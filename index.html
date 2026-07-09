@@ -112,11 +112,15 @@
   .btn.ghost{background:#eef2ff; color:var(--brand)}
   .btn.mini{padding:5px 9px; font-size:12px}
   #output{
-    width:100%; min-height:150px; max-height:44vh; border:0; border-top:1px solid var(--line);
+    min-height:150px; max-height:46vh; overflow:auto; border-top:1px solid var(--line);
     padding:12px 14px; font-family:"SFMono-Regular",Menlo,Consolas,monospace; font-size:13px;
-    line-height:1.55; resize:vertical; color:var(--ink);
+    line-height:1.65; color:var(--ink); white-space:pre-wrap; word-break:break-word;
   }
   #output:focus{outline:none; background:#fffdf5}
+  #output .hl-ok{background:#d1fae5; border-radius:3px; padding:0 2px}
+  #output .hl-warn{background:#fde047; border-radius:3px; padding:0 2px; font-weight:700}
+  .out-legend{display:flex; gap:14px; padding:2px 14px 6px; font-size:11px; color:var(--muted)}
+  .out-legend .sw{display:inline-block; width:11px; height:11px; border-radius:2px; vertical-align:-1px; margin-right:4px}
   .editflag{display:none; align-items:center; gap:8px; padding:6px 14px; background:var(--warn-bg); color:var(--warn); font-size:12px}
   .editflag.on{display:flex}
   .pedigree{white-space:pre; font-family:monospace; font-size:14px; background:#f9fafb; border:1px solid var(--line); border-radius:8px; padding:10px; margin-top:6px}
@@ -154,11 +158,15 @@
     <button type="button" class="btn ghost mini" id="regenBtn">重新產生</button>
     <button type="button" class="btn primary mini" id="copyBtn">複製</button>
   </div>
+  <div class="out-legend">
+    <span><span class="sw" style="background:#d1fae5"></span>已帶入的關鍵值</span>
+    <span><span class="sw" style="background:#fde047"></span>待補（空格請手動填）</span>
+  </div>
   <div class="editflag" id="editFlag">
     <span>已手動編輯，表單變更不會自動覆蓋</span>
     <button type="button" class="btn ghost mini" id="unlockBtn">放棄手改・重新產生</button>
   </div>
-  <textarea id="output" spellcheck="false"></textarea>
+  <div id="output" contenteditable="true" spellcheck="false"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -514,8 +522,9 @@ const FORM_HTML = `
       <select data-k="sex"><option value="girl">女 girl</option><option value="boy">男 male infant</option></select></div>
     <div class="field"><label>入院時日齡</label>
       <select data-k="ageDesc"><option value="just-born">just-born(當天)</option><option value="1-day-old" selected>1-day-old</option><option value="2-day-old">2-day-old</option><option value="3-day-old">3-day-old</option></select></div>
-    <div class="field"><label>生產醫院</label>
-      <select data-k="hospital"><option>TPEMMH</option><option>Taipei Mackay Memorial Hospital (TPEMMH)</option><option>Taipei MMH</option></select></div>
+    <div class="field"><label>生產醫院（可自填）</label>
+      <input data-k="hospital" list="hospitalList" value="TPEMMH">
+      <datalist id="hospitalList"><option>TPEMMH</option><option>Taipei Mackay Memorial Hospital (TPEMMH)</option><option>Taipei MMH</option></datalist></div>
     <div class="field"><label>出生日期 <span class="calc-badge">算 day-old</span></label>
       <input type="date" data-k="birthDate"></div>
     <div class="field"><label>出生時間</label>
@@ -845,11 +854,16 @@ function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":
 function runParse(){
   const text=$("#pasteBox").value.trim();
   if(!text){ toast("請先貼上病歷"); return; }
-  const res=parseHIS(text);
-  applyStateToForm();
-  renderReview(res);
-  forceRegen();
-  toast("已解析並帶入");
+  try{
+    const res=parseHIS(text);
+    applyStateToForm();
+    renderReview(res);
+    forceRegen();
+    toast("已解析並帶入");
+  }catch(err){
+    $("#parseSummary").textContent="解析發生錯誤："+(err&&err.message||err);
+    console.error(err);
+  }
 }
 
 /* ---------- 初始化 ---------- */
@@ -926,19 +940,39 @@ function renderSibs(){
   $$("[data-del]",box).forEach(el=>el.addEventListener("click",()=>{S.sibs.splice(+el.dataset.del,1); renderSibs(); regen();}));
 }
 
-/* ---------- 產稿/複製 ---------- */
-function regen(){
-  if(manualEdit) return;
-  $("#output").value=generate();
+/* ---------- 產稿/複製（含顏色標示）---------- */
+function escOut(s){ return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+// 已帶入的關鍵值（綠）——挑不易誤判的多字值
+function greenVals(){
+  return [
+    S.birthDate?fmtDate(S.birthDate):null,
+    S.edc?fmtDate(S.edc):null,
+    S.gaW?`${S.gaW}${S.gaD?"+"+S.gaD:""} weeks`:null,
+    S.bw?`${S.bw} g`:null,
+    S.birthTime||null,
+    (S.ancPlace==="outside"&&S.ancOutside)?S.ancOutside:null
+  ].filter(v=>v&&String(v).trim());
 }
-function forceRegen(){ manualEdit=false; $("#editFlag").classList.remove("on"); $("#output").value=generate(); }
+function renderOutput(text){
+  let h=escOut(text);
+  // 綠：關鍵值首次出現先用文字 sentinel 標記，避免與黃色規則衝突
+  const A="[[OKS]]", B="[[OKE]]";
+  greenVals().forEach(v=>{ const ev=escOut(v); const i=h.indexOf(ev); if(i>=0) h=h.slice(0,i)+A+ev+B+h.slice(i+ev.length); });
+  // 黃：placeholder（含底線片段，如 ____/__/__、____ g、__ weeks、Apgar _）
+  h=h.replace(/[_\/]*_[_\/]*/g, m=>`<span class="hl-warn">${m}</span>`);
+  h=h.split(A).join('<span class="hl-ok">').split(B).join("</span>");
+  return h;
+}
+function regen(){ if(manualEdit) return; $("#output").innerHTML=renderOutput(generate()); }
+function forceRegen(){ manualEdit=false; $("#editFlag").classList.remove("on"); $("#output").innerHTML=renderOutput(generate()); }
 
 $("#output").addEventListener("input",()=>{ manualEdit=true; $("#editFlag").classList.add("on"); });
 $("#regenBtn").addEventListener("click",forceRegen);
 $("#unlockBtn").addEventListener("click",forceRegen);
 $("#copyBtn").addEventListener("click",async()=>{
-  try{ await navigator.clipboard.writeText($("#output").value); toast("已複製"); }
-  catch{ $("#output").select(); document.execCommand("copy"); toast("已複製"); }
+  const txt=$("#output").innerText || $("#output").textContent;
+  try{ await navigator.clipboard.writeText(txt); toast("已複製"); }
+  catch{ const r=document.createRange(); r.selectNodeContents($("#output")); const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r); document.execCommand("copy"); sel.removeAllRanges(); toast("已複製"); }
 });
 
 /* ---------- 紀年切換 ---------- */
@@ -947,8 +981,8 @@ $$("#eraToggle button").forEach(b=>b.addEventListener("click",()=>{
 }));
 
 /* ---------- operator localStorage ---------- */
-function loadOperator(){ const v=localStorage.getItem("nnb_operator"); if(v){ S.operator=v; const el=$('[data-k="operator"]'); if(el) el.value=v; } }
-$("#form").addEventListener("input",e=>{ if(e.target.dataset.k==="operator"){ localStorage.setItem("nnb_operator",e.target.value); } });
+function loadOperator(){ try{ const v=localStorage.getItem("nnb_operator"); if(v){ S.operator=v; const el=$('[data-k="operator"]'); if(el) el.value=v; } }catch(e){} }
+$("#form").addEventListener("input",e=>{ if(e.target.dataset.k==="operator"){ try{ localStorage.setItem("nnb_operator",e.target.value); }catch(err){} } });
 
 /* ---------- toast ---------- */
 let toastT;
