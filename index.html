@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NICU Note Builder</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#fff; --ink:#1f2937; --muted:#6b7280;
+    --line:#e5e7eb; --brand:#2563eb; --brand-d:#1d4ed8; --ok:#059669;
+    --warn:#b45309; --warn-bg:#fef3c7; --chip:#eef2ff; --chip-ink:#3730a3;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,"PingFang TC","Noto Sans TC","Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--ink); font-size:15px; line-height:1.5;
+    -webkit-text-size-adjust:100%;
+  }
+  header{
+    position:sticky; top:0; z-index:20; background:var(--brand); color:#fff;
+    padding:10px 14px; display:flex; align-items:center; gap:10px;
+    box-shadow:0 1px 6px rgba(0,0,0,.15);
+  }
+  header h1{font-size:16px; margin:0; font-weight:700; flex:1}
+  header .era{display:flex; gap:4px; background:rgba(255,255,255,.15); border-radius:8px; padding:3px}
+  header .era button{
+    border:0; background:transparent; color:#fff; padding:4px 10px; border-radius:6px;
+    font-size:12px; cursor:pointer;
+  }
+  header .era button.on{background:#fff; color:var(--brand); font-weight:700}
+  .wrap{max-width:900px; margin:0 auto; padding:10px 10px 120px}
+  .tabs{display:flex; gap:6px; margin:10px 2px}
+  .tabs button{
+    flex:1; border:1px solid var(--line); background:var(--card); color:var(--muted);
+    padding:9px 6px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .tabs button.on{background:var(--brand); color:#fff; border-color:var(--brand)}
+  .tabs button:disabled{opacity:.5; cursor:not-allowed}
+  details.sec{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    margin:8px 0; overflow:hidden;
+  }
+  details.sec>summary{
+    list-style:none; cursor:pointer; padding:12px 14px; font-weight:700; font-size:14px;
+    display:flex; align-items:center; gap:8px; user-select:none;
+  }
+  details.sec>summary::-webkit-details-marker{display:none}
+  details.sec>summary::after{content:"▾"; margin-left:auto; color:var(--muted); transition:transform .15s}
+  details.sec[open]>summary::after{transform:rotate(180deg)}
+  .sec .body{padding:4px 14px 14px}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .grid.three{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:560px){.grid,.grid.three{grid-template-columns:1fr 1fr}}
+  .field{display:flex; flex-direction:column; gap:3px; margin:2px 0}
+  .field.full{grid-column:1/-1}
+  .field label{font-size:12px; color:var(--muted); font-weight:600}
+  .field input,.field select,.field textarea{
+    border:1px solid var(--line); border-radius:9px; padding:8px 9px; font-size:14px;
+    background:#fff; color:var(--ink); font-family:inherit; width:100%;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--brand); border-color:var(--brand)}
+  .row-inline{display:flex; gap:6px; align-items:center}
+  .row-inline input{width:100%}
+  .checks{display:flex; flex-wrap:wrap; gap:6px; margin-top:4px}
+  .chk{
+    display:inline-flex; align-items:center; gap:5px; border:1px solid var(--line);
+    background:#fff; border-radius:20px; padding:5px 11px; font-size:13px; cursor:pointer; user-select:none;
+  }
+  .chk input{accent-color:var(--brand); margin:0}
+  .chk.on{background:var(--chip); border-color:#c7d2fe; color:var(--chip-ink); font-weight:600}
+  .scr3{cursor:pointer}
+  .scr3.pos{background:#fef2f2; border-color:#fecaca; color:#b91c1c; font-weight:700}
+  .hint{font-size:11px; color:var(--muted); margin-top:2px}
+  .calc-badge{
+    display:inline-block; background:#ecfdf5; color:var(--ok); border:1px solid #a7f3d0;
+    border-radius:6px; padding:1px 7px; font-size:11px; font-weight:700; margin-left:6px;
+  }
+  .sub{margin-left:14px; padding-left:10px; border-left:2px solid var(--line)}
+  /* output */
+  #outputCard{
+    position:sticky; bottom:0; z-index:15; background:var(--card);
+    border:1px solid var(--line); border-radius:var(--radius) var(--radius) 0 0;
+    margin:10px -10px 0; box-shadow:0 -3px 14px rgba(0,0,0,.08);
+  }
+  #outputCard .oc-head{display:flex; align-items:center; gap:8px; padding:10px 14px 4px}
+  #outputCard .oc-head b{font-size:13px; flex:1}
+  .btn{border:0; border-radius:9px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer}
+  .btn.primary{background:var(--brand); color:#fff}
+  .btn.ghost{background:#eef2ff; color:var(--brand)}
+  .btn.mini{padding:5px 9px; font-size:12px}
+  #output{
+    width:100%; min-height:150px; max-height:44vh; border:0; border-top:1px solid var(--line);
+    padding:12px 14px; font-family:"SFMono-Regular",Menlo,Consolas,monospace; font-size:13px;
+    line-height:1.55; resize:vertical; color:var(--ink);
+  }
+  #output:focus{outline:none; background:#fffdf5}
+  .editflag{display:none; align-items:center; gap:8px; padding:6px 14px; background:var(--warn-bg); color:var(--warn); font-size:12px}
+  .editflag.on{display:flex}
+  .pedigree{white-space:pre; font-family:monospace; font-size:14px; background:#f9fafb; border:1px solid var(--line); border-radius:8px; padding:10px; margin-top:6px}
+  .toast{
+    position:fixed; left:50%; bottom:80px; transform:translateX(-50%) translateY(20px);
+    background:#111827; color:#fff; padding:9px 18px; border-radius:22px; font-size:13px;
+    opacity:0; transition:.2s; pointer-events:none; z-index:50;
+  }
+  .toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
+  .stub{padding:40px 20px; text-align:center; color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>NICU Note Builder</h1>
+  <div class="era" id="eraToggle">
+    <button data-era="ce" class="on">西元</button>
+    <button data-era="roc">民國</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="on" data-note="admission">Admission</button>
+    <button data-note="acceptance" disabled>Acceptance</button>
+    <button data-note="procedure" disabled>Procedure</button>
+  </div>
+
+  <form id="form"><!-- admission form injected here --></form>
+</div>
+
+<div id="outputCard">
+  <div class="oc-head">
+    <b>成稿（可直接編輯）</b>
+    <button type="button" class="btn ghost mini" id="regenBtn">重新產生</button>
+    <button type="button" class="btn primary mini" id="copyBtn">複製</button>
+  </div>
+  <div class="editflag" id="editFlag">
+    <span>已手動編輯，表單變更不會自動覆蓋</span>
+    <button type="button" class="btn ghost mini" id="unlockBtn">放棄手改・重新產生</button>
+  </div>
+  <textarea id="output" spellcheck="false"></textarea>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   NICU Note Builder — 雛形 v0.1（admission note）
+   單檔、純前端、病人資料不離開瀏覽器
+   ============================================================ */
+
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+
+let ERA = "ce";                 // ce=西元, roc=民國
+let manualEdit = false;         // 使用者是否手改過成稿
+
+/* ---------- state ---------- */
+const S = {
+  // basics
+  sex:"girl", ageDesc:"1-day-old",
+  birthDate:"", birthTime:"", hospital:"TPEMMH",
+  gaW:"", gaD:"", bw:"", sizeClass:"AGA",
+  gravida:"2", para:"2", matAge:"", edc:"", chartNo:"",
+  // delivery
+  delivery:"cesarean", csReason:"", deliverySmooth:true,
+  // prenatal
+  ancPlace:"TPEMMH", ancOutside:"", usNormal:true, level2:true,
+  matHx:{}, matHxOther:"",
+  scr:{hbsag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
+  toccNone:true,
+  // course
+  steroid:false, steroidDose:"2", steroidNote:"",
+  mgso4:false, abx:false, abxDrug:"cefazolin",
+  rom:"none", romHours:"", romNote:"",
+  matInfNote:"", obNote:"",
+  // delivery event
+  apgarPts:"2", a1:"", a5:"", a7:"", a10:"",
+  fetalDistress:false, meconium:false, doic:false, placentaDirty:false,
+  // resuscitation
+  resusLevel:"none", ippeep:"", fio2:"", ettSize:"", ettTime:"",
+  epiTime:"", resusOutcome:"",
+  // postnatal
+  symptoms:{}, cyanosis:false, brady:false, spo2:"",
+  support:"none", supportSet:"", physical:{}, resolved:true,
+  // admission & dx
+  admitTo:"NICU", dxFormat:"prose", dx:{}, dxOther:"",
+  // pedigree
+  sibs:[],  // array of {sex:'boy'|'girl', proband:bool}
+  // operator
+  operator:""
+};
+
+/* ---------- helpers ---------- */
+const he = s => s;  // (placeholder for escaping if needed)
+function pron(){ return S.sex==="boy" ? {subj:"he",obj:"him",poss:"his",noun:"male infant"} : {subj:"she",obj:"her",poss:"her",noun:"girl"}; }
+
+// 民國/西元 換算與格式化。輸入 birthDate 一律存西元 yyyy-mm-dd
+function fmtDate(iso){
+  if(!iso) return "____/__/__";
+  const [y,m,d]=iso.split("-").map(Number);
+  if(ERA==="roc") return `${y-1911}/${m}/${d}`;
+  return `${y}/${String(m).padStart(2,"0")}/${String(d).padStart(2,"0")}`;
+}
+function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function daysBetween(iso){
+  if(!iso) return null;
+  const b=new Date(iso+"T00:00:00"); const t=new Date(todayISO()+"T00:00:00");
+  return Math.round((t-b)/86400000);
+}
+
+/* ---------- 自動計算 ---------- */
+function gaWeeksNum(){ const w=parseInt(S.gaW,10); return isNaN(w)?null:w; }
+function prematureDx(){
+  const w=gaWeeksNum(); if(w===null) return null;
+  if(w<37) return "Prematurity";
+  return null;
+}
+function weightClassDx(){
+  const g=parseInt(S.bw,10); if(isNaN(g)) return null;
+  if(g<1000) return "ELBW";
+  if(g<1500) return "VLBW";
+  if(g<2500) return "LBW";
+  return null;
+}
+function ageDesc(){ return S.ageDesc==="just-born" ? "just-born" : (S.ageDesc || "1-day-old"); }
+// 依出生日與今天建議 day-old（僅供欄位旁提示，不強制覆寫）
+function suggestAge(){ const d=S.birthDate?daysBetween(S.birthDate):null; if(d===null) return ""; if(d<=0) return "just-born"; return d+"-day-old"; }
+// ETT/UVC 估算（供 procedure note；此處先備用）
+function ettByWeight(){
+  const g=parseInt(S.bw,10); if(isNaN(g)) return null;
+  if(g<1000) return {size:"2.5", depth:(6+1).toFixed(0)};
+  if(g<2000) return {size:"3.0", depth:"7-8"};
+  if(g<3000) return {size:"3.0-3.5", depth:"8-9"};
+  return {size:"3.5", depth:"9-10"};
+}
+
+/* ============================================================
+   產稿引擎
+   ============================================================ */
+function generate(){
+  const p=pron();
+  const parts=[];
+
+  /* 1. 開場出生句 */
+  const deliveryPhrase = {
+    NSD:"vaginal delivery", VD:"vaginal delivery",
+    VDpainless:"vaginal delivery (with painless)",
+    cesarean:"cesarean section", emergent:"emergent cesarean section"
+  }[S.delivery] || "vaginal delivery";
+  let via = deliveryPhrase;
+  if(S.delivery==="emergent" && S.csReason) via += ` due to ${S.csReason}`;
+  const matAge = S.matAge ? `${S.matAge}-year-old ` : "";
+  const gp = `G${S.gravida}P${S.para}`;
+  let s1 = `This ${ageDesc()} ${p.noun} was born to a ${matAge}${gp} mother via ${via} on ${fmtDate(S.birthDate)}`;
+  if(S.birthTime) s1 += ` at ${S.birthTime}`;
+  s1 += ` at ${S.hospital}.`;
+  const gaStr = (S.gaW||"__")+(S.gaD?`+${S.gaD}`:"")+" weeks";
+  const bwStr = S.bw ? `${S.bw} g` : "____ g";
+  s1 += ` The gestational age was ${gaStr}, and the birth body weight was ${bwStr}, ${sizeLong(S.sizeClass)}.`;
+  if(S.edc) s1 += ` The estimated date of confinement was ${fmtDate(S.edc)}.`;
+  parts.push(s1);
+
+  /* 2. 產檢與母體病史 */
+  const ancPlace = S.ancPlace==="TPEMMH" ? S.hospital : (S.ancOutside||"an outside clinic");
+  let s2 = `Regular prenatal examinations were performed at ${ancPlace}.`;
+  const usBits=[];
+  if(S.usNormal) usBits.push("Prenatal ultrasound"+(S.level2?" and level II sonography":"")+" revealed no significant abnormalities.");
+  if(usBits.length) s2 += " "+usBits.join(" ");
+  parts.push(s2);
+
+  // 母體病史 positives
+  const pos=[];
+  if(S.matHx.gdm) pos.push("gestational diabetes mellitus"+(S.matHx.gdmInsulin?" (on insulin)":" (diet-controlled)"));
+  if(S.matHx.preeclampsia) pos.push("high risk of preeclampsia (on Aspirin)");
+  if(S.matHx.thalassemia) pos.push("thalassemia");
+  if(S.matHx.gerd) pos.push("GERD");
+  if(S.matHx.htn) pos.push("hypertension");
+  if(S.matHx.other && S.matHxOther) pos.push(S.matHxOther);
+
+  let matSent="";
+  if(pos.length){
+    matSent = `The mother had ${listJoin(pos)}. `;
+  }
+  // 否定安全網（用 or；有陽性病史在前 → 加 "other"）
+  const denySet = ["gestational diabetes mellitus","antepartum hemorrhage","preeclampsia","G6PD deficiency","thyroid disease","hematologic disorders","sexually transmitted diseases"];
+  const denies = denySet.filter(d=>{
+    if(d.startsWith("gestational") && S.matHx.gdm) return false;
+    if(d==="preeclampsia" && S.matHx.preeclampsia) return false;
+    if(d==="hematologic disorders" && S.matHx.thalassemia) return false;
+    return true;
+  });
+  if(denies.length){
+    matSent += pos.length
+      ? `She denied other history of ${listJoinOr(denies)}.`
+      : `The mother denied a history of ${listJoinOr(denies)}.`;
+  }
+  if(matSent) parts.push(matSent.trim());
+
+  /* 3. 產前篩檢（三態：neg/pos/unknown；unknown 不寫入任何句） */
+  const scrNeg=[], scrPos=[];
+  const scrLabel={hbsag:"hepatitis B",syphilis:"syphilis",rubella:"rubella",hiv:"HIV infection",gbs:"group B streptococcus (GBS)"};
+  Object.keys(S.scr).forEach(k=>{
+    if(S.scr[k]==="unknown") return;
+    (S.scr[k]==="pos"?scrPos:scrNeg).push(scrLabel[k]);
+  });
+  let s3="";
+  if(scrNeg.length) s3 += `Prenatal screening tests were negative for ${listJoin(scrNeg)}.`;
+  if(S.scr.hbsag==="pos") s3 += (s3?" ":"")+"HBsAg and HBeAg were positive.";
+  if(S.scr.gbs==="pos") s3 += (s3?" ":"")+"Group B streptococcus (GBS) screening was positive, and intravenous cefazolin was administered as intrapartum antibiotic prophylaxis before delivery.";
+  const otherPos=scrPos.filter(x=>x!=="hepatitis B" && x!=="group B streptococcus (GBS)");
+  if(otherPos.length) s3 += (s3?" ":"")+`Screening was positive for ${listJoin(otherPos)}.`;
+  if(S.toccNone) s3 += (s3?" ":"")+"There was no contributory TOCC or travel history.";
+  if(s3) parts.push(s3);
+
+  /* 4. 本次住院經過與產前處置（條件式） */
+  const course=[];
+  if(S.obNote) course.push(S.obNote.trim());
+  const preTx=[];
+  if(S.steroid) preTx.push(`antenatal betamethasone (${S.steroidDose} dose${S.steroidDose==="1"?"":"s"})${S.steroidNote?", "+S.steroidNote:""}`);
+  if(S.mgso4) preTx.push("MgSO4 for tocolysis");
+  if(S.abx) preTx.push(`intravenous ${S.abxDrug}`);
+  if(preTx.length) course.push(`Before delivery, ${listJoin(preTx)} ${preTx.length>1?"were":"was"} administered.`);
+  if(S.rom!=="none"){
+    const romMap={PROM:"premature rupture of membranes",PPROM:"preterm premature rupture of membranes",RPROM:"rupture of membranes"};
+    let r=`${romMap[S.rom]||S.rom}`+(S.romHours?` for ${S.romHours} hours`:"");
+    if(S.romNote) r+=` (${S.romNote})`;
+    course.push(cap1(r)+" was noted.");
+  }
+  if(S.matInfNote) course.push(S.matInfNote.trim());
+  if(course.length) parts.push(course.join(" "));
+
+  /* 5. 生產與 Apgar */
+  const dl=[];
+  let apg;
+  if(S.apgarPts==="4"){
+    apg=`Apgar scores were ${S.a1||"_"}, ${S.a5||"_"}, ${S.a7||"_"}, and ${S.a10||"_"} at 1, 5, 7, and 10 minutes, respectively.`;
+  }else{
+    apg=`The Apgar scores were ${S.a1||"_"} and ${S.a5||"_"} at 1st and 5th minute, respectively.`;
+  }
+  dl.push(apg);
+  const negEvents=[], posEvents=[];
+  (S.fetalDistress?posEvents:negEvents).push("fetal distress");
+  (S.meconium?posEvents:negEvents).push("meconium-stained amniotic fluid");
+  (S.doic?posEvents:negEvents).push("delay of initial crying");
+  if(S.resusLevel==="none") negEvents.push("need for neonatal resuscitation");
+  if(posEvents.length) dl.push(cap1(listJoin(posEvents))+(posEvents.length>1?" were":" was")+" noted.");
+  if(negEvents.length) dl.push("There was no "+listJoinOr(negEvents)+".");
+  if(S.placentaDirty) dl.push("The placenta and amniotic fluid were dirty.");
+  parts.push(dl.join(" "));
+
+  /* 6. 產房急救（階梯，條件式） */
+  if(S.resusLevel!=="none"){
+    const r=[];
+    if(S.ippeep) r.push(`Positive-pressure ventilation with Neopuff (IP/PEEP ${S.ippeep} cmH2O${S.fio2?`, FiO2 ${S.fio2}%`:""}) was given after birth.`);
+    else r.push("Positive-pressure ventilation was given after birth.");
+    if(S.resusLevel==="intubation"||S.resusLevel==="cpr"){
+      r.push(`Endotracheal intubation with a ${S.ettSize||"3.0"}-mm endotracheal tube was performed${S.ettTime?` at ${S.ettTime}`:""}.`);
+    }
+    if(S.resusLevel==="cpr"){
+      r.push("Cardiopulmonary resuscitation was initiated.");
+      r.push(`Epinephrine (1:10000) 1 mL/kg was administered via the endotracheal tube${S.epiTime?` at ${S.epiTime}`:""}.`);
+    }
+    if(S.resusOutcome) r.push(S.resusOutcome.trim());
+    parts.push(r.join(" "));
+  }
+
+  /* 7. 出生後表現與呼吸支持 */
+  const symLabel={tachypnea:"tachypnea",retraction:"subcostal retractions",grunting:"grunting",sob:"shortness of breath",intret:"intermittent retractions"};
+  const syms=Object.keys(S.symptoms).filter(k=>S.symptoms[k]).map(k=>symLabel[k]);
+  let s7="";
+  if(syms.length){
+    let tail="";
+    if(!S.cyanosis && !S.brady) tail=" without cyanosis or bradycardia";
+    else{
+      const t=[]; if(S.cyanosis)t.push("cyanosis"); if(S.brady)t.push("bradycardia");
+      if(t.length) tail=" with "+listJoin(t);
+    }
+    s7=`After birth, ${listJoin(syms)}${tail} ${syms.length>1?"were":"was"} noted.`;
+  }
+  const phys=[];
+  if(S.physical.caput) phys.push("caput succedaneum");
+  if(S.physical.cephalo) phys.push("cephalohematoma");
+  if(phys.length) s7 += (s7?" ":"")+cap1(listJoin(phys))+(phys.length>1?" were":" was")+" also noted.";
+  if(S.support!=="none"){
+    const supMap={hood:`oxygen hood therapy${S.spo2?` (SpO2 around ${S.spo2}%)`:""}`,neopuff:`respiratory support with IP/PEEP ${S.supportSet||"20/5"} cmH2O`};
+    s7 += (s7?" ":"")+cap1(supMap[S.support]||S.support)+" was provided"+(S.resolved?", after which the condition improved":"")+".";
+  } else if(S.spo2){
+    s7 += (s7?" ":"")+`Oxygen saturation was around ${S.spo2}%.`;
+  }
+  if(s7) parts.push(s7);
+
+  /* 8. tentative diagnosis 結尾 */
+  const dxList=collectDx();
+  const admitWard = S.admitTo==="NICU" ? "the neonatal intensive care unit (NICU)" : "our ward";
+  let s8;
+  if(S.dxFormat==="list" && dxList.length){
+    s8 = `Under the tentative diagnosis of\n${dxList.map(d=>"# "+d).join(", ")},\n${p.subj} was admitted to ${admitWard} for further evaluation and management.`;
+  }else{
+    s8 = `Under the tentative diagnosis of ${dxList.length?listJoin(dxList):"respiratory distress"}, ${p.subj} was admitted to ${admitWard} for further evaluation and ${S.admitTo==="NICU"?"management":"treatment"}.`;
+  }
+  parts.push(s8);
+
+  /* 9. Maternal Chart + pedigree */
+  let tail="";
+  if(S.chartNo) tail += `\n\nMaternal Chart No. ${S.chartNo}`;
+  const ped=buildPedigree();
+  if(ped) tail += `\n\n${ped}`;
+  if(S.operator) tail += `\n\n${S.operator}`;
+
+  return parts.join(" ").replace(/\s+\./g,".").replace(/ {2,}/g," ") + tail;
+}
+
+function collectDx(){
+  const auto=[];
+  const prem=prematureDx();
+  if(prem){ auto.push(`${prem}, GA ${(S.gaW||"__")}${S.gaD?"+"+S.gaD:""} weeks, BW ${S.bw||"__"} g, ${S.sizeClass}`); }
+  const wc=weightClassDx();
+  if(wc) auto[auto.length-1] = auto.length? auto[auto.length-1]+`, ${wc}` : wc;
+  // 使用者勾選
+  const dxLabel={rds:"respiratory distress syndrome",rd:"respiratory distress",ttn:"transient tachypnea of the newborn",asphyxia:"birth asphyxia",idm:"infant of a diabetic mother",eos:"rule out early-onset neonatal sepsis"};
+  Object.keys(S.dx).forEach(k=>{ if(S.dx[k]&&dxLabel[k]) auto.push(dxLabel[k]); });
+  if(S.matHx.gdm && !S.dx.idm) auto.push("infant of a diabetic mother");
+  if(S.resusLevel==="cpr" && !S.dx.asphyxia) auto.push("birth asphyxia");
+  if(S.dxOther) auto.push(S.dxOther);
+  // 去重
+  return [...new Set(auto)];
+}
+
+/* ---------- 小工具 ---------- */
+function listJoin(arr){   // 肯定/negative for… 用 and
+  arr=arr.filter(Boolean);
+  if(arr.length===0) return "";
+  if(arr.length===1) return arr[0];
+  if(arr.length===2) return arr[0]+" and "+arr[1];
+  return arr.slice(0,-1).join(", ")+", and "+arr[arr.length-1];
+}
+function listJoinOr(arr){  // 否定句 There was no… / denied… 用 or
+  arr=arr.filter(Boolean);
+  if(arr.length===0) return "";
+  if(arr.length===1) return arr[0];
+  if(arr.length===2) return arr[0]+" or "+arr[1];
+  return arr.slice(0,-1).join(", ")+", or "+arr[arr.length-1];
+}
+function cap1(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+function sizeLong(c){ return {AGA:"appropriate for gestational age (AGA)",SGA:"small for gestational age (SGA)",LGA:"large for gestational age (LGA)"}[c]||c; }
+
+/* ============================================================
+   家系圖產生器
+   symbol: □=male ○=female；實心 ■/● = proband
+   ============================================================ */
+function buildPedigree(){
+  const sibs=S.sibs;
+  if(!sibs.length) return "";
+  const pad=n=>" ".repeat(Math.max(0,n));
+  const sym=k=> k.sex==="boy" ? (k.proband?"■":"□") : (k.proband?"●":"○");
+  const kids=sibs.map(sym);
+  const parent="□─────○";           // 父□─母○，中點在 index 3
+  if(kids.length===1){
+    return `${parent}\n${pad(3)}│\n${pad(3)}${kids[0]}`;
+  }
+  // 多子代：kids 以 3 空格分隔，sibling bar 在每個 kid 上方分岔；整體對齊到父母中點(3)
+  let kidRow=kids.join("   ");
+  const cols=[]; { let c=0; kids.forEach(()=>{ cols.push(c); c+=4; }); }
+  const first=cols[0], last=cols[cols.length-1], bmid=Math.floor((first+last)/2);
+  const kidPad=Math.max(0,3-bmid), parentPad=Math.max(0,bmid-3), stemCol=Math.max(bmid,3);
+  let bracket=""; for(let c=0;c<=last;c++){ bracket += cols.includes(c) ? "┬" : (c>first&&c<last?"─":" "); }
+  return `${pad(parentPad)}${parent}\n${pad(stemCol)}│\n${pad(kidPad)}${bracket}\n${pad(kidPad)}${kidRow}`;
+}
+
+/* ============================================================
+   表單建構
+   ============================================================ */
+const FORM_HTML = `
+<details class="sec" open><summary>1. 基本資料</summary><div class="body">
+  <div class="grid">
+    <div class="field"><label>性別</label>
+      <select data-k="sex"><option value="girl">女 girl</option><option value="boy">男 male infant</option></select></div>
+    <div class="field"><label>入院時日齡</label>
+      <select data-k="ageDesc"><option value="just-born">just-born(當天)</option><option value="1-day-old" selected>1-day-old</option><option value="2-day-old">2-day-old</option><option value="3-day-old">3-day-old</option></select></div>
+    <div class="field"><label>生產醫院</label>
+      <select data-k="hospital"><option>TPEMMH</option><option>Taipei Mackay Memorial Hospital (TPEMMH)</option><option>Taipei MMH</option></select></div>
+    <div class="field"><label>出生日期 <span class="calc-badge">算 day-old</span></label>
+      <input type="date" data-k="birthDate"></div>
+    <div class="field"><label>出生時間</label>
+      <input type="time" data-k="birthTime"></div>
+    <div class="field"><label>GA 週 <span class="calc-badge">早產判定</span></label>
+      <input type="number" data-k="gaW" placeholder="26" min="20" max="45"></div>
+    <div class="field"><label>GA 天</label>
+      <input type="number" data-k="gaD" placeholder="3" min="0" max="6"></div>
+    <div class="field"><label>出生體重 g <span class="calc-badge">L/VL/EL BW</span></label>
+      <input type="number" data-k="bw" placeholder="910"></div>
+    <div class="field"><label>大小</label>
+      <select data-k="sizeClass"><option>AGA</option><option>SGA</option><option>LGA</option></select></div>
+    <div class="field"><label>母 G</label><input type="number" data-k="gravida" value="2" min="1"></div>
+    <div class="field"><label>母 P</label><input type="number" data-k="para" value="2" min="1"></div>
+    <div class="field"><label>母年齡（選填）</label><input type="number" data-k="matAge" placeholder="40"></div>
+    <div class="field"><label>EDC（選填）</label><input type="date" data-k="edc"></div>
+    <div class="field full"><label>母病歷號（選填）</label><input data-k="chartNo" placeholder="00000000"></div>
+  </div>
+</div></details>
+
+<details class="sec" open><summary>2. 生產方式</summary><div class="body">
+  <div class="grid">
+    <div class="field full"><label>生產方式</label>
+      <select data-k="delivery">
+        <option value="NSD">NSD 自然產</option>
+        <option value="VD">VD 陰道產</option>
+        <option value="VDpainless">VD with painless 無痛</option>
+        <option value="cesarean" selected>C/S 剖腹（擇期）</option>
+        <option value="emergent">emergent C/S 緊急剖腹</option>
+      </select></div>
+    <div class="field full"><label>緊急剖腹原因（僅 emergent C/S）</label>
+      <input data-k="csReason" placeholder="fetal distress"></div>
+  </div>
+</div></details>
+
+<details class="sec"><summary>3. 產檢與母體病史</summary><div class="body">
+  <div class="grid">
+    <div class="field"><label>產檢院所</label>
+      <select data-k="ancPlace"><option value="TPEMMH">本院</option><option value="outside">外院</option></select></div>
+    <div class="field"><label>外院名稱</label><input data-k="ancOutside" placeholder="○○婦產科診所"></div>
+  </div>
+  <label class="chk"><input type="checkbox" data-k="usNormal" checked> 產前超音波無異常</label>
+  <label class="chk"><input type="checkbox" data-k="level2" checked> level II 已做</label>
+  <div class="hint">母體病史（勾選＝有；沒勾的常規項會自動寫入「denied」句）</div>
+  <div class="checks" id="matHxChecks">
+    <label class="chk"><input type="checkbox" data-mh="gdm"> GDM</label>
+    <label class="chk"><input type="checkbox" data-mh="gdmInsulin"> GDM 用 insulin</label>
+    <label class="chk"><input type="checkbox" data-mh="preeclampsia"> Preeclampsia(+Aspirin)</label>
+    <label class="chk"><input type="checkbox" data-mh="thalassemia"> Thalassemia</label>
+    <label class="chk"><input type="checkbox" data-mh="gerd"> GERD</label>
+    <label class="chk"><input type="checkbox" data-mh="htn"> Hypertension</label>
+    <label class="chk"><input type="checkbox" data-mh="other"> 其他</label>
+  </div>
+  <div class="field full"><label>其他病史文字</label><input data-k="matHxOther" placeholder="..."></div>
+  <div class="hint">產前篩檢（點一下循環：陰性→陽性→未驗）。HBsAg 陽性會自動改寫、不再列入陰性句</div>
+  <div class="checks" id="scrChecks"></div>
+  <label class="chk"><input type="checkbox" data-k="toccNone" checked> 無 TOCC/旅遊史</label>
+</div></details>
+
+<details class="sec"><summary>4. 本次住院經過・產前處置</summary><div class="body">
+  <label class="chk"><input type="checkbox" data-k="steroid"> 產前類固醇 Betamethasone</label>
+  <div class="grid">
+    <div class="field"><label>劑數</label><select data-k="steroidDose"><option>1</option><option selected>2</option></select></div>
+    <div class="field"><label>備註（日期）</label><input data-k="steroidNote" placeholder="on MM/DD and MM/DD"></div>
+  </div>
+  <label class="chk"><input type="checkbox" data-k="mgso4"> MgSO4 安胎</label>
+  <label class="chk"><input type="checkbox" data-k="abx"> 待產抗生素</label>
+  <div class="field"><label>抗生素</label><select data-k="abxDrug"><option>cefazolin</option><option>ampicillin</option><option>Curam</option></select></div>
+  <div class="grid">
+    <div class="field"><label>破水</label>
+      <select data-k="rom"><option value="none">無</option><option>PROM</option><option>PPROM</option><option>RPROM</option></select></div>
+    <div class="field"><label>破水時數</label><input data-k="romHours" placeholder="12"></div>
+  </div>
+  <div class="field full"><label>破水備註（羊水量/AFI）</label><input data-k="romNote" placeholder="AFI 3.8cm"></div>
+  <div class="field full"><label>母體感染/檢驗（自由句）</label><textarea data-k="matInfNote" rows="2" placeholder="Blood test showed leukocytosis (WBC _____) and elevated CRP (____ mg/dL). U/A showed pyuria."></textarea></div>
+  <div class="field full"><label>其他產科經過（自由句，會放前面）</label><textarea data-k="obNote" rows="2" placeholder="cervical incompetence with bag protruding for 4cm; transferred from ... on ..."></textarea></div>
+</div></details>
+
+<details class="sec"><summary>5. 生產與 Apgar</summary><div class="body">
+  <div class="grid">
+    <div class="field"><label>Apgar 時間點</label><select data-k="apgarPts"><option value="2">2 點(1,5)</option><option value="4">4 點(1,5,7,10)</option></select></div>
+    <div class="field"><label>1 min</label><input type="number" data-k="a1" placeholder="9"></div>
+    <div class="field"><label>5 min</label><input type="number" data-k="a5" placeholder="9"></div>
+    <div class="field a4"><label>7 min</label><input type="number" data-k="a7"></div>
+    <div class="field a4"><label>10 min</label><input type="number" data-k="a10"></div>
+  </div>
+  <div class="checks">
+    <label class="chk"><input type="checkbox" data-k="fetalDistress"> Fetal distress</label>
+    <label class="chk"><input type="checkbox" data-k="meconium"> Meconium-stained</label>
+    <label class="chk"><input type="checkbox" data-k="doic"> Delay of initial crying</label>
+    <label class="chk"><input type="checkbox" data-k="placentaDirty"> 胎盤羊水 dirty</label>
+  </div>
+  <div class="hint">未勾的三項會自動寫成 "There was no ..."</div>
+</div></details>
+
+<details class="sec"><summary>6. 產房急救（階梯）</summary><div class="body">
+  <div class="field full"><label>急救到哪一級</label>
+    <select data-k="resusLevel">
+      <option value="none">無/常規</option>
+      <option value="neopuff">Neopuff / PPV</option>
+      <option value="intubation">＋ 插管</option>
+      <option value="cpr">＋ CPR + Epinephrine</option>
+    </select></div>
+  <div class="grid">
+    <div class="field"><label>IP/PEEP</label><input data-k="ippeep" placeholder="18/5"></div>
+    <div class="field"><label>FiO2 %</label><input data-k="fio2" placeholder="60"></div>
+    <div class="field"><label>ETT size mm</label><input data-k="ettSize" placeholder="3.0"></div>
+    <div class="field"><label>插管時間</label><input data-k="ettTime" placeholder="13:27"></div>
+    <div class="field"><label>Epinephrine 時間</label><input data-k="epiTime" placeholder="13:38"></div>
+  </div>
+  <div class="field full"><label>急救結果（自由句）</label><textarea data-k="resusOutcome" rows="2" placeholder="Following resuscitation, heart rate increased to 140 bpm and SpO2 improved to 80-90%."></textarea></div>
+</div></details>
+
+<details class="sec"><summary>7. 出生後表現・呼吸支持</summary><div class="body">
+  <div class="checks">
+    <label class="chk"><input type="checkbox" data-sym="tachypnea"> Tachypnea</label>
+    <label class="chk"><input type="checkbox" data-sym="retraction"> Subcostal retraction</label>
+    <label class="chk"><input type="checkbox" data-sym="grunting"> Grunting</label>
+    <label class="chk"><input type="checkbox" data-sym="sob"> SOB</label>
+    <label class="chk"><input type="checkbox" data-sym="intret"> Intermittent retraction</label>
+  </div>
+  <div class="checks">
+    <label class="chk"><input type="checkbox" data-k="cyanosis"> Cyanosis</label>
+    <label class="chk"><input type="checkbox" data-k="brady"> Bradycardia</label>
+  </div>
+  <div class="grid">
+    <div class="field"><label>SpO2 %</label><input data-k="spo2" placeholder="89-90"></div>
+    <div class="field"><label>呼吸支持</label>
+      <select data-k="support"><option value="none">無</option><option value="hood">Oxygen hood</option><option value="neopuff">Neopuff IP/PEEP</option></select></div>
+    <div class="field"><label>支持設定</label><input data-k="supportSet" placeholder="20/5"></div>
+  </div>
+  <div class="checks">
+    <label class="chk"><input type="checkbox" data-phys="caput"> Caput succedaneum</label>
+    <label class="chk"><input type="checkbox" data-phys="cephalo"> Cephalohematoma</label>
+    <label class="chk"><input type="checkbox" data-k="resolved" checked> 支持後改善</label>
+  </div>
+</div></details>
+
+<details class="sec" open><summary>8. 收治病房與診斷</summary><div class="body">
+  <div class="grid">
+    <div class="field"><label>收治</label><select data-k="admitTo"><option>NICU</option><option value="ward">our ward</option></select></div>
+    <div class="field"><label>診斷格式</label><select data-k="dxFormat"><option value="prose">段落式</option><option value="list"># 條列式</option></select></div>
+  </div>
+  <div class="hint">早產/體重分類/IDM/birth asphyxia 會自動加入診斷</div>
+  <div class="checks">
+    <label class="chk"><input type="checkbox" data-dx="rd"> Respiratory distress</label>
+    <label class="chk"><input type="checkbox" data-dx="rds"> RDS</label>
+    <label class="chk"><input type="checkbox" data-dx="ttn"> TTN</label>
+    <label class="chk"><input type="checkbox" data-dx="asphyxia"> Birth asphyxia</label>
+    <label class="chk"><input type="checkbox" data-dx="idm"> IDM</label>
+    <label class="chk"><input type="checkbox" data-dx="eos"> r/o EOS</label>
+  </div>
+  <div class="field full"><label>其他診斷</label><input data-k="dxOther" placeholder="..."></div>
+</div></details>
+
+<details class="sec"><summary>9. 家系圖・操作者</summary><div class="body">
+  <div class="hint">依手足序建立；點「＋手足」新增，勾「本人」標記 proband</div>
+  <div id="sibList"></div>
+  <button type="button" class="btn ghost mini" id="addSib">＋ 手足</button>
+  <div class="field full" style="margin-top:10px"><label>操作者署名（記住於本機）</label><input data-k="operator" placeholder="Dr. ___"></div>
+</div></details>
+`;
+
+/* ---------- 初始化 ---------- */
+function initForm(){
+  $("#form").innerHTML=FORM_HTML;
+  // 篩檢 chips（三態）
+  const scrLabel={hbsag:"HBsAg",syphilis:"Syphilis",rubella:"Rubella",hiv:"HIV",gbs:"GBS"};
+  const scrTxt={neg:"陰",pos:"陽",unknown:"未驗"};
+  $("#scrChecks").innerHTML=Object.keys(scrLabel).map(k=>
+    `<span class="chk scr3 ${S.scr[k]==='pos'?'pos':''}" data-scr="${k}">${scrLabel[k]}: <b class="v">${scrTxt[S.scr[k]]}</b></span>`).join("");
+
+  bindInputs();
+  renderSibs();
+  loadOperator();
+  regen();
+}
+
+function bindInputs(){
+  // 一般 data-k
+  $$("[data-k]").forEach(el=>{
+    const k=el.dataset.k;
+    if(el.type==="checkbox"){ el.checked=!!S[k]; el.addEventListener("change",()=>{S[k]=el.checked; toggleChip(el); regen();}); toggleChip(el); }
+    else { if(S[k]!==undefined && S[k]!=="") el.value=S[k]; el.addEventListener("input",()=>{S[k]=el.value; regen();}); }
+  });
+  // 母體病史
+  $$("[data-mh]").forEach(el=>{
+    el.addEventListener("change",()=>{S.matHx[el.dataset.mh]=el.checked; toggleChip(el); regen();});
+  });
+  // 症狀
+  $$("[data-sym]").forEach(el=>el.addEventListener("change",()=>{S.symptoms[el.dataset.sym]=el.checked; toggleChip(el); regen();}));
+  // 理學
+  $$("[data-phys]").forEach(el=>el.addEventListener("change",()=>{S.physical[el.dataset.phys]=el.checked; toggleChip(el); regen();}));
+  // 診斷
+  $$("[data-dx]").forEach(el=>el.addEventListener("change",()=>{S.dx[el.dataset.dx]=el.checked; toggleChip(el); regen();}));
+  // 篩檢三態：陰→陽→未驗→陰
+  const scrTxt={neg:"陰",pos:"陽",unknown:"未驗"};
+  const scrNext={neg:"pos",pos:"unknown",unknown:"neg"};
+  $$("#scrChecks [data-scr]").forEach(el=>{
+    const k=el.dataset.scr;
+    el.addEventListener("click",e=>{
+      e.preventDefault();
+      S.scr[k]=scrNext[S.scr[k]];
+      el.querySelector(".v").textContent=scrTxt[S.scr[k]];
+      el.classList.toggle("pos",S.scr[k]==="pos");
+      el.classList.toggle("on",S.scr[k]!=="neg");
+      regen();
+    });
+  });
+  $("#addSib").addEventListener("click",()=>{S.sibs.push({sex:"girl",proband:false}); renderSibs(); regen();});
+}
+
+function toggleChip(el){ const chip=el.closest(".chk"); if(chip) chip.classList.toggle("on", el.checked); }
+
+function renderSibs(){
+  const box=$("#sibList");
+  box.innerHTML=S.sibs.map((s,i)=>`
+    <div class="row-inline" style="margin:5px 0">
+      <span style="width:22px">${i+1}.</span>
+      <select data-sib="${i}" data-f="sex"><option value="girl"${s.sex==="girl"?" selected":""}>女○</option><option value="boy"${s.sex==="boy"?" selected":""}>男□</option></select>
+      <label class="chk"><input type="checkbox" data-sib="${i}" data-f="proband"${s.proband?" checked":""}> 本人</label>
+      <button type="button" class="btn ghost mini" data-del="${i}">✕</button>
+    </div>`).join("")||'<div class="hint">尚無手足</div>';
+  $$("[data-sib]",box).forEach(el=>{
+    el.addEventListener("change",()=>{
+      const i=+el.dataset.sib, f=el.dataset.f;
+      if(f==="proband"){ if(el.checked) S.sibs.forEach((x,j)=>x.proband=(j===i)); else S.sibs[i].proband=false; renderSibs(); }
+      else S.sibs[i][f]=el.value;
+      regen();
+    });
+  });
+  $$("[data-del]",box).forEach(el=>el.addEventListener("click",()=>{S.sibs.splice(+el.dataset.del,1); renderSibs(); regen();}));
+}
+
+/* ---------- 產稿/複製 ---------- */
+function regen(){
+  if(manualEdit) return;
+  $("#output").value=generate();
+}
+function forceRegen(){ manualEdit=false; $("#editFlag").classList.remove("on"); $("#output").value=generate(); }
+
+$("#output").addEventListener("input",()=>{ manualEdit=true; $("#editFlag").classList.add("on"); });
+$("#regenBtn").addEventListener("click",forceRegen);
+$("#unlockBtn").addEventListener("click",forceRegen);
+$("#copyBtn").addEventListener("click",async()=>{
+  try{ await navigator.clipboard.writeText($("#output").value); toast("已複製"); }
+  catch{ $("#output").select(); document.execCommand("copy"); toast("已複製"); }
+});
+
+/* ---------- 紀年切換 ---------- */
+$$("#eraToggle button").forEach(b=>b.addEventListener("click",()=>{
+  ERA=b.dataset.era; $$("#eraToggle button").forEach(x=>x.classList.toggle("on",x===b)); regen();
+}));
+
+/* ---------- operator localStorage ---------- */
+function loadOperator(){ const v=localStorage.getItem("nnb_operator"); if(v){ S.operator=v; const el=$('[data-k="operator"]'); if(el) el.value=v; } }
+$("#form").addEventListener("input",e=>{ if(e.target.dataset.k==="operator"){ localStorage.setItem("nnb_operator",e.target.value); } });
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("on"),1400); }
+
+initForm();
+</script>
+</body>
+</html>
