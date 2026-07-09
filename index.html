@@ -72,6 +72,27 @@
   .chk.on{background:var(--chip); border-color:#c7d2fe; color:var(--chip-ink); font-weight:600}
   .scr3{cursor:pointer}
   .scr3.pos{background:#fef2f2; border-color:#fecaca; color:#b91c1c; font-weight:700}
+  /* paste & review */
+  .paste-sec>summary{background:#eff6ff}
+  #pasteBox{width:100%; border:1px solid var(--line); border-radius:9px; padding:10px; font-size:13px; font-family:"SFMono-Regular",Menlo,monospace; line-height:1.5; resize:vertical}
+  #pasteBox:focus{outline:2px solid var(--brand); border-color:var(--brand)}
+  #reviewPanel{margin-top:10px; display:flex; flex-direction:column; gap:4px}
+  .rev{display:flex; gap:8px; align-items:baseline; padding:6px 10px; border-radius:8px; font-size:12px; border:1px solid transparent}
+  .rev.ok{background:#ecfdf5; border-color:#a7f3d0}
+  .rev.warn{background:#fffbeb; border-color:#fde68a}
+  .rev .rk{font-weight:700; min-width:104px; flex-shrink:0}
+  .rev .rv{color:var(--ink); word-break:break-word}
+  .rev .rt{margin-left:auto; font-size:11px; font-weight:700; white-space:nowrap; flex-shrink:0}
+  .rev.ok .rt{color:var(--ok)}
+  .rev.warn .rt{color:var(--warn)}
+  .rev-legend{display:flex; gap:14px; margin:8px 0 2px; font-size:12px; font-weight:600}
+  .rev-legend .lg{display:inline-flex; align-items:center; gap:5px}
+  .rev-legend .dot{width:12px; height:12px; border-radius:3px; border:1px solid}
+  .rev-legend .dot.ok{background:#ecfdf5; border-color:#a7f3d0}
+  .rev-legend .dot.warn{background:#fffbeb; border-color:#fde68a}
+  /* 自動帶入後表單欄位提示 */
+  .field.filled input,.field.filled select,.field.filled textarea{background:#f0fdf4}
+  .chk.autofill{box-shadow:0 0 0 2px #a7f3d0}
   .hint{font-size:11px; color:var(--muted); margin-top:2px}
   .calc-badge{
     display:inline-block; background:#ecfdf5; color:var(--ok); border:1px solid #a7f3d0;
@@ -317,7 +338,7 @@ function generate(){
   const course=[];
   if(S.obNote) course.push(S.obNote.trim());
   const preTx=[];
-  if(S.steroid) preTx.push(`antenatal betamethasone (${S.steroidDose} dose${S.steroidDose==="1"?"":"s"})${S.steroidNote?", "+S.steroidNote:""}`);
+  if(S.steroid) preTx.push(`antenatal betamethasone (${S.steroidDose} dose${S.steroidDose==="1"?"":"s"}${S.steroidNote?" "+S.steroidNote:""})`);
   if(S.mgso4) preTx.push("MgSO4 for tocolysis");
   if(S.abx) preTx.push(`intravenous ${S.abxDrug}`);
   if(preTx.length) course.push(`Before delivery, ${listJoin(preTx)} ${preTx.length>1?"were":"was"} administered.`);
@@ -472,6 +493,21 @@ function buildPedigree(){
    表單建構
    ============================================================ */
 const FORM_HTML = `
+<details class="sec paste-sec" open><summary>📋 貼上 HIS 病歷 → 自動解析帶入</summary><div class="body">
+  <div class="hint">把 HIS 的 Perinatal &amp; Development ／ Family History 整段貼進來，按「解析並帶入」。系統會自動填欄位並標示對應狀態。</div>
+  <textarea id="pasteBox" rows="7" spellcheck="false" placeholder="◆Perinatal &amp; Development:\n　●Prenatal History：\n產檢醫院: ...; \nMaternal disease：\nDM: ...; ...\n　●Birth History：\nG： 2  P： 2  GA： 25+6 weeks ...\n◆Family History...\nFather： ...\nMother： ...\nSibling： ..."></textarea>
+  <div class="row-inline" style="margin-top:8px; gap:8px">
+    <button type="button" class="btn primary mini" id="parseBtn">解析並帶入</button>
+    <button type="button" class="btn ghost mini" id="clearParseBtn">清空</button>
+    <span class="hint" id="parseSummary"></span>
+  </div>
+  <div class="rev-legend" id="revLegend" style="display:none">
+    <span class="lg"><span class="dot ok"></span>已正確對應並帶入</span>
+    <span class="lg"><span class="dot warn"></span>需人工確認（未自動帶入／陽性異常請複核）</span>
+  </div>
+  <div id="reviewPanel"></div>
+</div></details>
+
 <details class="sec" open><summary>1. 基本資料</summary><div class="body">
   <div class="grid">
     <div class="field"><label>性別</label>
@@ -542,7 +578,7 @@ const FORM_HTML = `
 <details class="sec"><summary>4. 本次住院經過・產前處置</summary><div class="body">
   <label class="chk"><input type="checkbox" data-k="steroid"> 產前類固醇 Betamethasone</label>
   <div class="grid">
-    <div class="field"><label>劑數</label><select data-k="steroidDose"><option>1</option><option selected>2</option></select></div>
+    <div class="field"><label>劑數</label><select data-k="steroidDose"><option>1</option><option selected>2</option><option>3</option></select></div>
     <div class="field"><label>備註（日期）</label><input data-k="steroidNote" placeholder="on MM/DD and MM/DD"></div>
   </div>
   <label class="chk"><input type="checkbox" data-k="mgso4"> MgSO4 安胎</label>
@@ -643,6 +679,179 @@ const FORM_HTML = `
 </div></details>
 `;
 
+/* ============================================================
+   HIS 貼上解析器
+   ============================================================ */
+function hisGet(t,label){
+  const esc=label.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  // 值讀到 ; / 換行 / 或「2+空格後接另一個 標籤：」為止（標籤可含空格，如 Meconium stain）
+  const m=t.match(new RegExp(esc+"\\s*[:：]\\s*(.*?)(?=\\s{2,}[^:：\\n]+?[:：]|[;\\n]|$)","i"));
+  return m?m[1].trim():null;
+}
+function hisNeg(v){ return v==null||v===""||v==="-"||/^[-–]\s*(hour|min|day)/i.test(v)||/^無$/.test(v); }
+function hisPos(v){ return v!=null && (v==="+"||/^\+/.test(v)); }
+function parseDateFlex(s){
+  if(!s) return "";
+  const m=s.match(/(\d{2,4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+  if(!m) return "";
+  let y=+m[1]; if(y<1911) y+=1911;   // 民國→西元
+  return `${y}-${String(+m[2]).padStart(2,"0")}-${String(+m[3]).padStart(2,"0")}`;
+}
+function parseTimeFlex(s){ const m=(s||"").match(/(\d{1,2}):(\d{2})/); return m?`${m[1]}:${m[2]}`:""; }
+
+// 主解析：讀 text → 改 S → 回傳 review rows
+function parseHIS(text){
+  const t=text.replace(/\r/g,"");
+  const ok=[], warn=[];
+  const G=l=>hisGet(t,l);
+  const addOk=(k,raw,into)=>ok.push({k,raw:(raw==null?"":String(raw)),into});
+  const addWarn=(k,raw,why)=>warn.push({k,raw:(raw==null?"":String(raw)),why});
+
+  /* --- Prenatal --- */
+  const site=G("產檢醫院");
+  if(site!=null){
+    if(/TPEMMH|本院|馬偕|Taipei/i.test(site)){ S.ancPlace="TPEMMH"; }
+    else { S.ancPlace="outside"; S.ancOutside=site; }
+    addOk("產檢醫院",site,"產檢院所");
+  }
+  // 母體病史
+  const dm=G("DM"); if(dm!=null){ if(!hisNeg(dm)){ S.matHx.gdm=true; if(/insulin/i.test(dm)) S.matHx.gdmInsulin=true; addOk("DM",dm,"母病史 GDM"); } else addOk("DM",dm,"陰性（併入 denied）"); }
+  const htn=G("HTN"); if(htn!=null){ S.matHx.htn=!hisNeg(htn); addOk("HTN",htn, hisNeg(htn)?"陰性":"母病史 HTN"); }
+  const pre=G("Preeclampsia"); if(pre!=null){ S.matHx.preeclampsia=!hisNeg(pre); addOk("Preeclampsia",pre, hisNeg(pre)?"陰性":"母病史 preeclampsia"); }
+  const aph=G("APH"); if(aph!=null) addOk("APH",aph, hisNeg(aph)?"陰性（併入 denied）":"⚠ APH 陽性");
+  const pph=G("PPH"); if(pph!=null){ if(hisNeg(pph)) addOk("PPH",pph,"陰性"); else addWarn("PPH",pph,"陽性，工具無此欄位，請手動加入"); }
+  const uri=G("URI"); if(uri!=null){ if(hisNeg(uri)) addOk("URI",uri,"陰性"); else addWarn("URI",uri,"陽性，請確認是否寫入"); }
+  const others=G("Others");
+  if(others!=null && !hisNeg(others)){
+    if(/thalassemia/i.test(others)) S.matHx.thalassemia=true;
+    const extra=others.split(/,\s*/).filter(x=>x && !/thalassemia/i.test(x));
+    if(extra.length){ S.matHx.other=true; S.matHxOther=(S.matHxOther?S.matHxOther+", ":"")+extra.map(x=>/myomectomy/i.test(x)?("status post "+x.toLowerCase()):x).join(", "); }
+    addWarn("Others",others,"已帶入(Thalassemia／其他)，請複核措辭");
+  }
+  const toco=G("Tocolysis"); if(toco!=null && hisPos(toco)){ S.mgso4=true; addOk("Tocolysis",toco,"安胎(→MgSO4)"); }
+  // 血清學
+  const hbsag=G("HBsAg"); const hbeag=G("HBeAg");
+  if(hbsag!=null){ S.scr.hbsag=hisNeg(hbsag)?"neg":"pos"; (S.scr.hbsag==="pos"?warn:ok).push({k:"HBsAg",raw:hbsag+(hbeag!=null?` (HBeAg ${hbeag})`:""),into:"血清 HBsAg",why:"⚠ HBsAg 陽性請複核"}); }
+  const rpr=G("RPR")||G("VDRL"); if(rpr!=null){ S.scr.syphilis=hisNeg(rpr)?"neg":"pos"; if(S.scr.syphilis==="pos") addWarn("RPR/VDRL",rpr,"⚠ 梅毒血清陽性，請複核"); else addOk("RPR/VDRL",rpr,"血清 syphilis 陰性"); }
+  const gbs=G("GBS"); if(gbs!=null){ S.scr.gbs=hisNeg(gbs)?"neg":"pos"; (S.scr.gbs==="pos"?warn:ok).push({k:"GBS",raw:gbs,into:"血清 GBS",why:"⚠ GBS 陽性請複核"}); }
+  // 藥物
+  const drug=G("Drug"); if(drug!=null && !hisNeg(drug)){ S.abx=true; const dm2=drug.match(/(cefazolin|ampicillin|penicillin|curam|augmentin)/i); if(dm2) S.abxDrug=dm2[1].toLowerCase(); addOk("Drug/Abx",drug,"待產抗生素"); }
+  const steroid=G("Steroid"); if(steroid!=null && !hisNeg(steroid)){ S.steroid=true; const dates=(steroid.match(/\d{1,2}\/\d{1,2}/g)||[]); S.steroidDose=String(dates.length||2); let sn=steroid.replace(/^\s*Betamethasone\s*/i,"").trim(); if(sn && !/^on\b/i.test(sn)) sn="on "+sn; S.steroidNote=sn; addOk("Steroid",steroid,"產前類固醇"); }
+  const mg=G("MgSO4"); if(mg!=null && !hisNeg(mg)){ S.mgso4=true; addOk("MgSO4",mg,"安胎 MgSO4"); }
+
+  /* --- Birth History --- */
+  const g=G("G")||hisGet(t,"G"); const gm=t.match(/G[：:]\s*(\d+)\s+P[：:]\s*(\d+)/i);
+  if(gm){ S.gravida=gm[1]; S.para=gm[2]; addOk("G/P",`G${gm[1]}P${gm[2]}`,"胎次"); }
+  const ga=G("GA"); if(ga){ const m=ga.match(/(\d+)\s*\+\s*(\d+)/); if(m){ S.gaW=m[1]; S.gaD=m[2]; addOk("GA",ga,"妊娠週數"); } }
+  const bw=G("Birth weight"); if(bw){ const m=bw.match(/(\d{3,4})/); if(m){ S.bw=m[1]; addOk("Birth weight",bw,"出生體重"); } }
+  const del=G("Delivery"); const csr=G("剖腹產原因");
+  if(del){
+    if(/emergent/i.test(del)||/emergent/i.test(csr||"")) S.delivery="emergent";
+    else if(/C\/S|cesarean|剖腹/i.test(del)) S.delivery="cesarean";
+    else if(/NSD/i.test(del)) S.delivery="NSD";
+    else if(/VD/i.test(del)) S.delivery=/painless|無痛/i.test(del)?"VDpainless":"VD";
+    if(S.delivery==="emergent" && csr){ const leftover=csr.replace(/emergent/ig,"").replace(/C\/S/ig,"").replace(/剖腹產?/g,"").replace(/[（）()]/g,"").trim(); if(leftover) S.csReason=leftover; }
+    addOk("Delivery",del+(csr?` / ${csr}`:""),"生產方式");
+  }
+  const bh=G("出生醫院"); if(bh){ S.hospital=/TPEMMH/i.test(bh)?"TPEMMH":bh; addOk("出生醫院",bh,"醫院"); }
+  const dtb=G("Day and time of birth"); if(dtb){ S.birthDate=parseDateFlex(dtb); S.birthTime=parseTimeFlex(dtb); addOk("出生日期時間",dtb,"出生日期＋時間"); }
+  const edc=G("EDC"); if(edc){ S.edc=parseDateFlex(edc); addOk("EDC",edc,"預產期"); }
+  const fd=G("Fetal distress"); if(fd!=null){ S.fetalDistress=!hisNeg(fd); addOk("Fetal distress",fd, hisNeg(fd)?"陰性":"⚠ 陽性"); }
+  const ms=G("Meconium stain"); if(ms!=null){ S.meconium=!hisNeg(ms); addOk("Meconium",ms, hisNeg(ms)?"陰性":"⚠ 陽性"); }
+  const doic=G("DOIC"); if(doic!=null){ S.doic=!hisNeg(doic); addOk("DOIC",doic, hisNeg(doic)?"陰性":"⚠ 延遲初啼"); }
+  // PROM / PPROM
+  const pprom=G("PPROM"); const prom=G("PROM");
+  if(pprom && !hisNeg(pprom)){ S.rom="PPROM"; const h=pprom.match(/(\d+)/); if(h) S.romHours=h[1]; addOk("PPROM",pprom,"破水 PPROM"); }
+  else if(prom && !hisNeg(prom)){ S.rom="PROM"; const h=prom.match(/(\d+)/); if(h) S.romHours=h[1]; addOk("PROM",prom,"破水 PROM"); }
+  else if(prom!=null||pprom!=null) addOk("PROM/PPROM",prom||pprom,"無破水");
+  // Apgar
+  const apg=G("Apgar score"); if(apg){ const pairs=[...apg.matchAll(/(\d+)'\s*\((\d+)\)/g)].map(m=>[+m[1],+m[2]]); if(pairs.length){ S.a1=String((pairs.find(p=>p[0]===1)||pairs[0])[1]); const p5=pairs.find(p=>p[0]===5); if(p5)S.a5=String(p5[1]); const p7=pairs.find(p=>p[0]===7),p10=pairs.find(p=>p[0]===10); if(p7||p10){ S.apgarPts="4"; if(p7)S.a7=String(p7[1]); if(p10)S.a10=String(p10[1]); } else S.apgarPts="2"; addOk("Apgar",apg,"Apgar 分數"); } }
+
+  /* --- 產房急救 --- */
+  const o2=G("O2"), ambu=G("Ambu"), endo=G("Endo"), cc=G("Chest compression")||G("CPR");
+  if(o2!=null||ambu!=null||endo!=null||cc!=null){
+    let lvl="none";
+    if(hisPos(o2)||!hisNeg(o2)&&o2==="+") lvl="neopuff";
+    if(hisPos(ambu)) lvl="neopuff";
+    if(hisPos(endo)) lvl="intubation";
+    if(cc && !hisNeg(cc)) lvl="cpr";
+    S.resusLevel=lvl;
+    addOk("產房急救",`O2:${o2||"-"} Ambu:${ambu||"-"} Endo:${endo||"-"} CC:${cc||"-"}`, lvl==="none"?"無需急救":"急救階梯 "+lvl);
+  }
+
+  /* --- Family History → 家系圖 --- */
+  const fam=parseFamily(t);
+  if(fam.applied){ addOk("Family History",fam.summary,"家系圖已產生"); }
+  // 社會史（不帶入 admission note）
+  ["計劃性轉診","居家主要照顧者","家庭類型","家族病史"].forEach(l=>{ const v=G(l); if(v!=null) addWarn(l,v,"社會史，未帶入 admission note（供參考）"); });
+
+  return {ok,warn};
+}
+
+// 解析 Father/Mother/Sibling → S.sibs（依年齡排序，本案在最後）
+function parseFamily(t){
+  const sibs=[];
+  const sibLines=[...t.matchAll(/Sibling[^:：]*[:：]\s*([^\n]+)/gi)];
+  const parsed=[];
+  sibLines.forEach(m=>{
+    const line=m[1];
+    // 可能一行多個手足，用逗號或分號分
+    line.split(/[,;]|、/).forEach(seg=>{
+      const ageM=seg.match(/(\d+)\s*(?:y\/o|yo|y|歲)/i);
+      const isB=/brother|male|男|哥|弟|兄|son/i.test(seg);
+      const isG=/sister|female|女|姊|妹|daughter/i.test(seg);
+      if(ageM||isB||isG){ parsed.push({age:ageM?+ageM[1]:999, sex:isB?"boy":(isG?"girl":"girl")}); }
+    });
+  });
+  // 年齡大到小（哥哥/姊姊在前），本案 proband 加在最後
+  parsed.sort((a,b)=>b.age-a.age);
+  parsed.forEach(s=>sibs.push({sex:s.sex,proband:false}));
+  sibs.push({sex:S.sex,proband:true});
+  S.sibs=sibs;
+  const fa=t.match(/Father[^:：]*[:：]\s*([^\n]+)/i);
+  const mo=t.match(/Mother[^:：]*[:：]\s*([^\n]+)/i);
+  return {applied:true, summary:`父 ${fa?fa[1].trim():"?"} / 母 ${mo?mo[1].trim():"?"} / 手足 ${parsed.length} 人＋本案`};
+}
+
+// 把 S 同步回表單 DOM
+function applyStateToForm(){
+  $$("[data-k]").forEach(el=>{
+    const k=el.dataset.k;
+    if(el.type==="checkbox"){ el.checked=!!S[k]; toggleChip(el); }
+    else if(S[k]!==undefined && S[k]!==null){ el.value=S[k]; }
+  });
+  $$("[data-mh]").forEach(el=>{ el.checked=!!S.matHx[el.dataset.mh]; toggleChip(el); });
+  $$("[data-sym]").forEach(el=>{ el.checked=!!S.symptoms[el.dataset.sym]; toggleChip(el); });
+  $$("[data-phys]").forEach(el=>{ el.checked=!!S.physical[el.dataset.phys]; toggleChip(el); });
+  $$("[data-dx]").forEach(el=>{ el.checked=!!S.dx[el.dataset.dx]; toggleChip(el); });
+  const scrTxt={neg:"陰",pos:"陽",unknown:"未驗"};
+  $$("#scrChecks [data-scr]").forEach(el=>{ const k=el.dataset.scr; el.querySelector(".v").textContent=scrTxt[S.scr[k]]; el.classList.toggle("pos",S.scr[k]==="pos"); el.classList.toggle("on",S.scr[k]!=="neg"); });
+  renderSibs();
+}
+
+// 渲染綠/黃對應狀態
+function renderReview(res){
+  const box=$("#reviewPanel");
+  const rows=[
+    ...res.ok.map(r=>`<div class="rev ok"><span class="rk">${r.k}</span><span class="rv">${escapeHtml(r.raw)}</span><span class="rt">✓ ${r.into||r.why||"已帶入"}</span></div>`),
+    ...res.warn.map(r=>`<div class="rev warn"><span class="rk">${r.k}</span><span class="rv">${escapeHtml(r.raw)}</span><span class="rt">⚠ ${r.why||"待確認"}</span></div>`)
+  ];
+  box.innerHTML=rows.join("");
+  $("#revLegend").style.display=rows.length?"flex":"none";
+  $("#parseSummary").textContent=`已對應 ${res.ok.length} 項，待確認 ${res.warn.length} 項`;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function runParse(){
+  const text=$("#pasteBox").value.trim();
+  if(!text){ toast("請先貼上病歷"); return; }
+  const res=parseHIS(text);
+  applyStateToForm();
+  renderReview(res);
+  forceRegen();
+  toast("已解析並帶入");
+}
+
 /* ---------- 初始化 ---------- */
 function initForm(){
   $("#form").innerHTML=FORM_HTML;
@@ -690,6 +899,9 @@ function bindInputs(){
     });
   });
   $("#addSib").addEventListener("click",()=>{S.sibs.push({sex:"girl",proband:false}); renderSibs(); regen();});
+  // HIS 貼上解析
+  $("#parseBtn").addEventListener("click",runParse);
+  $("#clearParseBtn").addEventListener("click",()=>{ $("#pasteBox").value=""; $("#reviewPanel").innerHTML=""; $("#revLegend").style.display="none"; $("#parseSummary").textContent=""; });
 }
 
 function toggleChip(el){ const chip=el.closest(".chk"); if(chip) chip.classList.toggle("on", el.checked); }
