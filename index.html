@@ -145,7 +145,7 @@
 <div class="wrap">
   <div class="tabs">
     <button class="on" data-note="admission">Admission</button>
-    <button data-note="acceptance" disabled>Acceptance</button>
+    <button data-note="acceptance">Acceptance</button>
     <button data-note="procedure" disabled>Procedure</button>
   </div>
 
@@ -183,6 +183,7 @@ const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
 
 let ERA = "ce";                 // ce=西元, roc=民國
 let manualEdit = false;         // 使用者是否手改過成稿
+let noteType = "admission";     // admission | acceptance | procedure
 
 /* ---------- state ---------- */
 const S = {
@@ -217,7 +218,17 @@ const S = {
   // pedigree
   sibs:[],  // array of {sex:'boy'|'girl', proband:bool}
   // operator
-  operator:""
+  operator:"",
+  // acceptance note 專用
+  acc:{
+    admitReason:"", respiratory:"", perinatal:"", infectionRisk:"",
+    hospitalCourse:"", labABG:"", labCXR:"", labOther:"",
+    respModes:{}, respNote:"", abxCourse:"",
+    brainUSdate:"", brainUS:"", heartUSdate:"", heartUS:"",
+    rop:"not yet", ropNote:"", aabr:"not yet", aabrNote:"", nbs:"not yet", nbsNote:"",
+    line:{}, lineNote:"", vaccination:"", nutrition:"",
+    gPMA:"", gBH:"", gBW:"", gHC:"", meds:"", plan:""
+  }
 };
 
 /* ---------- helpers ---------- */
@@ -265,9 +276,14 @@ function ettByWeight(){
 }
 
 /* ============================================================
-   產稿引擎
+   產稿引擎（依 noteType 分派）
    ============================================================ */
 function generate(){
+  if(noteType==="acceptance") return generateAcceptance();
+  return generateAdmission();
+}
+
+function generateAdmission(){
   const p=pron();
   const parts=[];
 
@@ -438,6 +454,80 @@ function generate(){
   if(S.operator) tail += `\n\n${S.operator}`;
 
   return parts.join(" ").replace(/\s+\./g,".").replace(/ {2,}/g," ") + tail;
+}
+
+function generateAcceptance(){
+  const A=S.acc;
+  const sexN=S.sex==="boy"?"male":"female";
+  const ga=(S.gaW||"__")+(S.gaD?`+${S.gaD}`:"")+" weeks";
+  const bw=(S.bw||"__")+" gm";
+  const size=S.sizeClass||"AGA";
+  const admitUnit=S.admitTo==="NICU"?"NICU":"our ward";
+  const admitReason=A.admitReason||"____";
+  const gp=`G${S.gravida||"_"}P${S.para||"_"}`;
+  const delv={NSD:"NSD",VD:"VD",VDpainless:"VD",cesarean:"C/S",emergent:"emergent C/S"}[S.delivery]||"VD";
+  const bwhen=S.birthTime||"__";
+  const bwhere=S.hospital||"__";
+  const a1=S.a1||"_", a5=S.a5||"_";
+  const sg=b=>b?"+":"-";
+  const L=[];
+  L.push("【Brief history】");
+  L.push(`A ${sexN} neonate, GA ${ga}, BW ${bw}, ${size}, was admitted to ${admitUnit} due to ${admitReason}.`);
+  L.push(`Birth History: ${gp}, ${delv} at ${bwhen} in ${bwhere}`);
+  L.push(`Apgar score: ${a1} and ${a5} at 1 and 5 minutes`);
+  L.push(`Fetal distress(${sg(S.fetalDistress)}), DOIC(${sg(S.doic)}), MSAF(${sg(S.meconium)})`);
+  L.push(`Respiratory: ${A.respiratory||"____"}`);
+  L.push(`Perinatal history: ${A.perinatal||"____"}`);
+  L.push(`Infection risk factor: ${A.infectionRisk||"____"}`);
+  L.push("");
+  L.push("【Hospital course】");
+  L.push("  "+(A.hospitalCourse||"____"));
+  L.push("");
+  L.push("【Initial laboratory data】");
+  L.push(`ABG: ${A.labABG||"____"}`);
+  L.push(`CXR: ${A.labCXR||"____"}`);
+  L.push(`Other (CBC/DC, CRP...): ${A.labOther||"____"}`);
+  L.push("");
+  L.push("【Respiratory course】");
+  const modes=Object.keys(A.respModes||{}).filter(k=>A.respModes[k]);
+  L.push((modes.length?modes.join(" → "):"____")+(A.respNote?`  ${A.respNote}`:""));
+  L.push("");
+  L.push("【Antibiotics course】");
+  L.push(A.abxCourse||"____");
+  L.push("");
+  L.push("【Brain ultrasound】");
+  L.push(((A.brainUSdate?A.brainUSdate+" ":"")+(A.brainUS||"____")).trim());
+  L.push("");
+  L.push("【Heart ultrasound】");
+  L.push(((A.heartUSdate?A.heartUSdate+" ":"")+(A.heartUS||"____")).trim());
+  L.push("");
+  const scr=(status,note)=> status==="done" ? (note||"done") : "not yet";
+  L.push("【ROP screen】");     L.push(scr(A.rop,A.ropNote));
+  L.push("");
+  L.push("【AABR】");           L.push(scr(A.aabr,A.aabrNote));
+  L.push("");
+  L.push("【Newborn screen】"); L.push(scr(A.nbs,A.nbsNote));
+  L.push("");
+  L.push("【Central line】");
+  const lines=Object.keys(A.line||{}).filter(k=>A.line[k]);
+  if(lines.length) lines.forEach(l=>L.push(l)); else L.push("____");
+  if(A.lineNote) L.push(A.lineNote);
+  L.push("");
+  L.push("【Vaccination】");
+  L.push(A.vaccination||"____");
+  L.push("");
+  L.push("【Nutrition】");
+  L.push(A.nutrition||"____");
+  L.push("");
+  L.push("【Infant growth assessment】");
+  L.push(`PMA ${A.gPMA||"__"}   BH ${A.gBH||"__"}   BW ${A.gBW||"__"}   HC ${A.gHC||"__"}`);
+  L.push("");
+  L.push("【Current medications】");
+  L.push(A.meds||"____");
+  L.push("");
+  L.push("【Plan】");
+  L.push(A.plan||"____");
+  return L.join("\n");
 }
 
 function collectDx(){
@@ -688,6 +778,120 @@ const FORM_HTML = `
 </div></details>
 `;
 
+/* ---- 共用貼上區塊（admission / acceptance 都用）---- */
+const PASTE_HTML = `
+<details class="sec paste-sec" open><summary>📋 貼上 HIS 病歷 → 自動解析帶入</summary><div class="body">
+  <div class="hint">貼 HIS 的 Perinatal &amp; Development ／ Family History，按「解析並帶入」。基本病人資料兩種 note 共用。</div>
+  <textarea id="pasteBox" rows="6" spellcheck="false" placeholder="◆Perinatal &amp; Development: ... ◆Family History ..."></textarea>
+  <div class="row-inline" style="margin-top:8px; gap:8px">
+    <button type="button" class="btn primary mini" id="parseBtn">解析並帶入</button>
+    <button type="button" class="btn ghost mini" id="clearParseBtn">清空</button>
+    <span class="hint" id="parseSummary"></span>
+  </div>
+  <div class="rev-legend" id="revLegend" style="display:none">
+    <span class="lg"><span class="dot ok"></span>已正確對應並帶入</span>
+    <span class="lg"><span class="dot warn"></span>需人工確認</span>
+  </div>
+  <div id="reviewPanel"></div>
+</div></details>`;
+
+/* ---- acceptance note 表單 ---- */
+const ACC_FORM_HTML = PASTE_HTML + `
+<details class="sec" open><summary>1. 病人基本（Brief history 用）</summary><div class="body">
+  <div class="grid">
+    <div class="field"><label>性別</label><select data-k="sex"><option value="girl">女 female</option><option value="boy">男 male</option></select></div>
+    <div class="field"><label>大小</label><select data-k="sizeClass"><option>AGA</option><option>SGA</option><option>LGA</option></select></div>
+    <div class="field"><label>GA 週</label><input type="number" data-k="gaW" placeholder="25"></div>
+    <div class="field"><label>GA 天</label><input type="number" data-k="gaD" placeholder="6"></div>
+    <div class="field"><label>出生體重 g</label><input type="number" data-k="bw" placeholder="688"></div>
+    <div class="field"><label>收治</label><select data-k="admitTo"><option>NICU</option><option value="ward">our ward</option></select></div>
+    <div class="field"><label>母 G</label><input type="number" data-k="gravida"></div>
+    <div class="field"><label>母 P</label><input type="number" data-k="para"></div>
+    <div class="field"><label>生產方式</label><select data-k="delivery"><option value="NSD">NSD</option><option value="VD">VD</option><option value="VDpainless">VD painless</option><option value="cesarean">C/S</option><option value="emergent">emergent C/S</option></select></div>
+    <div class="field"><label>出生時間</label><input type="time" data-k="birthTime"></div>
+    <div class="field full"><label>生產醫院（可自填）</label><input data-k="hospital" list="hospitalList2" value="TPEMMH"><datalist id="hospitalList2"><option>TPEMMH</option><option>Taipei MMH</option></datalist></div>
+    <div class="field"><label>Apgar 1'</label><input type="number" data-k="a1" placeholder="9"></div>
+    <div class="field"><label>Apgar 5'</label><input type="number" data-k="a5" placeholder="9"></div>
+  </div>
+  <div class="checks">
+    <label class="chk"><input type="checkbox" data-k="fetalDistress"> Fetal distress</label>
+    <label class="chk"><input type="checkbox" data-k="doic"> DOIC</label>
+    <label class="chk"><input type="checkbox" data-k="meconium"> MSAF</label>
+  </div>
+  <div class="field full"><label>Admitted due to（收治原因）</label><input data-ak="admitReason" placeholder="respiratory distress syndrome, prematurity"></div>
+  <div class="field full"><label>Respiratory</label><input data-ak="respiratory" placeholder="tachypnea with retraction, on ETT+SIMV+PS"></div>
+  <div class="field full"><label>Perinatal history</label><input data-ak="perinatal" placeholder="PPROM 12h, antenatal steroid x3"></div>
+  <div class="field full"><label>Infection risk factor</label><input data-ak="infectionRisk" placeholder="PPROM, maternal GBS unknown"></div>
+</div></details>
+
+<details class="sec" open><summary>2. Hospital course（病程）</summary><div class="body">
+  <div class="field full"><textarea data-ak="hospitalCourse" rows="6" placeholder="After admission, septic work-up ... respiratory support with ETT+SIMV+PS was initiated ..."></textarea></div>
+</div></details>
+
+<details class="sec"><summary>3. Initial laboratory data</summary><div class="body">
+  <div class="field full"><label>ABG</label><input data-ak="labABG" placeholder="pH 7.2 / pCO2 55 / pO2 45 ... respiratory acidosis"></div>
+  <div class="field full"><label>CXR</label><input data-ak="labCXR" placeholder="bilateral air bronchograms, RDS Gr.II"></div>
+  <div class="field full"><label>Other (CBC/DC, CRP...)</label><textarea data-ak="labOther" rows="2" placeholder="WBC .. / CRP .. / no leukocytosis"></textarea></div>
+</div></details>
+
+<details class="sec"><summary>4. Respiratory course（呼吸模式）</summary><div class="body">
+  <div class="hint">勾選使用過的模式（依勾選順序以 → 串接）</div>
+  <div class="checks">
+    <label class="chk"><input type="checkbox" data-arm="bubble CPAP"> bubble CPAP</label>
+    <label class="chk"><input type="checkbox" data-arm="NCPAP"> NCPAP</label>
+    <label class="chk"><input type="checkbox" data-arm="NSIMV+PS"> NSIMV+PS</label>
+    <label class="chk"><input type="checkbox" data-arm="NIVPC"> NIVPC</label>
+    <label class="chk"><input type="checkbox" data-arm="ETT+SIMV+PS"> ETT+SIMV+PS</label>
+    <label class="chk"><input type="checkbox" data-arm="ETT+HFOV"> ETT+HFOV</label>
+    <label class="chk"><input type="checkbox" data-arm="ETT+HFOV+iNO"> ETT+HFOV+iNO</label>
+  </div>
+  <div class="field full"><label>補充（日期/參數）</label><input data-ak="respNote" placeholder="(7/3 intubation, 7/8 extubate to NCPAP)"></div>
+</div></details>
+
+<details class="sec"><summary>5. Antibiotics course</summary><div class="body">
+  <div class="field full"><textarea data-ak="abxCourse" rows="2" placeholder="Ampicillin + Gentamicin + Claforan (7/3-), plan to keep until ..."></textarea></div>
+</div></details>
+
+<details class="sec"><summary>6. 影像・篩檢</summary><div class="body">
+  <div class="grid">
+    <div class="field"><label>Brain US 日期</label><input data-ak="brainUSdate" placeholder="7/10"></div>
+    <div class="field"><label>Brain US 結果</label><input data-ak="brainUS" placeholder="(f) 或 no IVH"></div>
+    <div class="field"><label>Heart US 日期</label><input data-ak="heartUSdate" placeholder="7/10"></div>
+    <div class="field"><label>Heart US 結果</label><input data-ak="heartUS" placeholder="(f) 或 PDA 2mm"></div>
+  </div>
+  <div class="grid three">
+    <div class="field"><label>ROP</label><select data-ak="rop"><option value="not yet">not yet</option><option value="done">已做</option></select></div>
+    <div class="field"><label>AABR</label><select data-ak="aabr"><option value="not yet">not yet</option><option value="done">已做</option></select></div>
+    <div class="field"><label>Newborn screen</label><select data-ak="nbs"><option value="not yet">not yet</option><option value="done">已做</option></select></div>
+  </div>
+  <div class="field full"><label>ROP 結果（已做才填）</label><input data-ak="ropNote" placeholder="7/20 immature zone II"></div>
+  <div class="field full"><label>AABR 結果</label><input data-ak="aabrNote" placeholder="pass"></div>
+  <div class="field full"><label>Newborn screen 結果</label><input data-ak="nbsNote" placeholder="7/6 sent"></div>
+</div></details>
+
+<details class="sec"><summary>7. Central line・疫苗</summary><div class="body">
+  <div class="checks">
+    <label class="chk"><input type="checkbox" data-aln="UVC"> UVC</label>
+    <label class="chk"><input type="checkbox" data-aln="PICC"> PICC</label>
+    <label class="chk"><input type="checkbox" data-aln="Aline"> Aline</label>
+  </div>
+  <div class="field full"><label>導管補充（日期/位置）</label><input data-ak="lineNote" placeholder="UVC 7/3-7/10, PICC 7/9-"></div>
+  <div class="field full"><label>Vaccination</label><input data-ak="vaccination" placeholder="7/4: HBV-1"></div>
+</div></details>
+
+<details class="sec"><summary>8. 營養・生長・用藥・Plan</summary><div class="body">
+  <div class="field full"><label>Nutrition</label><textarea data-ak="nutrition" rows="2" placeholder="TPN + MEN, advancing feeding ..."></textarea></div>
+  <div class="grid">
+    <div class="field"><label>PMA</label><input data-ak="gPMA" placeholder="26+2"></div>
+    <div class="field"><label>BH</label><input data-ak="gBH" placeholder="34 cm"></div>
+    <div class="field"><label>BW</label><input data-ak="gBW" placeholder="700 g"></div>
+    <div class="field"><label>HC</label><input data-ak="gHC" placeholder="24 cm"></div>
+  </div>
+  <div class="field full"><label>Current medications</label><textarea data-ak="meds" rows="2" placeholder="caffeine citrate, ..."></textarea></div>
+  <div class="field full"><label>Plan</label><textarea data-ak="plan" rows="3" placeholder="keep ventilator, monitor ..."></textarea></div>
+  <div class="field full" style="margin-top:6px"><label>操作者署名</label><input data-k="operator" placeholder="Dr. ___"></div>
+</div></details>`;
+
 /* ============================================================
    HIS 貼上解析器
    ============================================================ */
@@ -835,7 +1039,7 @@ function applyStateToForm(){
   $$("[data-dx]").forEach(el=>{ el.checked=!!S.dx[el.dataset.dx]; toggleChip(el); });
   const scrTxt={neg:"陰",pos:"陽",unknown:"未驗"};
   $$("#scrChecks [data-scr]").forEach(el=>{ const k=el.dataset.scr; el.querySelector(".v").textContent=scrTxt[S.scr[k]]; el.classList.toggle("pos",S.scr[k]==="pos"); el.classList.toggle("on",S.scr[k]!=="neg"); });
-  renderSibs();
+  if($("#sibList")) renderSibs();
 }
 
 // 渲染綠/黃對應狀態
@@ -867,19 +1071,31 @@ function runParse(){
 }
 
 /* ---------- 初始化 ---------- */
-function initForm(){
-  $("#form").innerHTML=FORM_HTML;
-  // 篩檢 chips（三態）
-  const scrLabel={hbsag:"HBsAg",syphilis:"Syphilis",rubella:"Rubella",hiv:"HIV",gbs:"GBS"};
-  const scrTxt={neg:"陰",pos:"陽",unknown:"未驗"};
-  $("#scrChecks").innerHTML=Object.keys(scrLabel).map(k=>
-    `<span class="chk scr3 ${S.scr[k]==='pos'?'pos':''}" data-scr="${k}">${scrLabel[k]}: <b class="v">${scrTxt[S.scr[k]]}</b></span>`).join("");
-
+function buildForm(){
+  $("#form").innerHTML = noteType==="acceptance" ? ACC_FORM_HTML : FORM_HTML;
+  // 篩檢 chips（三態）— 僅 admission 有
+  const scrBox=$("#scrChecks");
+  if(scrBox){
+    const scrLabel={hbsag:"HBsAg",syphilis:"Syphilis",rubella:"Rubella",hiv:"HIV",gbs:"GBS"};
+    const scrTxt={neg:"陰",pos:"陽",unknown:"未驗"};
+    scrBox.innerHTML=Object.keys(scrLabel).map(k=>
+      `<span class="chk scr3 ${S.scr[k]==='pos'?'pos':''}" data-scr="${k}">${scrLabel[k]}: <b class="v">${scrTxt[S.scr[k]]}</b></span>`).join("");
+  }
   bindInputs();
-  renderSibs();
+  if($("#sibList")) renderSibs();
   loadOperator();
   regen();
 }
+function initForm(){ buildForm(); }
+
+// 分頁切換
+$$(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+  if(b.disabled) return;
+  const t=b.dataset.note; if(t===noteType) return;
+  noteType=t; manualEdit=false;
+  $$(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  buildForm();
+}));
 
 function bindInputs(){
   // 一般 data-k
@@ -898,6 +1114,16 @@ function bindInputs(){
   $$("[data-phys]").forEach(el=>el.addEventListener("change",()=>{S.physical[el.dataset.phys]=el.checked; toggleChip(el); regen();}));
   // 診斷
   $$("[data-dx]").forEach(el=>el.addEventListener("change",()=>{S.dx[el.dataset.dx]=el.checked; toggleChip(el); regen();}));
+  // acceptance 純量欄位
+  $$("[data-ak]").forEach(el=>{
+    const k=el.dataset.ak;
+    if(S.acc[k]!==undefined && S.acc[k]!=="") el.value=S.acc[k];
+    el.addEventListener("input",()=>{S.acc[k]=el.value; regen();});
+    el.addEventListener("change",()=>{S.acc[k]=el.value; regen();});
+  });
+  // acceptance 呼吸模式 / 中心導管 多選
+  $$("[data-arm]").forEach(el=>{ el.checked=!!S.acc.respModes[el.dataset.arm]; toggleChip(el); el.addEventListener("change",()=>{S.acc.respModes[el.dataset.arm]=el.checked; toggleChip(el); regen();}); });
+  $$("[data-aln]").forEach(el=>{ el.checked=!!S.acc.line[el.dataset.aln]; toggleChip(el); el.addEventListener("change",()=>{S.acc.line[el.dataset.aln]=el.checked; toggleChip(el); regen();}); });
   // 篩檢三態：陰→陽→未驗→陰
   const scrTxt={neg:"陰",pos:"陽",unknown:"未驗"};
   const scrNext={neg:"pos",pos:"unknown",unknown:"neg"};
@@ -912,10 +1138,10 @@ function bindInputs(){
       regen();
     });
   });
-  $("#addSib").addEventListener("click",()=>{S.sibs.push({sex:"girl",proband:false}); renderSibs(); regen();});
-  // HIS 貼上解析
-  $("#parseBtn").addEventListener("click",runParse);
-  $("#clearParseBtn").addEventListener("click",()=>{ $("#pasteBox").value=""; $("#reviewPanel").innerHTML=""; $("#revLegend").style.display="none"; $("#parseSummary").textContent=""; });
+  const addSib=$("#addSib"); if(addSib) addSib.addEventListener("click",()=>{S.sibs.push({sex:"girl",proband:false}); renderSibs(); regen();});
+  // HIS 貼上解析（兩種 note 共用）
+  const pb=$("#parseBtn"); if(pb) pb.addEventListener("click",runParse);
+  const cb=$("#clearParseBtn"); if(cb) cb.addEventListener("click",()=>{ $("#pasteBox").value=""; $("#reviewPanel").innerHTML=""; $("#revLegend").style.display="none"; $("#parseSummary").textContent=""; });
 }
 
 function toggleChip(el){ const chip=el.closest(".chk"); if(chip) chip.classList.toggle("on", el.checked); }
@@ -948,7 +1174,7 @@ function greenVals(){
     S.birthDate?fmtDate(S.birthDate):null,
     S.edc?fmtDate(S.edc):null,
     S.gaW?`${S.gaW}${S.gaD?"+"+S.gaD:""} weeks`:null,
-    S.bw?`${S.bw} g`:null,
+    S.bw?(noteType==="acceptance"?`${S.bw} gm`:`${S.bw} g`):null,
     S.birthTime||null,
     (S.ancPlace==="outside"&&S.ancOutside)?S.ancOutside:null
   ].filter(v=>v&&String(v).trim());
