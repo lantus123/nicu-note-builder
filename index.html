@@ -1,14 +1,6 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light dark">
-<meta name="robots" content="noindex">
-<title>NICU Note Builder · 結構化組裝</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🍼</text></svg>">
-</head>
-<body>
+<html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="color-scheme" content="light dark"><meta name="robots" content="noindex"><title>NICU Note Builder · 結構化組裝</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🍼</text></svg>"></head><body>
 <style>
   :root{
     --bg:#f5f7f9; --surface:#ffffff; --surface-2:#eef2f5; --line:#dde5ea;
@@ -158,6 +150,14 @@
   .ins button:hover{border-color:var(--accent);border-style:solid;color:var(--accent-ink)}
   #accForm[hidden]{display:none}
   #admSections[hidden]{display:none}
+  /* 可摺疊卡片(平常無異常縮成一行) */
+  .card.collap>.sec-h{cursor:pointer;margin-bottom:12px;user-select:none}
+  .card.collap.collapsed>.sec-h{margin-bottom:0}
+  .card.collap.collapsed> :not(.sec-h){display:none}
+  .sec-h .chev{margin-left:auto;font-size:11px;color:var(--ink-3);transition:transform .15s}
+  .card.collap.collapsed .chev{transform:rotate(-90deg)}
+  .sec-h .csum{font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent-ink);font-size:11px}
+  .sec-h .csum.none{color:var(--ink-3);font-weight:500}
   /* 預覽 dock 收合(手機) */
   .dock.collapsed .dock-body{display:none}
   body.dockmin{padding-bottom:52px}
@@ -172,7 +172,7 @@
   .hc-child .lab{margin-bottom:5px}
   /* acceptance 基本資料摘要條 */
   .recap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--line);
-    border-radius:12px;padding:10px 13px;margin-bottom:12px}
+    border-radius:12px;padding:10px 13px;margin-bottom:12px;position:sticky;top:60px;z-index:14}
   .recap-vals{flex:1 1 auto;min-width:0;font-size:12.5px;line-height:1.55;color:var(--ink-2);font-variant-numeric:tabular-nums}
   .recap-vals b{color:var(--ink);font-weight:680}
   .recap-edit{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);color:var(--accent-ink);
@@ -344,14 +344,14 @@
   </section>
 
   <!-- 3. 產前篩檢 -->
-  <section class="card">
-    <h2 class="sec-h"><span class="n">3</span>產前篩檢 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">點一下循環：陰 → 陽 → 未驗</span></h2>
+  <section class="card collap collapsed">
+    <h2 class="sec-h"><span class="n">3</span>產前篩檢 <span class="csum" data-csum="scr"></span><span class="chev">▾</span></h2>
     <div id="screen"></div>
   </section>
 
   <!-- 4. 產房急救與出生事件 -->
-  <section class="card">
-    <h2 class="sec-h"><span class="n">4</span>產房急救與出生事件</h2>
+  <section class="card collap collapsed">
+    <h2 class="sec-h"><span class="n">4</span>產房急救與出生事件 <span class="csum" data-csum="resus"></span><span class="chev">▾</span></h2>
     <p class="man-h" style="margin:0 0 6px">急救階梯（含下層）</p>
     <div class="seg risk" data-seg="resus">
       <button data-v="none">無需</button><button data-v="ppv" data-on>PPV / Neopuff</button>
@@ -558,8 +558,8 @@
       <div class="field" style="margin-top:11px"><span class="lab">療程備註 <span class="q">（起訖／天數，選填）</span></span><input class="tin" id="accAbxNote" placeholder="例：D1–D7，或 keep until…"></div>
     </section>
 
-    <section class="card">
-      <h2 class="sec-h"><span class="n">F</span>影像 / 篩檢</h2>
+    <section class="card collap collapsed">
+      <h2 class="sec-h"><span class="n">F</span>影像 / 篩檢 <span class="csum none" style="margin-left:auto">多為 not yet</span><span class="chev">▾</span></h2>
       <div class="field"><span class="lab">Brain ultrasound</span><input class="tin" id="accBrainUS" placeholder="例 11/01 (f)"></div>
       <div class="field"><span class="lab">Heart ultrasound</span><input class="tin" id="accHeartUS" placeholder="例 11/01 (f)"></div>
       <div class="field"><span class="lab">ROP screen</span>
@@ -573,8 +573,8 @@
         <input class="tin" id="accNbsVal" placeholder="日期／結果" hidden style="margin-top:7px"></div>
     </section>
 
-    <section class="card">
-      <h2 class="sec-h"><span class="n">G</span>Central line <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">多選</span></h2>
+    <section class="card collap collapsed">
+      <h2 class="sec-h"><span class="n">G</span>Central line <span class="chev" style="margin-left:auto">▾</span></h2>
       <div class="seg" data-am="line" style="flex-wrap:wrap">
         <button data-v="UVC" style="flex:0 1 auto">UVC</button>
         <button data-v="UAC" style="flex:0 1 auto">UAC</button>
@@ -601,8 +601,8 @@
       <textarea class="tarea" id="accNutrition" rows="2" placeholder="例：NPO / TPN，或 breast milk __ ml q3h…">NPO</textarea>
     </section>
 
-    <section class="card">
-      <h2 class="sec-h"><span class="n">J</span>Infant growth assessment</h2>
+    <section class="card collap collapsed">
+      <h2 class="sec-h"><span class="n">J</span>Infant growth assessment <span class="chev" style="margin-left:auto">▾</span></h2>
       <div class="row2">
         <div class="field"><span class="lab">PMA <span class="q">(自動)</span></span><input class="tin" id="accGrPMA" placeholder="自動" readonly></div>
         <div class="field"><span class="lab">BH <span class="q">身長</span></span><div class="num"><input type="number" id="accBH" placeholder="—" step="0.1"><span class="u">cm</span></div></div>
@@ -672,7 +672,8 @@
       </div>
       <div id="opt_bet" hidden style="margin-top:13px">
         <p class="man-h" style="margin:0 0 5px">Exchange transfusion — 血型</p>
-        <input class="tin" id="betTypeIn" placeholder="血型 e.g. O, Rh+"></div>
+        <div class="seg" data-po="betABO" style="margin-bottom:6px"><button data-v="O" style="flex:0 1 auto">O</button><button data-v="A" style="flex:0 1 auto">A</button><button data-v="B" style="flex:0 1 auto">B</button><button data-v="AB" style="flex:0 1 auto">AB</button></div>
+        <div class="seg" data-po="betRh"><button data-v="Rh-positive" style="flex:0 1 auto">Rh＋</button><button data-v="Rh-negative" style="flex:0 1 auto">Rh−</button></div></div>
       <div class="field" style="margin-top:13px"><span class="lab">Operator</span>
         <div class="num"><span class="u">Dr.</span><input class="tin" id="procOperator" placeholder="操作醫師" style="max-width:180px"></div></div>
       <p class="man-h" style="margin-top:4px">ETT size／深度、surfactant 藥物與劑量、雙倍換血量、UAC／UVC 深度皆依體重自動帶（可於上方欄位覆寫）；其餘 slash 選項與空格可於下方預覽直接改。</p>
@@ -718,23 +719,25 @@
      extra:{label:"療程",multi:false,opts:[["complete","完整"],["incomplete","不完整"]]}},
   ];
   // 產前篩檢（三態 neg/pos/unk）；產房急救階梯；呼吸支持
-  const SCREEN=[["hbsag","HBsAg","hepatitis B"],["syphilis","Syphilis (VDRL)","syphilis"],
+  const SCREEN=[["hbsag","HBsAg","hepatitis B"],["hbeag","HBeAg（HBsAg+ 才需）","hepatitis B e antigen"],
+                ["syphilis","Syphilis (VDRL)","syphilis"],
                 ["rubella","Rubella","rubella"],["hiv","HIV","HIV infection"],
                 ["gbs","GBS","group B streptococcus (GBS)"]];
   const S={gender:"male",growth:"AGA",growthAuto:true,delivery:"cs",r:{},
-           scr:{hbsag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
+           scr:{hbsag:"neg",hbeag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
            resus:"none",resp:"roomair",surfactant:false,
            amnio:"none",mgso4:"none",toco:"none",iap:"none",us:"normal",
            fd:false,doic:false,msaf:false,outborn:false,obResp:false,
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
            mode:"adm",planAbx:"empirical",planAbxAuto:true,planCsf:false,noteDirty:false,noteCache:{},
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
-           procOpt:{alineSide:"right",alineArtery:"radial",uacPos:"high",chestSide:"right",chestType:"pigtail",chestICS:"4th",lpCompl:"nil"},
+           procOpt:{alineSide:"right",alineArtery:"radial",uacPos:"high",chestSide:"right",chestType:"pigtail",chestICS:"4th",lpCompl:"nil",betABO:"",betRh:""},
            acc:{resp:[],abx:[],line:[],vac:[],rop:"notyet",aabr:"notyet",nbs:"notyet",respDates:{},lineDates:{}},
            hc:{workup:true,workupItems:["CBC/DC","CRP","B/C","GJ/C","CXR","urine GBS Ag"],
                aline:false,bicarb:false,surf:false,surfReason:[],surfDrug:"survanta",surfRoute:"ett",improved:false,
                cxrDx:"none",infMarkers:"none",abxPlan:"none",cultures:"pending",monitor:false}};
   RISKS.forEach(x=>S.r[x.k]={on:false,val:null,extra:[],num:x.num?x.num.val:null});
+  S.r.steroid.val="2"; S.r.steroid.extra=["complete"];   // Y11 類固醇預設 2 劑・完整療程(turn on 即帶,例外才改)
 
   // ── AGA/SGA/LGA 自動判定：Fenton 2025 出生體重百分位（取自 neonatal-navigator/src/lib/neocalc.ts）──
   const maleBWpct={21:[397,675.2],22:[397,675.2],23:[496,753.5],24:[562.7,843.9],25:[635.7,957.4],26:[719.2,1097.9],27:[816.2,1261],28:[928.7,1444.2],29:[1057.8,1644.7],30:[1203.7,1859.2],31:[1365.4,2084.4],32:[1541.2,2316.6],33:[1728.3,2551.8],34:[1922.9,2785.7],35:[2120.2,3013.9],36:[2314.6,3231.5],37:[2499.3,3433.5],38:[2667.7,3614.5],39:[2808.3,3769],40:[2914.2,3890.9],41:[2974.1,3974.2],42:[2976.4,4012.3],43:[2908.5,3998.6],44:[2756.9,3926]};
@@ -796,6 +799,7 @@
   // ── 事件 ──
   const SCRTXT={neg:"陰性 −",pos:"陽性 +",unk:"未驗 ?"};
   document.addEventListener("click",e=>{
+    const ch=e.target.closest(".card.collap > .sec-h"); if(ch){ch.parentElement.classList.toggle("collapsed");return;}
     if(e.target.closest(".reset")){S.growthAuto=true;render();return;}
     const b=e.target.closest("button"); if(!b)return;
     const tab=b.closest("[data-tab]"); if(tab){const nel=document.getElementById("note");
@@ -941,6 +945,14 @@
     const csw=document.getElementById("csReasonWrap"); if(csw)csw.hidden=(S.delivery!=="cs");
     const usf=document.getElementById("usFindings"); if(usf)usf.hidden=(S.us!=="abnormal");
     const acf=document.getElementById("acghFindings"); if(acf)acf.hidden=(S.amnio!=="abnormal");
+    const heRow=document.querySelector('.scr-row[data-scr="hbeag"]'); if(heRow)heRow.hidden=(S.scr.hbsag!=="pos");  // HBeAg 只在 HBsAg+ 顯示
+    // 摺疊卡摘要
+    const setCsum=(key,txt,isNone)=>{const el=document.querySelector(`[data-csum="${key}"]`); if(el){el.textContent=txt; el.classList.toggle("none",!!isNone);}};
+    const scrPos=[]; [["hbsag","HBsAg"],["hbeag","HBeAg"],["syphilis","RPR"],["rubella","Rubella"],["hiv","HIV"],["gbs","GBS"]].forEach(([k,nm])=>{if(S.scr[k]==="pos")scrPos.push(nm+"+");else if(S.scr[k]==="unk")scrPos.push(nm+"?");});
+    setCsum("scr",scrPos.length?scrPos.join("・"):"全陰性",!scrPos.length);
+    const resusN={none:"",ppv:"PPV",intubation:"插管",cpr:"CPR+Epi"}[S.resus]||"", ev=[];
+    if(S.fd)ev.push("fetal distress"); if(S.doic)ev.push("DOIC"); if(S.msaf)ev.push("MSAF");
+    const rs=[resusN,...ev].filter(Boolean); setCsum("resus",rs.length?rs.join("・"):"無",!rs.length);
     const obw=document.getElementById("outbornWrap"); if(obw)obw.hidden=!S.outborn;
     const obrw=document.getElementById("obRespWrap"); if(obrw)obrw.hidden=!S.obResp;
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
@@ -1007,7 +1019,7 @@
     // 血清學：RPR / HBsAg(+HBeAg) / HIV — pos 個別列、neg 群組、unk(未驗)不當陰性
     const serTests=[
       {k:"syphilis",name:"rapid plasma reagin (RPR)"},
-      {k:"hbsag",name:"hepatitis B surface antigen (HBsAg) and hepatitis B e antigen (HBeAg)",negName:"hepatitis B surface antigen (HBsAg)"},
+      {k:"hbsag",name:"hepatitis B surface antigen (HBsAg)"},
       {k:"hiv",name:"human immunodeficiency virus (HIV)"}];
     const serPos=[],serNeg=[],serUnk=[];
     serTests.forEach(t=>{const v=S.scr[t.k], nm=t.negName||t.name;
@@ -1016,6 +1028,9 @@
     if(serNeg.length)P1.push(`The result${serNeg.length>1?"s":""} of ${sl(joinAnd(serNeg))} ${serNeg.length>1?"were":"was"} negative.`);
     if(serPos.length)P1.push(`${sl(cap(joinAnd(serPos)))} ${serPos.length>1||/ and /.test(serPos[0])?"were":"was"} positive.`);
     if(serUnk.length)P1.push(`${sl(cap(joinAnd(serUnk)))} ${serUnk.length>1?"were":"was"} not tested.`);
+    if(S.scr.hbsag==="pos"){const he=S.scr.hbeag;   // HBsAg+ 才報 HBeAg(常見 HBsAg+/HBeAg−)
+      if(he==="pos")P1.push(`Hepatitis B e antigen (HBeAg) was also positive.`);
+      else if(he==="neg")P1.push(`Hepatitis B e antigen (HBeAg) was negative.`);}
     if(S.scr.rubella==="pos")P1.push(`Maternal rubella IgM was positive.`);
 
     // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar + 入院 ──
@@ -1128,7 +1143,8 @@
     ["aline","lisa","uac","uvc","chest","lp","bet"].forEach(k=>{const el=document.getElementById("opt_"+k); if(el)el.hidden=!S.proc[k];});
     const iv=id=>{const el=document.getElementById(id); return el&&el.value.trim()?el.value.trim():"____";};
     const rw=id=>{const el=document.getElementById(id); return el&&el.value.trim()?el.value.trim():"";};
-    const lisaTime=iv("lisaTimeIn"), lpVol=iv("lpVolIn"), betType=iv("betTypeIn");
+    const lisaTime=iv("lisaTimeIn"), lpVol=iv("lpVolIn");
+    const betType=[S.procOpt.betABO,S.procOpt.betRh].filter(Boolean).join(" ")||"____";
     // UAC/UVC 深度：空白時用依 BW 自動算的值(可覆寫);placeholder 顯示自動值
     const uacCalc=bwN?(S.procOpt.uacPos==="low"?(bwKg+7).toFixed(1):(bwKg*3+9).toFixed(1)):"", uvcCalc=bwN?(bwKg*1.5+5.5).toFixed(1):"";
     const uacIn=document.getElementById("uacDepthIn"); if(uacIn)uacIn.placeholder=uacCalc?`自動 ${uacCalc}（可改）`:"cm";
@@ -1492,7 +1508,7 @@ ${opLine}`);
     const admReason=inV("admReason");
     const birthTime=inV("accBirthTime"), birthPlace=S.outborn?(inV("obFacility")||inV("ancPlace")||"____"):"TPEMMH";  // 繼承 admission 出生地
     const respMap={roomair:"room air",nc:"nasal cannula",hfnc:"high-flow nasal cannula",ncpap:"nCPAP",nippv:"NIPPV",vent:"mechanical ventilation"};
-    const respLine=inV("accResp")||respMap[S.resp]||"";
+    const respLine=inV("accResp")||(S.resp&&S.resp!=="roomair"?respMap[S.resp]:"")||(S.acc.resp.length?S.acc.resp[0]:"")||"room air";  // §A空則用§D第一項
     const periAuto=[]; if(S.r.gdm.on)periAuto.push("GDM"); if(S.r.pih.on)periAuto.push("PIH");
     if(S.r.pre.on)periAuto.push("preeclampsia"); if(S.r.steroid.on)periAuto.push("antenatal steroid");
     const perinatal=inV("accPerinatal")||(periAuto.length?periAuto.join(", "):"none");
@@ -1592,6 +1608,8 @@ ${opLine}`);
   document.querySelector('[data-seg="growth"] [data-v="AGA"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="delivery"] [data-v="cs"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="us"] [data-v="normal"]').setAttribute("aria-pressed","true");
+  document.querySelector('[data-rc="steroid"] [data-v="2"]')?.setAttribute("aria-pressed","true");
+  document.querySelector('[data-re="steroid"] [data-v="complete"]')?.setAttribute("aria-pressed","true");
   document.querySelectorAll('[data-ryn]').forEach(y=>y.querySelector('[data-v="no"]').setAttribute("aria-pressed","true"));
   document.querySelectorAll('[data-par]').forEach(p=>p.querySelector('[data-v="none"]').setAttribute("aria-pressed","true"));
   document.querySelector('[data-seg="thyType"] [data-v="hyper"]').setAttribute("aria-pressed","true");
