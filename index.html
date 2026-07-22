@@ -173,14 +173,6 @@
   .hc-child{margin-top:11px;padding-top:11px;border-top:1px dashed var(--accent);display:grid;gap:8px;animation:drop .18s ease}
   .hc-child[hidden]{display:none}
   .hc-child .lab{margin-bottom:5px}
-  /* acceptance 基本資料摘要條 */
-  .recap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--line);
-    border-radius:12px;padding:10px 13px;margin-bottom:12px;position:sticky;top:60px;z-index:14}
-  .recap-vals{flex:1 1 auto;min-width:0;font-size:12.5px;line-height:1.55;color:var(--ink-2);font-variant-numeric:tabular-nums}
-  .recap-vals b{color:var(--ink);font-weight:680}
-  .recap-edit{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);color:var(--accent-ink);
-    font:inherit;font-size:12px;font-weight:640;padding:7px 11px;border-radius:9px;cursor:pointer}
-  .recap-edit:hover{border-color:var(--accent)}
   /* 寬螢幕／嵌入：表單左、即時預覽釘右側全高（善用寬度、預覽常駐） */
   @media (min-width:800px){
     body{padding-bottom:24px}
@@ -204,16 +196,6 @@
     <button role="tab" data-tab="plan" aria-selected="false">NI plan</button>
     <button role="tab" data-tab="acc" aria-selected="false">Acceptance</button>
     <button role="tab" data-tab="proc" aria-selected="false">Procedure</button>
-  </div>
-
-  <!-- 共用迷你表頭：非 admission 分頁可就地改 GA/BW -->
-  <div id="miniHeader" class="recap" hidden>
-    <div class="num" style="gap:5px">
-      <span class="u">GA</span><input type="number" id="mhGaW" placeholder="週" min="20" max="43" inputmode="numeric" style="max-width:50px"><span class="u">+</span><input type="number" id="mhGaD" placeholder="天" min="0" max="6" inputmode="numeric" style="max-width:42px">
-      <span class="u" style="margin-left:6px">BW</span><input type="number" id="mhBw" placeholder="g" min="300" max="6000" step="10" inputmode="numeric" style="max-width:70px"><span class="u">g</span>
-    </div>
-    <div class="recap-vals" id="mhSummary" style="flex:1 1 auto"></div>
-    <button class="recap-edit" data-tab="adm">全部欄位 →</button>
   </div>
 
   <div id="admSections">
@@ -453,7 +435,7 @@
         <button data-v="roomair">Room air</button><button data-v="nc">NC</button><button data-v="hfnc">HFNC</button>
         <button data-v="ncpap">nCPAP</button><button data-v="nippv">NIPPV</button><button data-v="vent">呼吸器</button>
       </div>
-      <p class="man-h" style="margin-top:9px">表頭（d/o・PMA・Wt）與 Brief history 全自動沿用 admission（見上方摘要條）。呼吸器進程在 D 區。</p>
+      <p class="man-h" style="margin-top:9px">表頭（d/o・PMA・Wt）與 Brief history 全自動沿用 admission（要改 GA/BW 請切回 Admission 分頁）。呼吸器進程在 D 區。</p>
     </section>
 
     <section class="card">
@@ -1024,19 +1006,8 @@
   document.addEventListener("input",e=>{
     const d=e.target.dataset; if(d&&d.dkey&&S.acc[d.dkey+"Dates"])S.acc[d.dkey+"Dates"][d.ditem]=e.target.value;
     if(e.target.id==="procOperator"){try{localStorage.setItem("nicu_operator",e.target.value);}catch(_){}}
-    // 迷你表頭代理 → 寫回主欄位
-    if(e.target.id==="mhGaW")document.getElementById("gaW").value=e.target.value;
-    else if(e.target.id==="mhGaD")document.getElementById("gaD").value=e.target.value;
-    else if(e.target.id==="mhBw")document.getElementById("bw").value=e.target.value;
     if(e.target.matches("input,textarea"))render();
   });
-  function updateMiniHeader(){
-    const gw=document.getElementById("gaW").value, gd=document.getElementById("gaD").value, bw=document.getElementById("bw").value;
-    const set=(id,v)=>{const el=document.getElementById(id); if(el&&document.activeElement!==el)el.value=v;};   // 打字中不覆蓋
-    set("mhGaW",gw); set("mhGaD",gd); set("mhBw",bw);
-    const via=S.delivery==="cs"?"C/S":"VD", ap1=document.getElementById("ap1").value||"_", ap5=document.getElementById("ap5").value||"_";
-    const sm=document.getElementById("mhSummary"); if(sm)sm.innerHTML=`${S.gender==="male"?"♂":"♀"} · <b>${S.growth}</b> · ${via} · Apgar ${ap1}/${ap5}`;
-  }
   document.addEventListener("change",e=>{
     if(e.target.id==="gaD"){let v=parseInt(e.target.value); if(isNaN(v))v=0; e.target.value=String(Math.max(0,Math.min(6,v))); render();}
     if(e.target.matches("select"))render();
@@ -1095,7 +1066,6 @@
     const planForm=document.getElementById("planForm"); if(planForm)planForm.hidden=(S.mode!=="plan");
     const accForm=document.getElementById("accForm"); if(accForm)accForm.hidden=(S.mode!=="acc");
     const procForm=document.getElementById("procForm"); if(procForm)procForm.hidden=(S.mode!=="proc");
-    const mh=document.getElementById("miniHeader"); if(mh)mh.hidden=(S.mode==="adm"); if(S.mode!=="adm")updateMiniHeader();
     const dl=document.getElementById("dockLabel"); if(dl)dl.textContent={adm:"即時預覽 · Admission Summary",plan:"即時預覽 · NI Plan",acc:"即時預覽 · Acceptance Note",proc:"即時預覽 · Procedure Note"}[S.mode];
     const dxEl=document.getElementById("dx"); if(dxEl)dxEl.style.display=S.mode==="adm"?"":"none";
     if(S.mode==="acc"){renderAcc();return;}
@@ -1714,15 +1684,6 @@ ${opLine}`);
     if(S.r.prom.on){const h=V("promH"); infAuto.push((S.r.prom.val==="pprom"?"PPROM":"PROM")+(h?` for ${h} hours`:""));}
     if(S.r.fever&&S.r.fever.on)infAuto.push("maternal fever");
     const infRisk=inV("accInfRisk")||(infAuto.length?infAuto.join(", "):"none");
-
-    // 基本資料摘要條（唯讀，取代收起的 admission 輸入區）
-    const recap=document.getElementById("accRecap");
-    if(recap){
-      const bits=[`${S.gender==="male"?"♂":"♀"} <b>${sex}</b>`, `GA <b>${gaTxt}</b>`,
-                  `BW <b>${bw} g</b> (${growth})`, via, `Apgar ${ap1}/${ap5}`];
-      if(admReason)bits.push(`入院：${esc(admReason)}`);
-      recap.innerHTML=bits.join(" · ");
-    }
 
     const abx=S.acc.abx.length?S.acc.abx.join(" / "):"";
     const scr=(k,vid)=>S.acc[k]==="done"?(inV(vid)||"done"):"not yet";
