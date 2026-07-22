@@ -532,7 +532,8 @@
     <section class="card">
       <h2 class="sec-h"><span class="n">C</span>Initial laboratory data <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">ABG 在 B 區貼</span></h2>
       <div class="field"><span class="lab">CXR</span><input class="tin" id="accCXR" placeholder="所見"></div>
-      <div class="field"><span class="lab">Other <span class="q">(CBC/DC, CRP…)</span></span><input class="tin" id="accOther" placeholder="WBC / Hb / Plt / CRP…"></div>
+      <div class="field"><span class="lab">Other <span class="q">(CBC/DC、CRP…整段貼上，自動整理成一列)</span></span>
+        <textarea class="tarea" id="accOther" rows="3" placeholder="把血液報告整段貼進來（WBC/DC/CRP…）"></textarea></div>
     </section>
 
     <section class="card">
@@ -1333,6 +1334,23 @@ ${opLine}`);
     if(!S.noteDirty)document.getElementById("note").textContent=out;
   }
 
+  // ── CBC/DC/CRP 貼上 → 整理成一列(+I/T ratio) ──
+  function parseBlood(txt){
+    if(!txt)return "";
+    const g=lab=>{const m=txt.match(new RegExp(`^\\s*${lab}\\s+(?:[LH]\\s+)?(-?\\d+(?:\\.\\d+)?)`,"mi")); return m?m[1]:null;};
+    const wbc=g("WBC"), hb=g("(?:Hemoglobin|Hb)"), hct=g("(?:Hct|Ht|Hematocrit)"), plt=g("(?:Platelet|Plt)"),
+          rbc=g("RBC"), rdw=g("RDW"), mdw=g("MDW"), crp=g("CRP"),
+          band=g("Band"), seg=g("Seg"), eos=g("Eosin?"), baso=g("Baso"), mono=g("Mono"), lymp=g("Lymp\\w*"), atyp=g("Atypical\\s*lymphocyt\\w*");
+    const cbc=[]; if(wbc)cbc.push(`WBC ${wbc}`); if(hb)cbc.push(`Hb ${hb}`); if(hct)cbc.push(`Hct ${hct}%`); if(plt)cbc.push(`Plt ${plt}`); if(rdw)cbc.push(`RDW ${rdw}%`);
+    const dc=[]; if(band)dc.push(`Band ${band}%`); if(seg)dc.push(`Seg ${seg}%`); if(eos)dc.push(`Eosin ${eos}%`); if(baso)dc.push(`Baso ${baso}%`); if(mono)dc.push(`Mono ${mono}%`); if(lymp)dc.push(`Lymph ${lymp}%`); if(atyp)dc.push(`Atypical ${atyp}%`);
+    let it=""; if(band!=null&&seg!=null){const b=parseFloat(band),s=parseFloat(seg); if(b+s>0)it=(b/(b+s)).toFixed(2);}
+    const parts=[];
+    if(cbc.length)parts.push(cbc.join(", "));
+    if(dc.length)parts.push(`DC: ${dc.join(", ")}${it?` (I/T ${it})`:""}`);
+    if(crp)parts.push(`CRP ${crp} mg/dL`);
+    return parts.join("; ")||txt.trim();
+  }
+
   // ── ABG 貼上 → 整理成一列 + 回傳數值供判酸鹼 ──
   function parseGas(txt){
     if(!txt)return {line:"",vals:{}};
@@ -1567,7 +1585,8 @@ ${opLine}`);
     L.push("【Initial laboratory data】");
     L.push(`ABG: ${gas.line?sl(esc(gas.line)):""}`);
     L.push(`CXR: ${fv("accCXR")||(S.hc.cxrDx!=="none"&&CXR_MAP[S.hc.cxrDx]?sl(CXR_MAP[S.hc.cxrDx][0]):"")}`);  // 未填時鏡射 §B 影像診斷所見
-    L.push(`Other (CBC/DC, CRP...): ${fv("accOther")}`);
+    const otherLine=parseBlood(inV("accOther"));
+    L.push(`Other (CBC/DC, CRP...): ${otherLine?sl(esc(otherLine)):""}`);
     L.push("");
     L.push("【Respiratory course】");
     if(S.acc.resp.length)S.acc.resp.forEach(m=>L.push(sl(`${m} (${S.acc.respDates[m]||today()}-)`)));
