@@ -24,7 +24,9 @@
 ## 檔案 / 建置
 - `index.html` — GitHub Pages 部署檔（standalone 完整 HTML，直接開即可用）。
 - `_demo_structured.html` — 本體原始碼（body-only，供 Artifact 預覽與編輯）。
-- **建置**：`index.html` = HTML 外殼 ＋ `_demo_structured.html`。改動請編輯 `_demo_structured.html`，再重新產生 `index.html`（外殼見 repo commit 內指令）後 push。
+- `lab-parse.js` — **共用檢驗/血氣貼上解析器（單一真相）**。原始邏輯來自 `~/nbc-note-app`（病程記錄 App）的 `doLabParse`。Acceptance 分頁的「Other (CBC/DC, CRP…)」欄貼上血檢報告後即用它整理成一行（WBC/DC、Hb、PLT、電解質、腎肝、CRP… 並自動附 I/T ratio）。
+- **建置**：`index.html` = HTML 外殼 ＋ `_demo_structured.html`。`lab-parse.js` 的核心函式以 `//__LABPARSE_START__` / `//__LABPARSE_END__` 標記內嵌進 `_demo_structured.html` 的主 IIFE（維持單檔自足）。改動請編輯 `_demo_structured.html`，再重新產生 `index.html` 後 push。
+  - ⚠ **改解析邏輯請改 `lab-parse.js`**，再重新內嵌回兩邊（本 app 與 nbc-note-app），勿在各 app 內各自修改而讓兩份漂移。
 
 > **零病人資料**：本 repo 只放程式碼＋README。設計規格、含真實個案的範例（病歷號／院所／個案細節）一律只留本機、不進版控。連 placeholder 都用假值（病歷號 `00000000`）。
 
