@@ -283,6 +283,8 @@
           <span class="u">IP</span><input type="number" id="obIP" placeholder="__" min="0" style="max-width:60px"><span class="u">/ PEEP</span>
           <input type="number" id="obPEEP" placeholder="__" min="0" style="max-width:60px"></div></div>
       </div>
+      <div class="field"><span class="lab">轉入臨床過程 <span class="q">（補症狀時間軸／供氧方式流量／轉送細節，接在「出現窘迫」後）</span></span>
+        <textarea class="tarea" id="obCourse" rows="3" placeholder="例：initially cared for in the nursery; tachypnea and subcostal retractions developed without desaturation; oxygen given via hood at 5 L/min; the transport team was contacted…"></textarea></div>
     </div>
     <div class="row2">
       <div class="field"><span class="lab">G / P · 母年齡</span>
@@ -987,9 +989,12 @@
 
     // 妊娠併發症（GDM/APH/PIH/preeclampsia）：陽性拉出 + 其餘否定
     // 母親病史順序：GDM, PIH, preeclampsia, APH, PPH, URI symptoms, Fever
+    // URI 拆成獨立句(避免 was/were 與「複雜化」語意問題)
+    if(S.r.uri&&S.r.uri.on)P1.push(`The mother had upper respiratory tract infection (URI) symptoms during pregnancy.`);
+    // 併發症:GDM/PIH/preeclampsia/APH/PPH/fever → 「The pregnancy was (not) complicated by …」
     const complSet=[["gdm","gestational diabetes mellitus (GDM)"],["pih","pregnancy-induced hypertension (PIH)"],
                     ["pre","preeclampsia"],["aph","antepartum haemorrhage (APH)"],["pph","postpartum haemorrhage (PPH)"],
-                    ["uri","upper respiratory tract infection (URI) symptoms"],["fever","fever"]];
+                    ["fever","maternal fever"]];
     const cPos=[], cNeg=[];
     complSet.forEach(([k,label])=>{
       if(S.r[k]&&S.r[k].on){
@@ -999,10 +1004,8 @@
         else cPos.push(label);
       } else cNeg.push(label);
     });
-    let cs="";
-    if(cPos.length) cs+=`There ${cPos.length>1?"were":"was"} ${sl(joinAnd(cPos))}. `;
-    if(cNeg.length) cs+=`There was no ${sl(joinOr(cNeg))}.`;
-    if(cs.trim()) P1.push(cs.trim());
+    if(cPos.length) P1.push(`The pregnancy was complicated by ${sl(joinAnd(cPos))}.`);
+    if(cNeg.length) P1.push(`The pregnancy was not complicated by ${sl(joinOr(cNeg))}.`);
 
     P1.push(`Maternal group B streptococcus (GBS) culture was ${sl({neg:"negative",pos:"positive",unk:"pending"}[S.scr.gbs])}.`);
     // 雙親病史：thalassemia / G6PD deficiency / thyroid disease（無/母/父/雙親）
@@ -1040,15 +1043,8 @@
       else if(he==="neg")P1.push(`Hepatitis B e antigen (HBeAg) was negative.`);}
     if(S.scr.rubella==="pos")P1.push(`Maternal rubella IgM was positive.`);
 
-    // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar + 入院 ──
-    if(S.outborn){
-      const src=inV("obTransferFrom")||obFac, reason=inV("obReason");   // 轉入來源空 → 繼承出生院所（再繼承產檢地點）
-      P2.push(`The patient was transferred from ${src?sl(src):ph("____")} due to ${reason?sl(reason):ph("____")}.`);
-      if(S.obResp){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP");
-        P2.push(`Neopuff positive pressure ventilation (PPV) was used to assist with respiratory support. The infant was ventilated with Neopuff using appropriate settings (FiO2: ${f?sl(f):ph("__")}%, IP/PEEP: ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cm/H2O), maintaining a stable heart rate and oxygen saturation levels.`);}
-    } else {
-      P2.push(`The mother was admitted to our hospital due to ${admR?sl(admR):ph("____")}.`);
-    }
+    // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar +（外接轉入過程）+ 入院 ──
+    if(!S.outborn) P2.push(`The mother was admitted to our hospital due to ${admR?sl(admR):ph("____")}.`);  // 外接的轉入過程移到 Apgar 之後(正確時序)
     if(S.iap!=="none"){const drug=inV("iapDrug")||"Ampicillin", is=inV("iapSince");
       P2.push(`${sl(drug)} was administered${is?` since ${sl(is)}`:""}, ${S.iap==="complete"?"and":"but"} intrapartum antibiotic prophylaxis (IAP) was ${sl(S.iap==="complete"?"complete":"incomplete")}.`);}
     const st=S.r.steroid;
@@ -1057,7 +1053,7 @@
     if(S.mgso4!=="none") P2.push(`MgSO4 was added for ${sl(S.mgso4==="neuro"?"fetal neuroprotection":"seizure prophylaxis")}.`);
     if(S.toco!=="none"){const ts=inV("tocoSince");
       P2.push(`Antiabortifacient with ${sl(S.toco==="ritodrine"?"Ritodrine":"Atosiban")} was used for tocolysis${ts?` since ${sl(ts)}`:""}.`);}
-    if(S.delivery==="cs") P2.push(`Due to ${csR?sl(csR):ph("____")}, C/S was done. The process of C/S was smooth.`);
+    if(S.delivery==="cs") P2.push(`The cesarean delivery was uncomplicated.`);   // 原因已於 para1 說明，不重複
     // 出生事件（PROM 從 S.r.prom；其餘否定）
     const pr=S.r.prom;
     if(pr.on){const t={prom:"premature rupture of membranes (PROM)",pprom:"preterm premature rupture of membranes (PPROM)"}[pr.val]||"rupture of membranes"; const hr=V("promH"); P2.push(`${sl(t.charAt(0).toUpperCase()+t.slice(1))}${hr?` for ${sl(hr+" hours")}`:""} was noted before delivery.`);}
@@ -1101,7 +1097,7 @@
       : gw<37
       ? {s:"Prematurity", f:`Prematurity, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`}
       : {s:"Term baby",   f:`Term baby, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`});
-    if(respSick)DX.push({s:"Respiratory distress",f:"Respiratory distress"});
+    if(respSick||(S.outborn&&S.obResp))DX.push({s:"Respiratory distress",f:"Respiratory distress"});
     if(S.fd)DX.push({s:"Fetal distress",f:"Fetal distress"});
     if(S.doic)DX.push({s:"DOIC",f:`Delay of initial crying (DOIC) for ${doicMin||"__"} minutes`});
     if(S.msaf)DX.push({s:"MSAF",f:"Infant born through meconium-stained amniotic fluid (MSAF)"});
@@ -1115,7 +1111,16 @@
     if(S.scr.gbs==="pos")DX.push({s:"GBS colonization",f:`Maternal GBS colonization ${iapPhrase}`});
     if(S.scr.gbs==="unk")DX.push({s:"GBS unknown",f:`Maternal GBS unknown status ${iapPhrase}`});
 
-    const tdxTxt = tentDx? sl(tentDx) : (respSick? sl("respiratory distress") : (gw&&gw<37? sl("prematurity") : ph("____")));
+    if(S.outborn){   // 外接臨床過程：出生後 → 出現窘迫 →（補充）→ 呼吸支持 → 轉入(正確時序,置於 Apgar 之後)
+      const src=inV("obTransferFrom")||obFac, reason=inV("obReason"), obCourse=inV("obCourse");
+      P2.push(`After birth, the infant developed ${reason?sl(reason):sl("respiratory distress")}.`);
+      if(obCourse)P2.push(obCourse);
+      if(S.obResp){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP");
+        P2.push(`Neopuff positive-pressure ventilation (PPV) was provided for respiratory support with settings of FiO2 ${f?sl(f):ph("__")}%, PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O, and the heart rate and oxygen saturation remained stable.`);}
+      P2.push(`The infant was then transferred from ${src?sl(src):ph("____")} to our hospital.`);
+    }
+    const obR=S.outborn?inV("obReason"):"";
+    const tdxTxt = tentDx? sl(tentDx) : (obR? sl(obR) : (respSick? sl("respiratory distress") : (gw&&gw<37? sl("prematurity") : ph("____"))));  // 外接→暫定診斷帶轉入原因
     P2.push(`Under the tentative diagnosis of ${tdxTxt}, the patient was admitted to our ward for further evaluation and treatment.`);
 
     // 組出兩段 + 暫定診斷清單 + footer
