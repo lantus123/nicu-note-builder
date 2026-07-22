@@ -252,8 +252,8 @@
       <div class="seg risk" data-tog="outborn"><button data-v="1" data-on style="flex:0 1 auto">外接 Outborn</button></div>
     </div>
     <div id="outbornWrap" hidden>
-      <div class="field"><span class="lab">出生院所 <span class="q">(born in…)</span></span><input class="tin" id="obFacility" placeholder="○○醫院"></div>
-      <div class="field"><span class="lab">轉入來源 <span class="q">(transferred from…；空白＝同出生院所)</span></span><input class="tin" id="obTransferFrom" placeholder="maternal fetal medicine (MFM) clinic／○○醫院"></div>
+      <div class="field"><span class="lab">出生院所 <span class="q">(born in…；自動＝同產檢地點)</span></span><select class="tin" id="obFacility"></select></div>
+      <div class="field"><span class="lab">轉入來源 <span class="q">(transferred from…；自動＝同出生院所)</span></span><select class="tin" id="obTransferFrom"></select></div>
       <div class="field"><span class="lab">轉入原因 <span class="q">(due to…)</span></span><input class="tin" id="obReason" placeholder="prematurity／respiratory distress…"></div>
       <div class="field"><span class="lab">轉送時呼吸支持</span>
         <div class="seg risk" data-tog="obResp"><button data-v="1" data-on style="flex:0 1 auto">Neopuff PPV</button></div>
@@ -281,12 +281,7 @@
     <div class="field"><span class="lab">預產期 EDC</span>
       <input type="date" class="tin" id="edc"></div>
     <div class="field"><span class="lab">產檢地點 <span class="q">（非 MMH 標 OBGYN clinic）</span></span>
-      <select class="tin" id="ancPlace">
-        <option value="TPEMMH">TPEMMH</option><option value="TSMMH">TSMMH</option>
-        <option value="桃園秉坤">桃園秉坤</option><option value="中壢秉坤">中壢秉坤</option>
-        <option value="三重蕙心">三重蕙心</option><option value="民權禾馨">民權禾馨</option>
-        <option value="李木生">李木生</option><option value="周天給">周天給</option>
-      </select></div>
+      <select class="tin" id="ancPlace"></select></div>
     <div class="field"><span class="lab">羊膜穿刺 aCGH</span>
       <div class="seg" data-seg="amnio"><button data-v="none">未做</button><button data-v="normal">正常</button></div></div>
     <p class="man-h" style="margin:16px 0 7px">病史（有 risk 才展開）</p>
@@ -897,7 +892,8 @@
     const obrw=document.getElementById("obRespWrap"); if(obrw)obrw.hidden=!S.obResp;
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
     const via = S.delivery==="cs" ? "Cesarean section (C/S)" : "vaginal delivery (VD)";
-    const birthPlace = S.outborn ? (inV("obFacility")?sl(inV("obFacility")):ph("____")) : sl("TPEMMH");
+    const obFac = inV("obFacility")||inV("ancPlace");   // 出生院所空 → 繼承產檢地點
+    const birthPlace = S.outborn ? (obFac?sl(obFac):ph("____")) : sl("TPEMMH");
     let s1=`This ${sl("1-day-old")} ${sl(sex)} newborn was born to a G${sl(G)}P${sl(P)}, ${matAge?sl(matAge):ph("__")} y/o mother `
       +`at GA ${sl(gaTxt)} with birth weight (BW) ${sl(bw)} gm (${sl(S.growth)}) in ${birthPlace} via ${sl(via)}`;
     if(S.delivery==="cs") s1+=` due to ${csR?sl(csR):ph("____")}`;
@@ -958,7 +954,7 @@
 
     // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar + 入院 ──
     if(S.outborn){
-      const src=inV("obTransferFrom")||inV("obFacility"), reason=inV("obReason");
+      const src=inV("obTransferFrom")||obFac, reason=inV("obReason");   // 轉入來源空 → 繼承出生院所（再繼承產檢地點）
       P2.push(`The patient was transferred from ${src?sl(src):ph("____")} due to ${reason?sl(reason):ph("____")}.`);
       if(S.obResp){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP");
         P2.push(`Neopuff positive pressure ventilation (PPV) was used to assist with respiratory support. The infant was ventilated with Neopuff using appropriate settings (FiO2: ${f?sl(f):ph("__")}%, IP/PEEP: ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cm/H2O), maintaining a stable heart rate and oxygen saturation levels.`);}
@@ -1521,6 +1517,12 @@ ${opLine}`);
   document.querySelector('[data-seg="resp"] [data-v="roomair"]').setAttribute("aria-pressed","true");
   ["amnio","mgso4","toco","iap"].forEach(k=>document.querySelector(`[data-seg="${k}"] [data-v="none"]`).setAttribute("aria-pressed","true"));
   document.querySelector('[data-seg="planAbx"] [data-v="empirical"]').setAttribute("aria-pressed","true");
+  // 醫院清單集中一處（要加醫院改這裡即可），三個下拉共用；出生院所/轉入來源第一項為「自動繼承」
+  const HOSPITALS=["TPEMMH","TSMMH","桃園秉坤","中壢秉坤","三重蕙心","民權禾馨","李木生","周天給","四季和安"];
+  const hospOpts=HOSPITALS.map(h=>`<option value="${h}">${h}</option>`).join("");
+  document.getElementById("ancPlace").innerHTML=hospOpts;
+  document.getElementById("obFacility").innerHTML=`<option value="">同產檢地點（自動）</option>`+hospOpts;
+  document.getElementById("obTransferFrom").innerHTML=`<option value="">同出生院所（自動）</option>`+hospOpts;
   document.querySelectorAll('[data-po]').forEach(seg=>{const btn=seg.querySelector(`[data-v="${S.procOpt[seg.dataset.po]}"]`); if(btn)btn.setAttribute("aria-pressed","true");});
   document.querySelectorAll("[data-as]").forEach(seg=>seg.querySelector('[data-v="notyet"]').setAttribute("aria-pressed","true"));
   document.querySelectorAll("[data-hc]").forEach(seg=>{const btn=seg.querySelector(`[data-v="${S.hc[seg.dataset.hc]}"]`); if(btn)btn.setAttribute("aria-pressed","true");});
