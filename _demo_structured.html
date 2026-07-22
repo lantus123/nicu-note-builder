@@ -68,6 +68,10 @@
   /* 數字框移除原生上下箭頭:窄框(GA/BW/母齡/FiO2…)才不會把數字擠到看不見(iOS Safari / Chrome) */
   input[type=number]{-moz-appearance:textfield}
   input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  /* G/P·母年齡 與 Apgar：內容尺寸群組,窄畫面自動換行(不再各佔死板 50% 把小框擠到看不見) */
+  .gp-apgar{display:flex;flex-wrap:wrap;gap:14px 26px}
+  .gp-apgar .lab{margin-bottom:7px}
+  .gp-apgar .num input{width:auto;max-width:58px;flex:0 0 auto}
   .row2{display:flex;gap:10px}
   .row2>.field{flex:1;margin-bottom:0}
   /* 自動判定徽章 */
@@ -271,14 +275,17 @@
       <div class="field"><span class="lab">轉入臨床過程 <span class="q">（補症狀時間軸／供氧方式流量／轉送細節，接在「出現窘迫」後）</span></span>
         <textarea class="tarea" id="obCourse" rows="3" placeholder="例：initially cared for in the nursery; tachypnea and subcostal retractions developed without desaturation; oxygen given via hood at 5 L/min; the transport team was contacted…"></textarea></div>
     </div>
-    <div class="row2">
-      <div class="field"><span class="lab">G / P · 母年齡</span>
-        <div class="num"><input type="number" id="gravida" placeholder="1" min="1" aria-label="G"><span class="u">/</span>
-          <input type="number" id="para" placeholder="1" min="1" aria-label="P"><span class="u">·</span>
-          <input type="number" id="matAge" placeholder="32" min="14" max="60" aria-label="母年齡"><span class="u">y/o</span></div></div>
-      <div class="field"><span class="lab">Apgar <span class="q">1′ / 5′</span></span>
-        <div class="num"><input type="number" id="ap1" placeholder="9" min="0" max="10" aria-label="1分"><span class="u">/</span>
-          <input type="number" id="ap5" placeholder="10" min="0" max="10" aria-label="5分"></div></div>
+    <div class="field">
+      <div class="gp-apgar">
+        <div>
+          <span class="lab">G / P · 母年齡</span>
+          <div class="num"><input type="number" id="gravida" placeholder="1" min="1" inputmode="numeric" aria-label="G"><span class="u">/</span><input type="number" id="para" placeholder="1" min="1" inputmode="numeric" aria-label="P"><span class="u">·</span><input type="number" id="matAge" placeholder="32" min="14" max="60" inputmode="numeric" aria-label="母年齡"><span class="u">y/o</span></div>
+        </div>
+        <div>
+          <span class="lab">Apgar <span class="q">1′ / 5′</span></span>
+          <div class="num"><input type="number" id="ap1" placeholder="9" min="0" max="10" inputmode="numeric" aria-label="1分"><span class="u">/</span><input type="number" id="ap5" placeholder="10" min="0" max="10" inputmode="numeric" aria-label="5分"></div>
+        </div>
+      </div>
     </div>
   </section>
 
