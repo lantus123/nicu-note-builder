@@ -200,6 +200,16 @@
     <button role="tab" data-tab="proc" aria-selected="false">Procedure</button>
   </div>
 
+  <!-- 共用迷你表頭：非 admission 分頁可就地改 GA/BW -->
+  <div id="miniHeader" class="recap" hidden>
+    <div class="num" style="gap:5px">
+      <span class="u">GA</span><input type="number" id="mhGaW" placeholder="週" min="20" max="43" inputmode="numeric" style="max-width:50px"><span class="u">+</span><input type="number" id="mhGaD" placeholder="天" min="0" max="6" inputmode="numeric" style="max-width:42px">
+      <span class="u" style="margin-left:6px">BW</span><input type="number" id="mhBw" placeholder="g" min="300" max="6000" step="10" inputmode="numeric" style="max-width:70px"><span class="u">g</span>
+    </div>
+    <div class="recap-vals" id="mhSummary" style="flex:1 1 auto"></div>
+    <button class="recap-edit" data-tab="adm">全部欄位 →</button>
+  </div>
+
   <div id="admSections">
   <!-- 1. 寶寶基本 -->
   <section class="card">
@@ -412,10 +422,6 @@
 
   <!-- ═══ NI plan（只在 plan 分頁顯示）═══ -->
   <div id="planForm" hidden>
-    <div class="recap">
-      <div class="recap-vals" id="planRecap">—</div>
-      <button class="recap-edit" data-tab="adm">編輯基本資料 →</button>
-    </div>
     <section class="card">
       <h2 class="sec-h">NI 計畫設定 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">其餘依週數＋admission 自動帶</span></h2>
       <div class="field"><span class="lab">抗生素處方</span>
@@ -433,10 +439,6 @@
 
   <!-- ═══ Acceptance note（只在 acc 分頁顯示）═══ -->
   <div id="accForm" hidden>
-    <div class="recap">
-      <div class="recap-vals" id="accRecap">—</div>
-      <button class="recap-edit" data-tab="adm">編輯基本資料 →</button>
-    </div>
     <section class="card">
       <h2 class="sec-h"><span class="n">A</span>接手時呼吸支持 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">Brief history 的 Respiratory 一行</span></h2>
       <div class="seg" data-seg="resp" style="flex-wrap:wrap">
@@ -623,10 +625,6 @@
 
   <!-- ═══ Procedure note（只在 proc 分頁顯示）═══ -->
   <div id="procForm" hidden>
-    <div class="recap">
-      <div class="recap-vals" id="procRecap">—</div>
-      <button class="recap-edit" data-tab="adm">編輯基本資料 →</button>
-    </div>
     <section class="card">
       <h2 class="sec-h">選擇 Procedure <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">勾選需要的，下方自動帶入</span></h2>
       <div class="seg" data-proctog style="flex-wrap:wrap">
@@ -854,8 +852,19 @@
   document.addEventListener("input",e=>{
     const d=e.target.dataset; if(d&&d.dkey&&S.acc[d.dkey+"Dates"])S.acc[d.dkey+"Dates"][d.ditem]=e.target.value;
     if(e.target.id==="procOperator"){try{localStorage.setItem("nicu_operator",e.target.value);}catch(_){}}
+    // 迷你表頭代理 → 寫回主欄位
+    if(e.target.id==="mhGaW")document.getElementById("gaW").value=e.target.value;
+    else if(e.target.id==="mhGaD")document.getElementById("gaD").value=e.target.value;
+    else if(e.target.id==="mhBw")document.getElementById("bw").value=e.target.value;
     if(e.target.matches("input,textarea"))render();
   });
+  function updateMiniHeader(){
+    const gw=document.getElementById("gaW").value, gd=document.getElementById("gaD").value, bw=document.getElementById("bw").value;
+    const set=(id,v)=>{const el=document.getElementById(id); if(el&&document.activeElement!==el)el.value=v;};   // 打字中不覆蓋
+    set("mhGaW",gw); set("mhGaD",gd); set("mhBw",bw);
+    const via=S.delivery==="cs"?"C/S":"VD", ap1=document.getElementById("ap1").value||"_", ap5=document.getElementById("ap5").value||"_";
+    const sm=document.getElementById("mhSummary"); if(sm)sm.innerHTML=`${S.gender==="male"?"♂":"♀"} · <b>${S.growth}</b> · ${via} · Apgar ${ap1}/${ap5}`;
+  }
   document.addEventListener("change",e=>{
     if(e.target.id==="gaD"){let v=parseInt(e.target.value); if(isNaN(v))v=0; e.target.value=String(Math.max(0,Math.min(6,v))); render();}
     if(e.target.matches("select"))render();
@@ -914,6 +923,7 @@
     const planForm=document.getElementById("planForm"); if(planForm)planForm.hidden=(S.mode!=="plan");
     const accForm=document.getElementById("accForm"); if(accForm)accForm.hidden=(S.mode!=="acc");
     const procForm=document.getElementById("procForm"); if(procForm)procForm.hidden=(S.mode!=="proc");
+    const mh=document.getElementById("miniHeader"); if(mh)mh.hidden=(S.mode==="adm"); if(S.mode!=="adm")updateMiniHeader();
     const dl=document.getElementById("dockLabel"); if(dl)dl.textContent={adm:"即時預覽 · Admission Summary",plan:"即時預覽 · NI Plan",acc:"即時預覽 · Acceptance Note",proc:"即時預覽 · Procedure Note"}[S.mode];
     const dxEl=document.getElementById("dx"); if(dxEl)dxEl.style.display=S.mode==="adm"?"":"none";
     if(S.mode==="acc"){renderAcc();return;}
