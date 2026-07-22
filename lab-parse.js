@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
 // lab-parse.js — 檢驗/血氣貼上解析器(單一真相 / SHARED)
 //   來源:nbc-note-app 的 doLabParse。此檔為兩個工具(nbc-note-app、nicu-note-builder)共用。
-//   ⚠ 勿在各 app 內各自修改;要改請改此檔,再重新內嵌(兩 app 的 //__LABPARSE_START__…END__ 區塊)。
+//   ⚠ 勿在各 app 內各自修改;要改請改此檔的標記區塊,再重新內嵌回兩個 app 的同名標記區塊。
 //   純字串處理、無 DOM 依賴;可 node 直接跑(module.exports)或瀏覽器內嵌(window.LabParse)。
 // ═══════════════════════════════════════════════════════════════
+//__LABPARSE_START__
 const LAB_ORDER=["since","BloodGroup","病人血型","血袋血型","pH","pCO2","pO2","HCO3","B.E.","B.E","SaO2","Na","K","Cl","Ca","iCa","P","Mg","BUN","Creatinine","AST","GOT","ALT","GPT","Albumin","Bilirubin","D-Bil","T-Bil","Ammonia","Lactate","Glucose","Glucose PC60'","Glucose PC120'","Glucose AC (75GM)","Glucose AC","Glucose PC","HbA1c","TG","T-Chol","ALK-P","LDH","r-GT","CRP","PCT","Procalcitonin","E.S.R.","Troponin","CK","CKMB","CKMB/CK Ratio","BNP","NT-proBNP","AFP","PT","PT control","APTT","APTT control","INR","IAT","DAT","G6PD","Ferritin","Anti-dsDNA","CMV PCR","CMV viral load"];
 const NAME_MAPPING={"Total Bilirubin":"T-Bil","Total Bilirubin (Child)":"T-Bil","Direct Bilirubin":"D-Bil","Triglyceride":"TG","Total Cholesterol":"T-Chol","ALK-Phosphatase":"ALK-P","Blood Gas pH":"pH","Blood Gas pCO2":"pCO2","Blood Gas pO2":"pO2","Blood Gas HCO3":"HCO3","Blood Gas B.E.":"B.E.","Blood Gas SaO2":"SaO2","Glucose AC (75GM)":"Glucose AC (75GM)","Glucose PC 60' (75GM)":"Glucose PC60'","Glucose PC 120' (75GM)":"Glucose PC120'","AST(GOT)":"AST","ALT(GPT)":"ALT","BUN":"BUN","Ammonia":"Ammonia","Creatinine":"Creatinine","Calcium":"Ca","Potassium":"K","Sodium":"Na","Chloride":"Cl","Na(POCT)":"Na(POCT)","K(POCT)":"K(POCT)","K POCT (Child)":"K(POCT)","Free Ca(POCT)":"iCa(POCT)","Free Calcium":"iCa","LDH":"LDH","CK":"CK","CKMB":"CKMB","r-GT":"r-GT","CKMB/CK Ratio":"CKMB/CK Ratio","PT patient":"PT","PT control":"PT control","MNPT":"PT control","APTT patient":"APTT","APTT control":"APTT control","MNAPTT":"APTT control","Glucose(Random)":"Glucose(Random)","Immunoglobulin M":"IgM","Anti-HBs B":"Anti-HBs","Anti-HBs":"Anti-HBs","HBsAg":"HBsAg","Anti-HCV Ab":"Anti-HCV","COVID-19 Ag":"COVID-19 Ag","NT-proBNP(POCT)":"NT-proBNP(POCT)","CRP":"CRP","Lactate":"Lactate","E.S.R.":"E.S.R.","Ferritin":"Ferritin","Anti-dsDNA":"Anti-dsDNA","IAT":"IAT","DAT":"DAT","G6PD":"G6PD","糖化血色素(HbA1c)":"HbA1c"};
 const URINE_MAP={"比重檢查":"比重","酸、鹼度反應(pH)":"pH","蛋白質檢查(Protein)":"Protein","Protein":"Protein","糖檢查(Glucose)":"Glucose","Glucose":"Urine glucose","酮體檢查(Ketones)":"Ketones","Ketone Bodies":"Ketones","膽紅素檢查(Bilirubin)":"Bilirubin","尿液潛血反應":"尿液潛血反應","尿膽素原檢查":"Urobilinogen","Urobilinogen":"Urobilinogen","Leukocyte":"Leukocyte","亞硝酸鹽檢查":"Nitrite","Nitrite":"Nitrite","Bilirubin":"Bilirubin","Occult Blood":"Occult Blood","Specific Gravity":"Specific Gravity","pH":"pH","RBC count":"RBC count","WBC count":"WBC count","EPI count":"EPI count","Epithelium (/uL)":"Epithelium (/uL)","RBC (/uL)":"RBC (/uL)","WBC (/uL)":"WBC (/uL)"};
@@ -165,6 +166,7 @@ function labRenderBlocks(blocks,unpL,unpR){
   out=out.replace(/\n\s*\n/g,'\n');
   return{text:out,unparsedCount:unpL.length,unparsedRawLines:unpR||[]};
 }
+//__LABPARSE_END__
 
 if(typeof window!=='undefined')window.LabParse={doLabParse:doLabParse,labMapName:labMapName};
 if(typeof module!=='undefined')module.exports={doLabParse:doLabParse,labMapName:labMapName};
