@@ -303,6 +303,11 @@
     <div class="field"><span class="lab">羊膜穿刺 aCGH</span>
       <div class="seg" data-seg="amnio"><button data-v="none">未做</button><button data-v="normal">正常</button><button data-v="abnormal">異常</button></div>
       <input class="tin" id="acghFindings" placeholder="異常所見…" hidden style="margin-top:7px"></div>
+    <div class="field"><span class="lab">NIPT <span class="q">（非侵入性產前染色體篩檢）</span></span>
+      <div class="seg" data-seg="nipt"><button data-v="none">未做</button><button data-v="low">低風險</button><button data-v="high">高風險</button></div>
+      <div id="niptWrap" hidden style="margin-top:7px">
+        <div class="seg" data-fill="niptFind" style="flex-wrap:wrap;margin-bottom:7px"><button data-v="trisomy 21">T21</button><button data-v="trisomy 18">T18</button><button data-v="trisomy 13">T13</button><button data-v="sex chromosome aneuploidy">性染色體 SCA</button></div>
+        <input class="tin" id="niptFind" placeholder="高風險項目（如 trisomy 21）"></div></div>
     <p class="man-h" style="margin:16px 0 7px">病史（有 risk 才展開）</p>
     <div id="risks"></div>
     <p class="man-h" style="margin:15px 0 7px">雙親病史（無／母／父／雙親）</p>
@@ -879,7 +884,7 @@
   const S={gender:"male",growth:"AGA",growthAuto:true,delivery:"cs",r:{},
            scr:{hbsag:"neg",hbeag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
            resus:"none",resp:"roomair",surfactant:false,
-           amnio:"none",mgso4:"none",toco:"none",iap:"none",us:"normal",
+           amnio:"none",nipt:"none",mgso4:"none",toco:"none",iap:"none",us:"normal",
            fd:false,doic:false,msaf:false,outborn:false,obResp:false,
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
            mode:"adm",planAbx:"empirical",planAbxAuto:true,planCsf:false,noteDirty:false,noteCache:{},
@@ -1098,6 +1103,7 @@
     const csw=document.getElementById("csReasonWrap"); if(csw)csw.hidden=(S.delivery!=="cs");
     const usf=document.getElementById("usFindings"); if(usf)usf.hidden=(S.us!=="abnormal");
     const acf=document.getElementById("acghFindings"); if(acf)acf.hidden=(S.amnio!=="abnormal");
+    const niptW=document.getElementById("niptWrap"); if(niptW)niptW.hidden=(S.nipt!=="high");
     const heRow=document.querySelector('.scr-row[data-scr="hbeag"]'); if(heRow)heRow.hidden=(S.scr.hbsag!=="pos");  // HBeAg 只在 HBsAg+ 顯示
     // 摺疊卡摘要
     const setCsum=(key,txt,isNone)=>{const el=document.querySelector(`[data-csum="${key}"]`); if(el){el.textContent=txt; el.classList.toggle("none",!!isNone);}};
@@ -1130,6 +1136,12 @@
       : S.amnio==="abnormal"
       ? `Amniocentesis with array comparative genomic hybridization (aCGH) revealed ${acghF?sl(acghF):ph("____")}.`
       : `Amniocentesis with array comparative genomic hybridization (aCGH) was not performed.`);
+    const niptF=inV("niptFind");
+    P1.push(S.nipt==="low"
+      ? `Non-invasive prenatal testing (NIPT) revealed low risk for common trisomies (trisomy 21, 18, and 13).`
+      : S.nipt==="high"
+      ? `Non-invasive prenatal testing (NIPT) revealed high risk for ${niptF?sl(niptF):ph("____")}.`
+      : `Non-invasive prenatal testing (NIPT) was not performed.`);
 
     // 妊娠併發症（GDM/APH/PIH/preeclampsia）：陽性拉出 + 其餘否定
     // 母親病史順序：GDM, PIH, preeclampsia, APH, PPH, URI symptoms, Fever
@@ -1770,6 +1782,7 @@ ${opLine}`);
   document.querySelector('[data-seg="growth"] [data-v="AGA"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="delivery"] [data-v="cs"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="us"] [data-v="normal"]').setAttribute("aria-pressed","true");
+  document.querySelector('[data-seg="nipt"] [data-v="none"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-rc="steroid"] [data-v="2"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-re="steroid"] [data-v="complete"]')?.setAttribute("aria-pressed","true");
   document.querySelectorAll('[data-ryn]').forEach(y=>y.querySelector('[data-v="no"]').setAttribute("aria-pressed","true"));
