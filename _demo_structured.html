@@ -65,6 +65,9 @@
     font-variant-numeric:tabular-nums;text-align:center}
   .num input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
   .num .u{color:var(--ink-3);font-size:13px}
+  /* 數字框移除原生上下箭頭:窄框(GA/BW/母齡/FiO2…)才不會把數字擠到看不見(iOS Safari / Chrome) */
+  input[type=number]{-moz-appearance:textfield}
+  input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .row2{display:flex;gap:10px}
   .row2>.field{flex:1;margin-bottom:0}
   /* 自動判定徽章 */
