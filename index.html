@@ -144,7 +144,7 @@
     color:var(--doc-dim);align-self:center;margin-right:2px}
   .foot{color:var(--ink-3);font-size:11.5px;text-align:center;margin-top:6px;line-height:1.6}
   /* 分頁 */
-  .tabs{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:14px}
+  .tabs{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:14px;position:sticky;top:6px;z-index:15}
   .tabs button{flex:1;min-height:42px;padding:0 4px;border:0;background:transparent;color:var(--ink-2);font:inherit;font-size:12px;
     font-weight:650;border-radius:9px;cursor:pointer;transition:background .12s,color .12s}
   .tabs button[aria-selected="true"]{background:var(--surface);color:var(--accent-ink);box-shadow:0 1px 3px rgba(0,0,0,.09)}
@@ -158,6 +158,10 @@
   .ins button:hover{border-color:var(--accent);border-style:solid;color:var(--accent-ink)}
   #accForm[hidden]{display:none}
   #admSections[hidden]{display:none}
+  /* 預覽 dock 收合(手機) */
+  .dock.collapsed .dock-body{display:none}
+  body.dockmin{padding-bottom:52px}
+  @media (min-width:800px){#dockToggle{display:none} body.dockmin{padding-bottom:24px} .dock.collapsed .dock-body{display:flex}}
   /* hospital course 決策樹 */
   .hc-row{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:9px;background:var(--surface)}
   .hc-row.on{border-color:var(--accent);background:linear-gradient(0deg,var(--accent-soft),transparent 70%)}
@@ -296,7 +300,8 @@
       <div class="seg" data-seg="us"><button data-v="normal">正常</button><button data-v="abnormal">異常</button></div>
       <input class="tin" id="usFindings" placeholder="異常所見…" hidden style="margin-top:7px"></div>
     <div class="field"><span class="lab">羊膜穿刺 aCGH</span>
-      <div class="seg" data-seg="amnio"><button data-v="none">未做</button><button data-v="normal">正常</button></div></div>
+      <div class="seg" data-seg="amnio"><button data-v="none">未做</button><button data-v="normal">正常</button><button data-v="abnormal">異常</button></div>
+      <input class="tin" id="acghFindings" placeholder="異常所見…" hidden style="margin-top:7px"></div>
     <p class="man-h" style="margin:16px 0 7px">病史（有 risk 才展開）</p>
     <div id="risks"></div>
     <p class="man-h" style="margin:15px 0 7px">雙親病史（無／母／父／雙親）</p>
@@ -318,7 +323,7 @@
     </div>
     <p class="man-h" style="margin:16px 0 7px">產程用藥</p>
     <div class="field"><span class="lab">MgSO₄</span>
-      <div class="seg" data-seg="mgso4"><button data-v="none">無</button><button data-v="neuro">神經保護</button><button data-v="seizure">子癇前症預防</button></div></div>
+      <div class="seg" data-seg="mgso4"><button data-v="none">無</button><button data-v="neuro">神經保護</button><button data-v="seizure">抽搐／子癇預防</button></div></div>
     <div class="field"><span class="lab">安胎藥 <span class="q">（tocolysis）</span></span>
       <div class="seg" data-seg="toco"><button data-v="none">無</button><button data-v="ritodrine">Ritodrine</button><button data-v="atosiban">Atosiban</button></div>
       <div class="num" style="margin-top:8px"><span class="u">since</span><input class="tin" id="tocoSince" placeholder="7/19" style="max-width:120px"></div></div>
@@ -670,7 +675,7 @@
         <input class="tin" id="betTypeIn" placeholder="血型 e.g. O, Rh+"></div>
       <div class="field" style="margin-top:13px"><span class="lab">Operator</span>
         <div class="num"><span class="u">Dr.</span><input class="tin" id="procOperator" placeholder="操作醫師" style="max-width:180px"></div></div>
-      <p class="man-h" style="margin-top:4px">ETT size／深度、surfactant 藥物與劑量、雙倍換血量依體重自動帶；UAC／UVC 實際深度、CSF 量、血型等空格請在下方預覽填。</p>
+      <p class="man-h" style="margin-top:4px">ETT size／深度、surfactant 藥物與劑量、雙倍換血量、UAC／UVC 深度皆依體重自動帶（可於上方欄位覆寫）；其餘 slash 選項與空格可於下方預覽直接改。</p>
     </section>
   </div>
 
@@ -681,6 +686,7 @@
 <div class="dock">
   <div class="dock-h"><span class="t" id="dockLabel">即時預覽 · Admission Summary</span>
     <span style="display:flex;gap:7px">
+      <button class="copy" id="dockToggle" aria-label="收合預覽">▾</button>
       <button class="copy" id="regen" hidden>↺ 重新產生</button>
       <button class="copy" id="copy">複製</button></span></div>
   <div class="dock-body">
@@ -721,7 +727,7 @@
            amnio:"none",mgso4:"none",toco:"none",iap:"none",us:"normal",
            fd:false,doic:false,msaf:false,outborn:false,obResp:false,
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
-           mode:"adm",planAbx:"empirical",planAbxAuto:true,planCsf:false,noteDirty:false,
+           mode:"adm",planAbx:"empirical",planAbxAuto:true,planCsf:false,noteDirty:false,noteCache:{},
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
            procOpt:{alineSide:"right",alineArtery:"radial",uacPos:"high",chestSide:"right",chestType:"pigtail",chestICS:"4th",lpCompl:"nil"},
            acc:{resp:[],abx:[],line:[],vac:[],rop:"notyet",aabr:"notyet",nbs:"notyet",respDates:{},lineDates:{}},
@@ -748,8 +754,8 @@
         why.innerHTML=({SGA:`${bw} g ＜ ${ga} 週第 10 百分位（${g.lo} g）`,
           LGA:`${bw} g ＞ ${ga} 週第 90 百分位（${g.hi} g）`,
           AGA:`${bw} g 介於 ${ga} 週第 10–90 百分位（${g.lo}–${g.hi} g）`}[g.status])+" · Fenton 2025";
-      }else{box.classList.add("warn");big.textContent="?";
-        why.textContent=`GA ${ga||"—"} 週超出百分位表範圍（21–44），請手動選`;}
+      }else{S.growth="?";box.classList.add("warn");big.textContent="?";
+        why.textContent=`GA/BW 未填或超出百分位表範圍（21–44 週），note 顯示 (?)，請填齊或手動選`;}
     }else{
       box.classList.remove("warn");big.textContent=S.growth;
       why.innerHTML="手動指定"+(g?` · 自動判定為 <b>${g.status}</b>`:"");
@@ -792,9 +798,13 @@
   document.addEventListener("click",e=>{
     if(e.target.closest(".reset")){S.growthAuto=true;render();return;}
     const b=e.target.closest("button"); if(!b)return;
-    const tab=b.closest("[data-tab]"); if(tab){S.mode=tab.dataset.tab;
+    const tab=b.closest("[data-tab]"); if(tab){const nel=document.getElementById("note");
+      if(S.noteDirty)S.noteCache[S.mode]=nel.innerHTML;   // 存目前分頁手改內容
+      S.mode=tab.dataset.tab;
       document.querySelectorAll("[data-tab]").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab===S.mode?"true":"false"));
-      clearDirty(); window.scrollTo(0,0); render(); return;}
+      if(S.noteCache[S.mode]!=null){nel.innerHTML=S.noteCache[S.mode]; S.noteDirty=true; nel.classList.add("editing"); document.getElementById("regen").hidden=false;}
+      else clearDirty();
+      window.scrollTo(0,0); render(); return;}
     const am=b.closest("[data-am]"); if(am){const k=am.dataset.am,v=b.dataset.v,arr=S.acc[k],i=arr.indexOf(v);
       if(i<0)arr.push(v); else arr.splice(i,1);
       b.setAttribute("aria-pressed",arr.includes(v)?"true":"false");
@@ -930,6 +940,7 @@
 
     const csw=document.getElementById("csReasonWrap"); if(csw)csw.hidden=(S.delivery!=="cs");
     const usf=document.getElementById("usFindings"); if(usf)usf.hidden=(S.us!=="abnormal");
+    const acf=document.getElementById("acghFindings"); if(acf)acf.hidden=(S.amnio!=="abnormal");
     const obw=document.getElementById("outbornWrap"); if(obw)obw.hidden=!S.outborn;
     const obrw=document.getElementById("obRespWrap"); if(obrw)obrw.hidden=!S.obResp;
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
@@ -948,8 +959,11 @@
     const usFind=inV("usFindings");
     const usTxt = S.us==="abnormal" ? (usFind?`revealed ${sl(usFind)}`:`revealed abnormal findings`) : `revealed normal results`;
     P1.push(`The mother received regular antepartum examinations in ${sl(anc+(isMMH?"":" OBGYN clinic"))}, and prenatal ultrasound and level II ultrasound ${usTxt}.`);
+    const acghF=inV("acghFindings");
     P1.push(S.amnio==="normal"
       ? `Amniocentesis with array comparative genomic hybridization (aCGH) was normal.`
+      : S.amnio==="abnormal"
+      ? `Amniocentesis with array comparative genomic hybridization (aCGH) revealed ${acghF?sl(acghF):ph("____")}.`
       : `Amniocentesis with array comparative genomic hybridization (aCGH) was not performed.`);
 
     // 妊娠併發症（GDM/APH/PIH/preeclampsia）：陽性拉出 + 其餘否定
@@ -1072,7 +1086,7 @@
     if(pr.on){const h=V("promH")||"__";
       DX.push(pr.val==="pprom"
         ? {s:"PPROM",f:`Preterm premature rupture of membranes (PPROM) for ${h} hours`}
-        : {s:"PROM", f:`Prolonged rupture of membranes (PROM) for ${h} hours (>18 hours)`});}
+        : {s:"PROM", f:`Premature rupture of membranes (PROM) for ${h} hours${parseInt(h)>18?" (prolonged, >18 hours)":""}`});}
     if(S.r.gdm.on)DX.push({s:"IDM",f:"Infant of diabetic mother (IDM)"});
     if(S.r.pih.on)DX.push({s:"Maternal PIH",f:"Maternal pregnancy induced hypertension (PIH)"});
     if(S.r.pre.on)DX.push({s:"Maternal preeclampsia",f:"Maternal preeclampsia"});
@@ -1293,7 +1307,7 @@ ${opLine}`);
     if(!txt)return {line:"",vals:{}};
     const out={};
     txt.split(/\n/).forEach(line=>{
-      const m=line.match(/^\s*(pH|pCO2|pO2|HCO3|B\.?E\.?|SaO2)\s+(?:[LH]\s+)?(-?\d+(?:\.\d+)?)/i);
+      const m=line.match(/^\s*(pH|pCO2|pO2|HCO3|B\.?E\.?|SaO2)[\s:=]+(?:[LH]\s+)?(-?\d+(?:\.\d+)?)/i);
       if(m)out[m[1].toUpperCase().replace(/\./g,"")]=m[2];
       const src=line.match(/檢體來源\s*[:：]?\s*(\S+)/); if(src)out.SRC=src[1];
     });
@@ -1334,6 +1348,15 @@ ${opLine}`);
   }
 
   // ── Hospital course 敘述組裝（點選 → 通順句子）──
+  const CXR_MAP={
+    rds1:["diffuse fine reticulogranular opacities","respiratory distress syndrome, Gr. I"],
+    rds2:["bilateral reticulogranular opacities with air bronchograms","respiratory distress syndrome, Gr. II"],
+    rds3:["diffuse ground-glass opacities with obscured cardiac borders","respiratory distress syndrome, Gr. III"],
+    rds4:["a near white-out lung field","respiratory distress syndrome, Gr. IV"],
+    ttn:["increased perihilar interstitial markings with fluid in the fissures","transient tachypnea of the newborn"],
+    mas:["patchy coarse infiltrates with hyperinflation","meconium aspiration syndrome"],
+    pna:["focal air-space consolidation","neonatal pneumonia"],
+    ptx:["a peripheral lucent area with lung collapse","pneumothorax"]};
   function buildHC(sl,gas){
     const H=[], hc=S.hc, firstMode=S.acc.resp[0]||"";
     if(hc.workup){
@@ -1352,7 +1375,7 @@ ${opLine}`);
       const bits=[]; if(c.acid)bits.push(c.acid); c.o2.forEach(x=>bits.push(x));
       if(bits.length)H.push(`The initial arterial blood gas showed ${sl(joinAnd(bits))}.`);
     }
-    if(hc.bicarb)H.push(`Sodium bicarbonate was supplemented${/acidosis/.test(acidNow)?" for correction of the metabolic acidosis":""}.`);
+    if(hc.bicarb)H.push(`Sodium bicarbonate was supplemented${/metabolic|mixed/.test(acidNow)?" for correction of the metabolic acidosis":""}.`);
     if(hc.surf){
       const rMap={tachypnea:"persistent tachypnea",retraction:"subcostal retraction",o2:"an increasing oxygen requirement",desat:"desaturation"};
       const rs=hc.surfReason.map(x=>rMap[x]).filter(Boolean);
@@ -1361,17 +1384,8 @@ ${opLine}`);
       H.push(`There was ${rs.length?sl(joinAnd(rs)):sl("respiratory distress")}${firstMode?` under ${sl(firstMode)}`:""}, so ${sl(drug)} was administered ${sl(route)}.`);
       if(hc.improved)H.push(`The respiratory pattern improved significantly following ${sl(drug)} administration.`);
     }
-    const cxrMap={
-      rds1:["diffuse fine reticulogranular opacities","respiratory distress syndrome, Gr. I"],
-      rds2:["bilateral reticulogranular opacities with air bronchograms","respiratory distress syndrome, Gr. II"],
-      rds3:["diffuse ground-glass opacities with obscured cardiac borders","respiratory distress syndrome, Gr. III"],
-      rds4:["a near white-out lung field","respiratory distress syndrome, Gr. IV"],
-      ttn:["increased perihilar interstitial markings with fluid in the fissures","transient tachypnea of the newborn"],
-      mas:["patchy coarse infiltrates with hyperinflation","meconium aspiration syndrome"],
-      pna:["focal air-space consolidation","neonatal pneumonia"],
-      ptx:["a peripheral lucent area with lung collapse","pneumothorax"]};
-    if(hc.cxrDx!=="none"&&cxrMap[hc.cxrDx]){
-      const c=cxrMap[hc.cxrDx];
+    if(hc.cxrDx!=="none"&&CXR_MAP[hc.cxrDx]){
+      const c=CXR_MAP[hc.cxrDx];
       H.push(`Chest X-ray revealed ${sl(c[0])}, compatible with ${sl(c[1])}.`);
     }
     if(hc.workup){
@@ -1486,6 +1500,7 @@ ${opLine}`);
     if(S.scr.gbs==="pos")infAuto.push("maternal GBS colonization");
     else if(S.scr.gbs==="unk")infAuto.push("maternal GBS unknown status");
     if(S.r.prom.on){const h=V("promH"); infAuto.push((S.r.prom.val==="pprom"?"PPROM":"PROM")+(h?` for ${h} hours`:""));}
+    if(S.r.fever&&S.r.fever.on)infAuto.push("maternal fever");
     const infRisk=inV("accInfRisk")||(infAuto.length?infAuto.join(", "):"none");
 
     // 基本資料摘要條（唯讀，取代收起的 admission 輸入區）
@@ -1520,7 +1535,7 @@ ${opLine}`);
     L.push("");
     L.push("【Initial laboratory data】");
     L.push(`ABG: ${gas.line?sl(esc(gas.line)):""}`);
-    L.push(`CXR: ${fv("accCXR")}`);
+    L.push(`CXR: ${fv("accCXR")||(S.hc.cxrDx!=="none"&&CXR_MAP[S.hc.cxrDx]?sl(CXR_MAP[S.hc.cxrDx][0]):"")}`);  // 未填時鏡射 §B 影像診斷所見
     L.push(`Other (CBC/DC, CRP...): ${fv("accOther")}`);
     L.push("");
     L.push("【Respiratory course】");
@@ -1606,7 +1621,12 @@ ${opLine}`);
   const noteEl=document.getElementById("note");
   function clearDirty(){S.noteDirty=false; noteEl.classList.remove("editing"); document.getElementById("regen").hidden=true;}
   noteEl.addEventListener("input",()=>{S.noteDirty=true; noteEl.classList.add("editing"); document.getElementById("regen").hidden=false;});
-  document.getElementById("regen").addEventListener("click",()=>{clearDirty(); render();});
+  document.getElementById("regen").addEventListener("click",()=>{delete S.noteCache[S.mode]; clearDirty(); render();});
+  document.getElementById("dockToggle").addEventListener("click",()=>{
+    const d=document.querySelector(".dock"), c=!d.classList.contains("collapsed");
+    d.classList.toggle("collapsed",c); document.body.classList.toggle("dockmin",c);
+    document.getElementById("dockToggle").textContent=c?"▴":"▾";
+  });
   // 複製（Artifact iframe 剪貼簿 API 常被擋，加 execCommand fallback）
   document.getElementById("copy").addEventListener("click",async()=>{
     const txt=noteEl.innerText, b=document.getElementById("copy"); let ok=false;
