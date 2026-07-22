@@ -236,6 +236,22 @@
         <button data-v="non-reassuring fetal heart rate" style="flex:0 1 auto">NRFHR</button>
       </div>
       <input class="tin" id="csReason" placeholder="或自行輸入…"></div>
+    <div class="field">
+      <span class="lab">出生地 <span class="q">（院外出生轉入才開）</span></span>
+      <div class="seg risk" data-tog="outborn"><button data-v="1" data-on style="flex:0 1 auto">外接 Outborn</button></div>
+    </div>
+    <div id="outbornWrap" hidden>
+      <div class="field"><span class="lab">出生院所 <span class="q">(born in…)</span></span><input class="tin" id="obFacility" placeholder="○○醫院"></div>
+      <div class="field"><span class="lab">轉入來源 <span class="q">(transferred from…；空白＝同出生院所)</span></span><input class="tin" id="obTransferFrom" placeholder="maternal fetal medicine (MFM) clinic／○○醫院"></div>
+      <div class="field"><span class="lab">轉入原因 <span class="q">(due to…)</span></span><input class="tin" id="obReason" placeholder="prematurity／respiratory distress…"></div>
+      <div class="field"><span class="lab">轉送時呼吸支持</span>
+        <div class="seg risk" data-tog="obResp"><button data-v="1" data-on style="flex:0 1 auto">Neopuff PPV</button></div>
+        <div id="obRespWrap" hidden style="margin-top:8px"><div class="num" style="flex-wrap:wrap">
+          <span class="u">FiO₂</span><input type="number" id="obFiO2" placeholder="__" min="21" max="100" style="max-width:64px"><span class="u">%</span>
+          <span class="u">IP</span><input type="number" id="obIP" placeholder="__" min="0" style="max-width:60px"><span class="u">/ PEEP</span>
+          <input type="number" id="obPEEP" placeholder="__" min="0" style="max-width:60px"></div></div>
+      </div>
+    </div>
     <div class="row2">
       <div class="field"><span class="lab">G / P · 母年齡</span>
         <div class="num"><input type="number" id="gravida" value="2" min="1" aria-label="G"><span class="u">/</span>
@@ -665,7 +681,7 @@
            scr:{hbsag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
            resus:"none",resp:"roomair",surfactant:false,
            amnio:"none",mgso4:"none",toco:"none",iap:"none",
-           fd:false,doic:false,msaf:false,
+           fd:false,doic:false,msaf:false,outborn:false,obResp:false,
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
            mode:"adm",planAbx:"empirical",planCsf:false,noteDirty:false,
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
@@ -866,10 +882,13 @@
     const P1=[], P2=[];
 
     const csw=document.getElementById("csReasonWrap"); if(csw)csw.hidden=(S.delivery!=="cs");
+    const obw=document.getElementById("outbornWrap"); if(obw)obw.hidden=!S.outborn;
+    const obrw=document.getElementById("obRespWrap"); if(obrw)obrw.hidden=!S.obResp;
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
     const via = S.delivery==="cs" ? "Cesarean section (C/S)" : "vaginal delivery (VD)";
+    const birthPlace = S.outborn ? (inV("obFacility")?sl(inV("obFacility")):ph("____")) : sl("TPEMMH");
     let s1=`This ${sl("1-day-old")} ${sl(sex)} newborn was born to a G${sl(G)}P${sl(P)}, ${matAge?sl(matAge):ph("__")} y/o mother `
-      +`at GA ${sl(gaTxt)} with birth weight (BW) ${sl(bw)} gm (${sl(S.growth)}) in ${sl("TPEMMH")} via ${sl(via)}`;
+      +`at GA ${sl(gaTxt)} with birth weight (BW) ${sl(bw)} gm (${sl(S.growth)}) in ${birthPlace} via ${sl(via)}`;
     if(S.delivery==="cs") s1+=` due to ${csR?sl(csR):ph("____")}`;
     P1.push(s1+".");
     const edc=inV("edc");
@@ -927,7 +946,14 @@
     else P1.push(`${sl(joinAnd(serPos))} ${serPos.length>1||/and/.test(serPos[0])?"were":"was"} positive.`);
 
     // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar + 入院 ──
-    P2.push(`The mother was admitted to our hospital due to ${admR?sl(admR):ph("____")}.`);
+    if(S.outborn){
+      const src=inV("obTransferFrom")||inV("obFacility"), reason=inV("obReason");
+      P2.push(`The patient was transferred from ${src?sl(src):ph("____")} due to ${reason?sl(reason):ph("____")}.`);
+      if(S.obResp){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP");
+        P2.push(`Neopuff positive pressure ventilation (PPV) was used to assist with respiratory support. The infant was ventilated with Neopuff using appropriate settings (FiO2: ${f?sl(f):ph("__")}%, IP/PEEP: ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cm/H2O), maintaining a stable heart rate and oxygen saturation levels.`);}
+    } else {
+      P2.push(`The mother was admitted to our hospital due to ${admR?sl(admR):ph("____")}.`);
+    }
     if(S.iap!=="none"){const drug=inV("iapDrug")||"Ampicillin", is=inV("iapSince");
       P2.push(`${sl(drug)} was administered${is?` since ${sl(is)}`:""}, ${S.iap==="complete"?"and":"but"} intrapartum antibiotic prophylaxis (IAP) was ${sl(S.iap==="complete"?"complete":"incomplete")}.`);}
     const st=S.r.steroid;
