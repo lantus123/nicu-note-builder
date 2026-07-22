@@ -97,7 +97,7 @@
   .scr-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 2px;border-bottom:1px solid var(--line)}
   .scr-row:last-child{border-bottom:0}
   .scr-name{font-size:14px;font-weight:580}
-  .scr-btn{min-height:38px;min-width:100px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
+  .scr-btn{min-height:44px;min-width:100px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
     border-radius:9px;font:inherit;font-size:13.5px;font-weight:640;cursor:pointer;transition:background .12s,color .12s}
   .scr-btn[data-state="neg"]{background:var(--good-soft);border-color:var(--good);color:var(--good)}
   .scr-btn[data-state="pos"]{background:var(--risk-soft);border-color:var(--risk-line);color:var(--risk)}
@@ -110,7 +110,7 @@
   .risk-name{font-size:14.5px;font-weight:620}
   .risk-name small{display:block;font-size:11.5px;font-weight:500;color:var(--ink-3);margin-top:1px}
   .yn{display:flex;gap:5px;flex:0 0 auto}
-  .yn button{min-height:38px;min-width:48px;padding:0 12px;border:1px solid var(--line);background:var(--surface);
+  .yn button{min-height:44px;min-width:48px;padding:0 12px;border:1px solid var(--line);background:var(--surface);
     color:var(--ink-2);border-radius:9px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
   .yn button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
   .yn button[data-yes][aria-pressed="true"]{background:var(--risk-soft);border-color:var(--risk-line);color:var(--risk)}
@@ -153,7 +153,7 @@
     color:var(--ink);font:inherit;font-size:14px;line-height:1.55;resize:vertical}
   .tarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
   .ins{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
-  .ins button{min-height:34px;padding:0 11px;border:1px dashed var(--line);background:var(--surface);color:var(--ink-2);
+  .ins button{min-height:40px;padding:0 11px;border:1px dashed var(--line);background:var(--surface);color:var(--ink-2);
     border-radius:20px;font:inherit;font-size:12.5px;font-weight:560;cursor:pointer}
   .ins button:hover{border-color:var(--accent);border-style:solid;color:var(--accent-ink)}
   #accForm[hidden]{display:none}
@@ -212,12 +212,12 @@
     <div class="row2">
       <div class="field">
         <span class="lab">妊娠週數 GA</span>
-        <div class="num"><input type="number" id="gaW" value="34" min="20" max="43" aria-label="週"><span class="u">週</span>
-          <input type="number" id="gaD" value="2" min="0" max="6" aria-label="天"><span class="u">天</span></div>
+        <div class="num"><input type="number" id="gaW" placeholder="34" min="20" max="43" aria-label="週"><span class="u">週</span>
+          <input type="number" id="gaD" placeholder="0" min="0" max="6" aria-label="天"><span class="u">天</span></div>
       </div>
       <div class="field">
         <span class="lab">出生體重 <span class="q">(g)</span></span>
-        <div class="num"><input type="number" id="bw" value="2150" min="300" max="6000" step="10"><span class="u">g</span></div>
+        <div class="num"><input type="number" id="bw" placeholder="2150" min="300" max="6000" step="10"><span class="u">g</span></div>
         <div class="wclass" id="wclass"></div>
       </div>
     </div>
@@ -254,7 +254,17 @@
     <div id="outbornWrap" hidden>
       <div class="field"><span class="lab">出生院所 <span class="q">(born in…；自動＝同產檢地點)</span></span><select class="tin" id="obFacility"></select></div>
       <div class="field"><span class="lab">轉入來源 <span class="q">(transferred from…；自動＝同出生院所)</span></span><select class="tin" id="obTransferFrom"></select></div>
-      <div class="field"><span class="lab">轉入原因 <span class="q">(due to…)</span></span><input class="tin" id="obReason" placeholder="prematurity／respiratory distress…"></div>
+      <div class="field"><span class="lab">轉入原因 <span class="q">(due to…；點選帶入)</span></span>
+        <div class="seg" data-fill="obReason" style="flex-wrap:wrap;margin-bottom:7px">
+          <button data-v="prematurity" style="flex:0 1 auto">Prematurity</button>
+          <button data-v="respiratory distress" style="flex:0 1 auto">Resp distress</button>
+          <button data-v="neonatal hypoglycemia" style="flex:0 1 auto">Hypoglycemia</button>
+          <button data-v="hyperbilirubinemia" style="flex:0 1 auto">Hyperbili</button>
+          <button data-v="sepsis work-up" style="flex:0 1 auto">Sepsis w/u</button>
+          <button data-v="poor feeding" style="flex:0 1 auto">Poor feeding</button>
+          <button data-v="the need for a higher level of care" style="flex:0 1 auto">Higher care</button>
+        </div>
+        <input class="tin" id="obReason" placeholder="或自行輸入…"></div>
       <div class="field"><span class="lab">轉送時呼吸支持</span>
         <div class="seg risk" data-tog="obResp"><button data-v="1" data-on style="flex:0 1 auto">Neopuff PPV</button></div>
         <div id="obRespWrap" hidden style="margin-top:8px"><div class="num" style="flex-wrap:wrap">
@@ -265,12 +275,12 @@
     </div>
     <div class="row2">
       <div class="field"><span class="lab">G / P · 母年齡</span>
-        <div class="num"><input type="number" id="gravida" value="2" min="1" aria-label="G"><span class="u">/</span>
-          <input type="number" id="para" value="2" min="1" aria-label="P"><span class="u">·</span>
+        <div class="num"><input type="number" id="gravida" placeholder="1" min="1" aria-label="G"><span class="u">/</span>
+          <input type="number" id="para" placeholder="1" min="1" aria-label="P"><span class="u">·</span>
           <input type="number" id="matAge" placeholder="32" min="14" max="60" aria-label="母年齡"><span class="u">y/o</span></div></div>
       <div class="field"><span class="lab">Apgar <span class="q">1′ / 5′</span></span>
-        <div class="num"><input type="number" id="ap1" value="7" min="0" max="10" aria-label="1分"><span class="u">/</span>
-          <input type="number" id="ap5" value="9" min="0" max="10" aria-label="5分"></div></div>
+        <div class="num"><input type="number" id="ap1" placeholder="9" min="0" max="10" aria-label="1分"><span class="u">/</span>
+          <input type="number" id="ap5" placeholder="10" min="0" max="10" aria-label="5分"></div></div>
     </div>
   </section>
 
@@ -278,10 +288,13 @@
   <section class="card">
     <h2 class="sec-h"><span class="n">2</span>母親病史 · 產檢 · 產程</h2>
     <p class="man-h" style="margin:0 0 8px">產檢</p>
-    <div class="field"><span class="lab">預產期 EDC</span>
+    <div class="field"><span class="lab">預產期 EDC <span class="q">（空白＝由 GA 反推）</span></span>
       <input type="date" class="tin" id="edc"></div>
     <div class="field"><span class="lab">產檢地點 <span class="q">（非 MMH 標 OBGYN clinic）</span></span>
       <select class="tin" id="ancPlace"></select></div>
+    <div class="field"><span class="lab">產前超音波</span>
+      <div class="seg" data-seg="us"><button data-v="normal">正常</button><button data-v="abnormal">異常</button></div>
+      <input class="tin" id="usFindings" placeholder="異常所見…" hidden style="margin-top:7px"></div>
     <div class="field"><span class="lab">羊膜穿刺 aCGH</span>
       <div class="seg" data-seg="amnio"><button data-v="none">未做</button><button data-v="normal">正常</button></div></div>
     <p class="man-h" style="margin:16px 0 7px">病史（有 risk 才展開）</p>
@@ -312,7 +325,15 @@
     <div class="field"><span class="lab">IAP 抗生素 <span class="q">（沒驗 GBS 或沒給藥＝incomplete）</span></span>
       <div class="seg" data-seg="iap"><button data-v="none">不提及</button><button data-v="complete">完整</button><button data-v="incomplete">不完整</button></div>
       <div class="row2" style="margin-top:8px">
-        <div class="field" style="margin:0"><span class="lab">藥品</span><input class="tin" id="iapDrug" placeholder="Ampicillin"></div>
+        <div class="field" style="margin:0"><span class="lab">藥品</span>
+          <div class="seg" data-fill="iapDrug" style="flex-wrap:wrap;margin-bottom:6px">
+            <button data-v="Ampicillin" style="flex:0 1 auto">Ampicillin</button>
+            <button data-v="Penicillin G" style="flex:0 1 auto">Penicillin G</button>
+            <button data-v="Cefazolin" style="flex:0 1 auto">Cefazolin</button>
+            <button data-v="Clindamycin" style="flex:0 1 auto">Clindamycin</button>
+            <button data-v="Vancomycin" style="flex:0 1 auto">Vancomycin</button>
+          </div>
+          <input class="tin" id="iapDrug" placeholder="Ampicillin"></div>
         <div class="field" style="margin:0"><span class="lab">since</span><input class="tin" id="iapSince" placeholder="7/20"></div>
       </div></div>
   </section>
@@ -334,17 +355,17 @@
     <div id="ppvSet" hidden style="margin-top:11px">
       <p class="man-h" style="margin:0 0 6px">PPV / Neopuff 設定</p>
       <div class="num" style="flex-wrap:wrap">
-        <span class="u">FiO₂</span><input type="number" id="ppvFiO2" placeholder="21" min="21" max="100" style="max-width:64px"><span class="u">%</span>
-        <span class="u">IP</span><input type="number" id="ppvIP" placeholder="20" min="0" style="max-width:60px"><span class="u">/ PEEP</span>
-        <input type="number" id="ppvPEEP" placeholder="5" min="0" style="max-width:60px"></div>
+        <span class="u">FiO₂</span><input type="number" id="ppvFiO2" value="21" placeholder="21" min="21" max="100" style="max-width:64px"><span class="u">%</span>
+        <span class="u">IP</span><input type="number" id="ppvIP" value="20" placeholder="20" min="0" style="max-width:60px"><span class="u">/ PEEP</span>
+        <input type="number" id="ppvPEEP" value="5" placeholder="5" min="0" style="max-width:60px"></div>
     </div>
     <div id="ettSet" hidden style="margin-top:11px">
       <p class="man-h" style="margin:0 0 6px">插管後呼吸器設定</p>
       <div class="num" style="flex-wrap:wrap">
-        <span class="u">FiO₂</span><input type="number" id="ettFiO2" placeholder="30" min="21" max="100" style="max-width:64px"><span class="u">%</span>
-        <span class="u">IP</span><input type="number" id="ettIP" placeholder="18" min="0" style="max-width:60px"><span class="u">/ PEEP</span>
-        <input type="number" id="ettPEEP" placeholder="5" min="0" style="max-width:60px">
-        <span class="u">RR</span><input type="number" id="ettRR" placeholder="40" min="0" style="max-width:60px"></div>
+        <span class="u">FiO₂</span><input type="number" id="ettFiO2" value="30" placeholder="30" min="21" max="100" style="max-width:64px"><span class="u">%</span>
+        <span class="u">IP</span><input type="number" id="ettIP" value="18" placeholder="18" min="0" style="max-width:60px"><span class="u">/ PEEP</span>
+        <input type="number" id="ettPEEP" value="5" placeholder="5" min="0" style="max-width:60px">
+        <span class="u">RR</span><input type="number" id="ettRR" value="40" placeholder="40" min="0" style="max-width:60px"></div>
     </div>
     <p class="man-h" style="margin:12px 0 6px">出生事件（有才勾）</p>
     <div style="display:flex;flex-wrap:wrap;gap:6px">
@@ -371,7 +392,18 @@
         <button data-v="regular uterine contractions" style="flex:0 1 auto">Regular contractions</button>
       </div>
       <input class="tin" id="admReason" placeholder="或自行輸入…"></div>
-    <div class="field"><span class="lab">暫定診斷 <span class="q">（tentative diagnosis）</span></span><input class="tin" id="tentDx" placeholder="respiratory distress"></div>
+    <div class="field"><span class="lab">暫定診斷 <span class="q">（點選帶入，可再改）</span></span>
+      <div class="seg" data-fill="tentDx" style="flex-wrap:wrap;margin-bottom:7px">
+        <button data-v="healthy term newborn" style="flex:0 1 auto">健康足月</button>
+        <button data-v="respiratory distress" style="flex:0 1 auto">Resp distress</button>
+        <button data-v="prematurity" style="flex:0 1 auto">Prematurity</button>
+        <button data-v="rule out neonatal sepsis" style="flex:0 1 auto">R/O sepsis</button>
+        <button data-v="neonatal jaundice" style="flex:0 1 auto">Jaundice</button>
+        <button data-v="neonatal hypoglycemia" style="flex:0 1 auto">Hypoglycemia</button>
+        <button data-v="transient tachypnea of the newborn (TTN)" style="flex:0 1 auto">TTN</button>
+        <button data-v="meconium aspiration syndrome" style="flex:0 1 auto">MAS</button>
+      </div>
+      <input class="tin" id="tentDx" placeholder="respiratory distress"></div>
     <div class="field"><span class="lab">母病歷號</span><input class="tin" id="chartNo" placeholder="00000000"></div>
   </section>
   </div><!-- /admSections -->
@@ -652,7 +684,7 @@
       <button class="copy" id="regen" hidden>↺ 重新產生</button>
       <button class="copy" id="copy">複製</button></span></div>
   <div class="dock-body">
-    <p class="note" id="note" contenteditable="true" spellcheck="false"></p>
+    <p class="note" id="note" contenteditable="true" spellcheck="false" autocapitalize="off" autocorrect="off"></p>
     <div class="dx" id="dx"></div>
   </div>
 </div>
@@ -686,10 +718,10 @@
   const S={gender:"male",growth:"AGA",growthAuto:true,delivery:"cs",r:{},
            scr:{hbsag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
            resus:"none",resp:"roomair",surfactant:false,
-           amnio:"none",mgso4:"none",toco:"none",iap:"none",
+           amnio:"none",mgso4:"none",toco:"none",iap:"none",us:"normal",
            fd:false,doic:false,msaf:false,outborn:false,obResp:false,
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
-           mode:"adm",planAbx:"empirical",planCsf:false,noteDirty:false,
+           mode:"adm",planAbx:"empirical",planAbxAuto:true,planCsf:false,noteDirty:false,
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
            procOpt:{alineSide:"right",alineArtery:"radial",uacPos:"high",chestSide:"right",chestType:"pigtail",chestICS:"4th",lpCompl:"nil"},
            acc:{resp:[],abx:[],line:[],vac:[],rop:"notyet",aabr:"notyet",nbs:"notyet",respDates:{},lineDates:{}},
@@ -788,8 +820,12 @@
     const po=b.closest("[data-po]"); if(po){const k=po.dataset.po; S.procOpt[k]=b.dataset.v;
       po.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===b.dataset.v?"true":"false")); render(); return;}
     if(b.classList.contains("scr-btn")){const k=b.closest(".scr-row").dataset.scr,o=["neg","pos","unk"],
-      n=o[(o.indexOf(b.dataset.state)+1)%3]; b.dataset.state=n; b.textContent=SCRTXT[n]; S.scr[k]=n; render(); return;}
-    const fill=b.closest("[data-fill]"); if(fill){const inp=document.getElementById(fill.dataset.fill); if(inp){inp.value=b.dataset.v; render();} return;}
+      n=o[(o.indexOf(b.dataset.state)+1)%3]; b.dataset.state=n; b.textContent=SCRTXT[n]; S.scr[k]=n;
+      if(k==="gbs"&&n==="pos"){S.iap="complete"; document.querySelectorAll('[data-seg="iap"] button').forEach(x=>x.setAttribute("aria-pressed",x.dataset.v==="complete"?"true":"false"));}  // GBS 陽 → IAP 預設完整
+      render(); return;}
+    const fill=b.closest("[data-fill]"); if(fill){const inp=document.getElementById(fill.dataset.fill); if(inp){inp.value=b.dataset.v;
+      if(/fetal distress/i.test(b.dataset.v)){S.fd=true; const fdb=document.querySelector('[data-tog="fd"] button'); if(fdb)fdb.setAttribute("aria-pressed","true");}  // C/S/入院原因命中→自動勾出生事件 fetal distress(可再取消)
+      render();} return;}
     const tog=b.closest("[data-tog]"); if(tog){const k=tog.dataset.tog; S[k]=!S[k];
       b.setAttribute("aria-pressed",S[k]?"true":"false");
       if(k==="doic"){const w=document.getElementById("doicMinWrap"); if(w)w.hidden=!S.doic;}
@@ -806,17 +842,21 @@
   });
   document.addEventListener("input",e=>{
     const d=e.target.dataset; if(d&&d.dkey&&S.acc[d.dkey+"Dates"])S.acc[d.dkey+"Dates"][d.ditem]=e.target.value;
+    if(e.target.id==="procOperator"){try{localStorage.setItem("nicu_operator",e.target.value);}catch(_){}}
     if(e.target.matches("input,textarea"))render();
   });
   document.addEventListener("change",e=>{
     if(e.target.id==="gaD"){let v=parseInt(e.target.value); if(isNaN(v))v=0; e.target.value=String(Math.max(0,Math.min(6,v))); render();}
     if(e.target.matches("select"))render();
   });
+  // C2 手機:數字欄 focus 時整段反白，直接覆蓋不必先刪
+  document.addEventListener("focusin",e=>{if(e.target.matches('input[type="number"]'))setTimeout(()=>{try{e.target.select();}catch(_){}} ,0);});
 
   function segPick(seg,b,key,cb){
     seg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));
     b.setAttribute("aria-pressed","true"); if(key)S[key]=b.dataset.v;
     if(key==="growth")S.growthAuto=false;   // 手動改 → 關自動（顯示「↻回自動」）
+    if(key==="planAbx")S.planAbxAuto=false;  // 手動選抗生素 → 關自動
     if(cb)cb(); render();
   }
   function r3pick(r3,b){
@@ -874,7 +914,8 @@
   function renderAdm(){
     const sl=t=>`<span class="slot">${t}</span>`;
     const ph=t=>`<span class="ph">${t}</span>`;                       // 未填空格（灰）
-    const inV=id=>{const el=document.getElementById(id); return el&&el.value.trim()?el.value.trim():"";};
+    const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+    const inV=id=>{const el=document.getElementById(id); const v=el&&el.value.trim()?el.value.trim():""; return v?esc(v):"";};  // 自由文字一律 escape
     const gw=parseInt(V("gaW")||"0",10), gd=V("gaD")||"0";
     const gaTxt=(gw||"__")+(gd&&gd!=="0"?`+${gd}`:"")+" weeks";
     const sex={male:"male",female:"female"}[S.gender];
@@ -888,6 +929,7 @@
     const P1=[], P2=[];
 
     const csw=document.getElementById("csReasonWrap"); if(csw)csw.hidden=(S.delivery!=="cs");
+    const usf=document.getElementById("usFindings"); if(usf)usf.hidden=(S.us!=="abnormal");
     const obw=document.getElementById("outbornWrap"); if(obw)obw.hidden=!S.outborn;
     const obrw=document.getElementById("obRespWrap"); if(obrw)obrw.hidden=!S.obResp;
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
@@ -898,10 +940,14 @@
       +`at GA ${sl(gaTxt)} with birth weight (BW) ${sl(bw)} gm (${sl(S.growth)}) in ${birthPlace} via ${sl(via)}`;
     if(S.delivery==="cs") s1+=` due to ${csR?sl(csR):ph("____")}`;
     P1.push(s1+".");
-    const edc=inV("edc");
+    let edc=inV("edc");
+    if(!edc&&gw){const rem=280-(gw*7+parseInt(gd||"0",10)); const d=new Date(); d.setDate(d.getDate()+rem);
+      edc=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}   // 空白→由 GA 反推
     P1.push(`The expected date of confinement was ${edc?sl(fmtDate(edc)):ph("____")}.`);
     const anc=inV("ancPlace")||"TPEMMH", isMMH=/MMH/.test(anc);
-    P1.push(`The mother received regular antepartum examinations in ${sl(anc+(isMMH?"":" OBGYN clinic"))}, and prenatal ultrasound and level II ultrasound revealed normal results.`);
+    const usFind=inV("usFindings");
+    const usTxt = S.us==="abnormal" ? (usFind?`revealed ${sl(usFind)}`:`revealed abnormal findings`) : `revealed normal results`;
+    P1.push(`The mother received regular antepartum examinations in ${sl(anc+(isMMH?"":" OBGYN clinic"))}, and prenatal ultrasound and level II ultrasound ${usTxt}.`);
     P1.push(S.amnio==="normal"
       ? `Amniocentesis with array comparative genomic hybridization (aCGH) was normal.`
       : `Amniocentesis with array comparative genomic hybridization (aCGH) was not performed.`);
@@ -944,13 +990,19 @@
     habSet.forEach(([k,label])=>{(S.habit[k]?habPos:habNeg).push(label);});
     if(habPos.length)P1.push(`The mother had a history of ${sl(joinAnd(habPos))} during pregnancy.`);
     if(habNeg.length)P1.push(`The mother denied ${sl(joinOr(habNeg))} during pregnancy.`);
-    // 血清學：RPR(syphilis) / HBsAg+HBeAg / HIV
-    const serPos=[];
-    if(S.scr.syphilis==="pos")serPos.push("rapid plasma reagin (RPR)");
-    if(S.scr.hbsag==="pos")serPos.push("hepatitis B surface antigen (HBsAg) and hepatitis B e antigen (HBeAg)");
-    if(S.scr.hiv==="pos")serPos.push("human immunodeficiency virus (HIV)");
-    if(serPos.length===0) P1.push(`The results of rapid plasma reagin (RPR), hepatitis B surface antigen (HBsAg), hepatitis B e antigen (HBeAg), and human immunodeficiency virus (HIV) were all negative.`);
-    else P1.push(`${sl(joinAnd(serPos))} ${serPos.length>1||/and/.test(serPos[0])?"were":"was"} positive.`);
+    // 血清學：RPR / HBsAg(+HBeAg) / HIV — pos 個別列、neg 群組、unk(未驗)不當陰性
+    const serTests=[
+      {k:"syphilis",name:"rapid plasma reagin (RPR)"},
+      {k:"hbsag",name:"hepatitis B surface antigen (HBsAg) and hepatitis B e antigen (HBeAg)",negName:"hepatitis B surface antigen (HBsAg)"},
+      {k:"hiv",name:"human immunodeficiency virus (HIV)"}];
+    const serPos=[],serNeg=[],serUnk=[];
+    serTests.forEach(t=>{const v=S.scr[t.k], nm=t.negName||t.name;
+      if(v==="pos")serPos.push(t.name); else if(v==="unk")serUnk.push(nm); else serNeg.push(nm);});
+    const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+    if(serNeg.length)P1.push(`The result${serNeg.length>1?"s":""} of ${sl(joinAnd(serNeg))} ${serNeg.length>1?"were":"was"} negative.`);
+    if(serPos.length)P1.push(`${sl(cap(joinAnd(serPos)))} ${serPos.length>1||/ and /.test(serPos[0])?"were":"was"} positive.`);
+    if(serUnk.length)P1.push(`${sl(cap(joinAnd(serUnk)))} ${serUnk.length>1?"were":"was"} not tested.`);
+    if(S.scr.rubella==="pos")P1.push(`Maternal rubella IgM was positive.`);
 
     // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar + 入院 ──
     if(S.outborn){
@@ -1008,7 +1060,9 @@
                     : S.iap==="incomplete" ? "without complete intrapartum antibiotic prophylaxis (IAP)"
                     : "with or without complete intrapartum antibiotic prophylaxis (IAP)";
     const DX=[];
-    DX.push(gw&&gw<37
+    DX.push(!gw
+      ? {s:"Newborn",     f:`Newborn, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`}
+      : gw<37
       ? {s:"Prematurity", f:`Prematurity, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`}
       : {s:"Term baby",   f:`Term baby, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`});
     if(respSick)DX.push({s:"Respiratory distress",f:"Respiratory distress"});
@@ -1059,7 +1113,13 @@
     const surfDrug=S.hc.surfDrug==="curosurf"?"Curosurf":"Survanta", surfDose=S.hc.surfDrug==="curosurf"?"2.5 ml/kg":"4 ml/kg";
     ["aline","lisa","uac","uvc","chest","lp","bet"].forEach(k=>{const el=document.getElementById("opt_"+k); if(el)el.hidden=!S.proc[k];});
     const iv=id=>{const el=document.getElementById(id); return el&&el.value.trim()?el.value.trim():"____";};
-    const lisaTime=iv("lisaTimeIn"), uacDepth=iv("uacDepthIn"), uvcDepth=iv("uvcDepthIn"), lpVol=iv("lpVolIn"), betType=iv("betTypeIn");
+    const rw=id=>{const el=document.getElementById(id); return el&&el.value.trim()?el.value.trim():"";};
+    const lisaTime=iv("lisaTimeIn"), lpVol=iv("lpVolIn"), betType=iv("betTypeIn");
+    // UAC/UVC 深度：空白時用依 BW 自動算的值(可覆寫);placeholder 顯示自動值
+    const uacCalc=bwN?(S.procOpt.uacPos==="low"?(bwKg+7).toFixed(1):(bwKg*3+9).toFixed(1)):"", uvcCalc=bwN?(bwKg*1.5+5.5).toFixed(1):"";
+    const uacIn=document.getElementById("uacDepthIn"); if(uacIn)uacIn.placeholder=uacCalc?`自動 ${uacCalc}（可改）`:"cm";
+    const uvcIn=document.getElementById("uvcDepthIn"); if(uvcIn)uvcIn.placeholder=uvcCalc?`自動 ${uvcCalc}（可改）`:"cm";
+    const uacDepth=rw("uacDepthIn")||uacCalc||"____", uvcDepth=rw("uvcDepthIn")||uvcCalc||"____";
     const O=S.procOpt;
     const alineSite=O.alineArtery==="radial"?"wrist":"elbow";
     const chestName=O.chestType==="chest"?"chest tube":"pigtail";
@@ -1371,9 +1431,12 @@ ${opLine}`);
     if(rmode)T.push(`Respiratory support with ${rmode}`);
     if(S.hc.surf){const drug=S.hc.surfDrug==="curosurf"?"Curosurf (1.25 or 2.5 cc/kg)":"Survanta (4 ml/kg)"; const route=S.hc.surfRoute==="lisa"?"LISA procedure":"endotracheal tube"; T.push(`${drug} via ${route}`);}
     if(respSupport)T.push("OG decompression");
+    // 自動：有感染風險→Empirical、否則→none（不自動替健康兒開藥）；手動選過則尊重
+    const abxKey = S.planAbxAuto ? (infRisk?"empirical":"none") : S.planAbx;
+    document.querySelectorAll('[data-seg="planAbx"] button').forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===abxKey?"true":"false"));
     const abxLine={empirical:"Empirical antibiotics with Ampicillin (100 mg/kg/day) and Gentamicin (4 mg/kg/dose QD)",
       sepsis:"Antibiotic treatment with Ampicillin (200 mg/kg/day, Q12H) and Cefotaxime (50 mg/kg/dose Q12H) - sepsis dose",
-      meningitic:"Antibiotic treatment with Ampicillin (300 mg/kg/day, Q8H) and Cefotaxime (100 mg/kg/dose Q12H) - meningitic dose"}[S.planAbx];
+      meningitic:"Antibiotic treatment with Ampicillin (300 mg/kg/day, Q8H) and Cefotaxime (100 mg/kg/dose Q12H) - meningitic dose"}[abxKey];
     if(abxLine)T.push(abxLine);
     if(preterm||veryPreterm||invasive)T.push("Advance nutritional support with parenteral nutrition (PN)");
     T.push("Early enteral trophic feeding with breast milk, if general condition becomes stable");
@@ -1413,7 +1476,7 @@ ${opLine}`);
     const via=S.delivery==="cs"?"C/S":"VD";
     const admitTo=inV("accAdmitTo")||"our NICU";
     const admReason=inV("admReason");
-    const birthTime=inV("accBirthTime"), birthPlace=inV("accBirthPlace")||"TPEMMH";
+    const birthTime=inV("accBirthTime"), birthPlace=S.outborn?(inV("obFacility")||inV("ancPlace")||"____"):"TPEMMH";  // 繼承 admission 出生地
     const respMap={roomair:"room air",nc:"nasal cannula",hfnc:"high-flow nasal cannula",ncpap:"nCPAP",nippv:"NIPPV",vent:"mechanical ventilation"};
     const respLine=inV("accResp")||respMap[S.resp]||"";
     const periAuto=[]; if(S.r.gdm.on)periAuto.push("GDM"); if(S.r.pih.on)periAuto.push("PIH");
@@ -1482,11 +1545,14 @@ ${opLine}`);
     L.push("");
     L.push("【Vaccination】");
     const bwN=parseInt(V("bw")||"0",10), vacDate=inV("accVacDate"), vacPfx=vacDate?sl(esc(vacDate))+": ":"";
+    const hbig=S.scr.hbsag==="pos";   // HBsAg 陽性母 → HBIG(12h 內、不受體重限制)
     let vacLine;
     if(S.acc.vac.length)vacLine=vacPfx+sl(S.acc.vac.join(", "));
-    else if(bwN>2200)vacLine=vacPfx+sl("HBV-1")+"（BW &gt; 2200 g）";
-    else if(bwN)vacLine=sl(`HBV-1 deferred until body weight exceeds 2200 g`)+`（目前 ${bwN} g）`;
-    else vacLine=ph("——");
+    else if(!bwN)vacLine=ph("——");
+    else if(bwN>2200)vacLine=vacPfx+sl(hbig?"HBIG + HBV-1":"HBV-1")+"（BW &gt; 2200 g）";
+    else vacLine=hbig
+      ? vacPfx+sl("HBIG")+`；${sl("HBV-1 deferred until body weight exceeds 2200 g")}（目前 ${bwN} g）`
+      : sl("HBV-1 deferred until body weight exceeds 2200 g")+`（目前 ${bwN} g）`;
     L.push(vacLine);
     L.push("");
     L.push("【Nutrition】"); L.push(fv("accNutrition"));
@@ -1510,6 +1576,7 @@ ${opLine}`);
   document.querySelector('[data-seg="gender"] [data-v="male"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="growth"] [data-v="AGA"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="delivery"] [data-v="cs"]').setAttribute("aria-pressed","true");
+  document.querySelector('[data-seg="us"] [data-v="normal"]').setAttribute("aria-pressed","true");
   document.querySelectorAll('[data-ryn]').forEach(y=>y.querySelector('[data-v="no"]').setAttribute("aria-pressed","true"));
   document.querySelectorAll('[data-par]').forEach(p=>p.querySelector('[data-v="none"]').setAttribute("aria-pressed","true"));
   document.querySelector('[data-seg="thyType"] [data-v="hyper"]').setAttribute("aria-pressed","true");
@@ -1520,6 +1587,9 @@ ${opLine}`);
   // 醫院清單集中一處（要加醫院改這裡即可），三個下拉共用；出生院所/轉入來源第一項為「自動繼承」
   const HOSPITALS=["TPEMMH","TSMMH","桃園秉坤","中壢秉坤","三重蕙心","民權禾馨","李木生","周天給","四季和安"];
   const hospOpts=HOSPITALS.map(h=>`<option value="${h}">${h}</option>`).join("");
+  // C1 手機:整數欄用大 10 鍵盤、小數欄用小數鍵盤
+  document.querySelectorAll('input[type="number"]').forEach(i=>{const st=parseFloat(i.step); i.setAttribute("inputmode",(!isNaN(st)&&st<1)?"decimal":"numeric");});
+  try{const op=localStorage.getItem("nicu_operator"); if(op)document.getElementById("procOperator").value=op;}catch(_){}  // 記住上次操作醫師
   document.getElementById("ancPlace").innerHTML=hospOpts;
   document.getElementById("obFacility").innerHTML=`<option value="">同產檢地點（自動）</option>`+hospOpts;
   document.getElementById("obTransferFrom").innerHTML=`<option value="">同出生院所（自動）</option>`+hospOpts;
