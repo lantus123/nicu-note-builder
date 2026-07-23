@@ -248,6 +248,9 @@
       </div>
       <input class="tin" id="csReason" placeholder="或自行輸入…"></div>
     <div class="field">
+      <span class="lab">出生日期時間 <span class="q">（選填 · 空白則不顯示）</span></span>
+      <input class="tin" type="datetime-local" id="birthDT"></div>
+    <div class="field">
       <span class="lab">出生地 <span class="q">（院外出生轉入才開）</span></span>
       <div class="seg risk" data-tog="outborn"><button data-v="1" data-on style="flex:0 1 auto">外接 Outborn</button></div>
     </div>
@@ -862,8 +865,8 @@
      opts:[["diet","Diet control"],["oha","OHA"],["insulin","Insulin"]]},
     {k:"pih",name:"PIH",desc:"妊娠高血壓",type:"flag"},
     {k:"pre",name:"Preeclampsia",desc:"子癇前症",type:"choice",
-     opts:[["mild","輕度 Mild"],["severe","重度 Severe"]],
-     extra:{label:"用藥（MgSO₄ 請在下方「產程用藥」選）",multi:true,opts:[["asa","Aspirin"]]}},
+     opts:[["highrisk","高風險·aspirin 預防"],["mild","確診·輕度"],["severe","確診·重度"]],
+     extra:{label:"用藥（MgSO₄ 請在下方「產程用藥」選；高風險預防免勾，自動視為 aspirin）",multi:true,opts:[["asa","Aspirin"]]}},
     {k:"aph",name:"APH",desc:"產前出血",type:"flag"},
     {k:"pph",name:"PPH",desc:"產後出血",type:"flag"},
     {k:"uri",name:"URI symptoms",desc:"上呼吸道感染症狀",type:"flag"},
@@ -1118,7 +1121,9 @@
     const via = S.delivery==="cs" ? "Cesarean section (C/S)" : "vaginal delivery (VD)";
     const obFac = inV("obFacility")||inV("ancPlace");   // 出生院所空 → 繼承產檢地點
     const birthPlace = S.outborn ? (obFac?sl(obFac):ph("____")) : sl("TPEMMH");
-    let s1=`This ${sl("1-day-old")} ${sl(sex)} newborn was born to a G${sl(G)}P${sl(P)}, ${matAge?sl(matAge):ph("__")} y/o mother `
+    const bdt=inV("birthDT"); let bornWhen="";
+    if(bdt){const [bd,bt]=bdt.split("T"); const ds=fmtDate(bd); if(ds)bornWhen=(bt?`at ${bt} `:``)+`on ${ds}`;}
+    let s1=`This ${sl("1-day-old")} ${sl(sex)} newborn was born ${bornWhen?sl(bornWhen)+" ":""}to a G${sl(G)}P${sl(P)}, ${matAge?sl(matAge):ph("__")} y/o mother `
       +`at GA ${sl(gaTxt)} with birth weight (BW) ${sl(bw)} gm (${sl(S.growth)}) in ${birthPlace} via ${sl(via)}`;
     if(S.delivery==="cs") s1+=` due to ${csR?sl(csR):ph("____")}`;
     P1.push(s1+".");
@@ -1153,6 +1158,7 @@
                     ["fever","maternal fever"]];
     const cPos=[], cNeg=[];
     complSet.forEach(([k,label])=>{
+      if(k==="pre"&&S.r.pre.on&&S.r.pre.val==="highrisk") return;  // 高風險預防→獨立句,不進「(not) complicated by preeclampsia」
       if(S.r[k]&&S.r[k].on){
         if(k==="gdm"){const g="gestational diabetes mellitus (GDM)"; const v=S.r.gdm.val;
           cPos.push(v==="diet"?`diet-controlled ${g}`:v==="oha"?`${g} on oral hypoglycemic agents`:v==="insulin"?`${g} on insulin`:g);}
@@ -1162,6 +1168,7 @@
     });
     if(cPos.length) P1.push(`The pregnancy was complicated by ${sl(joinAnd(cPos))}.`);
     if(cNeg.length) P1.push(`The pregnancy was not complicated by ${sl(joinOr(cNeg))}.`);
+    if(S.r.pre.on&&S.r.pre.val==="highrisk") P1.push(`The mother was at high risk for preeclampsia, and low-dose aspirin was administered for prophylaxis.`);
 
     P1.push(`Maternal group B streptococcus (GBS) culture was ${sl({neg:"negative",pos:"positive",unk:"pending"}[S.scr.gbs])}.`);
     // 雙親病史：thalassemia / G6PD deficiency / thyroid disease（無/母/父/雙親）
@@ -1263,7 +1270,7 @@
         : {s:"PROM", f:`Premature rupture of membranes (PROM) for ${h} hours${parseInt(h)>18?" (prolonged, >18 hours)":""}`});}
     if(S.r.gdm.on)DX.push({s:"IDM",f:"Infant of diabetic mother (IDM)"});
     if(S.r.pih.on)DX.push({s:"Maternal PIH",f:"Maternal pregnancy induced hypertension (PIH)"});
-    if(S.r.pre.on)DX.push({s:"Maternal preeclampsia",f:"Maternal preeclampsia"});
+    if(S.r.pre.on&&S.r.pre.val!=="highrisk")DX.push({s:"Maternal preeclampsia",f:"Maternal preeclampsia"});
     if(S.scr.gbs==="pos")DX.push({s:"GBS colonization",f:`Maternal GBS colonization ${iapPhrase}`});
     if(S.scr.gbs==="unk")DX.push({s:"GBS unknown",f:`Maternal GBS unknown status ${iapPhrase}`});
 
@@ -1692,7 +1699,7 @@ ${opLine}`);
     const respMap={roomair:"room air",nc:"nasal cannula",hfnc:"high-flow nasal cannula",ncpap:"nCPAP",nippv:"NIPPV",vent:"mechanical ventilation"};
     const respLine=inV("accResp")||(S.resp&&S.resp!=="roomair"?respMap[S.resp]:"")||(S.acc.resp.length?S.acc.resp[0]:"")||"room air";  // §A空則用§D第一項
     const periAuto=[]; if(S.r.gdm.on)periAuto.push("GDM"); if(S.r.pih.on)periAuto.push("PIH");
-    if(S.r.pre.on)periAuto.push("preeclampsia"); if(S.r.steroid.on)periAuto.push("antenatal steroid");
+    if(S.r.pre.on)periAuto.push(S.r.pre.val==="highrisk"?"preeclampsia high risk (on aspirin)":"preeclampsia"); if(S.r.steroid.on)periAuto.push("antenatal steroid");
     const perinatal=inV("accPerinatal")||(periAuto.length?periAuto.join(", "):"none");
     const infAuto=[];
     if(S.scr.gbs==="pos")infAuto.push("maternal GBS colonization");
