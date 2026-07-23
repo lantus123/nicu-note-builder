@@ -1144,16 +1144,16 @@
     P1.push(`The mother received regular antepartum examinations in ${sl(anc+(isMMH?"":" OBGYN clinic"))}, and prenatal ultrasound and level II ultrasound ${usTxt}.`);
     const acghF=inV("acghFindings");
     P1.push(S.amnio==="normal"
-      ? `Amniocentesis with array comparative genomic hybridization (aCGH) was normal.`
+      ? `Amniocentesis with array comparative genomic hybridization (aCGH) was ${sl("normal")}.`
       : S.amnio==="abnormal"
       ? `Amniocentesis with array comparative genomic hybridization (aCGH) revealed ${acghF?sl(acghF):ph("____")}.`
-      : `Amniocentesis with array comparative genomic hybridization (aCGH) was not performed.`);
+      : `Amniocentesis with array comparative genomic hybridization (aCGH) was ${sl("not performed")}.`);
     const niptF=inV("niptFind");
     P1.push(S.nipt==="low"
-      ? `Non-invasive prenatal testing (NIPT) revealed low risk for common trisomies (trisomy 21, 18, and 13).`
+      ? `Non-invasive prenatal testing (NIPT) revealed ${sl("low risk for common trisomies (trisomy 21, 18, and 13)")}.`
       : S.nipt==="high"
-      ? `Non-invasive prenatal testing (NIPT) revealed high risk for ${niptF?sl(niptF):ph("____")}.`
-      : `Non-invasive prenatal testing (NIPT) was not performed.`);
+      ? `Non-invasive prenatal testing (NIPT) revealed ${sl("high risk for")} ${niptF?sl(niptF):ph("____")}.`
+      : `Non-invasive prenatal testing (NIPT) was ${sl("not performed")}.`);
 
     // 妊娠併發症（GDM/APH/PIH/preeclampsia）：陽性拉出 + 其餘否定
     // 母親病史順序：GDM, PIH, preeclampsia, APH, PPH, URI symptoms, Fever
@@ -1175,7 +1175,7 @@
     });
     if(cPos.length) P1.push(`The pregnancy was complicated by ${sl(joinAnd(cPos))}.`);
     if(cNeg.length) P1.push(`The pregnancy was not complicated by ${sl(joinOr(cNeg))}.`);
-    if(S.r.pre.on&&S.r.pre.val==="highrisk") P1.push(`The mother was at high risk for preeclampsia, and low-dose aspirin was administered for prophylaxis.`);
+    if(S.r.pre.on&&S.r.pre.val==="highrisk") P1.push(`The mother was at ${sl("high risk for preeclampsia")}, and ${sl("low-dose aspirin was administered for prophylaxis")}.`);
 
     P1.push(`Maternal group B streptococcus (GBS) culture was ${sl({neg:"negative",pos:"positive",unk:"pending"}[S.scr.gbs])}.`);
     // 雙親病史：thalassemia / G6PD deficiency / thyroid disease（無/母/父/雙親）
