@@ -1137,7 +1137,7 @@
     P1.push(`The expected date of confinement was ${edc?sl(fmtDate(edc)):ph("____")}.`);
     const anc=inV("ancPlace")||"TPEMMH", isMMH=/MMH/.test(anc);
     const usFind=inV("usFindings");
-    const usTxt = S.us==="abnormal" ? (usFind?`revealed ${sl(usFind)}`:`revealed abnormal findings`) : `revealed normal results`;
+    const usTxt = S.us==="abnormal" ? (usFind?`revealed ${sl(usFind)}`:`revealed ${sl("abnormal findings")}`) : `revealed ${sl("normal results")}`;
     P1.push(`The mother received regular antepartum examinations in ${sl(anc+(isMMH?"":" OBGYN clinic"))}, and prenatal ultrasound and level II ultrasound ${usTxt}.`);
     const acghF=inV("acghFindings");
     P1.push(S.amnio==="normal"
@@ -1155,7 +1155,7 @@
     // 妊娠併發症（GDM/APH/PIH/preeclampsia）：陽性拉出 + 其餘否定
     // 母親病史順序：GDM, PIH, preeclampsia, APH, PPH, URI symptoms, Fever
     // URI 拆成獨立句(避免 was/were 與「複雜化」語意問題)
-    if(S.r.uri&&S.r.uri.on)P1.push(`The mother had upper respiratory tract infection (URI) symptoms during pregnancy.`);
+    if(S.r.uri&&S.r.uri.on)P1.push(`The mother had ${sl("upper respiratory tract infection (URI) symptoms")} during pregnancy.`);
     // 併發症:GDM/PIH/preeclampsia/APH/PPH/fever → 「The pregnancy was (not) complicated by …」
     const complSet=[["gdm","gestational diabetes mellitus (GDM)"],["pih","pregnancy-induced hypertension (PIH)"],
                     ["pre","preeclampsia"],["aph","antepartum haemorrhage (APH)"],["pph","postpartum haemorrhage (PPH)"],
@@ -1206,9 +1206,9 @@
     if(serPos.length)P1.push(`${sl(cap(joinAnd(serPos)))} ${serPos.length>1||/ and /.test(serPos[0])?"were":"was"} positive.`);
     if(serUnk.length)P1.push(`${sl(cap(joinAnd(serUnk)))} ${serUnk.length>1?"were":"was"} not tested.`);
     if(S.scr.hbsag==="pos"){const he=S.scr.hbeag;   // HBsAg+ 才報 HBeAg(常見 HBsAg+/HBeAg−)
-      if(he==="pos")P1.push(`Hepatitis B e antigen (HBeAg) was also positive.`);
-      else if(he==="neg")P1.push(`Hepatitis B e antigen (HBeAg) was negative.`);}
-    if(S.scr.rubella==="pos")P1.push(`Maternal rubella IgM was positive.`);
+      if(he==="pos")P1.push(`Hepatitis B e antigen (HBeAg) was also ${sl("positive")}.`);
+      else if(he==="neg")P1.push(`Hepatitis B e antigen (HBeAg) was ${sl("negative")}.`);}
+    if(S.scr.rubella==="pos")P1.push(`Maternal rubella IgM was ${sl("positive")}.`);
 
     // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar +（外接轉入過程）+ 入院 ──
     if(!S.outborn) P2.push(`The mother was admitted to our hospital due to ${admR?sl(admR):ph("____")}.`);  // 外接的轉入過程移到 Apgar 之後(正確時序)
@@ -1216,11 +1216,11 @@
       P2.push(`${sl(drug)} was administered${is?` since ${sl(is)}`:""}, ${S.iap==="complete"?"and":"but"} intrapartum antibiotic prophylaxis (IAP) was ${sl(S.iap==="complete"?"complete":"incomplete")}.`);}
     const st=S.r.steroid;
     if(st.on){const sd=inV("steroidDates");
-      P2.push(`Antenatal Betamethasone (${sl((st.val||"?")+" dose"+(st.val==="1"?"":"s"))}${st.extra.includes("incomplete")?", incomplete course":""}) was used to accelerate fetal lung maturation${sd?` on ${sl(sd)}`:""}.`);}
+      P2.push(`Antenatal Betamethasone (${sl((st.val||"?")+" dose"+(st.val==="1"?"":"s"))}${st.extra.includes("incomplete")?", "+sl("incomplete course"):""}) was used to accelerate fetal lung maturation${sd?` on ${sl(sd)}`:""}.`);}
     if(S.mgso4!=="none") P2.push(`MgSO4 was added for ${sl(S.mgso4==="neuro"?"fetal neuroprotection":"seizure prophylaxis")}.`);
     if(S.toco!=="none"){const ts=inV("tocoSince");
       P2.push(`Antiabortifacient with ${sl(S.toco==="ritodrine"?"Ritodrine":"Atosiban")} was used for tocolysis${ts?` since ${sl(ts)}`:""}.`);}
-    if(S.delivery==="cs") P2.push(`The cesarean delivery was uncomplicated.`);   // 原因已於 para1 說明，不重複
+    if(S.delivery==="cs") P2.push(`The cesarean delivery was ${sl("uncomplicated")}.`);   // 原因已於 para1 說明，不重複
     // 出生事件（PROM 從 S.r.prom；其餘否定）
     const pr=S.r.prom;
     if(pr.on){const t={prom:"premature rupture of membranes (PROM)",pprom:"preterm premature rupture of membranes (PPROM)"}[pr.val]||"rupture of membranes"; const hr=V("promH"); P2.push(`${sl(t.charAt(0).toUpperCase()+t.slice(1))}${hr?` for ${sl(hr+" hours")}`:""} was noted before delivery.`);}
@@ -1241,17 +1241,17 @@
       if(lvl>=1){
         const fio2=inV("ppvFiO2"), ip=inV("ppvIP"), peep=inV("ppvPEEP"), pset=[];
         if(fio2)pset.push(`FiO2 ${fio2}%`); if(ip||peep)pset.push(`IP/PEEP ${ip||"__"}/${peep||"__"} cmH2O`);
-        P2.push(`After birth, positive-pressure ventilation with Neopuff${pset.length?` (${sl(pset.join(", "))})`:""} was given.`);
+        P2.push(`After birth, ${sl("positive-pressure ventilation with Neopuff")}${pset.length?` (${sl(pset.join(", "))})`:""} was given.`);
         if(lvl>=2){
           const efio2=inV("ettFiO2"), eip=inV("ettIP"), epeep=inV("ettPEEP"), err=inV("ettRR"), eset=[];
           if(efio2)eset.push(`FiO2 ${efio2}%`); if(eip||epeep)eset.push(`IP/PEEP ${eip||"__"}/${epeep||"__"} cmH2O`); if(err)eset.push(`rate ${err}/min`);
-          P2.push(`Endotracheal intubation was performed${eset.length?`, with ventilator settings of ${sl(eset.join(", "))}`:""}.`);
+          P2.push(`${sl("Endotracheal intubation")} was performed${eset.length?`, with ventilator settings of ${sl(eset.join(", "))}`:""}.`);
         }
-        if(lvl>=3)P2.push(`Cardiopulmonary resuscitation was initiated, and epinephrine (1:10000) was administered via the endotracheal tube.`);
+        if(lvl>=3)P2.push(`${sl("Cardiopulmonary resuscitation")} was initiated, and ${sl("epinephrine (1:10000)")} was administered via the endotracheal tube.`);
       }else{
         P2.push(`After birth, there was shortness of breath, so free oxygen was administered via ${sl("face mask")} for ${ph("__")} minutes following delivery.`);
       }
-      if(S.surfactant)P2.push(`Surfactant was administered.`);
+      if(S.surfactant)P2.push(`${sl("Surfactant")} was administered.`);
     }
     P2.push(`The baby's Apgar score was ${sl(ap1)} and ${sl(ap5)} at 1 and 5 minutes, respectively.`);
     // ── 暫定診斷問題清單（自動生成；短標籤給 chip、完整句給 note 的 # 清單）──
@@ -1281,9 +1281,9 @@
     if(S.outborn){   // 外接臨床過程：出生後 → 出現窘迫 →（補充）→ 呼吸支持 → 轉入(正確時序,置於 Apgar 之後)
       const src=inV("obTransferFrom")||obFac, reason=inV("obReason"), obCourse=inV("obCourse");
       P2.push(`After birth, the infant developed ${reason?sl(reason):sl("respiratory distress")}.`);
-      if(obCourse)P2.push(obCourse);
+      if(obCourse)P2.push(sl(obCourse));
       if(S.obResp){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP");
-        P2.push(`Neopuff positive-pressure ventilation (PPV) was provided for respiratory support with settings of FiO2 ${f?sl(f):ph("__")}%, PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O, and the heart rate and oxygen saturation remained stable.`);}
+        P2.push(`${sl("Neopuff positive-pressure ventilation (PPV)")} was provided for respiratory support with settings of FiO2 ${f?sl(f):ph("__")}%, PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O, and the heart rate and oxygen saturation remained stable.`);}
       P2.push(`The infant was then transferred from ${src?sl(src):ph("____")} to our hospital.`);
     }
     const obR=S.outborn?inV("obReason"):"";
@@ -1576,7 +1576,7 @@ ${opLine}`);
     }else if(firstMode){
       H.push(`After admission, respiratory support with ${sl(firstMode)} was initiated.`);
     }
-    if(hc.aline)H.push(`Arterial line placement was done for ABP monitoring and frequent phlebotomy.`);
+    if(hc.aline)H.push(sl(`Arterial line placement was done for ABP monitoring and frequent phlebotomy.`));
     // initial ABG：由貼上的血氣自動判酸鹼
     let acidNow="";
     if(gas&&gas.line){
@@ -1584,14 +1584,14 @@ ${opLine}`);
       const bits=[]; if(c.acid)bits.push(c.acid); c.o2.forEach(x=>bits.push(x));
       if(bits.length)H.push(`The initial arterial blood gas showed ${sl(joinAnd(bits))}.`);
     }
-    if(hc.bicarb)H.push(`Sodium bicarbonate was supplemented${/metabolic|mixed/.test(acidNow)?" for correction of the metabolic acidosis":""}.`);
+    if(hc.bicarb)H.push(`${sl("Sodium bicarbonate was supplemented")}${/metabolic|mixed/.test(acidNow)?" "+sl("for correction of the metabolic acidosis"):""}.`);
     if(hc.surf){
       const rMap={tachypnea:"persistent tachypnea",retraction:"subcostal retraction",o2:"an increasing oxygen requirement",desat:"desaturation"};
       const rs=hc.surfReason.map(x=>rMap[x]).filter(Boolean);
       const drug=hc.surfDrug==="curosurf"?"Curosurf":"Survanta";
       const route=hc.surfRoute==="lisa"?"via less invasive surfactant administration (LISA)":"via the endotracheal tube";
       H.push(`There was ${rs.length?sl(joinAnd(rs)):sl("respiratory distress")}${firstMode?` under ${sl(firstMode)}`:""}, so ${sl(drug)} was administered ${sl(route)}.`);
-      if(hc.improved)H.push(`The respiratory pattern improved significantly following ${sl(drug)} administration.`);
+      if(hc.improved)H.push(`${sl("The respiratory pattern improved significantly")} following ${sl(drug)} administration.`);
     }
     if(hc.cxrDx!=="none"&&CXR_MAP[hc.cxrDx]){
       const c=CXR_MAP[hc.cxrDx];
@@ -1600,7 +1600,7 @@ ${opLine}`);
     if(hc.workup){
       const iMap={none:"There was no evidence of leukocytosis or elevated CRP.",leuko:"Leukocytosis was noted.",
                   crp:"An elevated CRP level was noted.",both:"Both leukocytosis and an elevated CRP level were noted."};
-      H.push(iMap[hc.infMarkers]||iMap.none);
+      H.push(sl(iMap[hc.infMarkers]||iMap.none));
     }
     if(S.acc.abx.length){
       let s=`Empirical antibiotics, including ${sl(S.acc.abx.join(" / "))}, were started`;
@@ -1611,8 +1611,8 @@ ${opLine}`);
     }
     const culMap={pending:"Blood and GJ cultures were obtained and are still pending.",
                   nogrowth:"Blood and GJ cultures showed no growth.",positive:"Blood culture yielded a positive result."};
-    if(hc.cultures!=="none"&&culMap[hc.cultures])H.push(culMap[hc.cultures]);
-    if(hc.monitor)H.push(`We would keep monitoring the clinical condition and adjust management accordingly.`);
+    if(hc.cultures!=="none"&&culMap[hc.cultures])H.push(sl(culMap[hc.cultures]));
+    if(hc.monitor)H.push(sl(`We would keep monitoring the clinical condition and adjust management accordingly.`));
     return H;
   }
 
@@ -1767,8 +1767,8 @@ ${opLine}`);
     else if(!bwN)vacLine=ph("——");
     else if(bwN>2200)vacLine=vacPfx+sl(hbig?"HBIG + HBV-1":"HBV-1")+"（BW &gt; 2200 g）";
     else vacLine=hbig
-      ? vacPfx+sl("HBIG")+`；${sl("HBV-1 deferred until body weight exceeds 2200 g")}（目前 ${bwN} g）`
-      : sl("HBV-1 deferred until body weight exceeds 2200 g")+`（目前 ${bwN} g）`;
+      ? vacPfx+sl("HBIG")+`；${sl("HBV-1 deferred until body weight exceeds 2200 g")}（目前 ${sl(bwN)} g）`
+      : sl("HBV-1 deferred until body weight exceeds 2200 g")+`（目前 ${sl(bwN)} g）`;
     L.push(vacLine);
     L.push("");
     L.push("【Nutrition】"); L.push(fv("accNutrition"));
