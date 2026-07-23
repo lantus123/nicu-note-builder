@@ -867,9 +867,10 @@
     {k:"gdm",name:"GDM",desc:"妊娠糖尿病",type:"choice",
      opts:[["diet","Diet control"],["oha","OHA"],["insulin","Insulin"]]},
     {k:"pih",name:"PIH",desc:"妊娠高血壓",type:"flag"},
-    {k:"pre",name:"Preeclampsia",desc:"子癇前症",type:"choice",
-     opts:[["highrisk","高風險·aspirin 預防"],["mild","確診·輕度"],["severe","確診·重度"]],
-     extra:{label:"用藥（MgSO₄ 請在下方「產程用藥」選；高風險預防免勾，自動視為 aspirin）",multi:true,opts:[["asa","Aspirin"]]}},
+    {k:"pre",name:"Preeclampsia",desc:"子癇前症",type:"choice3",
+     opts:[["neg","無"],["highrisk","High risk"],["confirmed","有 確診"]],
+     childVals:["confirmed"],
+     extra:{label:"嚴重度（選填）",multi:false,opts:[["mild","輕度 Mild"],["severe","重度 Severe"]]}},
     {k:"aph",name:"APH",desc:"產前出血",type:"flag"},
     {k:"pph",name:"PPH",desc:"產後出血",type:"flag"},
     {k:"uri",name:"URI symptoms",desc:"上呼吸道感染症狀",type:"flag"},
@@ -942,9 +943,9 @@
     item.innerHTML=`<div class="risk-top"><div class="risk-name">${x.name}<small>${x.desc}</small></div>${ynHtml}</div>`
       + `<div class="child" data-child="${x.k}" hidden></div>`;
     host.appendChild(item);
-    if(x.type!=="choice3"){
+    {
       const c=item.querySelector(`[data-child="${x.k}"]`); let h="";
-      if(x.opts){h+=`<div><span class="lab">${x.k==="steroid"?"劑數":"處置"}</span><div class="seg" data-rc="${x.k}">${x.opts.map(o=>`<button data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`;}
+      if(x.opts&&x.type!=="choice3"){h+=`<div><span class="lab">${x.k==="steroid"?"劑數":"處置"}</span><div class="seg" data-rc="${x.k}">${x.opts.map(o=>`<button data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`;}
       if(x.num){h+=`<div><span class="lab">${x.num.label}</span><div class="num"><input type="number" id="${x.num.id}" value="${x.num.val}" min="0"><span class="u">${x.num.unit}</span></div></div>`;}
       if(x.text){h+=`<div><span class="lab">${x.text.label}</span><input class="tin" id="${x.text.id}" placeholder="${x.text.ph}"></div>`;}
       if(x.extra){h+=`<div>${x.extra.label?`<span class="lab">${x.extra.label}</span>`:""}<div class="seg" data-re="${x.k}" data-multi="${x.extra.multi}">${x.extra.opts.map(o=>`<button data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`;}
@@ -1040,7 +1041,10 @@
   function r3pick(r3,b){
     const k=r3.dataset.r3; r3.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));
     b.setAttribute("aria-pressed","true"); S.r[k].on=(b.dataset.v!=="neg"); S.r[k].val=b.dataset.v;
-    r3.closest(".risk-item").classList.toggle("active",b.dataset.v!=="neg"&&b.dataset.v!==undefined); render();
+    const item=r3.closest(".risk-item"); item.classList.toggle("active",b.dataset.v!=="neg"&&b.dataset.v!==undefined);
+    const def=RISKS.find(r=>r.k===k), child=item.querySelector(".child");
+    if(child)child.hidden=!(def&&def.childVals&&def.childVals.includes(b.dataset.v)&&child.innerHTML.trim());
+    render();
   }
   function rynPick(ryn,b){
     const k=ryn.dataset.ryn, yes=b.dataset.v==="yes";
@@ -1165,7 +1169,7 @@
       if(S.r[k]&&S.r[k].on){
         if(k==="gdm"){const g="gestational diabetes mellitus (GDM)"; const v=S.r.gdm.val;
           cPos.push(v==="diet"?`diet-controlled ${g}`:v==="oha"?`${g} on oral hypoglycemic agents`:v==="insulin"?`${g} on insulin`:g);}
-        else if(k==="pre"){const sev={mild:"mild ",severe:"severe "}[S.r.pre.val]||""; const meds=S.r.pre.extra.map(x=>({mgso4:"MgSO4",asa:"aspirin"})[x]).filter(Boolean); cPos.push(`${sev}preeclampsia`+(meds.length?` (on ${joinAnd(meds)})`:""));}
+        else if(k==="pre"){const sev={mild:"mild ",severe:"severe "}[S.r.pre.extra[0]]||""; cPos.push(`${sev}preeclampsia`);}
         else cPos.push(label);
       } else cNeg.push(label);
     });
@@ -1796,6 +1800,7 @@ ${opLine}`);
   document.querySelector('[data-rc="steroid"] [data-v="2"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-re="steroid"] [data-v="complete"]')?.setAttribute("aria-pressed","true");
   document.querySelectorAll('[data-ryn]').forEach(y=>y.querySelector('[data-v="no"]').setAttribute("aria-pressed","true"));
+  document.querySelectorAll('[data-r3]').forEach(r=>{const nb=r.querySelector('[data-v="neg"]'); if(nb)nb.setAttribute("aria-pressed","true"); const k=r.dataset.r3; if(S.r[k])S.r[k].val="neg";});
   document.querySelectorAll('[data-par]').forEach(p=>p.querySelector('[data-v="none"]').setAttribute("aria-pressed","true"));
   document.querySelector('[data-seg="thyType"] [data-v="hyper"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="resus"] [data-v="none"]').setAttribute("aria-pressed","true");
