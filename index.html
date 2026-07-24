@@ -259,8 +259,11 @@
       </div>
       <input class="tin" id="csReason" placeholder="或自行輸入…"></div>
     <div class="field">
-      <span class="lab">出生日期時間 <span class="q">（選填 · 空白則不顯示）</span></span>
-      <input class="tin" type="datetime-local" id="birthDT"></div>
+      <span class="lab">出生日期時間 <span class="q">（選填 · 24 小時制）</span></span>
+      <div class="row2">
+        <div class="field" style="margin:0"><input class="tin" type="date" id="birthDate"></div>
+        <div class="field" style="margin:0"><input class="tin" type="text" id="birthTime" inputmode="numeric" placeholder="時:分（如 14:30）" maxlength="5"></div>
+      </div></div>
     <div class="field">
       <span class="lab">出生地 <span class="q">（院外出生轉入才開）</span></span>
       <div class="seg risk" data-tog="outborn"><button data-v="1" data-on style="flex:0 1 auto">外接 Outborn</button></div>
@@ -280,11 +283,12 @@
         </div>
         <input class="tin" id="obReason" placeholder="或自行輸入…"></div>
       <div class="field"><span class="lab">轉送時呼吸支持</span>
-        <div class="seg risk" data-tog="obResp"><button data-v="1" data-on style="flex:0 1 auto">Neopuff PPV</button></div>
+        <div class="seg" data-seg="obRespType"><button data-v="none">無</button><button data-v="ppv">Neopuff PPV</button><button data-v="ett">插管 ETT</button></div>
         <div id="obRespWrap" hidden style="margin-top:8px"><div class="num" style="flex-wrap:wrap">
           <span class="u">FiO₂</span><input type="number" id="obFiO2" placeholder="__" min="21" max="100" style="max-width:64px"><span class="u">%</span>
           <span class="u">IP</span><input type="number" id="obIP" placeholder="__" min="0" style="max-width:60px"><span class="u">/ PEEP</span>
-          <input type="number" id="obPEEP" placeholder="__" min="0" style="max-width:60px"></div></div>
+          <input type="number" id="obPEEP" placeholder="__" min="0" style="max-width:60px">
+          <span id="obRRfield" hidden><span class="u">RR</span><input type="number" id="obRR" placeholder="__" min="0" style="max-width:60px"><span class="u">/min</span></span></div></div>
       </div>
       <div class="field"><span class="lab">轉入臨床過程 <span class="q">（補症狀時間軸／供氧方式流量／轉送細節，接在「出現窘迫」後）</span></span>
         <textarea class="tarea" id="obCourse" rows="3" placeholder="例：initially cared for in the nursery; tachypnea and subcostal retractions developed without desaturation; oxygen given via hood at 5 L/min; the transport team was contacted…"></textarea></div>
@@ -343,8 +347,8 @@
     </div>
   </section>
 
-  <!-- 3. 產前篩檢 -->
-  <section class="card collap collapsed">
+  <!-- 3. 產前篩檢（預設展開，避免漏填） -->
+  <section class="card collap">
     <h2 class="sec-h"><span class="n">3</span>產前篩檢 <span class="csum" data-csum="scr"></span><span class="chev">▾</span></h2>
     <div id="screen"></div>
   </section>
@@ -404,6 +408,8 @@
     </div>
     <div class="num" id="doicMinWrap" hidden style="margin-top:9px"><span class="u">DOIC</span>
       <input type="number" id="doicMin" placeholder="__" min="0"><span class="u">分鐘</span></div>
+    <div class="field" id="msafGradeWrap" hidden style="margin-top:9px"><span class="lab">MSAF 稠度 <span class="q">（選填）</span></span>
+      <div class="seg" data-seg="msafGrade"><button data-v="thin">Thin 稀</button><button data-v="moderate">Moderate 中</button><button data-v="thick">Thick 稠</button></div></div>
   </section>
 
   <!-- 5. 填空（自由文字，之後成稿可直接改） -->
@@ -905,7 +911,7 @@
            scr:{hbsag:"neg",hbeag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
            resus:"none",resp:"roomair",surfactant:false,
            amnio:"none",nipt:"none",mgso4:"none",toco:"none",iap:"none",us:"normal",
-           fd:false,doic:false,msaf:false,outborn:false,obResp:false,
+           fd:false,doic:false,msaf:false,msafGrade:"",outborn:false,obRespType:"none",
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
            mode:"adm",planAbx:"empirical",planAbxAuto:true,planCsf:false,noteDirty:false,noteCache:{},
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
@@ -1021,6 +1027,7 @@
     const tog=b.closest("[data-tog]"); if(tog){const k=tog.dataset.tog; S[k]=!S[k];
       b.setAttribute("aria-pressed",S[k]?"true":"false");
       if(k==="doic"){const w=document.getElementById("doicMinWrap"); if(w)w.hidden=!S.doic;}
+      if(k==="msaf"){const w=document.getElementById("msafGradeWrap"); if(w)w.hidden=!S.msaf;}
       render(); return;}
     const par=b.closest("[data-par]"); if(par){const k=par.dataset.par; S.parent[k]=b.dataset.v;
       par.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===b.dataset.v?"true":"false")); render(); return;}
@@ -1137,13 +1144,17 @@
     if(S.fd)ev.push("fetal distress"); if(S.doic)ev.push("DOIC"); if(S.msaf)ev.push("MSAF");
     const rs=[resusN,...ev].filter(Boolean); setCsum("resus",rs.length?rs.join("・"):"無",!rs.length);
     const obw=document.getElementById("outbornWrap"); if(obw)obw.hidden=!S.outborn;
-    const obrw=document.getElementById("obRespWrap"); if(obrw)obrw.hidden=!S.obResp;
+    const obrw=document.getElementById("obRespWrap"); if(obrw)obrw.hidden=(S.obRespType==="none");
+    const obrr=document.getElementById("obRRfield"); if(obrr)obrr.hidden=(S.obRespType!=="ett");
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
     const via = S.delivery==="cs" ? "Cesarean section (C/S)" : "vaginal delivery (VD)";
     const obFac = inV("obFacility")||inV("ancPlace");   // 出生院所空 → 繼承產檢地點
     const birthPlace = S.outborn ? (obFac?sl(obFac):ph("____")) : sl("TPEMMH");
-    const bdt=inV("birthDT"); let bornWhen="";
-    if(bdt){const [bd,bt]=bdt.split("T"); const ds=fmtDate(bd); if(ds)bornWhen=(bt?`at ${bt} `:``)+`on ${ds}`;}
+    const bDate=inV("birthDate"), bTimeRaw=inV("birthTime"); let bornWhen="";
+    let bt=bTimeRaw.replace(/[^\d:]/g,"");
+    if(/^\d{3,4}$/.test(bt))bt=bt.length===3?bt[0]+":"+bt.slice(1):bt.slice(0,2)+":"+bt.slice(2);   // 1430 → 14:30（24h）
+    const bds=bDate?fmtDate(bDate):"";
+    {const wp=[]; if(bt)wp.push(`at ${bt}`); if(bds)wp.push(`on ${bds}`); if(wp.length)bornWhen=wp.join(" ");}
     let s1=`This ${sl("1-day-old")} ${sl(sex)} newborn was born ${bornWhen?sl(bornWhen)+" ":""}to a G${sl(G)}P${sl(P)}, ${matAge?sl(matAge):ph("__")} y/o mother `
       +`at GA ${sl(gaTxt)} with birth weight (BW) ${sl(bw)} gm (${sl(S.growth,S.growth==="SGA"||S.growth==="LGA")}) in ${birthPlace} via ${sl(via)}`;
     if(S.delivery==="cs") s1+=` due to ${csR?sl(csR):ph("____")}`;
@@ -1246,7 +1257,7 @@
     const doicMin=inV("doicMin");
     if(S.doic)bePos.push(`delay of initial crying (DOIC)${doicMin?` for ${doicMin} minutes`:""}`); else beNeg.push("delay of initial crying (DOIC)");
     if(!pr.on)beNeg.push("premature rupture of membranes (PROM)");
-    if(S.msaf)bePos.push("meconium-stained amniotic fluid (MSAF)"); else beNeg.push("meconium-stained amniotic fluid (MSAF)");
+    if(S.msaf)bePos.push(`${S.msafGrade?S.msafGrade+" ":""}meconium-stained amniotic fluid (MSAF)`); else beNeg.push("meconium-stained amniotic fluid (MSAF)");
     let beSent="";
     if(bePos.length)beSent+=`There ${bePos.length>1?"were":"was"} ${sl(joinAnd(bePos),true)}. `;
     if(beNeg.length)beSent+=`There was no ${sl(joinOr(beNeg))}.`;
@@ -1281,10 +1292,10 @@
       : gw<37
       ? {s:"Prematurity", f:`Prematurity, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`}
       : {s:"Term baby",   f:`Term baby, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`});
-    if(respSick||(S.outborn&&S.obResp))DX.push({s:"Respiratory distress",f:"Respiratory distress"});
+    if(respSick||(S.outborn&&S.obRespType!=="none"))DX.push({s:"Respiratory distress",f:"Respiratory distress"});
     if(S.fd)DX.push({s:"Fetal distress",f:"Fetal distress"});
     if(S.doic)DX.push({s:"DOIC",f:`Delay of initial crying (DOIC) for ${doicMin||"__"} minutes`});
-    if(S.msaf)DX.push({s:"MSAF",f:"Infant born through meconium-stained amniotic fluid (MSAF)"});
+    if(S.msaf)DX.push({s:"MSAF",f:`Infant born through ${S.msafGrade?S.msafGrade+" ":""}meconium-stained amniotic fluid (MSAF)`});
     if(pr.on){const h=V("promH")||"__";
       DX.push(pr.val==="pprom"
         ? {s:"PPROM",f:`Preterm premature rupture of membranes (PPROM) for ${h} hours`}
@@ -1299,8 +1310,11 @@
       const src=inV("obTransferFrom")||obFac, reason=inV("obReason"), obCourse=inV("obCourse");
       P2.push(`After birth, the infant developed ${reason?sl(reason,true):sl("respiratory distress",true)}.`);
       if(obCourse)P2.push(sl(obCourse));
-      if(S.obResp){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP");
+      if(S.obRespType==="ppv"){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP");
         P2.push(`${sl("Neopuff positive-pressure ventilation (PPV)",true)} was provided for respiratory support with settings of FiO2 ${f?sl(f):ph("__")}%, PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O, and the heart rate and oxygen saturation remained stable.`);}
+      else if(S.obRespType==="ett"){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP"),rr=inV("obRR"),st=[];
+        if(f)st.push(`FiO2 ${sl(f)}%`); if(ip||pe)st.push(`PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O`); if(rr)st.push(`rate ${sl(rr)}/min`);
+        P2.push(`The infant was ${sl("intubated",true)} and placed on ${sl("mechanical ventilation",true)}${st.length?` with settings of ${st.join(", ")}`:""}.`);}
       P2.push(`The infant was then transferred from ${src?sl(src):ph("____")} to our hospital.`);
     }
     const obR=S.outborn?inV("obReason"):"";
@@ -1811,6 +1825,7 @@ ${opLine}`);
   document.querySelector('[data-seg="delivery"] [data-v="cs"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="us"] [data-v="normal"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="nipt"] [data-v="none"]').setAttribute("aria-pressed","true");
+  document.querySelector('[data-seg="obRespType"] [data-v="none"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-rc="steroid"] [data-v="2"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-re="steroid"] [data-v="complete"]')?.setAttribute("aria-pressed","true");
   document.querySelectorAll('[data-ryn]').forEach(y=>y.querySelector('[data-v="no"]').setAttribute("aria-pressed","true"));
