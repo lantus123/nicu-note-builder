@@ -262,54 +262,6 @@
         <div class="field" style="margin:0"><input class="tin" type="text" id="birthTime" inputmode="numeric" placeholder="時:分（如 14:30）" maxlength="5"></div>
       </div></div>
     <div class="field">
-      <span class="lab">出生地 <span class="q">（院外出生轉入才開）</span></span>
-      <div class="seg risk" data-tog="outborn"><button data-v="1" data-on style="flex:0 1 auto">外接 Outborn</button></div>
-    </div>
-    <div id="outbornWrap" hidden>
-      <div class="field"><span class="lab">出生院所 <span class="q">(born in…；自動＝同產檢地點)</span></span><select class="tin" id="obFacility"></select></div>
-      <div class="field"><span class="lab">轉入來源 <span class="q">(transferred from…；自動＝同出生院所)</span></span><select class="tin" id="obTransferFrom"></select></div>
-      <div class="field"><span class="lab">轉入原因 <span class="q">(due to…；點選帶入)</span></span>
-        <div class="seg" data-fill="obReason" style="flex-wrap:wrap;margin-bottom:7px">
-          <button data-v="prematurity" style="flex:0 1 auto">Prematurity</button>
-          <button data-v="respiratory distress" style="flex:0 1 auto">Resp distress</button>
-          <button data-v="neonatal hypoglycemia" style="flex:0 1 auto">Hypoglycemia</button>
-          <button data-v="hyperbilirubinemia" style="flex:0 1 auto">Hyperbili</button>
-          <button data-v="sepsis work-up" style="flex:0 1 auto">Sepsis w/u</button>
-          <button data-v="poor feeding" style="flex:0 1 auto">Poor feeding</button>
-          <button data-v="the need for a higher level of care" style="flex:0 1 auto">Higher care</button>
-        </div>
-        <input class="tin" id="obReason" placeholder="或自行輸入…"></div>
-      <div class="field"><span class="lab">出現症狀 <span class="q">(After birth, the infant developed…；多選，空白則帶轉入原因)</span></span>
-        <div class="seg risk" data-msel="obSx" style="flex-wrap:wrap">
-          <button data-on data-v="tachypnea" style="flex:0 1 auto">Tachypnea</button>
-          <button data-on data-v="subcostal retractions" style="flex:0 1 auto">Retractions</button>
-          <button data-on data-v="grunting" style="flex:0 1 auto">Grunting</button>
-          <button data-on data-v="nasal flaring" style="flex:0 1 auto">Nasal flaring</button>
-          <button data-on data-v="cyanosis" style="flex:0 1 auto">Cyanosis</button>
-          <button data-on data-v="desaturation" style="flex:0 1 auto">Desaturation</button>
-          <button data-on data-v="apnea" style="flex:0 1 auto">Apnea</button>
-          <button data-on data-v="poor activity" style="flex:0 1 auto">Poor activity</button>
-          <button data-on data-v="poor feeding" style="flex:0 1 auto">Poor feeding</button>
-          <button data-on data-v="hypoglycemia" style="flex:0 1 auto">Hypoglycemia</button>
-          <button data-on data-v="jaundice" style="flex:0 1 auto">Jaundice</button>
-          <button data-on data-v="fever" style="flex:0 1 auto">Fever</button>
-        </div></div>
-      <div class="field"><span class="lab">轉送前呼吸支持 <span class="q">（單一階梯）</span></span>
-        <div class="seg" data-seg="obRespType"><button data-v="room">Room air</button><button data-v="o2">O₂</button><button data-v="ppv">Neopuff PPV</button><button data-v="ett">插管 ETT</button></div>
-        <div id="obO2Wrap" hidden style="margin-top:8px">
-          <div class="seg" data-seg="obO2Dev" style="margin-bottom:7px"><button data-v="hood">Hood</button><button data-v="cannula">Nasal cannula</button><button data-v="mask">Mask</button></div>
-          <div class="num"><span class="u">流量</span><input type="number" id="obO2Flow" placeholder="5" min="0" step="0.5" style="max-width:64px"><span class="u">L/min</span></div>
-        </div>
-        <div id="obRespWrap" hidden style="margin-top:8px"><div class="num" style="flex-wrap:wrap">
-          <span class="u">FiO₂</span><input type="number" id="obFiO2" placeholder="__" min="21" max="100" style="max-width:64px"><span class="u">%</span>
-          <span class="u">IP</span><input type="number" id="obIP" placeholder="__" min="0" style="max-width:60px"><span class="u">/ PEEP</span>
-          <input type="number" id="obPEEP" placeholder="__" min="0" style="max-width:60px">
-          <span id="obRRfield" hidden><span class="u">RR</span><input type="number" id="obRR" placeholder="__" min="0" style="max-width:60px"><span class="u">/min</span></span></div></div>
-      </div>
-      <div class="field"><span class="lab">轉入過程補充 <span class="q">（自由欄·時間軸／轉送細節，接在症狀句後）</span></span>
-        <textarea class="tarea" id="obCourse" rows="2" placeholder="例：initially cared for in the nursery; the transport team was contacted…"></textarea></div>
-    </div>
-    <div class="field">
       <div class="gp-apgar">
         <div>
           <span class="lab">G / P · 母年齡</span>
@@ -428,9 +380,86 @@
       <div class="seg" data-seg="msafGrade"><button data-v="thin">Thin 稀</button><button data-v="moderate">Moderate 中</button><button data-v="thick">Thick 稠</button></div></div>
   </section>
 
-  <!-- 5. 填空（自由文字，之後成稿可直接改） -->
+  <!-- 6. 入院路徑（出生 → 入院的過程敘事；症狀 chip 與呼吸階梯全路徑共用） -->
   <section class="card">
-    <h2 class="sec-h"><span class="n">6</span>填空 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">自由文字</span></h2>
+    <h2 class="sec-h"><span class="n">6</span>入院路徑 <span class="csum" data-csum="pathway"></span></h2>
+    <div class="seg" data-seg="pathway" style="flex-wrap:wrap">
+      <button data-v="direct" style="flex:0 1 auto">直接入院</button>
+      <button data-v="nursery" style="flex:0 1 auto">嬰兒室觀察後轉入</button>
+      <button data-v="consult" style="flex:0 1 auto">出生後會診</button>
+      <button data-v="standby" style="flex:0 1 auto">產前 standby</button>
+      <button data-v="outborn" style="flex:0 1 auto">外接 Outborn</button>
+    </div>
+    <div class="field" id="pwSbWrap" hidden style="margin-top:10px"><span class="lab">Standby 原因 <span class="q">(stand by at the delivery due to…；多選，產房處置沿用第 5 區急救階梯)</span></span>
+      <div class="seg risk" data-msel="pwSbR" style="flex-wrap:wrap;margin-bottom:7px">
+        <button data-on data-v="fetal distress" style="flex:0 1 auto">Fetal distress</button>
+        <button data-on data-v="meconium-stained amniotic fluid" style="flex:0 1 auto">MSAF</button>
+        <button data-on data-v="preterm labor" style="flex:0 1 auto">Preterm labor</button>
+        <button data-on data-v="multiple gestation" style="flex:0 1 auto">Multiple gestation</button>
+        <button data-on data-v="breech presentation" style="flex:0 1 auto">Breech</button>
+        <button data-on data-v="congenital anomaly" style="flex:0 1 auto">Anomaly</button>
+      </div>
+      <input class="tin" id="pwSbRIn" placeholder="或自行輸入…"></div>
+    <div id="outbornWrap" hidden style="margin-top:10px">
+      <div class="field"><span class="lab">出生院所 <span class="q">(born in…；自動＝同產檢地點)</span></span><select class="tin" id="obFacility"></select></div>
+      <div class="field"><span class="lab">轉入來源 <span class="q">(transferred from…；自動＝同出生院所)</span></span><select class="tin" id="obTransferFrom"></select></div>
+      <div class="field"><span class="lab">轉入原因 <span class="q">(due to…；點選帶入)</span></span>
+        <div class="seg" data-fill="obReason" style="flex-wrap:wrap;margin-bottom:7px">
+          <button data-v="prematurity" style="flex:0 1 auto">Prematurity</button>
+          <button data-v="respiratory distress" style="flex:0 1 auto">Resp distress</button>
+          <button data-v="neonatal hypoglycemia" style="flex:0 1 auto">Hypoglycemia</button>
+          <button data-v="hyperbilirubinemia" style="flex:0 1 auto">Hyperbili</button>
+          <button data-v="sepsis work-up" style="flex:0 1 auto">Sepsis w/u</button>
+          <button data-v="poor feeding" style="flex:0 1 auto">Poor feeding</button>
+          <button data-v="the need for a higher level of care" style="flex:0 1 auto">Higher care</button>
+        </div>
+        <input class="tin" id="obReason" placeholder="或自行輸入…"></div>
+    </div>
+    <div class="field" id="pwSxWrap" hidden style="margin-top:10px"><span class="lab">出現症狀 <span class="q">(the infant developed…；多選)</span></span>
+      <div class="seg risk" data-msel="obSx" style="flex-wrap:wrap">
+        <button data-on data-v="tachypnea" style="flex:0 1 auto">Tachypnea</button>
+        <button data-on data-v="subcostal retractions" style="flex:0 1 auto">Retractions</button>
+        <button data-on data-v="grunting" style="flex:0 1 auto">Grunting</button>
+        <button data-on data-v="nasal flaring" style="flex:0 1 auto">Nasal flaring</button>
+        <button data-on data-v="cyanosis" style="flex:0 1 auto">Cyanosis</button>
+        <button data-on data-v="desaturation" style="flex:0 1 auto">Desaturation</button>
+        <button data-on data-v="apnea" style="flex:0 1 auto">Apnea</button>
+        <button data-on data-v="poor activity" style="flex:0 1 auto">Poor activity</button>
+        <button data-on data-v="poor feeding" style="flex:0 1 auto">Poor feeding</button>
+        <button data-on data-v="hypoglycemia" style="flex:0 1 auto">Hypoglycemia</button>
+        <button data-on data-v="jaundice" style="flex:0 1 auto">Jaundice</button>
+        <button data-on data-v="fever" style="flex:0 1 auto">Fever</button>
+      </div></div>
+    <div class="field" id="pwOnsetWrap" hidden><span class="lab">症狀時機 <span class="q">（嬰兒室觀察）</span></span>
+      <div class="seg" data-seg="pwOnset"><button data-v="developed">生後 _ 小時出現</button><button data-v="persist24">24 小時後仍喘</button></div>
+      <div class="num" id="pwOnsetHWrap" style="margin-top:8px"><span class="u">生後</span><input type="number" id="pwOnsetH" placeholder="6" min="0" style="max-width:64px"><span class="u">小時</span></div></div>
+    <div class="field" id="obM1Wrap" hidden><span class="lab">外院處置 <span class="q">（出生院所給的呼吸支持）</span></span>
+      <div class="seg" data-seg="obM1Type"><button data-v="room">Room air</button><button data-v="o2">O₂</button><button data-v="ppv">PPV</button><button data-v="ett">插管 ETT</button></div>
+      <div id="obM1O2Wrap" hidden style="margin-top:8px">
+        <div class="seg" data-seg="obM1Dev" style="margin-bottom:7px"><button data-v="hood">Hood</button><button data-v="cannula">Nasal cannula</button><button data-v="mask">Mask</button></div>
+        <div class="num"><span class="u">流量</span><input type="number" id="obM1Flow" placeholder="5" min="0" step="0.5" style="max-width:64px"><span class="u">L/min</span></div>
+      </div></div>
+    <div class="field" id="obArrWrap" hidden><span class="lab">我方到場時狀況 <span class="q">(On arrival, …；自由文字選填)</span></span>
+      <input class="tin" id="obArrival" placeholder="例：the infant was tachypneic with SpO2 88% under an oxygen hood"></div>
+    <div class="field" id="pwLadderWrap" hidden><span class="lab" id="ladderALab">呼吸處置</span>
+      <div class="seg" data-seg="obRespType"><button data-v="room">Room air</button><button data-v="o2">O₂</button><button data-v="ppv">Neopuff PPV</button><button data-v="ett">插管 ETT</button></div>
+      <div id="obO2Wrap" hidden style="margin-top:8px">
+        <div class="seg" data-seg="obO2Dev" style="margin-bottom:7px"><button data-v="hood">Hood</button><button data-v="cannula">Nasal cannula</button><button data-v="mask">Mask</button></div>
+        <div class="num"><span class="u">流量</span><input type="number" id="obO2Flow" placeholder="5" min="0" step="0.5" style="max-width:64px"><span class="u">L/min</span></div>
+      </div>
+      <div id="obRespWrap" hidden style="margin-top:8px"><div class="num" style="flex-wrap:wrap">
+        <span class="u">FiO₂</span><input type="number" id="obFiO2" placeholder="__" min="21" max="100" style="max-width:64px"><span class="u">%</span>
+        <span class="u">IP</span><input type="number" id="obIP" placeholder="__" min="0" style="max-width:60px"><span class="u">/ PEEP</span>
+        <input type="number" id="obPEEP" placeholder="__" min="0" style="max-width:60px">
+        <span id="obRRfield" hidden><span class="u">RR</span><input type="number" id="obRR" placeholder="__" min="0" style="max-width:60px"><span class="u">/min</span></span></div></div>
+    </div>
+    <div class="field" id="pwCourseWrap" hidden><span class="lab">過程補充 <span class="q">（自由欄，接在症狀句後）</span></span>
+      <textarea class="tarea" id="obCourse" rows="2" placeholder="例：initially cared for in the nursery; the transport team was contacted…"></textarea></div>
+  </section>
+
+  <!-- 7. 填空（自由文字，之後成稿可直接改） -->
+  <section class="card">
+    <h2 class="sec-h"><span class="n">7</span>填空 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">自由文字</span></h2>
     <div class="field"><span class="lab">媽媽入院原因 <span class="q">（媽媽 admitted due to…；點選帶入，可再改）</span></span>
       <div class="seg" data-fill="admReason" style="flex-wrap:wrap;margin-bottom:7px">
         <button data-v="induction of labor" style="flex:0 1 auto">Induction</button>
@@ -927,7 +956,9 @@
            scr:{hbsag:"neg",hbeag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
            resus:"none",resp:"roomair",surfactant:false,
            amnio:"none",nipt:"none",mgso4:"none",toco:"none",iap:"none",us:"normal",
-           fd:false,doic:false,msaf:false,msafGrade:"",outborn:false,obRespType:"room",obSx:[],obO2Dev:"hood",
+           fd:false,doic:false,msaf:false,msafGrade:"",
+           pathway:"direct",outborn:false,obRespType:"room",obSx:[],obO2Dev:"hood",
+           pwSbR:[],pwOnset:"developed",obM1Type:"room",obM1Dev:"hood",
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
            mode:"adm",planAbx:"empirical",planAbxAuto:true,planCsf:false,noteDirty:false,noteCache:{},
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
@@ -1118,6 +1149,7 @@
   }
 
   function render(){
+    S.outborn=(S.pathway==="outborn");   // 外接併入入院路徑單選器,S.outborn 為衍生值(P1出生地/acceptance繼承沿用)
     if(S.noteDirty)pulseRegen();   // 手改鎖定中又動選單 → 閃「套用最新選擇」提示已記錄
     updateGrowthUI();   // 依 GA/體重/性別自動判定 AGA/SGA/LGA（除非手動改）
     const admS=document.getElementById("admSections"); if(admS)admS.hidden=(S.mode!=="adm");
@@ -1161,10 +1193,23 @@
     const resusN={none:"",ppv:"PPV",intubation:"插管",cpr:"CPR+Epi"}[S.resus]||"", ev=[];
     if(S.fd)ev.push("fetal distress"); if(S.doic)ev.push("DOIC"); if(S.msaf)ev.push("MSAF");
     const rs=[resusN,...ev].filter(Boolean); setCsum("resus",rs.length?rs.join("・"):"無",!rs.length);
-    const obw=document.getElementById("outbornWrap"); if(obw)obw.hidden=!S.outborn;
-    const obo2=document.getElementById("obO2Wrap"); if(obo2)obo2.hidden=(S.obRespType!=="o2");
-    const obrw=document.getElementById("obRespWrap"); if(obrw)obrw.hidden=(S.obRespType!=="ppv"&&S.obRespType!=="ett");
-    const obrr=document.getElementById("obRRfield"); if(obrr)obrr.hidden=(S.obRespType!=="ett");
+    // 入院路徑顯隱矩陣（症狀 chip 與階梯 A 為 nursery/consult/outborn 共用）
+    const pwSx=["nursery","consult","outborn"].includes(S.pathway);
+    const sh=(id,show)=>{const el=document.getElementById(id); if(el)el.hidden=!show;};
+    sh("pwSbWrap",S.pathway==="standby");
+    sh("outbornWrap",S.outborn);
+    sh("pwSxWrap",pwSx);
+    sh("pwOnsetWrap",S.pathway==="nursery"); sh("pwOnsetHWrap",S.pwOnset==="developed");
+    sh("obM1Wrap",S.outborn); sh("obM1O2Wrap",S.obM1Type==="o2");
+    sh("obArrWrap",S.outborn);
+    sh("pwLadderWrap",pwSx);
+    sh("obO2Wrap",S.obRespType==="o2");
+    sh("obRespWrap",S.obRespType==="ppv"||S.obRespType==="ett");
+    sh("obRRfield",S.obRespType==="ett");
+    sh("pwCourseWrap",S.pathway!=="direct");
+    const ladLab=document.getElementById("ladderALab");
+    if(ladLab)ladLab.textContent=S.pathway==="outborn"?"我方處置·轉送中呼吸維持":S.pathway==="nursery"?"嬰兒室呼吸處置":"呼吸處置";
+    setCsum("pathway",{direct:"直接入院",nursery:"嬰兒室觀察",consult:"出生後會診",standby:"產前 standby",outborn:"外接"}[S.pathway],S.pathway==="direct");
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
     const via = S.delivery==="cs" ? "Cesarean section (C/S)" : "vaginal delivery (VD)";
     const obFac = inV("obFacility")||inV("ancPlace");   // 出生院所空 → 繼承產檢地點
@@ -1281,6 +1326,11 @@
     if(bePos.length)beSent+=`There ${bePos.length>1?"were":"was"} ${sl(joinAnd(bePos),true)}. `;
     if(beNeg.length)beSent+=`There was no ${sl(joinOr(beNeg))}.`;
     if(beSent.trim())P2.push(beSent.trim());
+    // 產前 standby：兒科被 call 到場待命（置於產房急救句前,時序=待命→出生→急救）
+    if(S.pathway==="standby"){
+      const sbr=S.pwSbR.map(x=>sl(x,true)); const sbIn=inV("pwSbRIn"); if(sbIn)sbr.push(sl(sbIn,true));
+      P2.push(`The pediatric team was called to stand by at the delivery due to ${sbr.length?joinAnd(sbr):ph("____")}.`);
+    }
     // 出生後呼吸 / 急救
     const ppvBox=document.getElementById("ppvSet"); if(ppvBox)ppvBox.hidden=!(lvl>=1);
     const ettBox=document.getElementById("ettSet"); if(ettBox)ettBox.hidden=!(lvl>=2);
@@ -1312,10 +1362,11 @@
       ? {s:"Prematurity", f:`Prematurity, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`}
       : {s:"Term baby",   f:`Term baby, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`});
     const OB_RESP_SX=["tachypnea","subcostal retractions","grunting","nasal flaring","cyanosis","desaturation","apnea"];
-    const obRespSick=S.outborn&&(["o2","ppv","ett"].includes(S.obRespType)||S.obSx.some(x=>OB_RESP_SX.includes(x)));
-    if(respSick||obRespSick)DX.push({s:"Respiratory distress",f:"Respiratory distress"});
-    if(S.outborn&&S.obSx.includes("hypoglycemia"))DX.push({s:"Hypoglycemia",f:"Neonatal hypoglycemia"});
-    if(S.outborn&&S.obSx.includes("jaundice"))DX.push({s:"Hyperbilirubinemia",f:"Neonatal hyperbilirubinemia"});
+    const pwRespSick=(pwSx&&(["o2","ppv","ett"].includes(S.obRespType)||S.obSx.some(x=>OB_RESP_SX.includes(x))))
+      ||(S.outborn&&["o2","ppv","ett"].includes(S.obM1Type));
+    if(respSick||pwRespSick)DX.push({s:"Respiratory distress",f:"Respiratory distress"});
+    if(pwSx&&S.obSx.includes("hypoglycemia"))DX.push({s:"Hypoglycemia",f:"Neonatal hypoglycemia"});
+    if(pwSx&&S.obSx.includes("jaundice"))DX.push({s:"Hyperbilirubinemia",f:"Neonatal hyperbilirubinemia"});
     if(S.fd)DX.push({s:"Fetal distress",f:"Fetal distress"});
     if(S.doic)DX.push({s:"DOIC",f:`Delay of initial crying (DOIC) for ${doicMin||"__"} minutes`});
     if(S.msaf)DX.push({s:"MSAF",f:`Infant born through ${S.msafGrade?S.msafGrade+" ":""}meconium-stained amniotic fluid (MSAF)`});
@@ -1329,22 +1380,49 @@
     if(S.scr.gbs==="pos")DX.push({s:"GBS colonization",f:`Maternal GBS colonization ${iapPhrase}`});
     if(S.scr.gbs==="unk")DX.push({s:"GBS unknown",f:`Maternal GBS unknown status ${iapPhrase}`});
 
-    if(S.outborn){   // 外接臨床過程：出生後 → 出現症狀 →（補充）→ 呼吸支持階梯 → 轉入(正確時序,置於 Apgar 之後)
-      const src=inV("obTransferFrom")||obFac, reason=inV("obReason"), obCourse=inV("obCourse");
+    // ── 入院路徑敘事（置於 Apgar 之後）：嬰兒室觀察／出生後會診／外接 ──
+    const obCourse=(S.pathway!=="direct")?inV("obCourse"):"";
+    const ladderSents=()=>{const out=[];   // 階梯 A 句（nursery/consult/outborn 共用；room 不出句）
+      if(S.obRespType==="o2"){const dev=({hood:"oxygen hood",cannula:"nasal cannula",mask:"face mask"})[S.obO2Dev]||"oxygen hood",fl=inV("obO2Flow");
+        out.push(`${sl("Oxygen",true)} was given via ${sl(dev,true)}${fl?` at ${sl(fl)} L/min`:""}.`);}
+      else if(S.obRespType==="ppv"){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP");
+        out.push(`${sl("Neopuff positive-pressure ventilation (PPV)",true)} was provided for respiratory support with settings of FiO2 ${f?sl(f):ph("__")}%, PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O, and the heart rate and oxygen saturation remained stable.`);}
+      else if(S.obRespType==="ett"){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP"),rr=inV("obRR"),st=[];
+        if(f)st.push(`FiO2 ${sl(f)}%`); if(ip||pe)st.push(`PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O`); if(rr)st.push(`rate ${sl(rr)}/min`);
+        out.push(`The infant was ${sl("intubated",true)} and placed on ${sl("mechanical ventilation",true)}${st.length?` with settings of ${st.join(", ")}`:""}.`);}
+      return out;};
+    if(S.pathway==="nursery"){   // 剛出生呼吸尚可→嬰兒室(±O₂)→中途喘/24hr仍喘→收住院
+      const sxTxt=S.obSx.length?joinAnd(S.obSx.map(x=>sl(x,true))):sl("tachypnea",true);
+      P2.push(`After birth, the infant was initially stable and was cared for in the nursery.`);
+      if(obCourse)P2.push(sl(obCourse));
+      if(S.pwOnset==="persist24"){ladderSents().forEach(s=>P2.push(s));
+        P2.push(`However, ${sxTxt} persisted beyond 24 hours of age.`);}
+      else{const oh=inV("pwOnsetH");
+        P2.push(`However, ${sxTxt} developed at ${oh?sl(oh):ph("__")} hours of age.`);
+        ladderSents().forEach(s=>P2.push(s));}
+    }
+    else if(S.pathway==="consult"){   // 剛出生就喘→婦產科 call 兒科評估→處置
+      const sxTxt=S.obSx.length?joinAnd(S.obSx.map(x=>sl(x,true))):sl("respiratory distress",true);
+      P2.push(`Shortly after birth, the infant developed ${sxTxt}, and the pediatric team was consulted for evaluation.`);
+      if(obCourse)P2.push(sl(obCourse));
+      ladderSents().forEach(s=>P2.push(s));
+    }
+    else if(S.outborn){   // 外接：外院出生後狀況→外院處置→我方到場→我方處置→轉送(置於 Apgar 之後)
+      const src=inV("obTransferFrom")||obFac, reason=inV("obReason");
       const sxTxt=S.obSx.length?joinAnd(S.obSx.map(x=>sl(x,true))):(reason?sl(reason,true):sl("respiratory distress",true));
       P2.push(`After birth, the infant developed ${sxTxt}.`);
       if(obCourse)P2.push(sl(obCourse));
-      if(S.obRespType==="o2"){const dev=({hood:"oxygen hood",cannula:"nasal cannula",mask:"face mask"})[S.obO2Dev]||"oxygen hood",fl=inV("obO2Flow");
-        P2.push(`${sl("Oxygen",true)} was given via ${sl(dev,true)}${fl?` at ${sl(fl)} L/min`:""}.`);}
-      else if(S.obRespType==="ppv"){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP");
-        P2.push(`${sl("Neopuff positive-pressure ventilation (PPV)",true)} was provided for respiratory support with settings of FiO2 ${f?sl(f):ph("__")}%, PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O, and the heart rate and oxygen saturation remained stable.`);}
-      else if(S.obRespType==="ett"){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP"),rr=inV("obRR"),st=[];
-        if(f)st.push(`FiO2 ${sl(f)}%`); if(ip||pe)st.push(`PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O`); if(rr)st.push(`rate ${sl(rr)}/min`);
-        P2.push(`The infant was ${sl("intubated",true)} and placed on ${sl("mechanical ventilation",true)}${st.length?` with settings of ${st.join(", ")}`:""}.`);}
+      if(S.obM1Type==="o2"){const dev=({hood:"oxygen hood",cannula:"nasal cannula",mask:"face mask"})[S.obM1Dev]||"oxygen hood",fl=inV("obM1Flow");
+        P2.push(`At the birth hospital, ${sl("oxygen",true)} was given via ${sl(dev,true)}${fl?` at ${sl(fl)} L/min`:""}.`);}
+      else if(S.obM1Type==="ppv")P2.push(`${sl("Positive-pressure ventilation",true)} was provided at the birth hospital.`);
+      else if(S.obM1Type==="ett")P2.push(`The infant was ${sl("intubated",true)} at the birth hospital.`);
+      P2.push(`Our neonatal transport team was consulted for transfer.`);
+      const arr=inV("obArrival"); if(arr)P2.push(`On arrival, ${sl(arr)}.`);
+      ladderSents().forEach(s=>P2.push(s));
       P2.push(`The infant was then transferred from ${src?sl(src):ph("____")} to our hospital${S.obRespType==="room"?` under ${sl("room air")}`:""}.`);
     }
     const obR=S.outborn?inV("obReason"):"";
-    const tdxTxt = tentDx? sl(tentDx) : (obR? sl(obR) : ((respSick||obRespSick)? sl("respiratory distress") : (gw&&gw<37? sl("prematurity") : ph("____"))));  // 外接→暫定診斷帶轉入原因/呼吸窘迫
+    const tdxTxt = tentDx? sl(tentDx) : (obR? sl(obR) : ((respSick||pwRespSick)? sl("respiratory distress") : (gw&&gw<37? sl("prematurity") : ph("____"))));  // 外接→暫定診斷帶轉入原因/呼吸窘迫
     P2.push(`Under the tentative diagnosis of ${tdxTxt}, the patient was admitted to our ward for further evaluation and treatment.`);
 
     // 組出兩段 + 暫定診斷清單 + footer
@@ -1698,9 +1776,10 @@ ${opLine}`);
       D.push(`Work-up for ${w}, including biogram, to evaluate tissue damage`);}
     if(SGA)D.push(`Work-up for SGA, including IgM and urine viral culture`);
     const dexR=[]; if(preterm)dexR.push("prematurity"); if(SGA)dexR.push("SGA"); if(LGA)dexR.push("LGA"); if(IDM)dexR.push("infant of a diabetic mother (IDM)");
-    if(S.outborn&&S.obSx.includes("hypoglycemia"))dexR.push("neonatal hypoglycemia");
+    const pwSx=["nursery","consult","outborn"].includes(S.pathway);   // 症狀 chip 有效的路徑
+    if(pwSx&&S.obSx.includes("hypoglycemia"))dexR.push("neonatal hypoglycemia");
     if(dexR.length)D.push(`Check Dextrostix STAT and Q6H for ${joinAnd(dexR)}`);
-    if(S.outborn&&S.obSx.includes("jaundice"))D.push(`Check bilirubin level and follow up for neonatal jaundice`);
+    if(pwSx&&S.obSx.includes("jaundice"))D.push(`Check bilirubin level and follow up for neonatal jaundice`);
     if(S.hc.aline||invasive)D.push(`Arterial line placement for ABP monitoring and frequent phlebotomy`);
 
     const T=[];
@@ -1853,8 +1932,12 @@ ${opLine}`);
   document.querySelector('[data-seg="delivery"] [data-v="cs"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="us"] [data-v="normal"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="nipt"] [data-v="none"]').setAttribute("aria-pressed","true");
+  document.querySelector('[data-seg="pathway"] [data-v="direct"]')?.setAttribute("aria-pressed","true");
+  document.querySelector('[data-seg="pwOnset"] [data-v="developed"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="obRespType"] [data-v="room"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="obO2Dev"] [data-v="hood"]')?.setAttribute("aria-pressed","true");
+  document.querySelector('[data-seg="obM1Type"] [data-v="room"]')?.setAttribute("aria-pressed","true");
+  document.querySelector('[data-seg="obM1Dev"] [data-v="hood"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-rc="steroid"] [data-v="2"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-re="steroid"] [data-v="complete"]')?.setAttribute("aria-pressed","true");
   document.querySelectorAll('[data-ryn]').forEach(y=>y.querySelector('[data-v="no"]').setAttribute("aria-pressed","true"));
