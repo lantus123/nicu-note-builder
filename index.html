@@ -281,6 +281,18 @@
   <!-- 2. 母親病史 · 產檢 · 產程（合併） -->
   <section class="card">
     <h2 class="sec-h"><span class="n">2</span>母親病史 · 產檢</h2>
+    <div class="field"><span class="lab">媽媽入院原因 <span class="q">（媽媽 admitted due to…；點選帶入，可再改）</span></span>
+      <div class="seg" data-fill="admReason" style="flex-wrap:wrap;margin-bottom:7px">
+        <button data-v="induction of labor" style="flex:0 1 auto">Induction</button>
+        <button data-v="preterm labor" style="flex:0 1 auto">Preterm labor</button>
+        <button data-v="premature rupture of membranes" style="flex:0 1 auto">PROM</button>
+        <button data-v="preterm premature rupture of membranes" style="flex:0 1 auto">PPROM</button>
+        <button data-v="decreased fetal movement" style="flex:0 1 auto">↓ fetal movement</button>
+        <button data-v="fetal distress" style="flex:0 1 auto">Fetal distress</button>
+        <button data-v="preeclampsia" style="flex:0 1 auto">Preeclampsia</button>
+        <button data-v="regular uterine contractions" style="flex:0 1 auto">Regular contractions</button>
+      </div>
+      <input class="tin" id="admReason" placeholder="或自行輸入…"></div>
     <p class="man-h" style="margin:0 0 8px">產檢</p>
     <div class="field"><span class="lab">預產期 EDC <span class="q">（空白＝由 GA 反推）</span></span>
       <input type="date" class="tin" id="edc"></div>
@@ -462,19 +474,7 @@
 
   <!-- 7. 填空（自由文字，之後成稿可直接改） -->
   <section class="card">
-    <h2 class="sec-h"><span class="n">7</span>填空 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">自由文字</span></h2>
-    <div class="field"><span class="lab">媽媽入院原因 <span class="q">（媽媽 admitted due to…；點選帶入，可再改）</span></span>
-      <div class="seg" data-fill="admReason" style="flex-wrap:wrap;margin-bottom:7px">
-        <button data-v="induction of labor" style="flex:0 1 auto">Induction</button>
-        <button data-v="preterm labor" style="flex:0 1 auto">Preterm labor</button>
-        <button data-v="premature rupture of membranes" style="flex:0 1 auto">PROM</button>
-        <button data-v="preterm premature rupture of membranes" style="flex:0 1 auto">PPROM</button>
-        <button data-v="decreased fetal movement" style="flex:0 1 auto">↓ fetal movement</button>
-        <button data-v="fetal distress" style="flex:0 1 auto">Fetal distress</button>
-        <button data-v="preeclampsia" style="flex:0 1 auto">Preeclampsia</button>
-        <button data-v="regular uterine contractions" style="flex:0 1 auto">Regular contractions</button>
-      </div>
-      <input class="tin" id="admReason" placeholder="或自行輸入…"></div>
+    <h2 class="sec-h"><span class="n">7</span>暫定診斷 · 母病歷號 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">自由文字</span></h2>
     <div class="field"><span class="lab">暫定診斷 <span class="q">（點選帶入，可再改）</span></span>
       <div class="seg" data-fill="tentDx" style="flex-wrap:wrap;margin-bottom:7px">
         <button data-v="healthy term newborn" style="flex:0 1 auto">健康足月</button>
@@ -516,7 +516,7 @@
         <button data-v="roomair">Room air</button><button data-v="nc">NC</button><button data-v="hfnc">HFNC</button>
         <button data-v="ncpap">nCPAP</button><button data-v="nippv">NIPPV</button><button data-v="vent">呼吸器</button>
       </div>
-      <p class="man-h" style="margin-top:9px">表頭（d/o・PMA・Wt）與 Brief history 全自動沿用 admission（要改 GA/BW 請切回 Admission 分頁）。呼吸器進程在 D 區。</p>
+      <p class="man-h" style="margin-top:9px">表頭（d/o・PMA・Wt）與 Brief history（含入院原因）全自動沿用 admission（要改 GA/BW/入院原因請切回 Admission 分頁）。呼吸器進程在 D 區。</p>
     </section>
 
     <section class="card">
@@ -1227,8 +1227,8 @@
     if(/^\d{3,4}$/.test(bt))bt=bt.length===3?bt[0]+":"+bt.slice(1):bt.slice(0,2)+":"+bt.slice(2);   // 1430 → 14:30（24h）
     const bds=bDate?fmtDate(bDate):"";
     {const wp=[]; if(bt)wp.push(`at ${bt}`); if(bds)wp.push(`on ${bds}`); if(wp.length)bornWhen=wp.join(" ");}
-    let s1=`This ${sl("1-day-old")} ${sl(sex)} newborn was born ${bornWhen?sl(bornWhen)+" ":""}to a G${sl(G)}P${sl(P)}, ${matAge?sl(matAge):ph("__")} y/o mother `
-      +`at GA ${sl(gaTxt)} with birth weight (BW) ${sl(bw)} gm (${sl(S.growth,S.growth==="SGA"||S.growth==="LGA")}) in ${birthPlace} via ${sl(via)}`;
+    let s1=`This ${sl("1-day-old")} ${sl(sex)} newborn was born ${bornWhen?sl(bornWhen)+" ":""}to a G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}, ${matAge?sl(matAge):ph("__")} y/o mother `
+      +`at GA ${gw?sl(gaTxt):ph(gaTxt)} with birth weight (BW) ${V("bw")?sl(bw):ph(bw)} gm (${S.growth==="?"?ph("?"):sl(S.growth,S.growth==="SGA"||S.growth==="LGA")}) in ${birthPlace} via ${sl(via)}`;
     if(S.delivery==="cs") s1+=` due to ${csR?sl(csR):ph("____")}`;
     P1.push(s1+".");
     let edc=inV("edc");
@@ -1358,7 +1358,7 @@
       }
       if(S.surfactant)P2.push(`${sl("Surfactant",true)} was administered.`);
     }
-    P2.push(`The baby's Apgar score was ${sl(ap1)} and ${sl(ap5)} at 1 and 5 minutes, respectively.`);
+    P2.push(`The baby's Apgar score was ${V("ap1")?sl(ap1):ph(ap1)} and ${V("ap5")?sl(ap5):ph(ap5)} at 1 and 5 minutes, respectively.`);
     // ── 暫定診斷問題清單（自動生成；短標籤給 chip、完整句給 note 的 # 清單）──
     const iapPhrase = S.iap==="complete" ? "with complete intrapartum antibiotic prophylaxis (IAP)"
                     : S.iap==="incomplete" ? "without complete intrapartum antibiotic prophylaxis (IAP)"
@@ -1461,8 +1461,6 @@
     const gw=parseInt(V("gaW")||"0",10), gd=parseInt(V("gaD")||"0",10);
     const gaTxt=(gw||"__")+(gd?`+${gd}`:"")+" weeks", sex={male:"male",female:"female"}[S.gender], bw=V("bw")||"____";
     const via=S.delivery==="cs"?"C/S":"VD", ap1=V("ap1")||"_", ap5=V("ap5")||"_";
-    const pr=document.getElementById("procRecap");
-    if(pr)pr.innerHTML=[`${S.gender==="male"?"♂":"♀"} <b>${sex}</b>`,`GA <b>${gaTxt}</b>`,`BW <b>${bw} g</b> (${S.growth})`,via,`Apgar ${ap1}/${ap5}`].join(" · ");
 
     const bwN=parseInt(V("bw")||"0",10), bwKg=bwN/1000;
     const op=(document.getElementById("procOperator")||{value:""}).value.trim();
@@ -1770,14 +1768,7 @@ ${opLine}`);
 
   // ── NI plan（依 GA + admission 選擇自動組出診斷/治療/預後）──
   function renderPlan(){
-    const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
     const gw=parseInt(V("gaW")||"0",10), gd=parseInt(V("gaD")||"0",10);
-    const gaTxt=(gw||"__")+(gd?`+${gd}`:"")+" weeks", sex={male:"male",female:"female"}[S.gender];
-    const bw=V("bw")||"____", via=S.delivery==="cs"?"C/S":"VD", ap1=V("ap1")||"_", ap5=V("ap5")||"_";
-    const admReason=(document.getElementById("admReason")||{value:""}).value.trim();
-    const pr=document.getElementById("planRecap");
-    if(pr){const bits=[`${S.gender==="male"?"♂":"♀"} <b>${sex}</b>`,`GA <b>${gaTxt}</b>`,`BW <b>${bw} g</b> (${S.growth})`,via,`Apgar ${ap1}/${ap5}`];
-      if(admReason)bits.push(`入院：${esc(admReason)}`); pr.innerHTML=bits.join(" · ");}
 
     const preterm=gw>0&&gw<37, veryPreterm=gw>0&&gw<32, bwN=parseInt(V("bw")||"0",10);
     const SGA=S.growth==="SGA", LGA=S.growth==="LGA", IDM=S.r.gdm.on;
@@ -1829,7 +1820,8 @@ ${opLine}`);
     }
 
     const sec=(t,a)=>t+":\n"+a.map(x=>"- "+x).join("\n");
-    if(!S.noteDirty)document.getElementById("note").textContent=[sec("Diagnostic plans",D),sec("Therapeutic plans",T),sec("Prognostic plans",Pr)].join("\n\n");
+    const gaWarn=!gw?"[GA 未填——以下以足月組稿，請回 Admission 填 GA]\n\n":"";   // plan 無灰字機制,缺 GA 會靜默組足月版
+    if(!S.noteDirty)document.getElementById("note").textContent=gaWarn+[sec("Diagnostic plans",D),sec("Therapeutic plans",T),sec("Prognostic plans",Pr)].join("\n\n");
   }
 
   // ── Acceptance note（模板填欄；上半自動沿用 admission 資料）──
@@ -1872,12 +1864,12 @@ ${opLine}`);
     const scr=(k,vid)=>S.acc[k]==="done"?(inV(vid)||"done"):"not yet";
 
     const L=[];
-    L.push(`${sl(dol)} d/o, PMA ${sl(pma)} wks, Wt: ${sl(bw)} g (${sl(growth,growth==="SGA"||growth==="LGA")})`);
+    L.push(`${sl(dol)} d/o, PMA ${gw?sl(pma):ph(pma)} wks, Wt: ${V("bw")?sl(bw):ph(bw)} g (${growth==="?"?ph("?"):sl(growth,growth==="SGA"||growth==="LGA")})`);
     L.push("");
     L.push("【Brief history】");
-    L.push(`A ${sl(sex)} neonate, GA ${sl(gaTxt)}, BW ${sl(bw)} gm, ${sl(growth,growth==="SGA"||growth==="LGA")}, was admitted to ${sl(esc(admitTo))} due to ${admReason?sl(esc(admReason)):ph("____")}.`);
-    L.push(`Birth History: G${sl(G)}P${sl(P)}, ${sl(via)} in ${sl(esc(birthPlace))}.`);
-    L.push(`Apgar score: ${sl(ap1)} and ${sl(ap5)} at 1 and 5 minutes.`);
+    L.push(`A ${sl(sex)} neonate, GA ${gw?sl(gaTxt):ph(gaTxt)}, BW ${V("bw")?sl(bw):ph(bw)} gm, ${growth==="?"?ph("?"):sl(growth,growth==="SGA"||growth==="LGA")}, was admitted to ${sl(esc(admitTo))} due to ${admReason?sl(esc(admReason)):ph("____")}.`);
+    L.push(`Birth History: G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}, ${sl(via)} in ${birthPlace==="____"?ph(birthPlace):sl(esc(birthPlace))}.`);
+    L.push(`Apgar score: ${V("ap1")?sl(ap1):ph(ap1)} and ${V("ap5")?sl(ap5):ph(ap5)} at 1 and 5 minutes.`);
     L.push(`Fetal distress(${sl(S.fd?"+":"-",S.fd)}), DOIC(${sl(S.doic?"+":"-",S.doic)}), MSAF(${sl(S.msaf?"+":"-",S.msaf)})`);
     L.push(`Respiratory: ${respLine?sl(esc(respLine)):ph("____")}`);
     L.push(`Perinatal history: ${sl(esc(perinatal),perinatal!=="none")}`);
@@ -2015,7 +2007,8 @@ ${opLine}`);
     try{await navigator.clipboard.writeText(txt); ok=true;}catch(e){}
     if(!ok){try{const ta=document.createElement("textarea"); ta.value=txt; ta.style.position="fixed"; ta.style.top="0"; ta.style.opacity="0";
       document.body.appendChild(ta); ta.focus(); ta.select(); ok=document.execCommand("copy"); document.body.removeChild(ta);}catch(e){}}
-    b.textContent=ok?"已複製 ✓":"請長按選取"; setTimeout(()=>b.textContent="複製",1600);
+    const blanks=(txt.match(/_{2,}|……|——/g)||[]).length;   // 未填佔位:____/……/——(四分頁通用)
+    b.textContent=ok?(blanks?`已複製 ✓ · 尚有 ${blanks} 空格`:"已複製 ✓"):"請長按選取"; setTimeout(()=>b.textContent="複製",blanks?3000:1600);
   });
   render();
 })();
