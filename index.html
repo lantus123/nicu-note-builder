@@ -1084,7 +1084,11 @@
     const hab=b.closest("[data-habit]"); if(hab){const k=hab.dataset.habit; S.habit[k]=!S.habit[k];
       b.setAttribute("aria-pressed",S.habit[k]?"true":"false"); render(); return;}
     const ms=b.closest("[data-msel]"); if(ms){const k=ms.dataset.msel,v=b.dataset.v,arr=S[k],i=arr.indexOf(v);
-      if(i<0)arr.push(v);else arr.splice(i,1); b.setAttribute("aria-pressed",arr.includes(v)?"true":"false"); render(); return;}
+      if(i<0)arr.push(v);else arr.splice(i,1); b.setAttribute("aria-pressed",arr.includes(v)?"true":"false");
+      if(k==="pwSbR"&&arr.includes(v)){   // standby 原因命中出生事件→自動勾(可再取消),避免與「There was no fetal distress…」矛盾
+        if(v==="fetal distress"&&!S.fd){S.fd=true; document.querySelector('[data-tog="fd"] button')?.setAttribute("aria-pressed","true");}
+        if(v==="meconium-stained amniotic fluid"&&!S.msaf){S.msaf=true; document.querySelector('[data-tog="msaf"] button')?.setAttribute("aria-pressed","true"); const w=document.getElementById("msafGradeWrap"); if(w)w.hidden=false;}}
+      render(); return;}
     const seg=b.closest("[data-seg]"); if(seg){segPick(seg,b,seg.dataset.seg);}
     const r3=b.closest("[data-r3]"); if(r3){r3pick(r3,b);}
     const ryn=b.closest("[data-ryn]"); if(ryn){rynPick(ryn,b);}
@@ -1215,7 +1219,8 @@
     setCsum("pathway",{direct:"直接入院",nursery:"嬰兒室觀察",consult:"出生後會診",standby:"產前 standby",outborn:"外接"}[S.pathway],S.pathway==="direct"&&!S.obSx.length&&S.obRespType==="room");
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
     const via = S.delivery==="cs" ? "Cesarean section (C/S)" : "vaginal delivery (VD)";
-    const obFac = inV("obFacility")||inV("ancPlace");   // 出生院所空 → 繼承產檢地點
+    let obFac = inV("obFacility")||inV("ancPlace");   // 出生院所空 → 繼承產檢地點
+    if(S.outborn&&obFac==="TPEMMH")obFac="";   // 外接時繼承到本院=矛盾(transferred from 本院)→視為未填
     const birthPlace = S.outborn ? (obFac?sl(obFac):ph("____")) : sl("TPEMMH");
     const bDate=inV("birthDate"), bTimeRaw=inV("birthTime"); let bornWhen="";
     let bt=bTimeRaw.replace(/[^\d:]/g,"");
@@ -1280,7 +1285,7 @@
       if(k==="thyroid"){const t=S.thyType==="hypo"?"hypothyroidism":"hyperthyroidism";
         const med=S.thyMed?(S.thyType==="hypo"?" on thyroxine supplementation":" on antithyroid medication"):""; parPos.push(`${who} ${t}${med}`);}
       else parPos.push(`${who} ${cond}`);});
-    if(parPos.length)P1.push(`There was ${sl(joinAnd(parPos))}.`);
+    if(parPos.length)P1.push(`There ${parPos.length>1?"were":"was"} ${sl(joinAnd(parPos))}.`);
     if(parNeg.length)P1.push(`The parents denied ${sl(joinOr(parNeg))}.`);
     // 母親習慣：smoking / alcohol / drug abuse
     const habSet=[["smoking","cigarette smoking"],["alcohol","alcohol consumption"],["drug","substance abuse"]];
@@ -1299,10 +1304,10 @@
     const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
     if(serNeg.length)P1.push(`The result${serNeg.length>1?"s":""} of ${sl(joinAnd(serNeg))} ${serNeg.length>1?"were":"was"} negative.`);
     if(serPos.length)P1.push(`${sl(cap(joinAnd(serPos)),true)} ${serPos.length>1||/ and /.test(serPos[0])?"were":"was"} positive.`);
-    if(serUnk.length)P1.push(`${sl(cap(joinAnd(serUnk)),true)} ${serUnk.length>1?"were":"was"} not tested.`);
-    if(S.scr.hbsag==="pos"){const he=S.scr.hbeag;   // HBsAg+ 才報 HBeAg(常見 HBsAg+/HBeAg−)
+    if(S.scr.hbsag==="pos"){const he=S.scr.hbeag;   // HBsAg+ 才報 HBeAg(常見 HBsAg+/HBeAg−);緊跟 HBsAg 陽性句
       if(he==="pos")P1.push(`Hepatitis B e antigen (HBeAg) was also ${sl("positive",true)}.`);
       else if(he==="neg")P1.push(`Hepatitis B e antigen (HBeAg) was ${sl("negative")}.`);}
+    if(serUnk.length)P1.push(`${sl(cap(joinAnd(serUnk)),true)} ${serUnk.length>1?"were":"was"} not tested.`);
     if(S.scr.rubella==="pos")P1.push(`Maternal rubella IgM was ${sl("positive",true)}.`);
 
     // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar +（外接轉入過程）+ 入院 ──
@@ -1318,7 +1323,7 @@
     if(S.delivery==="cs") P2.push(`The cesarean delivery was ${sl("uncomplicated")}.`);   // 原因已於 para1 說明，不重複
     // 出生事件（PROM 從 S.r.prom；其餘否定）
     const pr=S.r.prom;
-    if(pr.on){const t={prom:"premature rupture of membranes (PROM)",pprom:"preterm premature rupture of membranes (PPROM)"}[pr.val]||"rupture of membranes"; const hr=V("promH"); P2.push(`${sl(t.charAt(0).toUpperCase()+t.slice(1))}${hr?` for ${sl(hr+" hours")}`:""} was noted before delivery.`);}
+    if(pr.on){const t={prom:"premature rupture of membranes (PROM)",pprom:"preterm premature rupture of membranes (PPROM)"}[pr.val]||"premature rupture of membranes (PROM)"; const hr=V("promH"); P2.push(`${sl(t.charAt(0).toUpperCase()+t.slice(1))}${hr?` for ${sl(hr+" hours")}`:""} was noted before delivery.`);}
     const bePos=[], beNeg=[];
     if(S.fd)bePos.push("fetal distress"); else beNeg.push("fetal distress");
     const doicMin=inV("doicMin");
@@ -1366,7 +1371,8 @@
       : {s:"Term baby",   f:`Term baby, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`});
     const OB_RESP_SX=["tachypnea","subcostal retractions","grunting","nasal flaring","cyanosis","desaturation","apnea"];
     const pwRespSick=(pwSx&&(["o2","ppv","ett"].includes(S.obRespType)||S.obSx.some(x=>OB_RESP_SX.includes(x))))
-      ||(S.outborn&&["o2","ppv","ett"].includes(S.obM1Type));
+      ||(S.outborn&&["o2","ppv","ett"].includes(S.obM1Type))
+      ||(S.outborn&&/respiratory distress/i.test(inV("obReason")));   // 轉入原因寫呼吸窘迫→DX 同步
     if(respSick||pwRespSick)DX.push({s:"Respiratory distress",f:"Respiratory distress"});
     if(pwSx&&S.obSx.includes("hypoglycemia"))DX.push({s:"Hypoglycemia",f:"Neonatal hypoglycemia"});
     if(pwSx&&S.obSx.includes("jaundice"))DX.push({s:"Hyperbilirubinemia",f:"Neonatal hyperbilirubinemia"});
@@ -1384,7 +1390,8 @@
     if(S.scr.gbs==="unk")DX.push({s:"GBS unknown",f:`Maternal GBS unknown status ${iapPhrase}`});
 
     // ── 入院路徑敘事（置於 Apgar 之後）：直接入院前處理／嬰兒室觀察／出生後會診／外接 ──
-    const obCourse=inV("obCourse");
+    const obCourseRaw=inV("obCourse");
+    const obCourse=obCourseRaw?obCourseRaw.charAt(0).toUpperCase()+obCourseRaw.slice(1)+(/[.!?]$/.test(obCourseRaw)?"":"."):"";   // 自由欄正規化:首字大寫+句尾補句點(防 run-on)
     const ladderSents=()=>{const out=[];   // 階梯 A 句（nursery/consult/outborn 共用；room 不出句）
       if(S.obRespType==="o2"){const dev=({hood:"oxygen hood",cannula:"nasal cannula",mask:"face mask"})[S.obO2Dev]||"oxygen hood",fl=inV("obO2Flow");
         out.push(`${sl("Oxygen",true)} was given via ${sl(dev,true)}${fl?` at ${sl(fl)} L/min`:""}.`);}
@@ -1392,7 +1399,9 @@
         out.push(`${sl("Neopuff positive-pressure ventilation (PPV)",true)} was provided for respiratory support with settings of FiO2 ${f?sl(f):ph("__")}%, PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O, and the heart rate and oxygen saturation remained stable.`);}
       else if(S.obRespType==="ett"){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP"),rr=inV("obRR"),st=[];
         if(f)st.push(`FiO2 ${sl(f)}%`); if(ip||pe)st.push(`PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O`); if(rr)st.push(`rate ${sl(rr)}/min`);
-        out.push(`The infant was ${sl("intubated",true)} and placed on ${sl("mechanical ventilation",true)}${st.length?` with settings of ${st.join(", ")}`:""}.`);}
+        out.push(S.outborn&&S.obM1Type==="ett"
+          ? `${sl("Mechanical ventilation",true)} was continued${st.length?` with settings of ${st.join(", ")}`:""}.`
+          : `The infant was ${sl("intubated",true)} and placed on ${sl("mechanical ventilation",true)}${st.length?` with settings of ${st.join(", ")}`:""}.`);}
       return out;};
     if(S.pathway==="direct"&&(S.obSx.length||S.obRespType!=="room"||obCourse)){   // 直接入院的前處理:有點選才出句,全空=現行輸出
       if(S.obSx.length)P2.push(`After birth, the infant developed ${joinAnd(S.obSx.map(x=>sl(x,true)))}.`);
@@ -1845,7 +1854,8 @@ ${opLine}`);
     const via=S.delivery==="cs"?"C/S":"VD";
     const admitTo=inV("accAdmitTo")||"our NICU";
     const admReason=inV("admReason");
-    const birthTime=inV("accBirthTime"), birthPlace=S.outborn?(inV("obFacility")||inV("ancPlace")||"____"):"TPEMMH";  // 繼承 admission 出生地
+    let accObFac=inV("obFacility")||inV("ancPlace"); if(S.outborn&&accObFac==="TPEMMH")accObFac="";  // 外接繼承到本院=矛盾→未填
+    const birthTime=inV("accBirthTime"), birthPlace=S.outborn?(accObFac||"____"):"TPEMMH";  // 繼承 admission 出生地
     const respMap={roomair:"room air",nc:"nasal cannula",hfnc:"high-flow nasal cannula",ncpap:"nCPAP",nippv:"NIPPV",vent:"mechanical ventilation"};
     const respLine=inV("accResp")||(S.resp&&S.resp!=="roomair"?respMap[S.resp]:"")||(S.acc.resp.length?S.acc.resp[0]:"")||"room air";  // §A空則用§D第一項
     const periAuto=[]; if(S.r.gdm.on)periAuto.push("GDM"); if(S.r.pih.on)periAuto.push("PIH");
