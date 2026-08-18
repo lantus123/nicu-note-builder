@@ -540,7 +540,8 @@
             </div></div>
           <div><span class="lab">感染指標</span>
             <div class="seg" data-hc="infMarkers" style="flex-wrap:wrap">
-              <button data-v="none" style="flex:0 1 auto">無異常</button><button data-v="leuko" style="flex:0 1 auto">白血球↑</button>
+              <button data-v="na" style="flex:0 1 auto">未回報</button><button data-v="none" style="flex:0 1 auto">無異常</button>
+              <button data-v="leuko" style="flex:0 1 auto">白血球↑</button>
               <button data-v="crp" style="flex:0 1 auto">CRP↑</button><button data-v="both" style="flex:0 1 auto">兩者皆是</button>
             </div></div>
         </div>
@@ -968,9 +969,9 @@
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
            procOpt:{alineSide:"right",alineArtery:"radial",uacPos:"high",chestSide:"right",chestType:"pigtail",chestICS:"4th",lpCompl:"nil",betABO:"",betRh:""},
            acc:{resp:[],abx:[],line:[],vac:[],rop:"notyet",aabr:"notyet",nbs:"notyet",respDates:{},lineDates:{}},
-           hc:{workup:true,workupItems:["CBC/DC","CRP","B/C","GJ/C","CXR","urine GBS Ag"],
+           hc:{workup:false,workupItems:["CBC/DC","CRP","B/C","GJ/C","CXR","urine GBS Ag"],
                aline:false,bicarb:false,surf:false,surfReason:[],surfDrug:"survanta",surfRoute:"ett",improved:false,
-               cxrDx:"none",infMarkers:"none",abxPlan:"none",cultures:"pending",monitor:false}};
+               cxrDx:"none",infMarkers:"na",abxPlan:"none",cultures:"none",monitor:false}};
   RISKS.forEach(x=>S.r[x.k]={on:false,val:null,extra:[],num:x.num?x.num.val:null});
   S.r.steroid.val="2"; S.r.steroid.extra=["complete"];   // Y11 類固醇預設 2 劑・完整療程(turn on 即帶,例外才改)
 
@@ -1726,8 +1727,10 @@ ${opLine}`);
   function buildHC(sl,gas){
     const H=[], hc=S.hc, firstMode=S.acc.resp[0]||"";
     if(hc.workup){
-      const items=hc.workupItems.length?hc.workupItems.join(", "):"CBC/DC, CRP, blood culture";
-      let s=`After admission, septic work-up, including ${sl(items)}, had been conducted`;
+      // 項目全取消＝使用者明確表態「不具名列出」，不可 fallback 塞回三項（與 iMap 同一種捏造）
+      const items=hc.workupItems.join(", ");
+      let s=items?`After admission, septic work-up, including ${sl(items)}, had been conducted`
+                 :`After admission, septic work-up had been conducted`;
       if(firstMode)s+=`, and respiratory support with ${sl(firstMode)} was initiated`;
       H.push(s+".");
     }else if(firstMode){
@@ -1757,7 +1760,8 @@ ${opLine}`);
     if(hc.workup){
       const iMap={none:"There was no evidence of leukocytosis or elevated CRP.",leuko:"Leukocytosis was noted.",
                   crp:"An elevated CRP level was noted.",both:"Both leukocytosis and an elevated CRP level were noted."};
-      H.push(sl(iMap[hc.infMarkers]||iMap.none, hc.infMarkers!=="none"));
+      // "na"（未回報）→ 整句不出；原本的 ||iMap.none fallback 會替沒回報的檢驗蓋章說正常
+      if(iMap[hc.infMarkers])H.push(sl(iMap[hc.infMarkers], hc.infMarkers!=="none"));
     }
     if(S.acc.abx.length){
       let s=`Empirical antibiotics, including ${sl(S.acc.abx.join(" / "))}, were started`;
@@ -1978,10 +1982,11 @@ ${opLine}`);
   document.querySelectorAll("[data-as]").forEach(seg=>seg.querySelector('[data-v="notyet"]').setAttribute("aria-pressed","true"));
   document.querySelectorAll("[data-hc]").forEach(seg=>{const btn=seg.querySelector(`[data-v="${S.hc[seg.dataset.hc]}"]`); if(btn)btn.setAttribute("aria-pressed","true");});
   document.querySelectorAll("[data-hcm]").forEach(seg=>{const arr=S.hc[seg.dataset.hcm]; seg.querySelectorAll("button").forEach(b=>{if(arr.includes(b.dataset.v))b.setAttribute("aria-pressed","true");});});
-  // 敗血症檢查預設「做了」→ 展開子項
-  if(S.hc.workup){const t=document.querySelector('[data-hct="workup"] button'); if(t)t.setAttribute("aria-pressed","true");
-    const c=document.querySelector('[data-hcc="workup"]'); if(c)c.hidden=false;
-    const r=document.querySelector('[data-hcrow="workup"]'); if(r)r.classList.add("on");}
+  // hct 開關：把「S.hc 預設值 ↔ DOM 初始外觀」的隱含不變量寫成程式（目前六個皆 false，等同 no-op）
+  document.querySelectorAll("[data-hct]").forEach(seg=>{const k=seg.dataset.hct,on=!!S.hc[k];
+    const b=seg.querySelector("button"); if(b)b.setAttribute("aria-pressed",on?"true":"false");
+    const c=document.querySelector(`[data-hcc="${k}"]`); if(c)c.hidden=!on;
+    const r=seg.closest("[data-hcrow]"); if(r)r.classList.toggle("on",on);});
   syncDates("resp"); syncDates("line");
 
   const noteEl=document.getElementById("note");
