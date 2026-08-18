@@ -140,6 +140,9 @@
   .edit-hint b{color:#f7d79a;font-weight:700}
   #regen{border-color:rgba(242,198,128,.55);color:#f7d79a;font-weight:700}
   #regen.pulse{animation:regpulse .55s ease}
+  .iap-warn{margin-top:6px;padding:6px 8px;border-radius:6px;background:var(--risk-soft);border:1px solid var(--risk-line);font-size:12px;line-height:1.55}
+  .iap-warn.pulse{animation:iapflash .9s ease}
+  @keyframes iapflash{0%{background:var(--risk-soft)}30%{background:var(--risk-line)}100%{background:var(--risk-soft)}}
   @keyframes regpulse{0%{transform:scale(1)}28%{transform:scale(1.13);box-shadow:0 0 0 4px rgba(242,198,128,.28)}100%{transform:scale(1);box-shadow:none}}
   .note .slot{color:var(--doc-hl)}
   .note .slot.abn{color:#f5905e;font-weight:650}   /* 異常／非預設臨床值:珊瑚橘紅粗體,一眼跳出(有別於正常青綠、手改金色) */
@@ -346,6 +349,7 @@
       <div class="num" style="margin-top:8px"><span class="u">since</span><input class="tin" id="tocoSince" placeholder="7/19" style="max-width:120px"></div></div>
     <div class="field"><span class="lab">IAP 抗生素 <span class="q">（沒驗 GBS 或沒給藥＝incomplete）</span></span>
       <div class="seg" data-seg="iap"><button data-v="none">不提及</button><button data-v="complete">完整</button><button data-v="incomplete">不完整</button></div>
+      <div class="iap-warn" id="iapHint" hidden>⚠ GBS 陽性／未驗 → 請據實選擇 IAP 是否完整。未選則 note 寫 <b>with or without complete IAP</b>。選了完整／不完整後，請一併填藥名，否則不會寫出藥物。</div>
       <div class="row2" style="margin-top:8px">
         <div class="field" style="margin:0"><span class="lab">藥品</span>
           <div class="seg" data-fill="iapDrug" style="flex-wrap:wrap;margin-bottom:6px">
@@ -955,7 +959,7 @@
                 ["syphilis","Syphilis (VDRL)","syphilis"],
                 ["rubella","Rubella","rubella"],["hiv","HIV","HIV infection"],
                 ["gbs","GBS","group B streptococcus (GBS)"]];
-  const S={gender:"male",growth:"AGA",growthAuto:true,delivery:"cs",r:{},
+  const S={gender:"",growth:"AGA",growthAuto:true,delivery:"",r:{},   // 性別/生產方式不預設：預設值會被寫進 note＝捏造事實
            scr:{hbsag:"neg",hbeag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
            resus:"none",resp:"roomair",surfactant:false,
            amnio:"none",nipt:"none",mgso4:"none",toco:"none",iap:"none",us:"normal",
@@ -977,6 +981,7 @@
   const maleBWpct={21:[397,675.2],22:[397,675.2],23:[496,753.5],24:[562.7,843.9],25:[635.7,957.4],26:[719.2,1097.9],27:[816.2,1261],28:[928.7,1444.2],29:[1057.8,1644.7],30:[1203.7,1859.2],31:[1365.4,2084.4],32:[1541.2,2316.6],33:[1728.3,2551.8],34:[1922.9,2785.7],35:[2120.2,3013.9],36:[2314.6,3231.5],37:[2499.3,3433.5],38:[2667.7,3614.5],39:[2808.3,3769],40:[2914.2,3890.9],41:[2974.1,3974.2],42:[2976.4,4012.3],43:[2908.5,3998.6],44:[2756.9,3926]};
   const femaleBWpct={21:[330.2,655],22:[330.2,655],23:[448.8,722.2],24:[519.3,804.4],25:[591,914.5],26:[669.3,1050.3],27:[758.4,1209.5],28:[861.6,1389.2],29:[981,1586.5],30:[1117.5,1798.1],31:[1270.8,2020.2],32:[1439.7,2249],33:[1621.7,2480.2],34:[1813.1,2709.2],35:[2009.3,2931.4],36:[2204.4,3141.4],37:[2391.3,3334],38:[2561.9,3503.2],39:[2706.9,3643.2],40:[2816,3747.4],41:[2877.5,3809.4],42:[2878.9,3822.2],43:[2806.3,3778.4],44:[2644.7,3670.6]};
   function getGrowth(ga,weight,sex){
+    if(sex!=="male"&&sex!=="female")return null;   // 性別未選 → 不判定（否則會默默套用女性百分位表）
     const t=sex==="male"?maleBWpct:femaleBWpct, d=t[ga];
     if(!d||!weight)return null;
     const status=weight<d[0]?"SGA":weight>d[1]?"LGA":"AGA";
@@ -992,7 +997,7 @@
           LGA:`${bw} g ＞ ${ga} 週第 90 百分位（${g.hi} g）`,
           AGA:`${bw} g 介於 ${ga} 週第 10–90 百分位（${g.lo}–${g.hi} g）`}[g.status])+" · Fenton 2025";
       }else{S.growth="?";box.classList.add("warn");big.textContent="?";
-        why.textContent=`GA/BW 未填或超出百分位表範圍（21–44 週），note 顯示 (?)，請填齊或手動選`;}
+        why.textContent=`性別／GA／BW 未填齊或超出百分位表範圍（21–44 週），note 顯示 (?)，請填齊或手動選`;}
     }else{
       box.classList.remove("warn");big.textContent=S.growth;
       why.innerHTML="手動指定"+(g?` · 自動判定為 <b>${g.status}</b>`:"");
@@ -1069,8 +1074,9 @@
       po.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===b.dataset.v?"true":"false")); render(); return;}
     if(b.classList.contains("scr-btn")){const k=b.closest(".scr-row").dataset.scr,o=["neg","pos","unk"],
       n=o[(o.indexOf(b.dataset.state)+1)%3]; b.dataset.state=n; b.textContent=SCRTXT[n]; S.scr[k]=n;
-      if(k==="gbs"&&n==="pos"){S.iap="complete"; document.querySelectorAll('[data-seg="iap"] button').forEach(x=>x.setAttribute("aria-pressed",x.dataset.v==="complete"?"true":"false"));}  // GBS 陽 → IAP 預設完整
-      render(); return;}
+      render();
+      if(k==="gbs"&&(n==="pos"||n==="unk"))pulseIap();   // GBS 陽/未驗 → IAP 變必答，但絕不代填（代填＝捏造已給藥）
+      return;}
     const fill=b.closest("[data-fill]"); if(fill){const inp=document.getElementById(fill.dataset.fill); if(inp){inp.value=b.dataset.v;
       if(/fetal distress/i.test(b.dataset.v)){S.fd=true; const fdb=document.querySelector('[data-tog="fd"] button'); if(fdb)fdb.setAttribute("aria-pressed","true");}  // C/S/入院原因命中→自動勾出生事件 fetal distress(可再取消)
       render();} return;}
@@ -1178,7 +1184,7 @@
     const inV=id=>{const el=document.getElementById(id); const v=el&&el.value.trim()?el.value.trim():""; return v?esc(v):"";};  // 自由文字一律 escape
     const gw=parseInt(V("gaW")||"0",10), gd=V("gaD")||"0";
     const gaTxt=(gw||"__")+(gd&&gd!=="0"?`+${gd}`:"")+" weeks";
-    const sex={male:"male",female:"female"}[S.gender];
+    const sex={male:"male",female:"female"}[S.gender]||"";
     const bw=V("bw")||"____", ap1=V("ap1")||"_", ap5=V("ap5")||"_", G=V("gravida")||"_", P=V("para")||"_";
     const ap1n=parseInt(V("ap1")||"10",10);
     const matAge=inV("matAge"), csR=inV("csReason"), admR=inV("admReason"), tentDx=inV("tentDx"), chartNo=inV("chartNo");
@@ -1189,6 +1195,7 @@
     const P1=[], P2=[];
 
     const csw=document.getElementById("csReasonWrap"); if(csw)csw.hidden=(S.delivery!=="cs");
+    {const ih=document.getElementById("iapHint"); if(ih)ih.hidden=!((S.scr.gbs==="pos"||S.scr.gbs==="unk")&&S.iap==="none");}   // GBS 有風險且 IAP 未選 → 顯示提醒
     const usf=document.getElementById("usFindings"); if(usf)usf.hidden=(S.us!=="abnormal");
     const acf=document.getElementById("acghFindings"); if(acf)acf.hidden=(S.amnio!=="abnormal");
     const niptW=document.getElementById("niptWrap"); if(niptW)niptW.hidden=(S.nipt!=="high");
@@ -1218,7 +1225,7 @@
     if(ladLab)ladLab.textContent=S.pathway==="outborn"?"我方處置·轉送中呼吸維持":S.pathway==="nursery"?"嬰兒室呼吸處置":"呼吸處置";
     setCsum("pathway",{direct:"直接入院",nursery:"嬰兒室觀察",consult:"出生後會診",standby:"產前 standby",outborn:"外接"}[S.pathway],S.pathway==="direct"&&!S.obSx.length&&S.obRespType==="room");
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
-    const via = S.delivery==="cs" ? "Cesarean section (C/S)" : "vaginal delivery (VD)";
+    const via = S.delivery==="cs" ? "Cesarean section (C/S)" : S.delivery==="nsd" ? "vaginal delivery (VD)" : "";
     let obFac = inV("obFacility")||inV("ancPlace");   // 出生院所空 → 繼承產檢地點
     if(S.outborn&&obFac==="TPEMMH")obFac="";   // 外接時繼承到本院=矛盾(transferred from 本院)→視為未填
     const birthPlace = S.outborn ? (obFac?sl(obFac):ph("____")) : sl("TPEMMH");
@@ -1227,8 +1234,8 @@
     if(/^\d{3,4}$/.test(bt))bt=bt.length===3?bt[0]+":"+bt.slice(1):bt.slice(0,2)+":"+bt.slice(2);   // 1430 → 14:30（24h）
     const bds=bDate?fmtDate(bDate):"";
     {const wp=[]; if(bt)wp.push(`at ${bt}`); if(bds)wp.push(`on ${bds}`); if(wp.length)bornWhen=wp.join(" ");}
-    let s1=`This ${sl("1-day-old")} ${sl(sex)} newborn was born ${bornWhen?sl(bornWhen)+" ":""}to a G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}, ${matAge?sl(matAge):ph("__")} y/o mother `
-      +`at GA ${gw?sl(gaTxt):ph(gaTxt)} with birth weight (BW) ${V("bw")?sl(bw):ph(bw)} gm (${S.growth==="?"?ph("?"):sl(S.growth,S.growth==="SGA"||S.growth==="LGA")}) in ${birthPlace} via ${sl(via)}`;
+    let s1=`This ${sl("1-day-old")} ${sex?sl(sex):ph("____")} newborn was born ${bornWhen?sl(bornWhen)+" ":""}to a G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}, ${matAge?sl(matAge):ph("__")} y/o mother `
+      +`at GA ${gw?sl(gaTxt):ph(gaTxt)} with birth weight (BW) ${V("bw")?sl(bw):ph(bw)} gm (${S.growth==="?"?ph("?"):sl(S.growth,S.growth==="SGA"||S.growth==="LGA")}) in ${birthPlace} via ${via?sl(via):ph("____")}`;
     if(S.delivery==="cs") s1+=` due to ${csR?sl(csR):ph("____")}`;
     P1.push(s1+".");
     let edc=inV("edc");
@@ -1312,8 +1319,11 @@
 
     // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar +（外接轉入過程）+ 入院 ──
     if(!S.outborn) P2.push(`The mother was admitted to our hospital due to ${admR?sl(admR):ph("____")}.`);  // 外接的轉入過程移到 Apgar 之後(正確時序)
-    if(S.iap!=="none"){const drug=inV("iapDrug")||"Ampicillin", is=inV("iapSince");
-      P2.push(`${sl(drug)} was administered${is?` since ${sl(is)}`:""}, ${S.iap==="complete"?"and":"but"} intrapartum antibiotic prophylaxis (IAP) was ${sl(S.iap==="complete"?"complete":"incomplete")}.`);}
+    if(S.iap!=="none"){const drug=inV("iapDrug"), is=inV("iapSince"), iapDone=S.iap==="complete";
+      // 藥名未填 → 只陳述 IAP 完整度，不捏造「給了某藥」（incomplete 的常見情境正是根本沒給藥）
+      P2.push(drug
+        ? `${sl(drug)} was administered${is?` since ${sl(is)}`:""}, ${iapDone?"and":"but"} intrapartum antibiotic prophylaxis (IAP) was ${sl(iapDone?"complete":"incomplete")}.`
+        : `Intrapartum antibiotic prophylaxis (IAP) was ${sl(iapDone?"complete":"incomplete")}.`);}
     const st=S.r.steroid;
     if(st.on){const sd=inV("steroidDates");
       P2.push(`Antenatal Betamethasone (${sl((st.val||"?")+" dose"+(st.val==="1"?"":"s"))}${st.extra.includes("incomplete")?", "+sl("incomplete course"):""}) was used to accelerate fetal lung maturation${sd?` on ${sl(sd)}`:""}.`);}
@@ -1365,10 +1375,10 @@
                     : "with or without complete intrapartum antibiotic prophylaxis (IAP)";
     const DX=[];
     DX.push(!gw
-      ? {s:"Newborn",     f:`Newborn, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`}
+      ? {s:"Newborn",     f:`Newborn, GA ${gaTxt}, BW ${bw} gm, ${S.growth==="?"?ph("?"):S.growth}`}
       : gw<37
-      ? {s:"Prematurity", f:`Prematurity, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`}
-      : {s:"Term baby",   f:`Term baby, GA ${gaTxt}, BW ${bw} gm, ${S.growth}`});
+      ? {s:"Prematurity", f:`Prematurity, GA ${gaTxt}, BW ${bw} gm, ${S.growth==="?"?ph("?"):S.growth}`}
+      : {s:"Term baby",   f:`Term baby, GA ${gaTxt}, BW ${bw} gm, ${S.growth==="?"?ph("?"):S.growth}`});
     const OB_RESP_SX=["tachypnea","subcostal retractions","grunting","nasal flaring","cyanosis","desaturation","apnea"];
     const pwRespSick=(pwSx&&(["o2","ppv","ett"].includes(S.obRespType)||S.obSx.some(x=>OB_RESP_SX.includes(x))))
       ||(S.outborn&&["o2","ppv","ett"].includes(S.obM1Type))
@@ -1821,7 +1831,8 @@ ${opLine}`);
 
     const sec=(t,a)=>t+":\n"+a.map(x=>"- "+x).join("\n");
     const gaWarn=!gw?"[GA 未填——以下以足月組稿，請回 Admission 填 GA]\n\n":"";   // plan 無灰字機制,缺 GA 會靜默組足月版
-    if(!S.noteDirty)document.getElementById("note").textContent=gaWarn+[sec("Diagnostic plans",D),sec("Therapeutic plans",T),sec("Prognostic plans",Pr)].join("\n\n");
+    const sexWarn=(S.gender!=="male"&&S.gender!=="female")?"[性別未填——SGA/LGA 無法判定，相關醫囑未列入，請回 Admission 填性別]\n\n":"";
+    if(!S.noteDirty)document.getElementById("note").textContent=gaWarn+sexWarn+[sec("Diagnostic plans",D),sec("Therapeutic plans",T),sec("Prognostic plans",Pr)].join("\n\n");
   }
 
   // ── Acceptance note（模板填欄；上半自動沿用 admission 資料）──
@@ -1833,7 +1844,7 @@ ${opLine}`);
     const fv=id=>{const v=inV(id); return v?sl(esc(v)):"";};           // 有填才亮，否則空
     const gw=parseInt(V("gaW")||"0",10), gd=parseInt(V("gaD")||"0",10);
     const gaTxt=(gw||"__")+(gd?`+${gd}`:"")+" weeks";
-    const sex={male:"male",female:"female"}[S.gender];
+    const sex={male:"male",female:"female"}[S.gender]||"";
     const bw=V("bw")||"____", growth=S.growth;
     const ap1=V("ap1")||"_", ap5=V("ap5")||"_", G=V("gravida")||"_", P=V("para")||"_";
     // 馬上接手 → d/o 0、PMA=GA、Wt=BW（全自動，不再手動輸入）
@@ -1843,7 +1854,7 @@ ${opLine}`);
     const gp=document.getElementById("accGrPMA"); if(gp)gp.value=gw?`${pma} wks`:"";
     const gb=document.getElementById("accGrBW"); if(gb)gb.value=bw!=="____"?bw+" g":"";
 
-    const via=S.delivery==="cs"?"C/S":"VD";
+    const via=S.delivery==="cs"?"C/S":S.delivery==="nsd"?"VD":"";
     const admitTo=inV("accAdmitTo")||"our NICU";
     const admReason=inV("admReason");
     let accObFac=inV("obFacility")||inV("ancPlace"); if(S.outborn&&accObFac==="TPEMMH")accObFac="";  // 外接繼承到本院=矛盾→未填
@@ -1867,8 +1878,8 @@ ${opLine}`);
     L.push(`${sl(dol)} d/o, PMA ${gw?sl(pma):ph(pma)} wks, Wt: ${V("bw")?sl(bw):ph(bw)} g (${growth==="?"?ph("?"):sl(growth,growth==="SGA"||growth==="LGA")})`);
     L.push("");
     L.push("【Brief history】");
-    L.push(`A ${sl(sex)} neonate, GA ${gw?sl(gaTxt):ph(gaTxt)}, BW ${V("bw")?sl(bw):ph(bw)} gm, ${growth==="?"?ph("?"):sl(growth,growth==="SGA"||growth==="LGA")}, was admitted to ${sl(esc(admitTo))} due to ${admReason?sl(esc(admReason)):ph("____")}.`);
-    L.push(`Birth History: G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}, ${sl(via)} in ${birthPlace==="____"?ph(birthPlace):sl(esc(birthPlace))}.`);
+    L.push(`A ${sex?sl(sex):ph("____")} neonate, GA ${gw?sl(gaTxt):ph(gaTxt)}, BW ${V("bw")?sl(bw):ph(bw)} gm, ${growth==="?"?ph("?"):sl(growth,growth==="SGA"||growth==="LGA")}, was admitted to ${sl(esc(admitTo))} due to ${admReason?sl(esc(admReason)):ph("____")}.`);
+    L.push(`Birth History: G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}, ${via?sl(via):ph("____")} in ${birthPlace==="____"?ph(birthPlace):sl(esc(birthPlace))}.`);
     L.push(`Apgar score: ${V("ap1")?sl(ap1):ph(ap1)} and ${V("ap5")?sl(ap5):ph(ap5)} at 1 and 5 minutes.`);
     L.push(`Fetal distress(${sl(S.fd?"+":"-",S.fd)}), DOIC(${sl(S.doic?"+":"-",S.doic)}), MSAF(${sl(S.msaf?"+":"-",S.msaf)})`);
     L.push(`Respiratory: ${respLine?sl(esc(respLine)):ph("____")}`);
@@ -1937,9 +1948,8 @@ ${opLine}`);
   }
 
   // 初始選取狀態
-  document.querySelector('[data-seg="gender"] [data-v="male"]').setAttribute("aria-pressed","true");
+  document.querySelectorAll('[data-seg="gender"] button,[data-seg="delivery"] button').forEach(b=>b.setAttribute("aria-pressed","false"));   // 無預設值，但仍需 toggle 語意
   document.querySelector('[data-seg="growth"] [data-v="AGA"]').setAttribute("aria-pressed","true");
-  document.querySelector('[data-seg="delivery"] [data-v="cs"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="us"] [data-v="normal"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="nipt"] [data-v="none"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="pathway"] [data-v="direct"]')?.setAttribute("aria-pressed","true");
@@ -1978,6 +1988,7 @@ ${opLine}`);
   syncDates("resp"); syncDates("line");
 
   const noteEl=document.getElementById("note");
+  function pulseIap(){const el=document.getElementById("iapHint"); if(!el||el.hidden)return; el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse");}
   function pulseRegen(){const b=document.getElementById("regen"); if(!b||b.hidden)return; b.classList.remove("pulse"); void b.offsetWidth; b.classList.add("pulse");}
   function markDirty(){S.noteDirty=true; noteEl.classList.add("editing"); document.getElementById("regen").hidden=false; const eh=document.getElementById("editHint"); if(eh)eh.hidden=false;}
   function clearDirty(){S.noteDirty=false; noteEl.classList.remove("editing"); document.getElementById("regen").hidden=true; const eh=document.getElementById("editHint"); if(eh)eh.hidden=true;}
@@ -2013,6 +2024,5 @@ ${opLine}`);
   render();
 })();
 </script>
-
 </body>
 </html>
