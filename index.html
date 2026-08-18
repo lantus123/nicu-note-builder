@@ -470,7 +470,9 @@
         <span class="u">FiO₂</span><input type="number" id="obFiO2" placeholder="__" min="21" max="100" style="max-width:64px"><span class="u">%</span>
         <span class="u">IP</span><input type="number" id="obIP" placeholder="__" min="0" style="max-width:60px"><span class="u">/ PEEP</span>
         <input type="number" id="obPEEP" placeholder="__" min="0" style="max-width:60px">
-        <span id="obRRfield" hidden><span class="u">RR</span><input type="number" id="obRR" placeholder="__" min="0" style="max-width:60px"><span class="u">/min</span></span></div></div>
+        <span id="obRRfield" hidden><span class="u">RR</span><input type="number" id="obRR" placeholder="__" min="0" style="max-width:60px"><span class="u">/min</span></span></div>
+        <div id="obStableField" hidden style="margin-top:7px">
+          <div class="seg" data-tog="obRespStable"><button data-v="1" style="flex:0 1 auto">生命徵象穩定</button></div></div></div>
     </div>
     <div class="field" id="pwCourseWrap" hidden><span class="lab">過程補充 <span class="q">（自由欄，接在症狀句後）</span></span>
       <textarea class="tarea" id="obCourse" rows="2" placeholder="例：initially cared for in the nursery; the transport team was contacted…"></textarea></div>
@@ -508,6 +510,8 @@
         </div></div>
       <div class="field"><span class="lab">Sepsis work-up 是否含 CSF analysis</span>
         <div class="seg risk" data-tog="planCsf"><button data-v="1" data-on style="flex:0 1 auto">含腰椎穿刺 CSF</button></div></div>
+      <div class="field"><span class="lab">已向家屬解釋 <span class="q">（未勾則不寫入，這句是告知義務的舉證）</span></span>
+        <div class="seg" data-tog="planExplained"><button data-v="1" style="flex:0 1 auto">Explained to family fully</button></div></div>
       <p class="man-h" style="margin-top:4px">診斷／治療／預後三段依 GA、SGA/LGA、IDM、fetal distress/DOIC、呼吸支持、surfactant 等自動組出。複製後可再改。</p>
     </section>
   </div>
@@ -965,10 +969,10 @@
            resus:"none",resp:"roomair",surfactant:false,
            amnio:"none",nipt:"none",mgso4:"none",toco:"none",iap:"none",us:"normal",
            fd:false,doic:false,msaf:false,msafGrade:"",
-           pathway:"direct",outborn:false,obRespType:"room",obSx:[],obO2Dev:"hood",
+           pathway:"direct",outborn:false,obRespType:"room",obRespStable:false,obSx:[],obO2Dev:"hood",
            pwSbR:[],pwOnset:"developed",obM1Type:"room",obM1Dev:"hood",
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
-           mode:"adm",planAbx:"empirical",planAbxAuto:true,planCsf:false,noteDirty:false,noteCache:{},
+           mode:"adm",planAbx:"empirical",planAbxAuto:true,planCsf:false,planExplained:false,noteDirty:false,noteCache:{},
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
            procOpt:{alineSide:"right",alineArtery:"radial",uacPos:"high",chestSide:"right",chestType:"pigtail",chestICS:"4th",lpCompl:"nil",betABO:"",betRh:""},
            acc:{resp:[],abx:[],line:[],vac:[],rop:"notyet",aabr:"notyet",nbs:"notyet",respDates:{},lineDates:{}},
@@ -1221,6 +1225,7 @@
     sh("obO2Wrap",S.obRespType==="o2");
     sh("obRespWrap",S.obRespType==="ppv"||S.obRespType==="ett");
     sh("obRRfield",S.obRespType==="ett");
+    sh("obStableField",S.obRespType==="ppv");   // 生命徵象穩定只對 PPV 有意義
     sh("pwCourseWrap",true);
     const ladLab=document.getElementById("ladderALab");
     if(ladLab)ladLab.textContent=S.pathway==="outborn"?"我方處置·轉送中呼吸維持":S.pathway==="nursery"?"嬰兒室呼吸處置":"呼吸處置";
@@ -1407,7 +1412,7 @@
       if(S.obRespType==="o2"){const dev=({hood:"oxygen hood",cannula:"nasal cannula",mask:"face mask"})[S.obO2Dev]||"oxygen hood",fl=inV("obO2Flow");
         out.push(`${sl("Oxygen",true)} was given via ${sl(dev,true)}${fl?` at ${sl(fl)} L/min`:""}.`);}
       else if(S.obRespType==="ppv"){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP");
-        out.push(`${sl("Neopuff positive-pressure ventilation (PPV)",true)} was provided for respiratory support with settings of FiO2 ${f?sl(f):ph("__")}%, PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O, and the heart rate and oxygen saturation remained stable.`);}
+        out.push(`${sl("Neopuff positive-pressure ventilation (PPV)",true)} was provided for respiratory support with settings of FiO2 ${f?sl(f):ph("__")}%, PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O${S.obRespStable?`, and ${sl("the heart rate and oxygen saturation remained stable")}`:""}.`);}   // 生理反應是斷言,需明選
       else if(S.obRespType==="ett"){const f=inV("obFiO2"),ip=inV("obIP"),pe=inV("obPEEP"),rr=inV("obRR"),st=[];
         if(f)st.push(`FiO2 ${sl(f)}%`); if(ip||pe)st.push(`PIP/PEEP ${ip?sl(ip):ph("__")}/${pe?sl(pe):ph("__")} cmH2O`); if(rr)st.push(`rate ${sl(rr)}/min`);
         out.push(S.outborn&&S.obM1Type==="ett"
@@ -1825,7 +1830,7 @@ ${opLine}`);
     T.push("Early enteral trophic feeding with breast milk, if general condition becomes stable");
     T.push("The priority of enteral milk feeding is mother's own breast milk first, then donor human milk from the human milk bank, and lastly preterm infant formula or preterm special care formula, via OG tube");
 
-    const Pr=[]; Pr.push("Explained to family fully");
+    const Pr=[]; if(S.planExplained)Pr.push("Explained to family fully");   // 告知家屬是已發生的事件,不可預設斷言
     if(preterm){
       Pr.push("Beware of complications of prematurity: RDS, CLD, ROP, oxidative stress, NEC, PDA, IVH, etc.");
       Pr.push("ROP examination 4-6 weeks after birth (or after PMA 31 weeks)");
@@ -1836,7 +1841,8 @@ ${opLine}`);
     const sec=(t,a)=>t+":\n"+a.map(x=>"- "+x).join("\n");
     const gaWarn=!gw?"[GA 未填——以下以足月組稿，請回 Admission 填 GA]\n\n":"";   // plan 無灰字機制,缺 GA 會靜默組足月版
     const sexWarn=(S.gender!=="male"&&S.gender!=="female")?"[性別未填——SGA/LGA 無法判定，相關醫囑未列入，請回 Admission 填性別]\n\n":"";
-    if(!S.noteDirty)document.getElementById("note").textContent=gaWarn+sexWarn+[sec("Diagnostic plans",D),sec("Therapeutic plans",T),sec("Prognostic plans",Pr)].join("\n\n");
+    if(!S.noteDirty)document.getElementById("note").textContent=gaWarn+sexWarn+
+      [["Diagnostic plans",D],["Therapeutic plans",T],["Prognostic plans",Pr]].filter(([,a])=>a.length).map(([t,a])=>sec(t,a)).join("\n\n");   // 空段落不輸出光禿禿的標題
   }
 
   // ── Acceptance note（模板填欄；上半自動沿用 admission 資料）──
