@@ -1874,8 +1874,8 @@ ${opLine}`);
     const sex={male:"male",female:"female"}[S.gender]||"";
     const bw=V("bw")||"____", growth=S.growth;
     const ap1=V("ap1")||"_", ap5=V("ap5")||"_", G=V("gravida")||"_", P=V("para")||"_";
-    // 馬上接手 → d/o 0、PMA=GA、Wt=BW（全自動，不再手動輸入）
-    const dol="0", totalDays=(gw?gw*7+gd:0);
+    // 表頭沿用 admission 的日齡（S.dol），不再寫死 0；PMA = GA + 日齡（postmenstrual age 定義）
+    const dolN=parseInt(S.dol||"0",10), dol=String(dolN), totalDays=(gw?gw*7+gd+dolN:0);
     const pma=gw?`${Math.floor(totalDays/7)}+${totalDays%7}`:"__";
     const curWt=bw;
     const gp=document.getElementById("accGrPMA"); if(gp)gp.value=gw?`${pma} wks`:"";
