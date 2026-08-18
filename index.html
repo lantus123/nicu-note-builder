@@ -249,6 +249,8 @@
         <button data-v="nsd">自然產 NSD</button><button data-v="cs">剖腹 C/S</button>
       </div>
     </div>
+    <div class="field" id="csUncomplWrap" hidden><span class="lab">手術過程 <span class="q">（未勾則不寫，順利與否需自行確認）</span></span>
+      <div class="seg" data-tog="csUncompl"><button data-v="1" style="flex:0 1 auto">uncomplicated</button></div></div>
     <div class="field" id="csReasonWrap" hidden>
       <span class="lab">C/S 原因 <span class="q">（點選帶入，可再改）</span></span>
       <div class="seg" data-fill="csReason" style="flex-wrap:wrap;margin-bottom:7px">
@@ -267,6 +269,8 @@
         <div class="field" style="margin:0"><input class="tin" type="date" id="birthDate"></div>
         <div class="field" style="margin:0"><input class="tin" type="text" id="birthTime" inputmode="numeric" placeholder="時:分（如 14:30）" maxlength="5"></div>
       </div></div>
+    <div class="field"><span class="lab">入院時日齡 <span class="q">（admission note 多為當天或隔天寫）</span></span>
+      <div class="seg" data-seg="dol"><button data-v="0">當天 just-born</button><button data-v="1">1 天</button><button data-v="2">2 天</button><button data-v="3">3 天</button></div></div>
     <div class="field">
       <div class="gp-apgar">
         <div>
@@ -301,8 +305,10 @@
       <input type="date" class="tin" id="edc"></div>
     <div class="field"><span class="lab">產檢地點 <span class="q">（非 MMH 標 OBGYN clinic）</span></span>
       <select class="tin" id="ancPlace"></select></div>
+    <div class="field"><span class="lab">產檢規律性 <span class="q">（未提及則不寫這句）</span></span>
+      <div class="seg" data-seg="ancReg"><button data-v="na">未提及</button><button data-v="regular">規則</button><button data-v="irregular">不規則</button></div></div>
     <div class="field"><span class="lab">產前超音波</span>
-      <div class="seg" data-seg="us"><button data-v="normal">正常</button><button data-v="abnormal">異常</button></div>
+      <div class="seg" data-seg="us"><button data-v="na">未提及</button><button data-v="normal">正常</button><button data-v="abnormal">異常</button></div>
       <input class="tin" id="usFindings" placeholder="異常所見…" hidden style="margin-top:7px"></div>
     <div class="field"><span class="lab">羊膜穿刺 aCGH</span>
       <div class="seg" data-seg="amnio"><button data-v="none">未做</button><button data-v="normal">正常</button><button data-v="abnormal">異常</button></div>
@@ -678,7 +684,7 @@
 
     <section class="card">
       <h2 class="sec-h"><span class="n">I</span>Nutrition</h2>
-      <textarea class="tarea" id="accNutrition" rows="2" placeholder="例：NPO / TPN，或 breast milk __ ml q3h…">NPO</textarea>
+      <textarea class="tarea" id="accNutrition" rows="2" placeholder="例：NPO / TPN，或 breast milk __ ml q3h…"></textarea>
     </section>
 
     <section class="card collap collapsed">
@@ -953,7 +959,7 @@
     {k:"fever",name:"Fever",desc:"發燒",type:"flag"},
     {k:"prom",name:"PROM",desc:"破水",type:"choice",
      opts:[["prom","PROM"],["pprom","PPROM"]],
-     num:{id:"promH",label:"破水時數",unit:"hr",val:18}},
+     num:{id:"promH",label:"破水時數",unit:"hr",val:null,ph:"18"}},
     {k:"steroid",name:"產前類固醇",desc:"Betamethasone",type:"choice",
      opts:[["1","1 劑"],["2","2 劑"]],
      text:{id:"steroidDates",label:"日期（可填區間）",ph:"7/19-7/20"},
@@ -964,15 +970,15 @@
                 ["syphilis","Syphilis (VDRL)","syphilis"],
                 ["rubella","Rubella","rubella"],["hiv","HIV","HIV infection"],
                 ["gbs","GBS","group B streptococcus (GBS)"]];
-  const S={gender:"",growth:"AGA",growthAuto:true,delivery:"",r:{},   // 性別/生產方式不預設：預設值會被寫進 note＝捏造事實
+  const S={gender:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,r:{},   // 性別/生產方式不預設：預設值會被寫進 note＝捏造事實
            scr:{hbsag:"neg",hbeag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
            resus:"none",resp:"roomair",surfactant:false,
-           amnio:"none",nipt:"none",mgso4:"none",toco:"none",iap:"none",us:"normal",
+           amnio:"none",nipt:"none",mgso4:"none",toco:"none",iap:"none",us:"na",ancReg:"na",
            fd:false,doic:false,msaf:false,msafGrade:"",
            pathway:"direct",outborn:false,obRespType:"room",obRespStable:false,obSx:[],obO2Dev:"hood",
            pwSbR:[],pwOnset:"developed",obM1Type:"room",obM1Dev:"hood",
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
-           mode:"adm",planAbx:"empirical",planAbxAuto:true,planCsf:false,planExplained:false,noteDirty:false,noteCache:{},
+           dol:"1",mode:"adm",planAbx:"empirical",planAbxAuto:true,planCsf:false,planExplained:false,noteDirty:false,noteCache:{},
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
            procOpt:{alineSide:"right",alineArtery:"radial",uacPos:"high",chestSide:"right",chestType:"pigtail",chestICS:"4th",lpCompl:"nil",betABO:"",betRh:""},
            acc:{resp:[],abx:[],line:[],vac:[],rop:"notyet",aabr:"notyet",nbs:"notyet",respDates:{},lineDates:{}},
@@ -1025,7 +1031,7 @@
     {
       const c=item.querySelector(`[data-child="${x.k}"]`); let h="";
       if(x.opts&&x.type!=="choice3"){h+=`<div><span class="lab">${x.k==="steroid"?"劑數":"處置"}</span><div class="seg" data-rc="${x.k}">${x.opts.map(o=>`<button data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`;}
-      if(x.num){h+=`<div><span class="lab">${x.num.label}</span><div class="num"><input type="number" id="${x.num.id}" value="${x.num.val}" min="0"><span class="u">${x.num.unit}</span></div></div>`;}
+      if(x.num){h+=`<div><span class="lab">${x.num.label}</span><div class="num"><input type="number" id="${x.num.id}" value="${x.num.val??""}"${x.num.ph?` placeholder="${x.num.ph}"`:""} min="0"><span class="u">${x.num.unit}</span></div></div>`;}
       if(x.text){h+=`<div><span class="lab">${x.text.label}</span><input class="tin" id="${x.text.id}" placeholder="${x.text.ph}"></div>`;}
       if(x.extra){h+=`<div>${x.extra.label?`<span class="lab">${x.extra.label}</span>`:""}<div class="seg" data-re="${x.k}" data-multi="${x.extra.multi}">${x.extra.opts.map(o=>`<button data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`;}
       c.innerHTML=h;
@@ -1200,6 +1206,7 @@
     const P1=[], P2=[];
 
     const csw=document.getElementById("csReasonWrap"); if(csw)csw.hidden=(S.delivery!=="cs");
+    const cuw=document.getElementById("csUncomplWrap"); if(cuw)cuw.hidden=(S.delivery!=="cs");
     {const ih=document.getElementById("iapHint"); if(ih)ih.hidden=!((S.scr.gbs==="pos"||S.scr.gbs==="unk")&&S.iap==="none");}   // GBS 有風險且 IAP 未選 → 顯示提醒
     const usf=document.getElementById("usFindings"); if(usf)usf.hidden=(S.us!=="abnormal");
     const acf=document.getElementById("acghFindings"); if(acf)acf.hidden=(S.amnio!=="abnormal");
@@ -1240,18 +1247,26 @@
     if(/^\d{3,4}$/.test(bt))bt=bt.length===3?bt[0]+":"+bt.slice(1):bt.slice(0,2)+":"+bt.slice(2);   // 1430 → 14:30（24h）
     const bds=bDate?fmtDate(bDate):"";
     {const wp=[]; if(bt)wp.push(`at ${bt}`); if(bds)wp.push(`on ${bds}`); if(wp.length)bornWhen=wp.join(" ");}
-    let s1=`This ${sl("1-day-old")} ${sex?sl(sex):ph("____")} newborn was born ${bornWhen?sl(bornWhen)+" ":""}to a G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}, ${matAge?sl(matAge):ph("__")} y/o mother `
+    let s1=`This ${sl(S.dol==="0"?"just-born":S.dol+"-day-old")} ${sex?sl(sex):ph("____")} newborn was born ${bornWhen?sl(bornWhen)+" ":""}to a G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}, ${matAge?sl(matAge):ph("__")} y/o mother `
       +`at GA ${gw?sl(gaTxt):ph(gaTxt)} with birth weight (BW) ${V("bw")?sl(bw):ph(bw)} gm (${S.growth==="?"?ph("?"):sl(S.growth,S.growth==="SGA"||S.growth==="LGA")}) in ${birthPlace} via ${via?sl(via):ph("____")}`;
     if(S.delivery==="cs") s1+=` due to ${csR?sl(csR):ph("____")}`;
     P1.push(s1+".");
     let edc=inV("edc");
-    if(!edc&&gw){const rem=280-(gw*7+parseInt(gd||"0",10)); const d=new Date(); d.setDate(d.getDate()+rem);
-      edc=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}   // 空白→由 GA 反推
+    // 空白→由 GA 反推，基準必須是出生日而非今天（補打 note 時 today 會讓 EDC 整整偏移日齡天數）
+    {const bdRaw=inV("birthDate");
+     if(!edc&&gw&&bdRaw){const rem=280-(gw*7+parseInt(gd||"0",10)); const d=new Date(bdRaw+"T00:00:00"); d.setDate(d.getDate()+rem);
+       edc=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}}
     P1.push(`The expected date of confinement was ${edc?sl(fmtDate(edc)):ph("____")}.`);
-    const anc=inV("ancPlace")||"TPEMMH", isMMH=/MMH/.test(anc);
+    const anc=inV("ancPlace"), isMMH=/MMH/.test(anc);
     const usFind=inV("usFindings");
+    // 產檢規律性與超音波各自可「未提及」；能合則合成一句，皆未提及則整句不出
+    const ancPart = S.ancReg==="na" ? ""
+      : `The mother received ${sl(S.ancReg==="irregular"?"irregular":"regular", S.ancReg==="irregular")} antepartum examinations in ${anc?sl(anc+(isMMH?"":" OBGYN clinic")):ph("____")}`;
     const usTxt = S.us==="abnormal" ? (usFind?`revealed ${sl(usFind,true)}`:`revealed ${sl("abnormal findings",true)}`) : `revealed ${sl("normal results")}`;
-    P1.push(`The mother received regular antepartum examinations in ${sl(anc+(isMMH?"":" OBGYN clinic"))}, and prenatal ultrasound and level II ultrasound ${usTxt}.`);
+    const usPart = S.us==="na" ? "" : `prenatal ultrasound and level II ultrasound ${usTxt}`;
+    if(ancPart&&usPart)P1.push(`${ancPart}, and ${usPart}.`);
+    else if(ancPart)P1.push(`${ancPart}.`);
+    else if(usPart)P1.push(`${usPart.charAt(0).toUpperCase()+usPart.slice(1)}.`);
     const acghF=inV("acghFindings");
     P1.push(S.amnio==="normal"
       ? `Amniocentesis with array comparative genomic hybridization (aCGH) was ${sl("normal")}.`
@@ -1336,7 +1351,7 @@
     if(S.mgso4!=="none") P2.push(`MgSO4 was added for ${sl(S.mgso4==="neuro"?"fetal neuroprotection":"seizure prophylaxis")}.`);
     if(S.toco!=="none"){const ts=inV("tocoSince");
       P2.push(`Antiabortifacient with ${sl(S.toco==="ritodrine"?"Ritodrine":"Atosiban")} was used for tocolysis${ts?` since ${sl(ts)}`:""}.`);}
-    if(S.delivery==="cs") P2.push(`The cesarean delivery was ${sl("uncomplicated")}.`);   // 原因已於 para1 說明，不重複
+    if(S.delivery==="cs"&&S.csUncompl) P2.push(`The cesarean delivery was ${sl("uncomplicated")}.`);   // 手術順利與否使用者沒說過,需明選
     // 出生事件（PROM 從 S.r.prom；其餘否定）
     const pr=S.r.prom;
     if(pr.on){const t={prom:"premature rupture of membranes (PROM)",pprom:"preterm premature rupture of membranes (PPROM)"}[pr.val]||"premature rupture of membranes (PROM)"; const hr=V("promH"); P2.push(`${sl(t.charAt(0).toUpperCase()+t.slice(1))}${hr?` for ${sl(hr+" hours")}`:""} was noted before delivery.`);}
@@ -1395,10 +1410,10 @@
     if(S.fd)DX.push({s:"Fetal distress",f:"Fetal distress"});
     if(S.doic)DX.push({s:"DOIC",f:`Delay of initial crying (DOIC) for ${doicMin||"__"} minutes`});
     if(S.msaf)DX.push({s:"MSAF",f:`Infant born through ${S.msafGrade?S.msafGrade+" ":""}meconium-stained amniotic fluid (MSAF)`});
-    if(pr.on){const h=V("promH")||"__";
+    if(pr.on){const h=V("promH"), hTxt=h?` for ${h} hours`:"";   // 時數未填就不寫,與段落二一致(DX 整段被 sl 包成綠字,塞 __ 會誤導成已確認)
       DX.push(pr.val==="pprom"
-        ? {s:"PPROM",f:`Preterm premature rupture of membranes (PPROM) for ${h} hours`}
-        : {s:"PROM", f:`Premature rupture of membranes (PROM) for ${h} hours${parseInt(h)>18?" (prolonged, >18 hours)":""}`});}
+        ? {s:"PPROM",f:`Preterm premature rupture of membranes (PPROM)${hTxt}`}
+        : {s:"PROM", f:`Premature rupture of membranes (PROM)${hTxt}${h&&parseInt(h)>18?" (prolonged, >18 hours)":""}`});}
     if(S.r.gdm.on)DX.push({s:"IDM",f:"Infant of diabetic mother (IDM)"});
     if(S.r.pih.on)DX.push({s:"Maternal PIH",f:"Maternal pregnancy induced hypertension (PIH)"});
     if(S.r.pre.on&&S.r.pre.val!=="highrisk")DX.push({s:"Maternal preeclampsia",f:"Maternal preeclampsia"});
@@ -1425,7 +1440,7 @@
       ladderSents().forEach(s=>P2.push(s));
     }
     else if(S.pathway==="nursery"){   // 剛出生呼吸尚可→嬰兒室(±O₂)→中途喘/24hr仍喘→收住院
-      const sxTxt=S.obSx.length?joinAnd(S.obSx.map(x=>sl(x,true))):sl("tachypnea",true);
+      const sxTxt=S.obSx.length?joinAnd(S.obSx.map(x=>sl(x,true))):ph("____");   // 沒點症狀不可自動塞具體體徵
       P2.push(`After birth, the infant was initially stable and was cared for in the nursery.`);
       if(obCourse)P2.push(sl(obCourse));
       if(S.pwOnset==="persist24"){ladderSents().forEach(s=>P2.push(s));
@@ -1435,14 +1450,14 @@
         ladderSents().forEach(s=>P2.push(s));}
     }
     else if(S.pathway==="consult"){   // 剛出生就喘→婦產科 call 兒科評估→處置
-      const sxTxt=S.obSx.length?joinAnd(S.obSx.map(x=>sl(x,true))):sl("respiratory distress",true);
+      const sxTxt=S.obSx.length?joinAnd(S.obSx.map(x=>sl(x,true))):ph("____");   // 同上
       P2.push(`Shortly after birth, the infant developed ${sxTxt}, and the pediatric team was consulted for evaluation.`);
       if(obCourse)P2.push(sl(obCourse));
       ladderSents().forEach(s=>P2.push(s));
     }
     else if(S.outborn){   // 外接：外院出生後狀況→外院處置→我方到場→我方處置→轉送(置於 Apgar 之後)
       const src=inV("obTransferFrom")||obFac, reason=inV("obReason");
-      const sxTxt=S.obSx.length?joinAnd(S.obSx.map(x=>sl(x,true))):(reason?sl(reason,true):sl("respiratory distress",true));
+      const sxTxt=S.obSx.length?joinAnd(S.obSx.map(x=>sl(x,true))):(reason?sl(reason,true):ph("____"));   // 轉入原因是使用者輸入,可留;寫死的體徵不可
       P2.push(`After birth, the infant developed ${sxTxt}.`);
       if(obCourse)P2.push(sl(obCourse));
       if(S.obM1Type==="o2"){const dev=({hood:"oxygen hood",cannula:"nasal cannula",mask:"face mask"})[S.obM1Dev]||"oxygen hood",fl=inV("obM1Flow");
@@ -1475,8 +1490,6 @@
   // ── Procedure note（勾選 → 帶入模板，體重相關自動算）──
   function renderProc(){
     const gw=parseInt(V("gaW")||"0",10), gd=parseInt(V("gaD")||"0",10);
-    const gaTxt=(gw||"__")+(gd?`+${gd}`:"")+" weeks", sex={male:"male",female:"female"}[S.gender], bw=V("bw")||"____";
-    const via=S.delivery==="cs"?"C/S":"VD", ap1=V("ap1")||"_", ap5=V("ap5")||"_";
 
     const bwN=parseInt(V("bw")||"0",10), bwKg=bwN/1000;
     const op=(document.getElementById("procOperator")||{value:""}).value.trim();
@@ -1732,7 +1745,7 @@ ${opLine}`);
     mas:["patchy coarse infiltrates with hyperinflation","meconium aspiration syndrome"],
     pna:["focal air-space consolidation","neonatal pneumonia"],
     ptx:["a peripheral lucent area with lung collapse","pneumothorax"]};
-  function buildHC(sl,gas){
+  function buildHC(sl,gas,ph){
     const H=[], hc=S.hc, firstMode=S.acc.resp[0]||"";
     if(hc.workup){
       // 項目全取消＝使用者明確表態「不具名列出」，不可 fallback 塞回三項（與 iMap 同一種捏造）
@@ -1758,7 +1771,7 @@ ${opLine}`);
       const rs=hc.surfReason.map(x=>rMap[x]).filter(Boolean);
       const drug=hc.surfDrug==="curosurf"?"Curosurf":"Survanta";
       const route=hc.surfRoute==="lisa"?"via less invasive surfactant administration (LISA)":"via the endotracheal tube";
-      H.push(`There was ${rs.length?sl(joinAnd(rs)):sl("respiratory distress")}${firstMode?` under ${sl(firstMode)}`:""}, so ${sl(drug)} was administered ${sl(route)}.`);
+      H.push(`There was ${rs.length?sl(joinAnd(rs)):ph("____")}${firstMode?` under ${sl(firstMode)}`:""}, so ${sl(drug)} was administered ${sl(route)}.`);
       if(hc.improved)H.push(`${sl("The respiratory pattern improved significantly")} following ${sl(drug)} administration.`);
     }
     if(hc.cxrDx!=="none"&&CXR_MAP[hc.cxrDx]){
@@ -1778,8 +1791,15 @@ ${opLine}`);
       if(hc.abxPlan!=="none"&&pMap[hc.abxPlan])s+=`, and planned to keep ${sl(pMap[hc.abxPlan])}`;
       H.push(s+".");
     }
-    const culMap={pending:"Blood and GJ cultures were obtained and are still pending.",
-                  nogrowth:"Blood and GJ cultures showed no growth.",positive:"Blood culture yielded a positive result."};
+    // 檢體名跟著 work-up 勾選的項目走；work-up 未開則用中性的 "Cultures"（使用者選的是結果狀態，不是送了什麼）
+    const cIt=hc.workup?hc.workupItems:[], cBC=cIt.includes("B/C"), cGJ=cIt.includes("GJ/C");
+    const culSpec=cBC&&cGJ?"Blood and GJ cultures":cBC?"Blood culture":cGJ?"GJ culture":"Cultures";
+    const cPl=culSpec.endsWith("cultures")||culSpec==="Cultures";
+    // pending/nogrowth 可套用全部檢體（送了兩支、兩支都還沒長，成立）；
+    // positive 不行——使用者只說「有一支陽性」，不能推論每一支都陽性（GJ 陽性與 bacteremia 意義完全不同）
+    const culMap={pending:`${culSpec} ${cPl?"were":"was"} obtained and ${cPl?"are":"is"} still pending.`,
+                  nogrowth:`${culSpec} showed no growth.`,
+                  positive:`${ph("____")} culture yielded a positive result.`};
     if(hc.cultures!=="none"&&culMap[hc.cultures])H.push(sl(culMap[hc.cultures], hc.cultures==="positive"));
     if(hc.monitor)H.push(sl(`We would keep monitoring the clinical condition and adjust management accordingly.`));
     return H;
@@ -1898,7 +1918,7 @@ ${opLine}`);
     L.push("");
     const gas=parseGas(inV("accABG"));
     L.push("【Hospital course】");
-    const hcS=buildHC(sl,gas), hcX=inV("hcExtra");
+    const hcS=buildHC(sl,gas,ph), hcX=inV("hcExtra");
     const hcBody=(hcS.join(" ")+(hcX?(hcS.length?" ":"")+sl(esc(hcX)):"")).trim();
     L.push(hcBody?hcBody:ph("……"));
     L.push("");
@@ -1934,10 +1954,9 @@ ${opLine}`);
     let vacLine;
     if(S.acc.vac.length)vacLine=vacPfx+sl(S.acc.vac.join(", "));
     else if(!bwN)vacLine=ph("——");
-    else if(bwN>2200)vacLine=vacPfx+sl(hbig?"HBIG + HBV-1":"HBV-1")+"（BW &gt; 2200 g）";
-    else vacLine=hbig
-      ? vacPfx+sl("HBIG")+`；${sl("HBV-1 deferred until body weight exceeds 2200 g")}（目前 ${sl(bwN)} g）`
-      : sl("HBV-1 deferred until body weight exceeds 2200 g")+`（目前 ${sl(bwN)} g）`;
+    // 體重／母親 HBsAg 是「符合施打條件」的指引，不是「已施打」的事實；一律灰字待勾選
+    else if(bwN>2200)vacLine=ph("——")+`（BW &gt; 2200 g，可打 ${hbig?"HBIG + HBV-1":"HBV-1"}）`;
+    else vacLine=ph("——")+`（${bwN} g${hbig?"，HBsAg+ 可打 HBIG":""}；HBV-1 建議 deferred until BW &gt; 2200 g）`;
     L.push(vacLine);
     L.push("");
     L.push("【Nutrition】"); L.push(fv("accNutrition"));
@@ -1960,7 +1979,9 @@ ${opLine}`);
   // 初始選取狀態
   document.querySelectorAll('[data-seg="gender"] button,[data-seg="delivery"] button').forEach(b=>b.setAttribute("aria-pressed","false"));   // 無預設值，但仍需 toggle 語意
   document.querySelector('[data-seg="growth"] [data-v="AGA"]').setAttribute("aria-pressed","true");
-  document.querySelector('[data-seg="us"] [data-v="normal"]').setAttribute("aria-pressed","true");
+  document.querySelector('[data-seg="dol"] [data-v="1"]').setAttribute("aria-pressed","true");
+  document.querySelector('[data-seg="us"] [data-v="na"]').setAttribute("aria-pressed","true");
+  document.querySelector('[data-seg="ancReg"] [data-v="na"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="nipt"] [data-v="none"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="pathway"] [data-v="direct"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="pwOnset"] [data-v="developed"]')?.setAttribute("aria-pressed","true");
@@ -1984,7 +2005,7 @@ ${opLine}`);
   // C1 手機:整數欄用大 10 鍵盤、小數欄用小數鍵盤
   document.querySelectorAll('input[type="number"]').forEach(i=>{const st=parseFloat(i.step); i.setAttribute("inputmode",(!isNaN(st)&&st<1)?"decimal":"numeric");});
   try{const op=localStorage.getItem("nicu_operator"); if(op)document.getElementById("procOperator").value=op;}catch(_){}  // 記住上次操作醫師
-  document.getElementById("ancPlace").innerHTML=hospOpts;
+  document.getElementById("ancPlace").innerHTML=`<option value="">（未填）</option>`+hospOpts;
   document.getElementById("obFacility").innerHTML=`<option value="">同產檢地點（自動）</option>`+hospOpts;
   document.getElementById("obTransferFrom").innerHTML=`<option value="">同出生院所（自動）</option>`+hospOpts;
   document.querySelectorAll('[data-po]').forEach(seg=>{const btn=seg.querySelector(`[data-v="${S.procOpt[seg.dataset.po]}"]`); if(btn)btn.setAttribute("aria-pressed","true");});
