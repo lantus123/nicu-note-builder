@@ -263,6 +263,10 @@
         <button data-v="non-reassuring fetal heart rate" style="flex:0 1 auto">NRFHR</button>
       </div>
       <input class="tin" id="csReason" placeholder="或自行輸入…"></div>
+    <div class="field"><span class="lab">本院區 <span class="q">（會記住；決定出生地預設值與「外接自本院」的判定）</span></span>
+      <select class="tin" id="homeHosp"></select></div>
+    <div class="field"><span class="lab">出生院所 <span class="q">（born in…；預設同本院區）</span></span>
+      <select class="tin" id="birthHosp"></select></div>
     <div class="field">
       <span class="lab">出生日期時間 <span class="q">（選填 · 24 小時制）</span></span>
       <div class="row2">
@@ -1117,6 +1121,7 @@
   document.addEventListener("input",e=>{
     const d=e.target.dataset; if(d&&d.dkey&&S.acc[d.dkey+"Dates"])S.acc[d.dkey+"Dates"][d.ditem]=e.target.value;
     if(e.target.id==="procOperator"){try{localStorage.setItem("nicu_operator",e.target.value);}catch(_){}}
+    if(e.target.id==="homeHosp"){try{localStorage.setItem("nicu_home_hosp",e.target.value);}catch(_){}}
     if(e.target.matches("input,textarea"))render();
   });
   document.addEventListener("change",e=>{
@@ -1241,9 +1246,12 @@
     setCsum("pathway",{direct:"直接入院",nursery:"嬰兒室觀察",consult:"出生後會診",standby:"產前 standby",outborn:"外接"}[S.pathway],S.pathway==="direct"&&!S.obSx.length&&S.obRespType==="room");
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
     const via = S.delivery==="cs" ? "Cesarean section (C/S)" : S.delivery==="nsd" ? "vaginal delivery (VD)" : "";
-    let obFac = inV("obFacility")||inV("ancPlace");   // 出生院所空 → 繼承產檢地點
-    if(S.outborn&&obFac==="TPEMMH")obFac="";   // 外接時繼承到本院=矛盾(transferred from 本院)→視為未填
-    const birthPlace = S.outborn ? (obFac?sl(obFac):ph("____")) : sl("TPEMMH");
+    const homeH = inV("homeHosp")||"TPEMMH";
+    let obFac = inV("obFacility")||inV("ancPlace");   // 外接:出生院所空 → 繼承產檢地點
+    if(S.outborn&&obFac===homeH)obFac="";   // 外接時繼承到本院=矛盾(transferred from 本院)→視為未填
+    // 非外接時出生地不再寫死 TPEMMH：其他院區也在用這套系統，且寶寶未必在本院區出生
+    const bHosp = inV("birthHosp")||homeH;
+    const birthPlace = S.outborn ? (obFac?sl(obFac):ph("____")) : sl(bHosp);
     const bDate=inV("birthDate"), bTimeRaw=inV("birthTime"); let bornWhen="";
     let bt=bTimeRaw.replace(/[^\d:]/g,"");
     if(/^\d{3,4}$/.test(bt))bt=bt.length===3?bt[0]+":"+bt.slice(1):bt.slice(0,2)+":"+bt.slice(2);   // 1430 → 14:30（24h）
@@ -1411,7 +1419,7 @@
     if(pwSx&&S.obSx.includes("hypoglycemia"))DX.push({s:"Hypoglycemia",f:"Neonatal hypoglycemia"});
     if(pwSx&&S.obSx.includes("jaundice"))DX.push({s:"Hyperbilirubinemia",f:"Neonatal hyperbilirubinemia"});
     if(S.fd)DX.push({s:"Fetal distress",f:"Fetal distress"});
-    if(S.doic)DX.push({s:"DOIC",f:`Delay of initial crying (DOIC) for ${doicMin||"__"} minutes`});
+    if(S.doic)DX.push({s:"DOIC",f:`Delay of initial crying (DOIC)${doicMin?` for ${doicMin} minutes`:""}`});   // 未填分鐘不塞 __(整行被 sl 包成綠字會誤導),與段落句一致
     if(S.msaf)DX.push({s:"MSAF",f:`Infant born through ${S.msafGrade?S.msafGrade+" ":""}meconium-stained amniotic fluid (MSAF)`});
     if(pr.on){const h=V("promH"), hTxt=h?` for ${h} hours`:"";   // 時數未填就不寫,與段落二一致(DX 整段被 sl 包成綠字,塞 __ 會誤導成已確認)
       DX.push(pr.val==="pprom"
@@ -1898,8 +1906,9 @@ ${opLine}`);
     const via=S.delivery==="cs"?"C/S":S.delivery==="nsd"?"VD":"";
     const admitTo=inV("accAdmitTo")||"our NICU";
     const admReason=inV("admReason");
-    let accObFac=inV("obFacility")||inV("ancPlace"); if(S.outborn&&accObFac==="TPEMMH")accObFac="";  // 外接繼承到本院=矛盾→未填
-    const birthTime=inV("accBirthTime"), birthPlace=S.outborn?(accObFac||"____"):"TPEMMH";  // 繼承 admission 出生地
+    const accHome=inV("homeHosp")||"TPEMMH";
+    let accObFac=inV("obFacility")||inV("ancPlace"); if(S.outborn&&accObFac===accHome)accObFac="";  // 外接繼承到本院=矛盾→未填
+    const birthTime=inV("accBirthTime"), birthPlace=S.outborn?(accObFac||"____"):(inV("birthHosp")||accHome);  // 繼承 admission 出生地
     const respMap={roomair:"room air",nc:"nasal cannula",hfnc:"high-flow nasal cannula",ncpap:"nCPAP",nippv:"NIPPV",vent:"mechanical ventilation"};
     // 回落鏈：手填 → 產房急救支持 → 入院路徑呼吸階梯(obRespType) → §D 第一項；全空留 ____
     // 舊版最後回落寫死 "room air"，會與 admission 的 O2/PPV/ETT 正面矛盾
@@ -2027,6 +2036,9 @@ ${opLine}`);
   try{const op=localStorage.getItem("nicu_operator"); if(op)document.getElementById("procOperator").value=op;}catch(_){}  // 記住上次操作醫師
   document.getElementById("ancPlace").innerHTML=`<option value="">（未填）</option>`+hospOpts;
   document.getElementById("obFacility").innerHTML=`<option value="">同產檢地點（自動）</option>`+hospOpts;
+  document.getElementById("homeHosp").innerHTML=hospOpts;
+  document.getElementById("birthHosp").innerHTML=`<option value="">同本院區（自動）</option>`+hospOpts;
+  try{const hh=localStorage.getItem("nicu_home_hosp"); if(hh&&HOSPITALS.includes(hh))document.getElementById("homeHosp").value=hh;}catch(_){}   // 記住院區,淡水/台北使用者不必每張重選
   document.getElementById("obTransferFrom").innerHTML=`<option value="">同出生院所（自動）</option>`+hospOpts;
   document.querySelectorAll('[data-po]').forEach(seg=>{const btn=seg.querySelector(`[data-v="${S.procOpt[seg.dataset.po]}"]`); if(btn)btn.setAttribute("aria-pressed","true");});
   document.querySelectorAll("[data-as]").forEach(seg=>seg.querySelector('[data-v="notyet"]').setAttribute("aria-pressed","true"));
