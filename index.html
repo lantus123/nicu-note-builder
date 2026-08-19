@@ -1258,7 +1258,7 @@
     const bds=bDate?fmtDate(bDate):"";
     {const wp=[]; if(bt)wp.push(`at ${bt}`); if(bds)wp.push(`on ${bds}`); if(wp.length)bornWhen=wp.join(" ");}
     let s1=`This ${sl(S.dol==="0"?"just-born":S.dol+"-day-old")} ${sex?sl(sex):ph("____")} newborn was born ${bornWhen?sl(bornWhen)+" ":""}to a G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}, ${matAge?sl(matAge):ph("__")} y/o mother `
-      +`at GA ${gw?sl(gaTxt):ph(gaTxt)} with birth weight (BW) ${V("bw")?sl(bw):ph(bw)} gm (${S.growth==="?"?ph("?"):sl(S.growth,S.growth==="SGA"||S.growth==="LGA")}) in ${birthPlace} via ${via?sl(via):ph("____")}`;
+      +`at GA ${gw?sl(gaTxt):ph(gaTxt)} with birth weight (BW) ${V("bw")?sl(bw):ph(bw)} gm (${S.growth==="?"?ph("____"):sl(S.growth,S.growth==="SGA"||S.growth==="LGA")}) in ${birthPlace} via ${via?sl(via):ph("____")}`;
     if(S.delivery==="cs") s1+=` due to ${csR?sl(csR):ph("____")}`;
     P1.push(s1+".");
     let edc=inV("edc");
@@ -1350,21 +1350,22 @@
 
     // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar +（外接轉入過程）+ 入院 ──
     if(!S.outborn) P2.push(`The mother was admitted to our hospital due to ${admR?sl(admR):ph("____")}.`);  // 外接的轉入過程移到 Apgar 之後(正確時序)
+    // 產程事件依時序輸出：破水 → 安胎 → 產前類固醇 → MgSO4 → 產程 IAP → 生產
+    // （舊順序是 IAP→類固醇→生產→破水，會讓「剖腹順利」出現在「破水發生於生產前」之前）
+    const pr=S.r.prom;
+    if(pr.on){const t={prom:"premature rupture of membranes (PROM)",pprom:"preterm premature rupture of membranes (PPROM)"}[pr.val]||"premature rupture of membranes (PROM)"; const hr=V("promH"); P2.push(`${sl(t.charAt(0).toUpperCase()+t.slice(1))}${hr?` for ${sl(hr+" hours")}`:""} was noted before delivery.`);}
+    if(S.toco!=="none"){const ts=inV("tocoSince");
+      P2.push(`Antiabortifacient with ${sl(S.toco==="ritodrine"?"Ritodrine":"Atosiban")} was used for tocolysis${ts?` since ${sl(ts)}`:""}.`);}
+    const st=S.r.steroid;
+    if(st.on){const sd=inV("steroidDates");
+      P2.push(`Antenatal Betamethasone (${sl((st.val||"?")+" dose"+(st.val==="1"?"":"s"))}${st.extra.includes("incomplete")?", "+sl("incomplete course"):""}) was used to accelerate fetal lung maturation${sd?` on ${sl(sd)}`:""}.`);}
+    if(S.mgso4!=="none") P2.push(`MgSO4 was added for ${sl(S.mgso4==="neuro"?"fetal neuroprotection":"seizure prophylaxis")}.`);
     if(S.iap!=="none"){const drug=inV("iapDrug"), is=inV("iapSince"), iapDone=S.iap==="complete";
       // 藥名未填 → 只陳述 IAP 完整度，不捏造「給了某藥」（incomplete 的常見情境正是根本沒給藥）
       P2.push(drug
         ? `${sl(drug)} was administered${is?` since ${sl(is)}`:""}, ${iapDone?"and":"but"} intrapartum antibiotic prophylaxis (IAP) was ${sl(iapDone?"complete":"incomplete")}.`
         : `Intrapartum antibiotic prophylaxis (IAP) was ${sl(iapDone?"complete":"incomplete")}.`);}
-    const st=S.r.steroid;
-    if(st.on){const sd=inV("steroidDates");
-      P2.push(`Antenatal Betamethasone (${sl((st.val||"?")+" dose"+(st.val==="1"?"":"s"))}${st.extra.includes("incomplete")?", "+sl("incomplete course"):""}) was used to accelerate fetal lung maturation${sd?` on ${sl(sd)}`:""}.`);}
-    if(S.mgso4!=="none") P2.push(`MgSO4 was added for ${sl(S.mgso4==="neuro"?"fetal neuroprotection":"seizure prophylaxis")}.`);
-    if(S.toco!=="none"){const ts=inV("tocoSince");
-      P2.push(`Antiabortifacient with ${sl(S.toco==="ritodrine"?"Ritodrine":"Atosiban")} was used for tocolysis${ts?` since ${sl(ts)}`:""}.`);}
     if(S.delivery==="cs"&&S.csUncompl) P2.push(`The cesarean delivery was ${sl("uncomplicated")}.`);   // 手術順利與否使用者沒說過,需明選
-    // 出生事件（PROM 從 S.r.prom；其餘否定）
-    const pr=S.r.prom;
-    if(pr.on){const t={prom:"premature rupture of membranes (PROM)",pprom:"preterm premature rupture of membranes (PPROM)"}[pr.val]||"premature rupture of membranes (PROM)"; const hr=V("promH"); P2.push(`${sl(t.charAt(0).toUpperCase()+t.slice(1))}${hr?` for ${sl(hr+" hours")}`:""} was noted before delivery.`);}
     const bePos=[], beNeg=[];
     if(S.fd)bePos.push("fetal distress"); else beNeg.push("fetal distress");
     const doicMin=inV("doicMin");
@@ -1407,10 +1408,10 @@
                     : " (IAP status not documented)";
     const DX=[];
     DX.push(!gw
-      ? {s:"Newborn",     f:`Newborn, GA ${gaTxt}, BW ${bw} gm, ${S.growth==="?"?ph("?"):S.growth}`}
+      ? {s:"Newborn",     f:`Newborn, GA ${gaTxt}, BW ${bw} gm, ${S.growth==="?"?ph("____"):S.growth}`}
       : gw<37
-      ? {s:"Prematurity", f:`Prematurity, GA ${gaTxt}, BW ${bw} gm, ${S.growth==="?"?ph("?"):S.growth}`}
-      : {s:"Term baby",   f:`Term baby, GA ${gaTxt}, BW ${bw} gm, ${S.growth==="?"?ph("?"):S.growth}`});
+      ? {s:"Prematurity", f:`Prematurity, GA ${gaTxt}, BW ${bw} gm, ${S.growth==="?"?ph("____"):S.growth}`}
+      : {s:"Term baby",   f:`Term baby, GA ${gaTxt}, BW ${bw} gm, ${S.growth==="?"?ph("____"):S.growth}`});
     const OB_RESP_SX=["tachypnea","subcostal retractions","grunting","nasal flaring","cyanosis","desaturation","apnea"];
     const pwRespSick=(pwSx&&(["o2","ppv","ett"].includes(S.obRespType)||S.obSx.some(x=>OB_RESP_SX.includes(x))))
       ||(S.outborn&&["o2","ppv","ett"].includes(S.obM1Type))
@@ -1469,13 +1470,16 @@
     else if(S.outborn){   // 外接：外院出生後狀況→外院處置→我方到場→我方處置→轉送(置於 Apgar 之後)
       const src=inV("obTransferFrom")||obFac, reason=inV("obReason");
       const sxTxt=S.obSx.length?joinAnd(S.obSx.map(x=>sl(x,true))):(reason?sl(reason,true):ph("____"));   // 轉入原因是使用者輸入,可留;寫死的體徵不可
-      P2.push(`After birth, the infant developed ${sxTxt}.`);
+      // 症狀未填時與轉送句合併，避免空格落在句末看起來像被截斷（consult 路徑即此寫法）
+      if(S.obSx.length||reason)P2.push(`After birth, the infant developed ${sxTxt}.`);
       if(obCourse)P2.push(sl(obCourse));
       if(S.obM1Type==="o2"){const dev=({hood:"oxygen hood",cannula:"nasal cannula",mask:"face mask"})[S.obM1Dev]||"oxygen hood",fl=inV("obM1Flow");
         P2.push(`At the birth hospital, ${sl("oxygen",true)} was given via ${sl(dev,true)}${fl?` at ${sl(fl)} L/min`:""}.`);}
       else if(S.obM1Type==="ppv")P2.push(`${sl("Positive-pressure ventilation",true)} was provided at the birth hospital.`);
       else if(S.obM1Type==="ett")P2.push(`The infant was ${sl("intubated",true)} at the birth hospital.`);
-      P2.push(`Our neonatal transport team was consulted for transfer.`);
+      P2.push(S.obSx.length||reason
+        ? `Our neonatal transport team was consulted for transfer.`
+        : `After birth, the infant developed ${sxTxt}, and our neonatal transport team was consulted for transfer.`);
       const arr=inV("obArrival"); if(arr)P2.push(`On arrival, ${sl(arr)}.`);
       ladderSents().forEach(s=>P2.push(s));
       P2.push(`The infant was then transferred from ${src?sl(src):ph("____")} to our hospital${S.obRespType==="room"?` under ${sl("room air")}`:""}.`);
@@ -1760,7 +1764,9 @@ ${opLine}`);
     const H=[], hc=S.hc, firstMode=S.acc.resp[0]||"";
     if(hc.workup){
       // 項目全取消＝使用者明確表態「不具名列出」，不可 fallback 塞回三項（與 iMap 同一種捏造）
-      const items=hc.workupItems.join(", ");
+      const WORKUP_ORDER=["CBC/DC","CRP","B/C","GJ/C","CXR","urine GBS Ag"];   // 固定順序,不跟著點擊先後跑
+      const wIts=WORKUP_ORDER.filter(x=>hc.workupItems.includes(x)).concat(hc.workupItems.filter(x=>!WORKUP_ORDER.includes(x)));
+      const items=joinAnd(wIts);   // 牛津式收尾,避免「including CBC/DC, B/C, had been conducted」讀成清單未完
       let s=items?`After admission, septic work-up, including ${sl(items)}, had been conducted`
                  :`After admission, septic work-up had been conducted`;
       if(firstMode)s+=`, and respiratory support with ${sl(firstMode)} was initiated`;
@@ -1776,15 +1782,6 @@ ${opLine}`);
       const bits=[]; if(c.acid)bits.push(c.acid); c.o2.forEach(x=>bits.push(x));
       if(bits.length)H.push(`The initial arterial blood gas showed ${sl(joinAnd(bits))}.`);
     }
-    if(hc.bicarb)H.push(`${sl("Sodium bicarbonate was supplemented")}${/metabolic|mixed/.test(acidNow)?" "+sl("for correction of the metabolic acidosis"):""}.`);
-    if(hc.surf){
-      const rMap={tachypnea:"persistent tachypnea",retraction:"subcostal retraction",o2:"an increasing oxygen requirement",desat:"desaturation"};
-      const rs=hc.surfReason.map(x=>rMap[x]).filter(Boolean);
-      const drug=hc.surfDrug==="curosurf"?"Curosurf":"Survanta";
-      const route=hc.surfRoute==="lisa"?"via less invasive surfactant administration (LISA)":"via the endotracheal tube";
-      H.push(`There was ${rs.length?sl(joinAnd(rs)):ph("____")}${firstMode?` under ${sl(firstMode)}`:""}, so ${sl(drug)} was administered ${sl(route)}.`);
-      if(hc.improved)H.push(`${sl("The respiratory pattern improved significantly")} following ${sl(drug)} administration.`);
-    }
     if(hc.cxrDx!=="none"&&CXR_MAP[hc.cxrDx]){
       const c=CXR_MAP[hc.cxrDx];
       H.push(`Chest X-ray revealed ${sl(c[0],true)}, compatible with ${sl(c[1],true)}.`);
@@ -1795,13 +1792,8 @@ ${opLine}`);
       // "na"（未回報）→ 整句不出；原本的 ||iMap.none fallback 會替沒回報的檢驗蓋章說正常
       if(iMap[hc.infMarkers])H.push(sl(iMap[hc.infMarkers], hc.infMarkers!=="none"));
     }
-    if(S.acc.abx.length){
-      let s=`Empirical antibiotics, including ${sl(S.acc.abx.join(" / "))}, were started`;
-      const pMap={cultures:"until the culture results return",course:"to complete a 7-day course",
-                  improve:"until clinical improvement",digestion:"until the poor digestion status improved"};
-      if(hc.abxPlan!=="none"&&pMap[hc.abxPlan])s+=`, and planned to keep ${sl(pMap[hc.abxPlan])}`;
-      H.push(s+".");
-    }
+    // ── 敘事順序：檢查(work-up/aline/ABG/CXR) → 結果(感染指標/培養) → 治療(bicarb/surfactant/抗生素) → 監測 ──
+    // 舊順序讓 surfactant 句插在 work-up 與其結果之間，把感染敘事鏈腰斬
     // 檢體名跟著 work-up 勾選的項目走；work-up 未開則用中性的 "Cultures"（使用者選的是結果狀態，不是送了什麼）
     const cIt=hc.workup?hc.workupItems:[], cBC=cIt.includes("B/C"), cGJ=cIt.includes("GJ/C");
     const culSpec=cBC&&cGJ?"Blood and GJ cultures":cBC?"Blood culture":cGJ?"GJ culture":"Cultures";
@@ -1810,8 +1802,24 @@ ${opLine}`);
     // positive 不行——使用者只說「有一支陽性」，不能推論每一支都陽性（GJ 陽性與 bacteremia 意義完全不同）
     const culMap={pending:`${culSpec} ${cPl?"were":"was"} obtained and ${cPl?"are":"is"} still pending.`,
                   nogrowth:`${culSpec} showed no growth.`,
-                  positive:`${ph("____")} culture yielded a positive result.`};
+                  positive:`${culSpec} yielded ${cPl?"positive results":"a positive result"} for ${ph("____")}.`};
     if(hc.cultures!=="none"&&culMap[hc.cultures])H.push(sl(culMap[hc.cultures], hc.cultures==="positive"));
+    if(hc.bicarb)H.push(`${sl("Sodium bicarbonate was supplemented")}${/metabolic|mixed/.test(acidNow)?" "+sl("for correction of the metabolic acidosis"):""}.`);
+    if(hc.surf){
+      const rMap={tachypnea:"persistent tachypnea",retraction:"subcostal retraction",o2:"an increasing oxygen requirement",desat:"desaturation"};
+      const rs=hc.surfReason.map(x=>rMap[x]).filter(Boolean);
+      const drug=hc.surfDrug==="curosurf"?"Curosurf":"Survanta";
+      const route=hc.surfRoute==="lisa"?"via less invasive surfactant administration (LISA)":"via the endotracheal tube";
+      H.push(`There was ${rs.length?sl(joinAnd(rs)):ph("____")}${firstMode?` under ${sl(firstMode)}`:""}, so ${sl(drug)} was administered ${sl(route)}.`);
+      if(hc.improved)H.push(`${sl("The respiratory pattern improved significantly")} following ${sl(drug)} administration.`);
+    }
+    if(S.acc.abx.length){
+      let s=`Empirical antibiotics, including ${sl(S.acc.abx.join(" / "))}, were started`;
+      const pMap={cultures:"until the culture results return",course:"to complete a 7-day course",
+                  improve:"until clinical improvement",digestion:"until the poor digestion status improved"};
+      if(hc.abxPlan!=="none"&&pMap[hc.abxPlan])s+=`, and planned to keep ${sl(pMap[hc.abxPlan])}`;
+      H.push(s+".");
+    }
     if(hc.monitor)H.push(sl(`We would keep monitoring the clinical condition and adjust management accordingly.`));
     return H;
   }
@@ -1929,10 +1937,10 @@ ${opLine}`);
     const scr=(k,vid)=>S.acc[k]==="done"?(inV(vid)||"done"):"not yet";
 
     const L=[];
-    L.push(`${sl(dol)} d/o, PMA ${gw?sl(pma):ph(pma)} wks, Wt: ${V("bw")?sl(bw):ph(bw)} g (${growth==="?"?ph("?"):sl(growth,growth==="SGA"||growth==="LGA")})`);
+    L.push(`${sl(dol)} d/o, PMA ${gw?sl(pma):ph(pma)} wks, Wt: ${V("bw")?sl(bw):ph(bw)} g (${growth==="?"?ph("____"):sl(growth,growth==="SGA"||growth==="LGA")})`);
     L.push("");
     L.push("【Brief history】");
-    L.push(`A ${sex?sl(sex):ph("____")} neonate, GA ${gw?sl(gaTxt):ph(gaTxt)}, BW ${V("bw")?sl(bw):ph(bw)} gm, ${growth==="?"?ph("?"):sl(growth,growth==="SGA"||growth==="LGA")}, was admitted to ${sl(esc(admitTo))} due to ${admReason?sl(esc(admReason)):ph("____")}.`);
+    L.push(`A ${sex?sl(sex):ph("____")} neonate, GA ${gw?sl(gaTxt):ph(gaTxt)}, BW ${V("bw")?sl(bw):ph(bw)} gm, ${growth==="?"?ph("____"):sl(growth,growth==="SGA"||growth==="LGA")}, was admitted to ${sl(esc(admitTo))} due to ${admReason?sl(esc(admReason)):ph("____")}.`);
     L.push(`Birth History: G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}, ${via?sl(via):ph("____")} in ${birthPlace==="____"?ph(birthPlace):sl(esc(birthPlace))}.`);
     L.push(`Apgar score: ${V("ap1")?sl(ap1):ph(ap1)} and ${V("ap5")?sl(ap5):ph(ap5)} at 1 and 5 minutes.`);
     L.push(`Fetal distress(${sl(S.fd?"+":"-",S.fd)}), DOIC(${sl(S.doic?"+":"-",S.doic)}), MSAF(${sl(S.msaf?"+":"-",S.msaf)})`);
