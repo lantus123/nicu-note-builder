@@ -507,6 +507,7 @@
   <div id="planForm" hidden>
     <section class="card">
       <h2 class="sec-h">NI 計畫設定 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">其餘依週數＋admission 自動帶</span></h2>
+      <div class="iap-warn" id="planWarn" hidden></div>
       <div class="field"><span class="lab">抗生素處方</span>
         <div class="seg" data-seg="planAbx" style="flex-wrap:wrap">
           <button data-v="none" style="flex:0 1 auto">無</button>
@@ -673,7 +674,8 @@
 
     <section class="card">
       <h2 class="sec-h"><span class="n">H</span>Vaccination</h2>
-      <p class="man-h" style="margin:0 0 8px">規則：BW &gt; 2200 g 當天打 HBV；未達則待體重超過 2200 g 再打。<b>不點選時自動依 BW 帶出</b>。</p>
+      <p class="man-h" style="margin:0 0 8px">規則：BW &gt; 2200 g 當天打 HBV；未達則待體重超過 2200 g 再打。<b>實際施打與否請自行勾選</b>，未勾則 note 寫「——」。</p>
+      <div class="iap-warn" id="vacHint" hidden></div>
       <div class="seg" data-am="vac" style="flex-wrap:wrap">
         <button data-v="HBV-1" style="flex:0 1 auto">HBV-1</button>
         <button data-v="HBIG" style="flex:0 1 auto">HBIG</button>
@@ -1391,9 +1393,10 @@
     }
     P2.push(`The baby's Apgar score was ${V("ap1")?sl(ap1):ph(ap1)} and ${V("ap5")?sl(ap5):ph(ap5)} at 1 and 5 minutes, respectively.`);
     // ── 暫定診斷問題清單（自動生成；短標籤給 chip、完整句給 note 的 # 清單）──
-    const iapPhrase = S.iap==="complete" ? "with complete intrapartum antibiotic prophylaxis (IAP)"
-                    : S.iap==="incomplete" ? "without complete intrapartum antibiotic prophylaxis (IAP)"
-                    : "with or without complete intrapartum antibiotic prophylaxis (IAP)";
+    // 未表態時不可寫「with or without」——診斷欄的兩可斷言無法做風險分層，比留空格更難處理
+    const iapPhrase = S.iap==="complete" ? " with complete intrapartum antibiotic prophylaxis (IAP)"
+                    : S.iap==="incomplete" ? " without complete intrapartum antibiotic prophylaxis (IAP)"
+                    : " (IAP status not documented)";
     const DX=[];
     DX.push(!gw
       ? {s:"Newborn",     f:`Newborn, GA ${gaTxt}, BW ${bw} gm, ${S.growth==="?"?ph("?"):S.growth}`}
@@ -1417,8 +1420,8 @@
     if(S.r.gdm.on)DX.push({s:"IDM",f:"Infant of diabetic mother (IDM)"});
     if(S.r.pih.on)DX.push({s:"Maternal PIH",f:"Maternal pregnancy induced hypertension (PIH)"});
     if(S.r.pre.on&&S.r.pre.val!=="highrisk")DX.push({s:"Maternal preeclampsia",f:"Maternal preeclampsia"});
-    if(S.scr.gbs==="pos")DX.push({s:"GBS colonization",f:`Maternal GBS colonization ${iapPhrase}`});
-    if(S.scr.gbs==="unk")DX.push({s:"GBS unknown",f:`Maternal GBS unknown status ${iapPhrase}`});
+    if(S.scr.gbs==="pos")DX.push({s:"GBS colonization",f:`Maternal GBS colonization${iapPhrase}`});
+    if(S.scr.gbs==="unk")DX.push({s:"GBS unknown",f:`Maternal GBS unknown status${iapPhrase}`});
 
     // ── 入院路徑敘事（置於 Apgar 之後）：直接入院前處理／嬰兒室觀察／出生後會診／外接 ──
     const obCourseRaw=inV("obCourse");
@@ -1846,6 +1849,11 @@ ${opLine}`);
       sepsis:"Antibiotic treatment with Ampicillin (200 mg/kg/day, Q12H) and Cefotaxime (50 mg/kg/dose Q12H) - sepsis dose",
       meningitic:"Antibiotic treatment with Ampicillin (300 mg/kg/day, Q8H) and Cefotaxime (100 mg/kg/dose Q12H) - meningitic dose"}[abxKey];
     if(abxLine)T.push(abxLine);
+    // 母親 HBsAg 陽性 → HBIG 有出生 12 小時內時限，計畫端必須反應（原本只在 acceptance 的括號裡提一句）
+    if(S.scr.hbsag==="pos"){T.push("HBIG 0.5 mL IM within 12 hours after birth (maternal HBsAg positive)");
+      T.push(bwN>0&&bwN<=2200
+        ? "HBV vaccine: first dose deferred until body weight exceeds 2200 g (this dose is not counted in the 3-dose series)"
+        : "HBV vaccine: first dose within 24 hours after birth");}
     if(preterm||veryPreterm||invasive)T.push("Advance nutritional support with parenteral nutrition (PN)");
     T.push("Early enteral trophic feeding with breast milk, if general condition becomes stable");
     T.push("The priority of enteral milk feeding is mother's own breast milk first, then donor human milk from the human milk bank, and lastly preterm infant formula or preterm special care formula, via OG tube");
@@ -1859,9 +1867,12 @@ ${opLine}`);
     }
 
     const sec=(t,a)=>t+":\n"+a.map(x=>"- "+x).join("\n");
-    const gaWarn=!gw?"[GA 未填——以下以足月組稿，請回 Admission 填 GA]\n\n":"";   // plan 無灰字機制,缺 GA 會靜默組足月版
-    const sexWarn=(S.gender!=="male"&&S.gender!=="female")?"[性別未填——SGA/LGA 無法判定，相關醫囑未列入，請回 Admission 填性別]\n\n":"";
-    if(!S.noteDirty)document.getElementById("note").textContent=gaWarn+sexWarn+
+    // 警示改放 UI 的 #planWarn，不進 note —— 複製走 innerText，中文提示會被貼進 HIS
+    {const w=[];
+     if(!gw)w.push("GA 未填 → 以下以足月組稿，請回 Admission 填 GA");
+     if(S.gender!=="male"&&S.gender!=="female")w.push("性別未填 → SGA/LGA 無法判定，相關醫囑未列入");
+     const pw=document.getElementById("planWarn"); if(pw){pw.hidden=!w.length; pw.textContent=w.length?"⚠ "+w.join("；"):"";}}
+    if(!S.noteDirty)document.getElementById("note").textContent=
       [["Diagnostic plans",D],["Therapeutic plans",T],["Prognostic plans",Pr]].filter(([,a])=>a.length).map(([t,a])=>sec(t,a)).join("\n\n");   // 空段落不輸出光禿禿的標題
   }
 
@@ -1890,7 +1901,11 @@ ${opLine}`);
     let accObFac=inV("obFacility")||inV("ancPlace"); if(S.outborn&&accObFac==="TPEMMH")accObFac="";  // 外接繼承到本院=矛盾→未填
     const birthTime=inV("accBirthTime"), birthPlace=S.outborn?(accObFac||"____"):"TPEMMH";  // 繼承 admission 出生地
     const respMap={roomair:"room air",nc:"nasal cannula",hfnc:"high-flow nasal cannula",ncpap:"nCPAP",nippv:"NIPPV",vent:"mechanical ventilation"};
-    const respLine=inV("accResp")||(S.resp&&S.resp!=="roomair"?respMap[S.resp]:"")||(S.acc.resp.length?S.acc.resp[0]:"")||"room air";  // §A空則用§D第一項
+    // 回落鏈：手填 → 產房急救支持 → 入院路徑呼吸階梯(obRespType) → §D 第一項；全空留 ____
+    // 舊版最後回落寫死 "room air"，會與 admission 的 O2/PPV/ETT 正面矛盾
+    const obRespTxt=({o2:({hood:"O2 via oxygen hood",cannula:"O2 via nasal cannula",mask:"O2 via face mask"})[S.obO2Dev]||"O2 via oxygen hood",
+                      ppv:"Neopuff PPV",ett:"mechanical ventilation via ETT"})[S.obRespType]||"";
+    const respLine=inV("accResp")||(S.resp&&S.resp!=="roomair"?respMap[S.resp]:"")||obRespTxt||(S.acc.resp.length?S.acc.resp[0]:"");
     const periAuto=[]; if(S.r.gdm.on)periAuto.push("GDM"); if(S.r.pih.on)periAuto.push("PIH");
     if(S.r.pre.on)periAuto.push(S.r.pre.val==="highrisk"?"preeclampsia high risk (on aspirin)":"preeclampsia"); if(S.r.steroid.on)periAuto.push("antenatal steroid");
     const perinatal=inV("accPerinatal")||(periAuto.length?periAuto.join(", "):"none");
@@ -1955,8 +1970,13 @@ ${opLine}`);
     if(S.acc.vac.length)vacLine=vacPfx+sl(S.acc.vac.join(", "));
     else if(!bwN)vacLine=ph("——");
     // 體重／母親 HBsAg 是「符合施打條件」的指引，不是「已施打」的事實；一律灰字待勾選
-    else if(bwN>2200)vacLine=ph("——")+`（BW &gt; 2200 g，可打 ${hbig?"HBIG + HBV-1":"HBV-1"}）`;
-    else vacLine=ph("——")+`（${bwN} g${hbig?"，HBsAg+ 可打 HBIG":""}；HBV-1 建議 deferred until BW &gt; 2200 g）`;
+    else vacLine=ph("——");   // 施打與否一律待勾選；適應症提示改放 UI(#vacHint)，不進 note(會被 innerText 整段複製進 HIS)
+    {const vh=document.getElementById("vacHint");
+     if(vh){const t=[];
+       if(bwN>0&&!S.acc.vac.length){
+         if(hbig)t.push("母親 HBsAg 陽性 → 符合 HBIG（出生 12 小時內）");
+         t.push(bwN>2200?`BW ${bwN} g > 2200 g → 符合 HBV-1`:`BW ${bwN} g ≤ 2200 g → HBV-1 建議待體重超過 2200 g`);}
+       vh.hidden=!t.length; vh.textContent=t.length?"⚠ "+t.join("；")+"（僅提示，未勾選不寫入 note）":"";}}
     L.push(vacLine);
     L.push("");
     L.push("【Nutrition】"); L.push(fv("accNutrition"));
