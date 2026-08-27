@@ -523,8 +523,18 @@
           <button data-v="sepsis" style="flex:0 1 auto">Sepsis dose</button>
           <button data-v="meningitic" style="flex:0 1 auto">Meningitic dose</button>
         </div></div>
-      <div class="field"><span class="lab">Sepsis work-up 是否含 CSF analysis</span>
-        <div class="seg risk" data-tog="planCsf"><button data-v="1" data-on style="flex:0 1 auto">含腰椎穿刺 CSF</button></div></div>
+      <div class="field"><span class="lab">醫囑項目 <span class="q">（依規則自動帶入，點一下可改；灰色＝這次不列入）</span></span>
+        <div class="seg" data-planon="1" style="flex-wrap:wrap">
+          <button data-v="sepsis" style="flex:0 1 auto">Sepsis work-up</button>
+          <button data-v="csf" style="flex:0 1 auto">含腰穿 CSF</button>
+          <button data-v="biogram" style="flex:0 1 auto">Biogram</button>
+          <button data-v="sga" style="flex:0 1 auto">SGA work-up</button>
+          <button data-v="aline" style="flex:0 1 auto">A-line</button>
+          <button data-v="pn" style="flex:0 1 auto">PN</button>
+          <button data-v="minimal" style="flex:0 1 auto">Minimal handling</button>
+          <button data-v="og" style="flex:0 1 auto">OG decompression</button>
+        </div>
+        <button type="button" class="mini-add" id="planOnReset" style="margin-top:7px" hidden>↻ 全部回自動</button></div>
       <div class="field"><span class="lab">已向家屬解釋 <span class="q">（未勾則不寫入，這句是告知義務的舉證）</span></span>
         <div class="seg" data-tog="planExplained"><button data-v="1" style="flex:0 1 auto">Explained to family fully</button></div></div>
       <p class="man-h" style="margin-top:4px">診斷／治療／預後三段依 GA、SGA/LGA、IDM、fetal distress/DOIC、呼吸支持、surfactant 等自動組出。複製後可再改。</p>
@@ -536,8 +546,11 @@
     <section class="card">
       <h2 class="sec-h"><span class="n">A</span>接手時呼吸支持 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">Brief history 的 Respiratory 一行</span></h2>
       <div class="seg" data-seg="resp" style="flex-wrap:wrap">
-        <button data-v="roomair">Room air</button><button data-v="nc">NC</button><button data-v="hfnc">HFNC</button>
-        <button data-v="ncpap">nCPAP</button><button data-v="nippv">NIPPV</button><button data-v="vent">呼吸器</button>
+        <button data-v="room air" style="flex:0 1 auto">Room air</button><button data-v="NC" style="flex:0 1 auto">NC</button><button data-v="HFNC" style="flex:0 1 auto">HFNC</button>
+        <button data-v="bubble CPAP" style="flex:0 1 auto">bubble CPAP</button><button data-v="NCPAP" style="flex:0 1 auto">NCPAP</button>
+        <button data-v="NSIMV+PS" style="flex:0 1 auto">NSIMV+PS</button><button data-v="NIVPC" style="flex:0 1 auto">NIVPC</button>
+        <button data-v="ETT+SIMV+PS" style="flex:0 1 auto">ETT+SIMV+PS</button><button data-v="ETT+HFOV" style="flex:0 1 auto">ETT+HFOV</button>
+        <button data-v="ETT+HFOV+iNO" style="flex:0 1 auto">ETT+HFOV+iNO</button>
       </div>
       <p class="man-h" style="margin-top:9px">表頭（d/o・PMA・Wt）與 Brief history（含入院原因）全自動沿用 admission（要改 GA/BW/入院原因請切回 Admission 分頁）。呼吸器進程在 D 區。</p>
     </section>
@@ -980,15 +993,16 @@
                 ["syphilis","Syphilis (VDRL)","syphilis"],
                 ["rubella","Rubella IgG","rubella IgG"],["hiv","HIV","HIV infection"],
                 ["gbs","GBS","group B streptococcus (GBS)"]];
+  // planOn[k]: undefined=依規則自動, true/false=醫師手動覆寫
   const S={gender:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,r:{},   // 性別/生產方式不預設：預設值會被寫進 note＝捏造事實
            scr:{hbsag:"neg",hbeag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
-           resus:"none",resp:"roomair",surfactant:false,
+           resus:"none",resp:"room air",surfactant:false,
            amnio:"none",nipt:"none",mgso4:"none",toco:"none",iap:"none",us:"na",ancReg:"na",
            fd:false,doic:false,msaf:false,msafGrade:"",
            pathway:"direct",outborn:false,obRespType:"room",obRespStable:false,obSx:[],obO2Dev:"hood",
            pwSbR:[],pwOnset:"developed",obM1Type:"room",obM1Dev:"hood",
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
-           dol:"1",numUnit:{promH:"hours"},mode:"adm",planAbx:"empirical",planAbxAuto:true,planCsf:false,planExplained:false,noteDirty:false,noteCache:{},
+           dol:"1",numUnit:{promH:"hours"},mode:"adm",planAbx:"empirical",planAbxAuto:true,planOn:{},planExplained:false,noteDirty:false,noteCache:{},
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
            procOpt:{alineSide:"right",alineArtery:"radial",uacPos:"high",chestSide:"right",chestType:"pigtail",chestICS:"4th",lpCompl:"nil",betABO:"",betRh:""},
            acc:{resp:[],abx:[],line:[],vac:[],rop:"notyet",aabr:"notyet",nbs:"notyet",respDates:{},lineDates:{}},
@@ -1109,6 +1123,10 @@
       render();
       if(k==="gbs"&&n!=="neg")pulseIap();   // GBS 陽/未驗 → IAP 變必答，但絕不代填（代填＝捏造已給藥）
       return;}
+    const po2=b.closest("[data-planon]"); if(po2){const k=b.dataset.v;
+      S.planOn[k]=b.getAttribute("aria-pressed")!=="true";   // 以目前生效值為準翻轉，翻轉後即成手動
+      render(); return;}
+    if(b.id==="planOnReset"){S.planOn={}; render(); return;}
     const nu=b.closest("[data-numunit]"); if(nu){const id=nu.dataset.numunit; S.numUnit[id]=b.dataset.v;
       nu.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===b.dataset.v?"true":"false")); render(); return;}
     const fill=b.closest("[data-fill]"); if(fill){const inp=document.getElementById(fill.dataset.fill); if(inp){
@@ -1882,33 +1900,41 @@ ${opLine}`);
     const preterm=gw>0&&gw<37, veryPreterm=gw>0&&gw<32, bwN=parseInt(V("bw")||"0",10);
     const SGA=S.growth==="SGA", LGA=S.growth==="LGA", IDM=S.r.gdm.on;
     const lvl={none:0,ppv:1,intubation:2,cpr:3}[S.resus]||0;
-    const invasive=S.resp==="vent"||S.acc.resp.some(m=>/ETT/.test(m))||lvl>=2;
-    const respSupport=(S.resp&&S.resp!=="roomair")||S.acc.resp.length>0||lvl>=1;
+    const invasive=/ETT/.test(S.resp||"")||S.acc.resp.some(m=>/ETT/.test(m))||lvl>=2;
+    const respSupport=(S.resp&&S.resp!=="room air")||S.acc.resp.length>0||lvl>=1;
     const infRisk=S.scr.gbs!=="neg"||S.r.prom.on||S.r.fever.on;
 
+    // 這些是臨床決定不是可推導的事實：規則只給預設值，最終由 planOn 覆寫，且按鈕一律顯示生效狀態
+    const RULE={sepsis:infRisk||preterm||respSupport||S.fd||S.doic, csf:false,
+                biogram:S.fd||S.doic, sga:SGA, aline:S.hc.aline||invasive,
+                pn:preterm||veryPreterm||invasive, minimal:veryPreterm||invasive, og:respSupport};
+    const ON=k=>S.planOn[k]===undefined?!!RULE[k]:S.planOn[k];
+    document.querySelectorAll('[data-planon] button').forEach(x=>x.setAttribute("aria-pressed",ON(x.dataset.v)?"true":"false"));
+    {const r=document.getElementById("planOnReset"); if(r)r.hidden=!Object.keys(S.planOn).length;}
+
     const D=[];
-    if(infRisk||preterm||respSupport||S.fd||S.doic)
-      D.push(`Sepsis work-up, including CBC/DC, CRP, B/C, CXR, urine GBS Ag${S.planCsf?" and CSF analysis":""}`);
-    if(S.fd||S.doic){const w=(S.fd&&S.doic)?"fetal distress and delay of initial crying (DOIC)":S.fd?"fetal distress":"delay of initial crying (DOIC)";
+    if(ON("sepsis"))
+      D.push(`Sepsis work-up, including CBC/DC, CRP, B/C, CXR, urine GBS Ag${ON("csf")?" and CSF analysis":""}`);
+    if(ON("biogram")){const w=(S.fd&&S.doic)?"fetal distress and delay of initial crying (DOIC)":S.fd?"fetal distress":S.doic?"delay of initial crying (DOIC)":"perinatal insult";
       D.push(`Work-up for ${w}, including biogram, to evaluate tissue damage`);}
-    if(SGA)D.push(`Work-up for SGA, including IgM and urine viral culture`);
+    if(ON("sga"))D.push(`Work-up for SGA, including IgM and urine viral culture`);
     const dexR=[]; if(preterm)dexR.push("prematurity"); if(SGA)dexR.push("SGA"); if(LGA)dexR.push("LGA"); if(IDM)dexR.push("infant of a diabetic mother (IDM)");
     const pwSx=["direct","nursery","consult","outborn"].includes(S.pathway);   // 症狀 chip 有效的路徑
     if(pwSx&&S.obSx.includes("hypoglycemia"))dexR.push("neonatal hypoglycemia");
-    if(dexR.length)D.push(`Check Dextrostix STAT and Q6H for ${joinAnd(dexR)}`);
+    if(dexR.length)D.push(`Check Dex STAT and Q6H for ${joinAnd(dexR)}`);
     if(pwSx&&S.obSx.includes("jaundice"))D.push(`Check bilirubin level and follow up for neonatal jaundice`);
-    if(S.hc.aline||invasive)D.push(`Arterial line placement for ABP monitoring and frequent phlebotomy`);
+    if(ON("aline"))D.push(`Arterial line placement for ABP monitoring and frequent phlebotomy`);
 
     const T=[];
-    T.push((veryPreterm||(bwN>0&&bwN<1500))?"On incubator/giraffe care":(preterm||(bwN>0&&bwN<2500))?"On incubator, and warmer PRN":"On open warmer, and warmer PRN");
-    if(veryPreterm||invasive)T.push("Minimal handling for critical baby care");
+    T.push((veryPreterm||(bwN>0&&bwN<1500))?"On incubator/giraffe care, and warmer PRN":(preterm||(bwN>0&&bwN<2500))?"On incubator, and warmer PRN":"On open warmer, and warmer PRN");
+    if(ON("minimal"))T.push("Minimal handling for critical baby care");
     T.push("On EKG & SpO2 monitor");
     T.push("Record body weight QD");
     let rmode=""; if(S.acc.resp.length)rmode=S.acc.resp.join(" / ");
-    else{const map={nc:"nasal cannula",hfnc:"high-flow nasal cannula",ncpap:"nCPAP",nippv:"NIPPV",vent:"mechanical ventilation"}; if(S.resp&&S.resp!=="roomair")rmode=map[S.resp]||"";}
+    else if(S.resp&&S.resp!=="room air")rmode=S.resp;   // §A 與 §D 同一套詞彙,不再翻譯成教科書用語
     if(rmode)T.push(`Respiratory support with ${rmode}`);
     if(S.hc.surf){const drug=S.hc.surfDrug==="curosurf"?"Curosurf (1.25 or 2.5 cc/kg)":"Survanta (4 ml/kg)"; const route=S.hc.surfRoute==="lisa"?"LISA procedure":"endotracheal tube"; T.push(`${drug} via ${route}`);}
-    if(respSupport)T.push("OG decompression");
+    if(ON("og"))T.push("OG decompression");
     // 自動：有感染風險→Empirical、否則→none（不自動替健康兒開藥）；手動選過則尊重
     const abxKey = S.planAbxAuto ? (infRisk?"empirical":"none") : S.planAbx;
     document.querySelectorAll('[data-seg="planAbx"] button').forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===abxKey?"true":"false"));
@@ -1921,8 +1947,9 @@ ${opLine}`);
       T.push(bwN>0&&bwN<=2200
         ? "HBV vaccine: first dose deferred until body weight exceeds 2200 g (this dose is not counted in the 3-dose series)"
         : "HBV vaccine: first dose within 24 hours after birth");}
-    if(preterm||veryPreterm||invasive)T.push("Advance nutritional support with parenteral nutrition (PN)");
+    if(ON("pn"))T.push("Advance nutritional support with parenteral nutrition (PN)");
     T.push("Early enteral trophic feeding with breast milk, if general condition becomes stable");
+    T.push("Encourage breast milk feeding exclusively, and trophic feeding if relatively smooth breathing pattern");
     T.push("The priority of enteral milk feeding is mother's own breast milk first, then donor human milk from the human milk bank, and lastly preterm infant formula or preterm special care formula, via OG tube");
 
     const Pr=[]; if(S.planExplained)Pr.push("Explained to family fully");   // 告知家屬是已發生的事件,不可預設斷言
@@ -1970,12 +1997,11 @@ ${opLine}`);
     const accHome=inV("homeHosp")||"TPEMMH";
     let accObFac=inV("obFacility")||inV("ancPlace"); if(S.outborn&&accObFac===accHome)accObFac="";  // 外接繼承到本院=矛盾→未填
     const birthTime=inV("accBirthTime"), birthPlace=S.outborn?(accObFac||"____"):(inV("birthHosp")||accHome);  // 繼承 admission 出生地
-    const respMap={roomair:"room air",nc:"nasal cannula",hfnc:"high-flow nasal cannula",ncpap:"nCPAP",nippv:"NIPPV",vent:"mechanical ventilation"};
     // 回落鏈：手填 → 產房急救支持 → 入院路徑呼吸階梯(obRespType) → §D 第一項；全空留 ____
     // 舊版最後回落寫死 "room air"，會與 admission 的 O2/PPV/ETT 正面矛盾
     const obRespTxt=({o2:({hood:"O2 via oxygen hood",cannula:"O2 via nasal cannula",mask:"O2 via face mask"})[S.obO2Dev]||"O2 via oxygen hood",
                       ppv:"Neopuff PPV",ett:"mechanical ventilation via ETT"})[S.obRespType]||"";
-    const respLine=inV("accResp")||(S.resp&&S.resp!=="roomair"?respMap[S.resp]:"")||obRespTxt||(S.acc.resp.length?S.acc.resp[0]:"");
+    const respLine=inV("accResp")||(S.resp&&S.resp!=="room air"?S.resp:"")||obRespTxt||(S.acc.resp.length?S.acc.resp[0]:"");
     const periAuto=[]; if(S.r.gdm.on)periAuto.push("GDM"); if(S.r.pih.on)periAuto.push("PIH");
     if(S.r.pre.on)periAuto.push(S.r.pre.val==="highrisk"?"preeclampsia high risk (on aspirin)":"preeclampsia"); if(S.r.steroid.on)periAuto.push("antenatal steroid");
     const perinatal=inV("accPerinatal")||(periAuto.length?periAuto.join(", "):"none");
@@ -2088,7 +2114,7 @@ ${opLine}`);
   document.querySelectorAll('[data-par]').forEach(p=>p.querySelector('[data-v="none"]').setAttribute("aria-pressed","true"));
   document.querySelector('[data-seg="thyType"] [data-v="hyper"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="resus"] [data-v="none"]').setAttribute("aria-pressed","true");
-  document.querySelector('[data-seg="resp"] [data-v="roomair"]').setAttribute("aria-pressed","true");
+  document.querySelector('[data-seg="resp"] [data-v="room air"]').setAttribute("aria-pressed","true");
   ["amnio","mgso4","toco","iap"].forEach(k=>document.querySelector(`[data-seg="${k}"] [data-v="none"]`).setAttribute("aria-pressed","true"));
   document.querySelector('[data-seg="planAbx"] [data-v="empirical"]').setAttribute("aria-pressed","true");
   // 醫院清單集中一處（要加醫院改這裡即可），三個下拉共用；出生院所/轉入來源第一項為「自動繼承」
