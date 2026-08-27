@@ -251,8 +251,8 @@
         <button data-v="nsd">自然產 NSD</button><button data-v="cs">剖腹 C/S</button>
       </div>
     </div>
-    <div class="field" id="csUncomplWrap" hidden><span class="lab">手術過程 <span class="q">（未勾則不寫，順利與否需自行確認）</span></span>
-      <div class="seg" data-tog="csUncompl"><button data-v="1" style="flex:0 1 auto">uncomplicated</button></div></div>
+    <div class="field" id="csUncomplWrap" hidden><span class="lab">生產過程 <span class="q">（未勾則不寫，順利與否需自行確認）</span></span>
+      <div class="seg" data-tog="csUncompl"><button data-v="1" style="flex:0 1 auto">過程順利</button></div></div>
     <div class="field" id="csReasonWrap" hidden>
       <span class="lab">C/S 原因 <span class="q">（點選帶入，可再改）</span></span>
       <div class="seg" data-fill="csReason" style="flex-wrap:wrap;margin-bottom:7px">
@@ -278,7 +278,7 @@
         <div class="field" style="margin:0"><input class="tin" type="text" id="birthTime" inputmode="numeric" placeholder="時:分（如 14:30）" maxlength="5"></div>
       </div></div>
     <div class="field"><span class="lab">入院時日齡 <span class="q">（admission note 多為當天或隔天寫）</span></span>
-      <div class="seg" data-seg="dol"><button data-v="0">當天 just-born</button><button data-v="1">1 天</button><button data-v="2">2 天</button><button data-v="3">3 天</button><button data-v="x">其他</button></div>
+      <div class="seg" data-seg="dol"><button data-v="0">當天</button><button data-v="1">1 天</button><button data-v="2">2 天</button><button data-v="3">3 天</button><button data-v="x">其他</button></div>
       <div class="num" id="dolOtherWrap" hidden style="margin-top:7px"><input type="number" id="dolOther" placeholder="__" min="0" max="120" inputmode="numeric" style="max-width:70px"><span class="u">天</span></div></div>
     <div class="field">
       <div class="gp-apgar">
@@ -1230,7 +1230,7 @@
     const ph=t=>`<span class="ph">${t}</span>`;                       // 未填空格（灰）
     const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
     const dolN=S.dol==="x"?(V("dolOther")||""):S.dol;   // 四顆常用鈕 + 其他可輸入（跨院轉診可能十幾天）
-    const dolTxt=dolN===""?"":(dolN==="0"?"just-born":dolN+"-day-old");
+    const dolTxt=dolN===""||dolN==="0"?"":dolN+"-day-old";   // 0 天＝省略年齡修飾（This male newborn was born…），避免 born 重複
     const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
     const inV=id=>{const el=document.getElementById(id); const v=el&&el.value.trim()?el.value.trim():""; return v?esc(v):"";};  // 自由文字一律 escape
     const gw=parseInt(V("gaW")||"0",10), gd=V("gaD")||"0";
@@ -1250,7 +1250,7 @@
     {const a5=parseInt(V("ap5")||"",10), show=(!isNaN(a5)&&a5<7)||!!V("ap10");
      const e=document.getElementById("ap10"), sp=document.getElementById("ap10Sep");
      if(e)e.hidden=!show; if(sp)sp.hidden=!show;}
-    const cuw=document.getElementById("csUncomplWrap"); if(cuw)cuw.hidden=(S.delivery!=="cs");
+    const cuw=document.getElementById("csUncomplWrap"); if(cuw)cuw.hidden=!S.delivery;   // C/S 與 VD 皆可標記
     {const ih=document.getElementById("iapHint"); if(ih)ih.hidden=!(S.scr.gbs!=="neg"&&S.iap==="none");}   // GBS 有風險且 IAP 未選 → 顯示提醒
     const usf=document.getElementById("usFindings"); if(usf)usf.hidden=(S.us!=="abnormal");
     const acf=document.getElementById("acghFindings"); if(acf)acf.hidden=(S.amnio!=="abnormal");
@@ -1295,7 +1295,7 @@
     if(/^\d{3,4}$/.test(bt))bt=bt.length===3?bt[0]+":"+bt.slice(1):bt.slice(0,2)+":"+bt.slice(2);   // 1430 → 14:30（24h）
     const bds=bDate?fmtDate(bDate):"";
     {const wp=[]; if(bt)wp.push(`at ${bt}`); if(bds)wp.push(`on ${bds}`); if(wp.length)bornWhen=wp.join(" ");}
-    let s1=`This ${dolTxt?sl(dolTxt):ph("__-day-old")} ${sex?sl(sex):ph("____")} newborn was born ${bornWhen?sl(bornWhen)+" ":""}to a G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}${A?`A${sl(A)}`:""}, ${matAge?sl(matAge):ph("__")} y/o mother `
+    let s1=`This ${dolTxt?sl(dolTxt)+" ":(dolN==="0"?"":ph("__-day-old")+" ")}${sex?sl(sex):ph("____")} newborn was born ${bornWhen?sl(bornWhen)+" ":""}to a G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}${A?`A${sl(A)}`:""}, ${matAge?sl(matAge):ph("__")} y/o mother `
       +`at GA ${gw?sl(gaTxt):ph(gaTxt)} with birth weight (BW) ${V("bw")?sl(bw):ph(bw)} gm (${S.growth==="?"?ph("____"):sl(S.growth,S.growth==="SGA"||S.growth==="LGA")}) in ${birthPlace} via ${via?sl(via):ph("____")}`;
     if(S.delivery==="cs") s1+=` due to ${csR?sl(csR):ph("____")}`;
     P1.push(s1+".");
@@ -1412,7 +1412,9 @@
       P2.push(drug
         ? `${sl(drug)} was administered${is?` since ${sl(is)}`:""}, ${iapDone?"and":"but"} intrapartum antibiotic prophylaxis (IAP) was ${sl(iapDone?"complete":"incomplete")}.`
         : `Intrapartum antibiotic prophylaxis (IAP) was ${sl(iapDone?"complete":"incomplete")}.`);}
-    if(S.delivery==="cs"&&S.csUncompl) P2.push(`The cesarean delivery was ${sl("uncomplicated")}.`);   // 手術順利與否使用者沒說過,需明選
+    if(S.csUncompl) P2.push(S.delivery==="cs"
+      ? `The cesarean delivery was ${sl("uncomplicated")}.`
+      : `The process of vaginal delivery was ${sl("smooth")}.`);   // 順利與否使用者沒說過,需明選
     const bePos=[], beNeg=[];
     if(S.fd)bePos.push("fetal distress"); else beNeg.push("fetal distress");
     const doicMin=inV("doicMin");
@@ -1853,7 +1855,9 @@ ${opLine}`);
     const culMap={pending:`${culSpec} ${cPl?"were":"was"} obtained and ${cPl?"are":"is"} still pending.`,
                   nogrowth:`${culSpec} showed no growth.`,
                   positive:`${culSpec} yielded ${cPl?"positive results":"a positive result"} for ${ph("____")}.`};
-    if(hc.cultures!=="none"&&culMap[hc.cultures])H.push(sl(culMap[hc.cultures], hc.cultures==="positive"));
+    if(hc.cultures!=="none"&&culMap[hc.cultures]){   // 若前面沒有任何句子,補時間錨點免得段落像從半路開始
+      const c0=culMap[hc.cultures];
+      H.push(H.length?sl(c0,hc.cultures==="positive"):"After admission, "+sl(c0.charAt(0).toLowerCase()+c0.slice(1),hc.cultures==="positive"));}
     if(hc.bicarb)H.push(`${sl("Sodium bicarbonate was supplemented")}${/metabolic|mixed/.test(acidNow)?" "+sl("for correction of the metabolic acidosis"):""}.`);
     if(hc.surf){
       const rMap={tachypnea:"persistent tachypnea",retraction:"subcostal retraction",o2:"an increasing oxygen requirement",desat:"desaturation"};
@@ -1955,7 +1959,9 @@ ${opLine}`);
     const bw=V("bw")||"____", growth=S.growth;
     const ap1=V("ap1")||"_", ap5=V("ap5")||"_", G=V("gravida")||"_", P=V("para")||"_", A=V("abortion")||"";
     // 表頭沿用 admission 的日齡（S.dol），不再寫死 0；PMA = GA + 日齡（postmenstrual age 定義）
-    const dolN=parseInt(S.dol||"0",10), dol=String(dolN), totalDays=(gw?gw*7+gd+dolN:0);
+    // S.dol 可能是 "x"（其他 → #dolOther），直接 parseInt 會得到 NaN 讓表頭寫成「NaN d/o」
+    const dolRaw=S.dol==="x"?(V("dolOther")||""):S.dol;
+    const dolN=dolRaw===""?0:(parseInt(dolRaw,10)||0), dol=String(dolN), totalDays=(gw?gw*7+gd+dolN:0);
     const pma=gw?`${Math.floor(totalDays/7)}+${totalDays%7}`:"__";
     const curWt=bw;
     const gp=document.getElementById("accGrPMA"); if(gp)gp.value=gw?`${pma} wks`:"";
@@ -1987,7 +1993,9 @@ ${opLine}`);
     const scr=(k,vid)=>S.acc[k]==="done"?(inV(vid)||"done"):"not yet";
 
     const L=[];
-    L.push(`${sl(dol)} d/o, PMA ${gw?sl(pma):ph(pma)} wks, Wt: ${V("bw")?sl(bw):ph(bw)} g (${growth==="?"?ph("____"):sl(growth,growth==="SGA"||growth==="LGA")})`);
+    // d/o > 0 時今天體重≠出生體重（生理性體重下降），不可直接沿用 BW
+    const wtTxt = dolN>0 ? `${ph("____")} g (BW ${V("bw")?sl(bw):ph(bw)} g)` : `${V("bw")?sl(bw):ph(bw)} g`;
+    L.push(`${sl(dol)} d/o, PMA ${gw?sl(pma):ph(pma)} wks, Wt: ${wtTxt} (${growth==="?"?ph("____"):sl(growth,growth==="SGA"||growth==="LGA")})`);
     L.push("");
     L.push("【Brief history】");
     L.push(`A ${sex?sl(sex):ph("____")} neonate, GA ${gw?sl(gaTxt):ph(gaTxt)}, BW ${V("bw")?sl(bw):ph(bw)} gm, ${growth==="?"?ph("____"):sl(growth,growth==="SGA"||growth==="LGA")}, was admitted to ${sl(esc(admitTo))} due to ${admReason?sl(esc(admReason)):ph("____")}.`);
@@ -2002,7 +2010,7 @@ ${opLine}`);
     L.push("【Hospital course】");
     const hcS=buildHC(sl,gas,ph), hcX=inV("hcExtra");
     const hcBody=(hcS.join(" ")+(hcX?(hcS.length?" ":"")+sl(esc(hcX)):"")).trim();
-    L.push(hcBody?hcBody:ph("……"));
+    L.push(hcBody?hcBody:ph("--"));
     L.push("");
     L.push("【Initial laboratory data】");
     L.push(`ABG: ${gas.line?sl(esc(gas.line)):""}`);
@@ -2012,10 +2020,10 @@ ${opLine}`);
     L.push("");
     L.push("【Respiratory course】");
     if(S.acc.resp.length)S.acc.resp.forEach(m=>L.push(sl(`${m} (${S.acc.respDates[m]||today()}-)`)));
-    else L.push(ph("……"));
+    else L.push(ph("--"));
     L.push("");
     L.push("【Antibiotics course】");
-    L.push((abx?sl(abx):ph("……"))+(inV("accAbxNote")?"  "+sl(esc(inV("accAbxNote"))):""));
+    L.push((abx?sl(abx):ph("--"))+(inV("accAbxNote")?"  "+sl(esc(inV("accAbxNote"))):""));
     L.push("");
     L.push("【Brain ultrasound】"); L.push(fv("accBrainUS"));
     L.push("");
