@@ -97,7 +97,8 @@
     border-radius:9px;font:inherit;font-size:13.5px;font-weight:640;cursor:pointer;transition:background .12s,color .12s}
   .scr-btn[data-state="neg"]{background:var(--good-soft);border-color:var(--good);color:var(--good)}
   .scr-btn[data-state="pos"]{background:var(--risk-soft);border-color:var(--risk-line);color:var(--risk)}
-  .scr-btn[data-state="unk"]{background:var(--surface-2);border-color:var(--line);color:var(--ink-3)}
+  .scr-btn[data-state="pend"]{background:var(--surface-2);border-color:var(--risk-line);color:var(--risk)}
+  .scr-btn[data-state="nd"]{background:var(--surface-2);border-color:var(--line);color:var(--ink-3)}
   /* risk row */
   .risk-item{border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:9px;background:var(--surface)}
   .risk-item:last-child{margin-bottom:0}
@@ -307,7 +308,7 @@
     <div class="field"><span class="lab">產檢地點 <span class="q">（非 MMH 標 OBGYN clinic）</span></span>
       <select class="tin" id="ancPlace"></select></div>
     <div class="field"><span class="lab">產檢規律性 <span class="q">（未提及則不寫這句）</span></span>
-      <div class="seg" data-seg="ancReg"><button data-v="na">未提及</button><button data-v="regular">規則</button><button data-v="irregular">不規則</button></div></div>
+      <div class="seg" data-seg="ancReg"><button data-v="na">未提及</button><button data-v="regular">規則</button><button data-v="irregular">不規則</button><button data-v="none">未產檢</button></div></div>
     <div class="field"><span class="lab">產前超音波</span>
       <div class="seg" data-seg="us"><button data-v="na">未提及</button><button data-v="normal">正常</button><button data-v="abnormal">異常</button></div>
       <input class="tin" id="usFindings" placeholder="異常所見…" hidden style="margin-top:7px"></div>
@@ -343,6 +344,8 @@
   <!-- 3. 產前篩檢（預設展開，避免漏填） -->
   <section class="card collap">
     <h2 class="sec-h"><span class="n">3</span>產前篩檢 <span class="csum" data-csum="scr"></span><span class="chev">▾</span></h2>
+      <div class="field" style="margin-bottom:4px"><span class="lab">整批設定 <span class="q">（無產檢／急診才驗時省點擊）</span></span>
+        <div class="seg" data-scrall="1"><button data-v="neg">全部陰性</button><button data-v="pend">全部待報</button><button data-v="nd">全部未驗</button></div></div>
     <div id="screen"></div>
   </section>
 
@@ -971,7 +974,7 @@
   // 產前篩檢（三態 neg/pos/unk）；產房急救階梯；呼吸支持
   const SCREEN=[["hbsag","HBsAg","hepatitis B"],["hbeag","HBeAg（HBsAg+ 才需）","hepatitis B e antigen"],
                 ["syphilis","Syphilis (VDRL)","syphilis"],
-                ["rubella","Rubella","rubella"],["hiv","HIV","HIV infection"],
+                ["rubella","Rubella IgG","rubella IgG"],["hiv","HIV","HIV infection"],
                 ["gbs","GBS","group B streptococcus (GBS)"]];
   const S={gender:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,r:{},   // 性別/生產方式不預設：預設值會被寫進 note＝捏造事實
            scr:{hbsag:"neg",hbeag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
@@ -1041,16 +1044,21 @@
     }
   });
 
-  // 建產前篩檢 UI（三態循環按鈕）
+  const SCRTXT={neg:"陰性 −",pos:"陽性 +",pend:"待報 …",nd:"未驗 ✕"};   // 待報=已驗未回報,未驗=根本沒驗;兩者臨床處置不同
+  // Rubella 驗的是 IgG（免疫力）不是 IgM（感染），「陰性」語意與其他篩檢相反：無抗體才是需處置的發現。
+  // 故給它專屬標籤，預設不產生句子（不斷言有或沒有抗體）。
+  const SCRTXT_RUBELLA={neg:"未提及",pos:"有抗體 IgG+",pend:"待報 …",nd:"無抗體 IgG−"};
+  const scrTxt=(k,v)=>(k==="rubella"?SCRTXT_RUBELLA:SCRTXT)[v];
+
+  // 建產前篩檢 UI（四態循環按鈕：陰性→陽性→待報→未驗）
   const scrHost=document.getElementById("screen");
   SCREEN.forEach(([k,label])=>{
     const row=document.createElement("div"); row.className="scr-row"; row.dataset.scr=k;
-    row.innerHTML=`<span class="scr-name">${label}</span><button class="scr-btn" data-state="neg">陰性 −</button>`;
+    row.innerHTML=`<span class="scr-name">${label}</span><button class="scr-btn" data-state="neg">${scrTxt(k,"neg")}</button>`;
     scrHost.appendChild(row);
   });
 
   // ── 事件 ──
-  const SCRTXT={neg:"陰性 −",pos:"陽性 +",unk:"未驗 ?"};
   document.addEventListener("click",e=>{
     const ch=e.target.closest(".card.collap > .sec-h"); if(ch){ch.parentElement.classList.toggle("collapsed");return;}
     if(e.target.closest(".reset")){S.growthAuto=true;render();return;}
@@ -1086,10 +1094,14 @@
       b.setAttribute("aria-pressed",S.proc[k]?"true":"false"); render(); return;}
     const po=b.closest("[data-po]"); if(po){const k=po.dataset.po; S.procOpt[k]=b.dataset.v;
       po.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===b.dataset.v?"true":"false")); render(); return;}
-    if(b.classList.contains("scr-btn")){const k=b.closest(".scr-row").dataset.scr,o=["neg","pos","unk"],
-      n=o[(o.indexOf(b.dataset.state)+1)%3]; b.dataset.state=n; b.textContent=SCRTXT[n]; S.scr[k]=n;
+    const sa=b.closest("[data-scrall]"); if(sa){const v=b.dataset.v;   // 整批設定,不動 HBeAg(只在 HBsAg+ 顯示)
+      SCREEN.forEach(([k])=>{if(k==="hbeag"||k==="rubella")return; S.scr[k]=v;   // HBeAg 條件顯示、Rubella 語意不同,批次不動
+        const rb=document.querySelector(`.scr-row[data-scr="${k}"] .scr-btn`); if(rb){rb.dataset.state=v; rb.textContent=scrTxt(k,v);}});
+      render(); return;}
+    if(b.classList.contains("scr-btn")){const k=b.closest(".scr-row").dataset.scr,o=["neg","pos","pend","nd"],
+      n=o[(o.indexOf(b.dataset.state)+1)%o.length]; b.dataset.state=n; b.textContent=scrTxt(k,n); S.scr[k]=n;
       render();
-      if(k==="gbs"&&(n==="pos"||n==="unk"))pulseIap();   // GBS 陽/未驗 → IAP 變必答，但絕不代填（代填＝捏造已給藥）
+      if(k==="gbs"&&n!=="neg")pulseIap();   // GBS 陽/未驗 → IAP 變必答，但絕不代填（代填＝捏造已給藥）
       return;}
     const fill=b.closest("[data-fill]"); if(fill){const inp=document.getElementById(fill.dataset.fill); if(inp){inp.value=b.dataset.v;
       if(/fetal distress/i.test(b.dataset.v)){S.fd=true; const fdb=document.querySelector('[data-tog="fd"] button'); if(fdb)fdb.setAttribute("aria-pressed","true");}  // C/S/入院原因命中→自動勾出生事件 fetal distress(可再取消)
@@ -1195,6 +1207,7 @@
   function renderAdm(){
     const sl=(t,w)=>`<span class="slot${w?" abn":""}">${t}</span>`;
     const ph=t=>`<span class="ph">${t}</span>`;                       // 未填空格（灰）
+    const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
     const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
     const inV=id=>{const el=document.getElementById(id); const v=el&&el.value.trim()?el.value.trim():""; return v?esc(v):"";};  // 自由文字一律 escape
     const gw=parseInt(V("gaW")||"0",10), gd=V("gaD")||"0";
@@ -1211,14 +1224,14 @@
 
     const csw=document.getElementById("csReasonWrap"); if(csw)csw.hidden=(S.delivery!=="cs");
     const cuw=document.getElementById("csUncomplWrap"); if(cuw)cuw.hidden=(S.delivery!=="cs");
-    {const ih=document.getElementById("iapHint"); if(ih)ih.hidden=!((S.scr.gbs==="pos"||S.scr.gbs==="unk")&&S.iap==="none");}   // GBS 有風險且 IAP 未選 → 顯示提醒
+    {const ih=document.getElementById("iapHint"); if(ih)ih.hidden=!(S.scr.gbs!=="neg"&&S.iap==="none");}   // GBS 有風險且 IAP 未選 → 顯示提醒
     const usf=document.getElementById("usFindings"); if(usf)usf.hidden=(S.us!=="abnormal");
     const acf=document.getElementById("acghFindings"); if(acf)acf.hidden=(S.amnio!=="abnormal");
     const niptW=document.getElementById("niptWrap"); if(niptW)niptW.hidden=(S.nipt!=="high");
     const heRow=document.querySelector('.scr-row[data-scr="hbeag"]'); if(heRow)heRow.hidden=(S.scr.hbsag!=="pos");  // HBeAg 只在 HBsAg+ 顯示
     // 摺疊卡摘要
     const setCsum=(key,txt,isNone)=>{const el=document.querySelector(`[data-csum="${key}"]`); if(el){el.textContent=txt; el.classList.toggle("none",!!isNone);}};
-    const scrPos=[]; [["hbsag","HBsAg"],["hbeag","HBeAg"],["syphilis","RPR"],["rubella","Rubella"],["hiv","HIV"],["gbs","GBS"]].forEach(([k,nm])=>{if(S.scr[k]==="pos")scrPos.push(nm+"+");else if(S.scr[k]==="unk")scrPos.push(nm+"?");});
+    const scrPos=[]; [["hbsag","HBsAg"],["hbeag","HBeAg"],["syphilis","RPR"],["rubella","Rubella"],["hiv","HIV"],["gbs","GBS"]].forEach(([k,nm])=>{const v=S.scr[k]; if(v==="pos")scrPos.push(nm+"+");else if(v==="pend")scrPos.push(nm+"…");else if(v==="nd")scrPos.push(nm+"✕");});
     setCsum("scr",scrPos.length?scrPos.join("・"):"全陰性",!scrPos.length);
     const resusN={none:"",ppv:"PPV",intubation:"插管",cpr:"CPR+Epi"}[S.resus]||"", ev=[];
     if(S.fd)ev.push("fetal distress"); if(S.doic)ev.push("DOIC"); if(S.msaf)ev.push("MSAF");
@@ -1268,7 +1281,9 @@
     const usFind=inV("usFindings");
     // 產檢規律性與超音波各自可「未提及」；能合則合成一句，皆未提及則整句不出
     const ancPart = S.ancReg==="na" ? ""
-      : `The mother received ${sl(S.ancReg==="irregular"?"irregular":"regular", S.ancReg==="irregular")} antepartum examinations in ${anc?sl(anc+(isMMH?"":" OBGYN clinic")):ph("____")}`;
+      : S.ancReg==="none"
+        ? `The mother had ${sl("not received regular antepartum examinations",true)}`
+        : `The mother received ${sl(S.ancReg==="irregular"?"irregular":"regular", S.ancReg==="irregular")} antepartum examinations in ${anc?sl(anc+(isMMH?"":" OBGYN clinic")):ph("____")}`;
     const usTxt = S.us==="abnormal" ? (usFind?`revealed ${sl(usFind,true)}`:`revealed ${sl("abnormal findings",true)}`) : `revealed ${sl("normal results")}`;
     const usPart = S.us==="na" ? "" : `prenatal ultrasound and level II ultrasound ${usTxt}`;
     if(ancPart&&usPart)P1.push(`${ancPart}, and ${usPart}.`);
@@ -1306,10 +1321,13 @@
       } else cNeg.push(label);
     });
     if(cPos.length) P1.push(`The pregnancy was complicated by ${sl(joinAnd(cPos),true)}.`);
-    if(cNeg.length) P1.push(`The pregnancy was not complicated by ${sl(joinOr(cNeg))}.`);
+    // 沒產檢＝這些根本沒被檢查過，寫「not complicated by」等於斷言驗過且陰性
+    if(cNeg.length) P1.push(S.ancReg==="none"
+      ? `${sl(cap(joinAnd(cNeg)),true)} ${cNeg.length>1?"were":"was"} not examined.`
+      : `The pregnancy was not complicated by ${sl(joinOr(cNeg))}.`);
     if(S.r.pre.on&&S.r.pre.val==="highrisk") P1.push(`The mother was at ${sl("high risk for preeclampsia",true)}, and ${sl("low-dose aspirin was administered for prophylaxis")}.`);
 
-    P1.push(`Maternal group B streptococcus (GBS) culture was ${sl({neg:"negative",pos:"positive",unk:"not available"}[S.scr.gbs], S.scr.gbs!=="neg")}.`);
+    P1.push(`Maternal group B streptococcus (GBS) culture was ${sl({neg:"negative",pos:"positive",pend:"done but still pending for final report",nd:"not obtained"}[S.scr.gbs]||"not obtained", S.scr.gbs!=="neg")}.`);
     // 雙親病史：thalassemia / G6PD deficiency / thyroid disease（無/母/父/雙親）
     const parSet=[["thal","thalassemia"],["g6pd","G6PD deficiency"],["thyroid","thyroid disease"]];
     const parPos=[], parNeg=[];
@@ -1333,17 +1351,21 @@
       {k:"syphilis",name:"rapid plasma reagin (RPR)"},
       {k:"hbsag",name:"hepatitis B surface antigen (HBsAg)"},
       {k:"hiv",name:"human immunodeficiency virus (HIV)"}];
-    const serPos=[],serNeg=[],serUnk=[];
+    const serPos=[],serNeg=[],serUnk=[],serPend=[];
     serTests.forEach(t=>{const v=S.scr[t.k], nm=t.negName||t.name;
-      if(v==="pos")serPos.push(t.name); else if(v==="unk")serUnk.push(nm); else serNeg.push(nm);});
-    const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+      if(v==="pos")serPos.push(t.name); else if(v==="pend")serPend.push(nm); else if(v==="nd")serUnk.push(nm); else serNeg.push(nm);});
     if(serNeg.length)P1.push(`The result${serNeg.length>1?"s":""} of ${sl(joinAnd(serNeg))} ${serNeg.length>1?"were":"was"} negative.`);
     if(serPos.length)P1.push(`${sl(cap(joinAnd(serPos)),true)} ${serPos.length>1||/ and /.test(serPos[0])?"were":"was"} positive.`);
     if(S.scr.hbsag==="pos"){const he=S.scr.hbeag;   // HBsAg+ 才報 HBeAg(常見 HBsAg+/HBeAg−);緊跟 HBsAg 陽性句
       if(he==="pos")P1.push(`Hepatitis B e antigen (HBeAg) was also ${sl("positive",true)}.`);
       else if(he==="neg")P1.push(`Hepatitis B e antigen (HBeAg) was ${sl("negative")}.`);}
-    if(serUnk.length)P1.push(`${sl(cap(joinAnd(serUnk)),true)} ${serUnk.length>1?"were":"was"} not tested.`);
-    if(S.scr.rubella==="pos")P1.push(`Maternal rubella IgM was ${sl("positive",true)}.`);
+    if(serPend.length)P1.push(`${sl(cap(joinAnd(serPend)),true)} ${serPend.length>1?"were":"was"} still pending for final report.`);
+    if(serUnk.length)P1.push(`${sl(cap(joinAnd(serUnk)),true)} ${serUnk.length>1?"were":"was"} not examined.`);
+    // Rubella 是 IgG（抗體）不是 IgM（感染）：reactive=有免疫力(正常)，nonreactive=無免疫力(產後需補接種)
+    {const rv=S.scr.rubella;   // neg=未提及→不出句（不斷言有無抗體）
+     if(rv==="pos")P1.push(`Maternal rubella IgG was ${sl("reactive")}.`);
+     else if(rv==="nd")P1.push(`Maternal rubella IgG was ${sl("nonreactive",true)}.`);
+     else if(rv==="pend")P1.push(`Maternal rubella IgG was ${sl("still pending for final report",true)}.`);}
 
     // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar +（外接轉入過程）+ 入院 ──
     if(!S.outborn) P2.push(`The mother was admitted to our hospital due to ${admR?sl(admR):ph("____")}.`);  // 外接的轉入過程移到 Apgar 之後(正確時序)
@@ -1427,7 +1449,7 @@
     if(S.r.pih.on)DX.push({s:"Maternal PIH",f:"Maternal pregnancy induced hypertension (PIH)"});
     if(S.r.pre.on&&S.r.pre.val!=="highrisk")DX.push({s:"Maternal preeclampsia",f:"Maternal preeclampsia"});
     if(S.scr.gbs==="pos")DX.push({s:"GBS colonization",f:`Maternal GBS colonization${iapPhrase}`});
-    if(S.scr.gbs==="unk")DX.push({s:"GBS unknown",f:`Maternal GBS unknown status${iapPhrase}`});
+    if(S.scr.gbs==="pend"||S.scr.gbs==="nd")DX.push({s:"GBS unknown",f:`Maternal GBS unknown status${iapPhrase}`});
 
     // ── 入院路徑敘事（置於 Apgar 之後）：直接入院前處理／嬰兒室觀察／出生後會診／外接 ──
     const obCourseRaw=inV("obCourse");
@@ -1830,7 +1852,7 @@ ${opLine}`);
     const lvl={none:0,ppv:1,intubation:2,cpr:3}[S.resus]||0;
     const invasive=S.resp==="vent"||S.acc.resp.some(m=>/ETT/.test(m))||lvl>=2;
     const respSupport=(S.resp&&S.resp!=="roomair")||S.acc.resp.length>0||lvl>=1;
-    const infRisk=S.scr.gbs==="pos"||S.scr.gbs==="unk"||S.r.prom.on||S.r.fever.on;
+    const infRisk=S.scr.gbs!=="neg"||S.r.prom.on||S.r.fever.on;
 
     const D=[];
     if(infRisk||preterm||respSupport||S.fd||S.doic)
@@ -1925,7 +1947,7 @@ ${opLine}`);
     const perinatal=inV("accPerinatal")||(periAuto.length?periAuto.join(", "):"none");
     const infAuto=[];
     if(S.scr.gbs==="pos")infAuto.push("maternal GBS colonization");
-    else if(S.scr.gbs==="unk")infAuto.push("maternal GBS unknown status");
+    else if(S.scr.gbs!=="neg")infAuto.push("maternal GBS unknown status");
     if(S.r.prom.on){const h=V("promH"); infAuto.push((S.r.prom.val==="pprom"?"PPROM":"PROM")+(h?` for ${h} hours`:""));}
     if(S.r.fever&&S.r.fever.on)infAuto.push("maternal fever");
     const infRisk=inV("accInfRisk")||(infAuto.length?infAuto.join(", "):"none");
