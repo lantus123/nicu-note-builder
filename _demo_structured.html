@@ -604,13 +604,14 @@
         </div>
       </div>
 
-      <div class="field"><span class="lab">CXR 影像診斷</span>
-        <div class="seg" data-hc="cxrDx" style="flex-wrap:wrap">
-          <button data-v="none" style="flex:0 1 auto">未提及</button>
+      <div class="field"><span class="lab">CXR 影像診斷 <span class="q">（可複選；都不選＝不寫入）</span></span>
+        <div class="seg" data-hcm="cxrDx" style="flex-wrap:wrap">
           <button data-v="rds1" style="flex:0 1 auto">RDS Gr.I</button><button data-v="rds2" style="flex:0 1 auto">RDS Gr.II</button>
           <button data-v="rds3" style="flex:0 1 auto">RDS Gr.III</button><button data-v="rds4" style="flex:0 1 auto">RDS Gr.IV</button>
           <button data-v="ttn" style="flex:0 1 auto">TTN</button><button data-v="mas" style="flex:0 1 auto">MAS</button>
+          <button data-v="infl" style="flex:0 1 auto">Infiltrations 增加</button>
           <button data-v="pna" style="flex:0 1 auto">Pneumonia</button><button data-v="ptx" style="flex:0 1 auto">Pneumothorax</button>
+          <button data-v="pmd" style="flex:0 1 auto">Pneumomediastinum</button>
         </div></div>
 
       <div class="field"><span class="lab">抗生素計畫 <span class="q">（藥品在 E 區選）</span></span>
@@ -714,11 +715,14 @@
       <h2 class="sec-h"><span class="n">J</span>Infant growth assessment <span class="chev" style="margin-left:auto">▾</span></h2>
       <div class="row2">
         <div class="field"><span class="lab">PMA <span class="q">(自動)</span></span><input class="tin" id="accGrPMA" placeholder="自動" readonly></div>
-        <div class="field"><span class="lab">BH <span class="q">身長</span></span><div class="num"><input type="number" id="accBH" placeholder="—" step="0.1"><span class="u">cm</span></div></div>
+        <div class="field"><span class="lab">BH <span class="q">身長</span></span><div class="num"><input type="number" id="accBH" placeholder="—" step="0.1"><span class="u">cm</span></div>
+          <span class="q" id="pctBH" hidden style="margin-top:2px"></span></div>
       </div>
       <div class="row2" style="margin-top:12px">
-        <div class="field"><span class="lab">BW <span class="q">(目前體重)</span></span><input class="tin" id="accGrBW" placeholder="自動" readonly></div>
-        <div class="field"><span class="lab">HC <span class="q">頭圍</span></span><div class="num"><input type="number" id="accHC" placeholder="—" step="0.1"><span class="u">cm</span></div></div>
+        <div class="field"><span class="lab">BW <span class="q">(目前體重)</span></span><input class="tin" id="accGrBW" placeholder="自動" readonly>
+          <span class="q" id="pctBW" hidden style="margin-top:2px"></span></div>
+        <div class="field"><span class="lab">HC <span class="q">頭圍</span></span><div class="num"><input type="number" id="accHC" placeholder="—" step="0.1"><span class="u">cm</span></div>
+          <span class="q" id="pctHC" hidden style="margin-top:2px"></span></div>
       </div>
     </section>
 
@@ -1008,7 +1012,7 @@
            acc:{resp:[],abx:[],line:[],vac:[],rop:"notyet",aabr:"notyet",nbs:"notyet",respDates:{},lineDates:{}},
            hc:{workup:false,workupItems:["CBC/DC","CRP","B/C","GJ/C","CXR","urine GBS Ag"],
                aline:false,bicarb:false,surf:false,surfReason:[],surfDrug:"survanta",surfRoute:"ett",improved:false,
-               cxrDx:"none",infMarkers:"na",abxPlan:"none",cultures:"none",monitor:false}};
+               cxrDx:[],infMarkers:"na",abxPlan:"none",cultures:"none",monitor:false}};
   RISKS.forEach(x=>S.r[x.k]={on:false,val:null,extra:[],num:x.num?x.num.val:null});
   S.r.steroid.val="2"; S.r.steroid.extra=["complete"];   // Y11 類固醇預設 2 劑・完整療程(turn on 即帶,例外才改)
 
@@ -1818,6 +1822,32 @@ ${opLine}`);
   }
 
   // ── Hospital course 敘述組裝（點選 → 通順句子）──
+  // ── Fenton 2025 百分位（Ryan 2026-08-29：BH/BW/HC 自動帶 %）──
+  // 資料推導自官方 FentonGrowth.ca API v2.1.1.0（ucalgary 官方計算器後端），
+  // 方法＝探測值取 z 反插百分位曲線、迭代至 |z-target|<0.02（誤差 <0.3 個百分位點），
+  // 三重驗證：單調性／40 週地標（男 3542g/51.0cm/35.35cm）／官方 ASSIGN V2 合理差異。
+  // 推導腳本與原始輸出在 .scratch/fenton/（gitignored）。
+  // ⚠ 資料邊界（API 實測）：體重/頭圍 22 4/7 起（週 22 的值以 22 4/7 近似）、身長 24 0/7 起、上限 44 週。
+  //   超界一律回空字串不顯示——寧可不寫也不外插醫療數值。
+  const FENTON25={"weeks":[22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44],"M":{"W":{"3":[372.0,401.0,472.0,550.0,638.0,733.0,841.0,960.0,1090.0,1226.0,1370.0,1528.0,1700.0,1879.0,2059.0,2236.0,2413.0,2591.0,2769.0,2947.0,3124.0,3301.0,3478.0],"10":[416.0,448.0,527.0,617.0,715.0,821.0,936.0,1059.0,1193.0,1338.0,1494.0,1667.0,1854.0,2048.0,2241.0,2431.0,2620.0,2809.0,2999.0,3189.0,3379.0,3568.0,3757.0],"50":[512.0,550.0,644.0,752.0,871.0,1002.0,1141.0,1284.0,1439.0,1609.0,1795.0,2000.0,2226.0,2448.0,2676.0,2897.0,3116.0,3324.0,3542.0,3761.0,3980.0,4200.0,4421.0],"90":[606.0,651.0,760.0,883.0,1026.0,1179.0,1348.0,1527.0,1722.0,1933.0,2161.0,2407.0,2666.0,2928.0,3185.0,3436.0,3686.0,3935.0,4186.0,4436.0,4686.0,4931.0,5181.0],"97":[651.0,698.0,813.0,943.0,1095.0,1260.0,1446.0,1648.0,1872.0,2114.0,2367.0,2632.0,2907.0,3184.0,3456.0,3723.0,3989.0,4256.0,4510.0,4779.0,5041.0,5312.0,5575.0]},"H":{"3":[17.5,18.0,19.0,20.0,21.0,22.0,22.9,24.0,25.0,25.8,26.8,27.7,28.7,29.6,30.4,31.1,31.7,32.3,32.9,33.5,34.0,34.5,35.0],"10":[18.3,18.8,19.8,20.8,21.8,22.8,23.8,24.9,25.9,26.7,27.7,28.6,29.6,30.5,31.2,31.9,32.5,33.1,33.7,34.2,34.8,35.2,35.7],"50":[20.0,20.4,21.5,22.6,23.6,24.7,25.7,26.8,27.8,28.7,29.7,30.6,31.5,32.3,33.0,33.7,34.3,34.8,35.4,35.9,36.3,36.8,37.2],"90":[21.6,22.1,23.2,24.3,25.4,26.5,27.6,28.7,29.7,30.7,31.6,32.5,33.4,34.2,34.9,35.5,36.0,36.5,37.0,37.5,37.9,38.3,38.7],"97":[22.4,22.9,24.0,25.1,26.3,27.4,28.5,29.6,30.6,31.6,32.6,33.5,34.3,35.1,35.7,36.3,36.8,37.3,37.8,38.2,38.7,39.1,39.4]},"L":{"3":[null,null,26.3,27.7,29.1,30.5,31.9,33.4,34.8,36.2,37.6,39.0,40.3,41.5,42.7,43.8,44.8,45.8,46.7,47.6,48.5,49.4,50.3],"10":[null,null,27.7,29.1,30.5,32.0,33.4,34.9,36.3,37.7,39.1,40.4,41.7,43.0,44.1,45.2,46.2,47.2,48.1,49.0,49.9,50.7,51.6],"50":[null,null,30.8,32.2,33.7,35.1,36.6,38.1,39.5,40.9,42.3,43.6,44.9,46.1,47.2,48.3,49.2,50.1,51.0,51.9,52.7,53.5,54.4],"90":[null,null,33.9,35.3,36.8,38.3,39.8,41.3,42.7,44.1,45.5,46.8,48.0,49.2,50.3,51.3,52.2,53.1,53.9,54.8,55.6,56.4,57.1],"97":[null,null,35.3,36.8,38.3,39.8,41.3,42.8,44.2,45.6,47.0,48.2,49.5,50.6,51.7,52.7,53.6,54.5,55.3,56.1,56.9,57.7,58.5]}},"F":{"W":{"3":[364.0,390.0,456.0,531.0,615.0,707.0,802.0,907.0,1022.0,1150.0,1289.0,1441.0,1604.0,1774.0,1949.0,2122.0,2292.0,2456.0,2614.0,2767.0,2921.0,3077.0,3234.0],"10":[397.0,428.0,502.0,585.0,679.0,781.0,888.0,1001.0,1126.0,1264.0,1418.0,1585.0,1763.0,1949.0,2137.0,2324.0,2505.0,2680.0,2850.0,3016.0,3181.0,3347.0,3512.0],"50":[476.0,514.0,606.0,708.0,824.0,948.0,1079.0,1216.0,1366.0,1536.0,1725.0,1929.0,2141.0,2359.0,2580.0,2804.0,3016.0,3218.0,3426.0,3610.0,3801.0,3989.0,4175.0],"90":[566.0,610.0,716.0,836.0,972.0,1121.0,1278.0,1445.0,1632.0,1843.0,2076.0,2322.0,2572.0,2826.0,3082.0,3341.0,3602.0,3858.0,4103.0,4333.0,4551.0,4760.0,4968.0],"97":[611.0,658.0,771.0,898.0,1043.0,1203.0,1375.0,1558.0,1767.0,2003.0,2262.0,2530.0,2798.0,3068.0,3341.0,3624.0,3914.0,4207.0,4465.0,4703.0,4940.0,5154.0,5373.0]},"H":{"3":[17.0,17.5,18.6,19.6,20.6,21.6,22.6,23.6,24.6,25.4,26.4,27.3,28.2,29.1,29.9,30.6,31.2,31.8,32.3,32.8,33.3,33.7,34.1],"10":[17.8,18.3,19.4,20.4,21.4,22.4,23.4,24.5,25.4,26.3,27.3,28.2,29.1,30.0,30.7,31.4,32.0,32.5,33.1,33.6,34.0,34.5,34.9],"50":[19.5,20.0,21.0,22.1,23.2,24.2,25.3,26.3,27.3,28.2,29.2,30.1,31.0,31.8,32.5,33.2,33.7,34.2,34.7,35.2,35.6,36.0,36.4],"90":[21.2,21.6,22.7,23.8,24.9,26.0,27.1,28.2,29.1,30.1,31.1,32.0,32.8,33.6,34.3,34.9,35.4,35.9,36.4,36.8,37.2,37.6,38.0],"97":[22.0,22.4,23.5,24.6,25.7,26.8,27.9,29.0,30.0,31.0,32.0,32.9,33.7,34.5,35.2,35.7,36.2,36.7,37.1,37.5,38.0,38.3,38.7]},"L":{"3":[null,null,25.9,27.2,28.6,30.0,31.4,32.8,34.2,35.6,37.0,38.3,39.6,40.8,42.0,43.1,44.1,45.0,45.9,46.8,47.7,48.5,49.3],"10":[null,null,27.2,28.6,30.0,31.4,32.8,34.3,35.7,37.1,38.5,39.7,41.0,42.2,43.4,44.5,45.5,46.4,47.3,48.1,49.0,49.8,50.6],"50":[null,null,30.2,31.6,33.0,34.5,35.9,37.4,38.8,40.2,41.5,42.8,44.1,45.3,46.5,47.5,48.5,49.3,50.2,51.0,51.9,52.7,53.4],"90":[null,null,33.1,34.6,36.0,37.5,39.0,40.5,41.9,43.3,44.6,45.9,47.1,48.4,49.5,50.5,51.4,52.3,53.1,53.9,54.7,55.5,56.2],"97":[null,null,34.5,36.0,37.4,38.9,40.4,41.9,43.3,44.8,46.1,47.3,48.6,49.8,50.9,51.9,52.8,53.6,54.5,55.2,56.0,56.8,57.5]}}};
+  // kind:'W'(g)|'H'(cm)|'L'(cm) → "<P3"/"P3-10"/"P10-50"/"P50-90"/"P90-97"/">P97"；不可算回 ""
+  function fentonBracket(kind,val,totalDays,gender){
+    const sx={male:"M",female:"F"}[gender]; if(!sx||!val||!totalDays)return "";
+    const wk=totalDays/7, WKS=FENTON25.weeks;
+    const lo=(kind==="L")?24:22.5714;                       // 身長資料 24 週起；W/H 22 4/7 起
+    if(wk<lo||wk>WKS[WKS.length-1])return "";
+    const t=FENTON25[sx][kind];
+    const curve=p=>{                                        // 百分位曲線在 wk 的線性插值
+      const a=t[p]; const x=Math.max(WKS[0],Math.min(wk,WKS[WKS.length-1]));
+      let i=0; while(i<WKS.length-2&&WKS[i+1]<=x)i++;   // <=：整數週取右區間（身長 24 週左端是 null）
+      const v1=a[i],v2=a[i+1]; if(v1==null||v2==null)return null;
+      return v1+(x-WKS[i])*(v2-v1)/(WKS[i+1]-WKS[i]);
+    };
+    const c3=curve("3"),c10=curve("10"),c50=curve("50"),c90=curve("90"),c97=curve("97");
+    if([c3,c10,c50,c90,c97].some(v=>v==null))return "";
+    return val<c3?"<P3":val<c10?"P3-10":val<c50?"P10-50":val<c90?"P50-90":val<c97?"P90-97":">P97";
+  }
+
   const CXR_MAP={
     rds1:["diffuse fine reticulogranular opacities","respiratory distress syndrome, Gr. I"],
     rds2:["bilateral reticulogranular opacities with air bronchograms","respiratory distress syndrome, Gr. II"],
@@ -1826,7 +1856,9 @@ ${opLine}`);
     ttn:["increased perihilar interstitial markings with fluid in the fissures","transient tachypnea of the newborn"],
     mas:["patchy coarse infiltrates with hyperinflation","meconium aspiration syndrome"],
     pna:["focal air-space consolidation","neonatal pneumonia"],
-    ptx:["a peripheral lucent area with lung collapse","pneumothorax"]};
+    ptx:["a peripheral lucent area with lung collapse","pneumothorax"],
+    infl:["increased pulmonary infiltrations","increased pulmonary infiltrations without frank consolidation"],
+    pmd:["lucency outlining the cardiac border and mediastinum","pneumomediastinum"]};
   function buildHC(sl,gas,ph){
     const H=[], hc=S.hc, firstMode=S.acc.resp[0]||"";
     if(hc.workup){
@@ -1849,10 +1881,11 @@ ${opLine}`);
       const bits=[]; if(c.acid)bits.push(c.acid); c.o2.forEach(x=>bits.push(x));
       if(bits.length)H.push(`The initial arterial blood gas showed ${sl(joinAnd(bits))}.`);
     }
-    if(hc.cxrDx!=="none"&&CXR_MAP[hc.cxrDx]){
-      const c=CXR_MAP[hc.cxrDx];
-      H.push(`Chest X-ray revealed ${sl(c[0],true)}, compatible with ${sl(c[1],true)}.`);
-    }
+    {const dx=(hc.cxrDx||[]).filter(k=>CXR_MAP[k]);
+     if(dx.length){
+       const finds=joinAnd(dx.map(k=>CXR_MAP[k][0])), dxs=joinAnd(dx.map(k=>CXR_MAP[k][1]));
+       H.push(`Chest X-ray revealed ${sl(finds,true)}, compatible with ${sl(dxs,true)}.`);
+     }}
     if(hc.workup){
       const iMap={none:"There was no evidence of leukocytosis or elevated CRP.",leuko:"Leukocytosis was noted.",
                   crp:"An elevated CRP level was noted.",both:"Both leukocytosis and an elevated CRP level were noted."};
@@ -1990,6 +2023,13 @@ ${opLine}`);
     const curWt=bw;
     const gp=document.getElementById("accGrPMA"); if(gp)gp.value=gw?`${pma} wks`:"";
     const gb=document.getElementById("accGrBW"); if(gb)gb.value=bw!=="____"?bw+" g":"";
+    // 三個測量的即時百分位 chip（Fenton 2025；不可算＝隱藏）
+    {const chip=(id,k,raw)=>{const el=document.getElementById(id); if(!el)return;
+       const b=fentonBracket(k,parseFloat(raw),totalDays,S.gender);
+       el.textContent=b?`${b} · Fenton 2025`:""; el.hidden=!b;};
+     chip("pctBW","W",bw!=="____"?bw:"");
+     chip("pctBH","L",V("accBH"));
+     chip("pctHC","H",V("accHC"));}
 
     const via=S.delivery==="cs"?"C/S":S.delivery==="nsd"?"VD":"";
     const admitTo=inV("accAdmitTo")||"our NICU";
@@ -2037,7 +2077,7 @@ ${opLine}`);
     L.push("");
     L.push("【Initial laboratory data】");
     L.push(`ABG: ${gas.line?sl(esc(gas.line)):""}`);
-    L.push(`CXR: ${fv("accCXR")||(S.hc.cxrDx!=="none"&&CXR_MAP[S.hc.cxrDx]?sl(CXR_MAP[S.hc.cxrDx][0]):"")}`);  // 未填時鏡射 §B 影像診斷所見
+    L.push(`CXR: ${fv("accCXR")||((S.hc.cxrDx||[]).filter(k=>CXR_MAP[k]).length?sl(joinAnd((S.hc.cxrDx||[]).filter(k=>CXR_MAP[k]).map(k=>CXR_MAP[k][0]))):"")}`);  // 未填時鏡射 §B 影像診斷所見（多選合併）
     const otherLine=parseBlood(inV("accOther"));
     L.push(`Other (CBC/DC, CRP...): ${otherLine?sl(esc(otherLine)):""}`);
     L.push("");
@@ -2080,7 +2120,9 @@ ${opLine}`);
     L.push("【Nutrition】"); L.push(fv("accNutrition"));
     L.push("");
     L.push("【Infant growth assessment】");
-    L.push(`PMA ${sl(pma)}   BH ${fv("accBH")||ph("__")}   BW ${curWt!=="____"?sl(curWt):ph("__")}   HC ${fv("accHC")||ph("__")}`);
+    {const _pb=(k,raw)=>{const b=fentonBracket(k,parseFloat(raw),totalDays,S.gender); return b?` (${b})`:"";};
+     const bhV=fv("accBH"), hcV=fv("accHC");
+     L.push(`PMA ${sl(pma)}   BH ${bhV?fv("accBH")+_pb("L",bhV):ph("__")}   BW ${curWt!=="____"?sl(curWt)+_pb("W",curWt):ph("__")}   HC ${hcV?fv("accHC")+_pb("H",hcV):ph("__")}`);}
     L.push("");
     L.push("【Current medications】"); L.push(fv("accMeds"));
     L.push("");
