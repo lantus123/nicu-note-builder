@@ -1252,7 +1252,7 @@
     const ph=t=>`<span class="ph">${t}</span>`;                       // 未填空格（灰）
     const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
     const dolN=S.dol==="x"?(V("dolOther")||""):S.dol;   // 四顆常用鈕 + 其他可輸入（跨院轉診可能十幾天）
-    const dolTxt=dolN===""||dolN==="0"?"":dolN+"-day-old";   // 0 天＝省略年齡修飾（This male newborn was born…），避免 born 重複
+    const dolTxt=dolN===""||dolN==="0"?"":dolN+"-day-old";   // 0 天＝省略年齡修飾（This male newborn was born…），與 delivered 句式相容
     const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
     const inV=id=>{const el=document.getElementById(id); const v=el&&el.value.trim()?el.value.trim():""; return v?esc(v):"";};  // 自由文字一律 escape
     const gw=parseInt(V("gaW")||"0",10), gd=V("gaD")||"0";
@@ -1317,9 +1317,12 @@
     if(/^\d{3,4}$/.test(bt))bt=bt.length===3?bt[0]+":"+bt.slice(1):bt.slice(0,2)+":"+bt.slice(2);   // 1430 → 14:30（24h）
     const bds=bDate?fmtDate(bDate):"";
     {const wp=[]; if(bt)wp.push(`at ${bt}`); if(bds)wp.push(`on ${bds}`); if(wp.length)bornWhen=wp.join(" ");}
-    let s1=`This ${dolTxt?sl(dolTxt)+" ":(dolN==="0"?"":ph("__-day-old")+" ")}${sex?sl(sex):ph("____")} newborn was born ${bornWhen?sl(bornWhen)+" ":""}to a G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}${A?`A${sl(A)}`:""}, ${matAge?sl(matAge):ph("__")} y/o mother `
-      +`at GA ${gw?sl(gaTxt):ph(gaTxt)} with birth weight (BW) ${V("bw")?sl(bw):ph(bw)} gm (${S.growth==="?"?ph("____"):sl(S.growth,S.growth==="SGA"||S.growth==="LGA")}) in ${birthPlace} via ${via?sl(via):ph("____")}`;
-    if(S.delivery==="cs") s1+=` due to ${csR?sl(csR):ph("____")}`;
+    // 改法6：was delivered 消 newborn-was-born 同根重複;成熟度詞純 GA 推導(WHO 分帶),GA 空→無詞
+    // 語序採審查修正:delivered in {地點} 緊鄰,避免 "to a mother in {地點}" 被讀成修飾 mother
+    const matW=gw?(gw<28?"extremely preterm":gw<32?"very preterm":gw<34?"moderately preterm":gw<37?"late preterm":"term"):"";
+    let s1=`This ${dolTxt?sl(dolTxt)+" ":(dolN==="0"?"":ph("__-day-old")+" ")}${matW?sl(matW)+" ":""}${sex?sl(sex):ph("____")} infant was delivered ${bornWhen?sl(bornWhen)+" ":""}in ${birthPlace} at GA ${gw?sl(gaTxt):ph(gaTxt)} to a G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}${A?`A${sl(A)}`:""}, ${matAge?sl(matAge):ph("__")} y/o mother via ${via?sl(via):ph("____")}`;
+    if(S.delivery==="cs") s1+=` performed for ${csR?sl(csR):ph("____")}`;   // VD 無 performed for 子句
+    s1+=`, with a birth weight (BW) of ${V("bw")?sl(bw):ph(bw)} gm (${S.growth==="?"?ph("____"):sl(S.growth,S.growth==="SGA"||S.growth==="LGA")})`;
     P1.push(s1+".");
     let edc=inV("edc");
     // 空白→由 GA 反推，基準必須是出生日而非今天（補打 note 時 today 會讓 EDC 整整偏移日齡天數）
