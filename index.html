@@ -1002,11 +1002,11 @@
                 ["gbs","GBS","group B streptococcus (GBS)"]];
   // planOn[k]: undefined=依規則自動, true/false=醫師手動覆寫
   const S={gender:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,r:{},   // 性別/生產方式不預設：預設值會被寫進 note＝捏造事實
-           scr:{hbsag:"neg",hbeag:"neg",syphilis:"neg",rubella:"neg",hiv:"neg",gbs:"neg"},
+           scr:{hbsag:"na",hbeag:"na",syphilis:"na",rubella:"neg",hiv:"na",gbs:"na"},   // 核心四項+HBeAg 預設未表態(neg 預設=把沒填寫成事實);rubella 的 neg 本義即未提及
            resus:"none",resp:"room air",surfactant:false,
            amnio:"none",nipt:"none",mgso4:"none",toco:"none",iap:"none",us:"na",ancReg:"na",
            fd:false,doic:false,msaf:false,msafGrade:"",
-           pathway:"direct",outborn:false,obRespType:"room",obRespStable:false,obSx:[],obO2Dev:"hood",
+           pathway:"direct",outborn:false,obRespType:"",obRespStable:false,obSx:[],obO2Dev:"hood",   // obRespType 空=未表態,room 要明選(預設 room 會把沒填寫成 under room air)
            pwSbR:[],pwOnset:"developed",obM1Type:"room",obM1Dev:"hood",
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
            dol:"1",numUnit:{promH:"hours"},mode:"adm",planAbx:"empirical",planAbxAuto:true,planOn:{},planExplained:false,noteDirty:false,noteCache:{},
@@ -1071,7 +1071,7 @@
     }
   });
 
-  const SCRTXT={neg:"陰性 −",pos:"陽性 +",pend:"待報 …",nd:"未驗 ✕"};   // 待報=已驗未回報,未驗=根本沒驗;兩者臨床處置不同
+  const SCRTXT={na:"未填 ？",neg:"陰性 −",pos:"陽性 +",pend:"待報 …",nd:"未驗 ✕"};   // na=未表態:note 出佔位,絕不預設陰性(佔位符紀律)   // 待報=已驗未回報,未驗=根本沒驗;兩者臨床處置不同
   // Rubella 驗的是 IgG（免疫力）不是 IgM（感染），「陰性」語意與其他篩檢相反：無抗體才是需處置的發現。
   // 故給它專屬標籤，預設不產生句子（不斷言有或沒有抗體）。
   const SCRTXT_RUBELLA={neg:"未提及",pos:"有抗體 IgG+",pend:"待報 …",nd:"無抗體 IgG−"};
@@ -1081,7 +1081,7 @@
   const scrHost=document.getElementById("screen");
   SCREEN.forEach(([k,label])=>{
     const row=document.createElement("div"); row.className="scr-row"; row.dataset.scr=k;
-    row.innerHTML=`<span class="scr-name">${label}</span><button class="scr-btn" data-state="neg">${scrTxt(k,"neg")}</button>`;
+    row.innerHTML=`<span class="scr-name">${label}</span><button class="scr-btn" data-state="${S.scr[k]}">${scrTxt(k,S.scr[k])}</button>`;
     scrHost.appendChild(row);
   });
 
@@ -1125,10 +1125,10 @@
       SCREEN.forEach(([k])=>{if(k==="hbeag"||k==="rubella")return; S.scr[k]=v;   // HBeAg 條件顯示、Rubella 語意不同,批次不動
         const rb=document.querySelector(`.scr-row[data-scr="${k}"] .scr-btn`); if(rb){rb.dataset.state=v; rb.textContent=scrTxt(k,v);}});
       render(); return;}
-    if(b.classList.contains("scr-btn")){const k=b.closest(".scr-row").dataset.scr,o=["neg","pos","pend","nd"],
+    if(b.classList.contains("scr-btn")){const k=b.closest(".scr-row").dataset.scr,o=k==="rubella"?["neg","pos","pend","nd"]:["na","neg","pos","pend","nd"],   // rubella 無 na(neg 即未提及);%o.length 已防 modulo 陷阱
       n=o[(o.indexOf(b.dataset.state)+1)%o.length]; b.dataset.state=n; b.textContent=scrTxt(k,n); S.scr[k]=n;
       render();
-      if(k==="gbs"&&n!=="neg")pulseIap();   // GBS 陽/未驗 → IAP 變必答，但絕不代填（代填＝捏造已給藥）
+      if(k==="gbs"&&["pos","pend","nd"].includes(n))pulseIap();   // na 不催 IAP   // GBS 陽/未驗 → IAP 變必答，但絕不代填（代填＝捏造已給藥）
       return;}
     const po2=b.closest("[data-planon]"); if(po2){const k=b.dataset.v;
       S.planOn[k]=b.getAttribute("aria-pressed")!=="true";   // 以目前生效值為準翻轉，翻轉後即成手動
@@ -1273,7 +1273,7 @@
      const e=document.getElementById("ap10"), sp=document.getElementById("ap10Sep");
      if(e)e.hidden=!show; if(sp)sp.hidden=!show;}
     const cuw=document.getElementById("csUncomplWrap"); if(cuw)cuw.hidden=!S.delivery;   // C/S 與 VD 皆可標記
-    {const ih=document.getElementById("iapHint"); if(ih)ih.hidden=!(S.scr.gbs!=="neg"&&S.iap==="none");}   // GBS 有風險且 IAP 未選 → 顯示提醒
+    {const ih=document.getElementById("iapHint"); if(ih)ih.hidden=!(["pos","pend","nd"].includes(S.scr.gbs)&&S.iap==="none");}   // na=未表態,不知有無風險,不提醒   // GBS 有風險且 IAP 未選 → 顯示提醒
     const usf=document.getElementById("usFindings"); if(usf)usf.hidden=(S.us!=="abnormal");
     const acf=document.getElementById("acghFindings"); if(acf)acf.hidden=(S.amnio!=="abnormal");
     const niptW=document.getElementById("niptWrap"); if(niptW)niptW.hidden=(S.nipt!=="high");
@@ -1281,7 +1281,8 @@
     // 摺疊卡摘要
     const setCsum=(key,txt,isNone)=>{const el=document.querySelector(`[data-csum="${key}"]`); if(el){el.textContent=txt; el.classList.toggle("none",!!isNone);}};
     const scrPos=[]; [["hbsag","HBsAg"],["hbeag","HBeAg"],["syphilis","RPR"],["rubella","Rubella"],["hiv","HIV"],["gbs","GBS"]].forEach(([k,nm])=>{const v=S.scr[k]; if(v==="pos")scrPos.push(nm+"+");else if(v==="pend")scrPos.push(nm+"…");else if(v==="nd")scrPos.push(nm+"✕");});
-    setCsum("scr",scrPos.length?scrPos.join("・"):"全陰性",!scrPos.length);
+    {const naCore=["hbsag","syphilis","hiv","gbs"].filter(k=>S.scr[k]==="na").length;
+    setCsum("scr",scrPos.length?scrPos.join("・"):naCore?`未填 ${naCore} 項`:"全陰性",!scrPos.length);}
     const resusN={none:"",ppv:"PPV",intubation:"插管",cpr:"CPR+Epi"}[S.resus]||"", ev=[];
     if(S.fd)ev.push("fetal distress"); if(S.doic)ev.push("DOIC"); if(S.msaf)ev.push("MSAF");
     const rs=[resusN,...ev].filter(Boolean); setCsum("resus",rs.length?rs.join("・"):"無",!rs.length);
@@ -1303,7 +1304,7 @@
     sh("pwCourseWrap",true);
     const ladLab=document.getElementById("ladderALab");
     if(ladLab)ladLab.textContent=S.pathway==="outborn"?"我方處置·轉送中呼吸維持":S.pathway==="nursery"?"嬰兒室呼吸處置":"呼吸處置";
-    setCsum("pathway",{direct:"直接入院",nursery:"嬰兒室觀察",consult:"出生後會診",standby:"產前 standby",outborn:"外接"}[S.pathway],S.pathway==="direct"&&!S.obSx.length&&S.obRespType==="room");
+    setCsum("pathway",{direct:"直接入院",nursery:"嬰兒室觀察",consult:"出生後會診",standby:"產前 standby",outborn:"外接"}[S.pathway],S.pathway==="direct"&&!S.obSx.length&&!["o2","ppv","ett"].includes(S.obRespType));
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
     const via = S.delivery==="cs" ? "Cesarean section (C/S)" : S.delivery==="nsd" ? "vaginal delivery (VD)" : "";
     const homeH = inV("homeHosp")||"TPEMMH";
@@ -1402,15 +1403,20 @@
       {k:"syphilis",name:"rapid plasma reagin (RPR)"},
       {k:"hbsag",name:"hepatitis B surface antigen (HBsAg)"},
       {k:"hiv",name:"human immunodeficiency virus (HIV)"}];
-    const serPos=[],serNeg=[],serUnk=[],serPend=[];
+    const serPos=[],serNeg=[],serUnk=[],serPend=[],serNA=[];
     serTests.forEach(t=>{const v=S.scr[t.k], nm=t.negName||t.name;
-      if(v==="pos")serPos.push(t.name); else if(v==="pend")serPend.push(nm); else if(v==="nd")serUnk.push(nm); else serNeg.push(nm);});
+      if(v==="pos")serPos.push(t.name); else if(v==="pend")serPend.push(nm); else if(v==="nd")serUnk.push(nm);
+      else if(v==="neg")serNeg.push(nm); else serNA.push(nm);});   // 未表態≠陰性:落佔位桶,絕不寫成事實
     const allScreenNeg=S.scr.gbs==="neg"&&serNeg.length===3&&!serPos.length&&!serPend.length&&!serUnk.length;
+    const allScreenNA=S.scr.gbs==="na"&&serNA.length===3;   // 全未表態→單句佔位,格式鏡射窮舉句
     if(allScreenNeg){
       // 窮舉列名＋all negative——不用 including（including 暗示非窮舉，會總括到未驗項）
       P1.push(`Maternal group B streptococcus (GBS) culture, rapid plasma reagin (RPR), hepatitis B surface antigen (HBsAg), and human immunodeficiency virus (HIV) were ${sl("all negative")}.`);
+    }else if(allScreenNA){
+      P1.push(`Maternal group B streptococcus (GBS) culture, rapid plasma reagin (RPR), hepatitis B surface antigen (HBsAg), and human immunodeficiency virus (HIV) were ${ph("____")}.`);
     }else{
-      P1.push(`Maternal group B streptococcus (GBS) culture was ${sl({neg:"negative",pos:"positive",pend:"done but still pending for final report",nd:"not obtained"}[S.scr.gbs]||"not obtained", S.scr.gbs!=="neg")}.`);
+      if(S.scr.gbs==="na")serNA.unshift("group B streptococcus (GBS) culture");   // GBS 未表態併入佔位清單,不出自己的句子
+      else P1.push(`Maternal group B streptococcus (GBS) culture was ${sl({neg:"negative",pos:"positive",pend:"done but still pending for final report",nd:"not obtained"}[S.scr.gbs]||"not obtained", S.scr.gbs!=="neg")}.`);
       if(serNeg.length)P1.push(`The result${serNeg.length>1?"s":""} of ${sl(joinAnd(serNeg))} ${serNeg.length>1?"were":"was"} negative.`);
       if(serPos.length)P1.push(`${sl(cap(joinAnd(serPos)),true)} ${serPos.length>1||/ and /.test(serPos[0])?"were":"was"} positive.`);
       if(S.scr.hbsag==="pos"){const he=S.scr.hbeag;   // HBsAg+ 才報 HBeAg(常見 HBsAg+/HBeAg−);緊跟 HBsAg 陽性句
@@ -1418,6 +1424,7 @@
         else if(he==="neg")P1.push(`Hepatitis B e antigen (HBeAg) was ${sl("negative")}.`);}
       if(serPend.length)P1.push(`${sl(cap(joinAnd(serPend)),true)} ${serPend.length>1?"were":"was"} still pending for final report.`);
       if(serUnk.length)P1.push(`${sl(cap(joinAnd(serUnk)),true)} ${serUnk.length>1?"were":"was"} not examined.`);
+      if(serNA.length)P1.push(`The result${serNA.length>1?"s":""} of ${joinAnd(serNA)} ${serNA.length>1?"were":"was"} ${ph("____")}.`);   // 未表態列名+佔位,提醒補填
     }
     // Rubella 是 IgG（抗體）不是 IgM（感染）：reactive=有免疫力(正常)，nonreactive=無免疫力(產後需補接種)
     // 緊跟血清之後（改法4 移位：感染篩檢集中一處）
@@ -1589,7 +1596,7 @@
           ? `${sl("Mechanical ventilation",true)} was continued${st.length?` with settings of ${st.join(", ")}`:""}.`
           : `The infant was ${sl("intubated",true)} and placed on ${sl("mechanical ventilation",true)}${st.length?` with settings of ${st.join(", ")}`:""}.`);}
       return out;};
-    if(S.pathway==="direct"&&(S.obSx.length||S.obRespType!=="room"||obCourse)){   // 直接入院的前處理:有點選才出句,全空=現行輸出
+    if(S.pathway==="direct"&&(S.obSx.length||["o2","ppv","ett"].includes(S.obRespType)||obCourse)){   // !=="room" 會把未表態("")誤判為有處置   // 直接入院的前處理:有點選才出句,全空=現行輸出
       if(S.obSx.length)P2.push(`After birth, the infant developed ${joinAnd(S.obSx.map(x=>sl(x,true)))}.`);
       if(obCourse)P2.push(sl(obCourse));
       ladderSents().forEach(s=>P2.push(s));
@@ -1646,7 +1653,7 @@
       let transportTail="";
       if(transportO2){const dev=({hood:"oxygen hood",cannula:"nasal cannula",mask:"face mask"})[S.obO2Dev]||"oxygen hood",fl=inV("obO2Flow");
         transportTail=` under ${sl("oxygen",true)} via ${sl(dev,true)}${fl?` at ${sl(fl)} L/min`:""}`;}
-      else if(S.obRespType==="room")transportTail=` under ${sl("room air")}`;   // 既有行為（room 為停留預設值的債見 issue）
+      else if(S.obRespType==="room")transportTail=` under ${sl("room air")}`;   // room 現須明選,此句只在使用者表態後出現(債已清)
       // where 併句（改法17/18）：轉送→入院決策一氣呵成；診斷回退鏈沿用下方 tdxTxt 邏輯
       const obR17=inV("obReason");
       const tdx17=tentDx? sl(tentDx) : (obR17? sl(obR17) : ((respSick||pwRespSick)? sl("respiratory distress") : (gw&&gw<37? sl("prematurity") : ph("____"))));
@@ -1655,7 +1662,7 @@
     if(!S.outborn){   // 外接已在轉送句 where 子句內完成入院決策（改法17）,不再獨立出句
       const tdxTxt = tentDx? sl(tentDx) : ((respSick||pwRespSick)? sl("respiratory distress") : (gw&&gw<37? sl("prematurity") : ph("____")));
       // 前文有事件/處置敘事（路徑敘事或急救鏈）→ therefore 承接因果；純陳述背景 → 現行句型
-      const hasNarr=(S.pathway!=="direct"&&S.pathway!=="standby")||lvl>=1||(S.pathway==="direct"&&(S.obSx.length||S.obRespType!=="room"||obCourse));
+      const hasNarr=(S.pathway!=="direct"&&S.pathway!=="standby")||lvl>=1||(S.pathway==="direct"&&(S.obSx.length||["o2","ppv","ett"].includes(S.obRespType)||obCourse));
       P2.push(hasNarr
         ? `The infant was therefore admitted to our ward under the tentative diagnosis of ${tdxTxt} for further evaluation and treatment.`
         : `Under the tentative diagnosis of ${tdxTxt}, the infant was admitted to our ward for further evaluation and treatment.`);}
@@ -2053,7 +2060,7 @@ ${opLine}`);
     const lvl={none:0,ppv:1,intubation:2,cpr:3}[S.resus]||0;
     const invasive=/ETT/.test(S.resp||"")||S.acc.resp.some(m=>/ETT/.test(m))||lvl>=2;
     const respSupport=(S.resp&&S.resp!=="room air")||S.acc.resp.length>0||lvl>=1;
-    const infRisk=S.scr.gbs!=="neg"||S.r.prom.on||S.r.fever.on;
+    const infRisk=["pos","pend","nd"].includes(S.scr.gbs)||S.r.prom.on||S.r.fever.on;   // na=未表態不算風險
 
     // 這些是臨床決定不是可推導的事實：規則只給預設值，最終由 planOn 覆寫，且按鈕一律顯示生效狀態
     const RULE={sepsis:infRisk||preterm||respSupport||S.fd||S.doic, csf:false,
@@ -2164,7 +2171,7 @@ ${opLine}`);
     const perinatal=inV("accPerinatal")||(periAuto.length?periAuto.join(", "):"none");
     const infAuto=[];
     if(S.scr.gbs==="pos")infAuto.push("maternal GBS colonization");
-    else if(S.scr.gbs!=="neg")infAuto.push("maternal GBS unknown status");
+    else if(S.scr.gbs==="pend"||S.scr.gbs==="nd")infAuto.push("maternal GBS unknown status");   // na 不得斷言 unknown status
     if(S.r.prom.on){const h=V("promH"); infAuto.push((S.r.prom.val==="pprom"?"PPROM":"PROM")+(h?` for ${h} ${S.numUnit.promH||"hours"}`:""));}
     if(S.r.fever&&S.r.fever.on)infAuto.push("maternal fever");
     const infRisk=inV("accInfRisk")||(infAuto.length?infAuto.join(", "):"none");
@@ -2266,7 +2273,6 @@ ${opLine}`);
   document.querySelector('[data-seg="nipt"] [data-v="none"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="pathway"] [data-v="direct"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="pwOnset"] [data-v="developed"]')?.setAttribute("aria-pressed","true");
-  document.querySelector('[data-seg="obRespType"] [data-v="room"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="obO2Dev"] [data-v="hood"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="obM1Type"] [data-v="room"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="obM1Dev"] [data-v="hood"]')?.setAttribute("aria-pressed","true");
