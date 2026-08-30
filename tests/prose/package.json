@@ -1,0 +1,12 @@
+{
+  "name": "nicu-note-prose-tests",
+  "private": true,
+  "description": "20 情境 headless 文體驗收：golden master + 佔位符紀律不變量",
+  "scripts": {
+    "test": "node check.js",
+    "update": "node check.js --update"
+  },
+  "dependencies": {
+    "jsdom": "^29.1.1"
+  }
+}

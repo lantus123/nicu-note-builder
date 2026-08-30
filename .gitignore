@@ -2,3 +2,5 @@ _artifact.html
 _check.js
 .DS_Store
 .scratch/
+tests/prose/node_modules/
+tests/prose/current.json

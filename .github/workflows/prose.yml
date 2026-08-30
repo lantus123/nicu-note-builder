@@ -1,0 +1,22 @@
+# 文體驗收：20 情境 headless 渲染 → golden master + 佔位符紀律不變量
+# 不上傳任何 artifacts（帳號 storage 已滿；本 job 只跑測試不受影響）
+name: prose-corpus
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  corpus:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: index.html 與 _demo_structured.html 同步防呆
+        run: bash build/build.sh --check
+      - name: 20 情境 golden master + 不變量
+        working-directory: tests/prose
+        run: |
+          npm ci --no-audit --no-fund
+          node check.js
