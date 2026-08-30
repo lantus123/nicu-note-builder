@@ -2013,13 +2013,14 @@ ${opLine}`);
       // therefore 只在感染指標實際輸出且為陽性時成立;指標陰性/未回報照樣給藥時寫 therefore 即捏造因果
       const markerPos=hc.workup&&(hc.infMarkers==="leuko"||hc.infMarkers==="crp"||hc.infMarkers==="both");
       let s=`Empirical antibiotics, including ${sl(S.acc.abx.join(" / "))}, were ${markerPos?"therefore ":""}started`;
-      const pMap={cultures:"until the culture results return",course:"to complete a 7-day course",
-                  improve:"until clinical improvement",digestion:"until the poor digestion status improved"};
-      if(hc.abxPlan!=="none"&&pMap[hc.abxPlan])s+=`, and planned to keep ${sl(pMap[hc.abxPlan])}`;
+      const pMap={cultures:"continued until the culture results return",course:"given for a total course of 7 days",
+                  improve:"continued until clinical improvement",digestion:"continued until the digestion status improves"};
+      if(hc.abxPlan!=="none"&&pMap[hc.abxPlan])s+=`, and will be ${sl(pMap[hc.abxPlan])}`;
       H.push(s+".");
     }
     let cxrAt=-1;
-    {const dx=(hc.cxrDx||[]).filter(k=>CXR_MAP[k]);
+    const CXR_KEYS=Object.keys(CXR_MAP);   // canonical 順序=定義序(主診斷先於併發症),不跟點擊先後跑
+    {const dx=(hc.cxrDx||[]).filter(k=>CXR_MAP[k]).sort((a,b)=>CXR_KEYS.indexOf(a)-CXR_KEYS.indexOf(b));
      if(dx.length){
        // 逐 pair 掛接：等強度 hedge 輪替;診斷語含 finding 字面(如 infl)=撞詞,只出診斷語免重複
        const HEDGES=["compatible with","consistent with","in keeping with"];
@@ -2085,13 +2086,13 @@ ${opLine}`);
 
     const T=[];
     T.push((veryPreterm||(bwN>0&&bwN<1500))?"On incubator (Giraffe) care, with radiant warmer PRN":(preterm||(bwN>0&&bwN<2500))?"On incubator care, with radiant warmer PRN":"On open warmer");
-    if(ON("minimal"))T.push("Minimal handling for critical baby care");
+    if(ON("minimal"))T.push("Minimal handling for critically ill infants");
     T.push("On EKG & SpO2 monitor");
     T.push("Record body weight QD");
     let rmode=""; if(S.acc.resp.length)rmode=S.acc.resp.join(" / ");
     else if(S.resp&&S.resp!=="room air")rmode=S.resp;   // §A 與 §D 同一套詞彙,不再翻譯成教科書用語
     if(rmode)T.push(`Respiratory support with ${rmode}`);
-    if(S.hc.surf){const drug=S.hc.surfDrug==="curosurf"?"Curosurf (1.25 or 2.5 cc/kg)":"Survanta (4 ml/kg)"; const route=S.hc.surfRoute==="lisa"?"LISA procedure":"endotracheal tube"; T.push(`${drug} via ${route}`);}
+    if(S.hc.surf){const drug=S.hc.surfDrug==="curosurf"?"Curosurf (1.25 or 2.5 ml/kg)":"Survanta (4 ml/kg)"; const route=S.hc.surfRoute==="lisa"?"LISA":"endotracheal tube"; T.push(`${drug} via ${route}`);}
     if(ON("og"))T.push("OG decompression");
     // 自動：有感染風險→Empirical、否則→none（不自動替健康兒開藥）；手動選過則尊重
     const abxKey = S.planAbxAuto ? (infRisk?"empirical":"none") : S.planAbx;
@@ -2203,7 +2204,8 @@ ${opLine}`);
     L.push("");
     L.push("【Initial laboratory data】");
     L.push(`ABG: ${gas.line?sl(esc(gas.line)):""}`);
-    L.push(`CXR: ${fv("accCXR")||((S.hc.cxrDx||[]).filter(k=>CXR_MAP[k]).length?sl(joinAnd((S.hc.cxrDx||[]).filter(k=>CXR_MAP[k]).map(k=>CXR_MAP[k][0]))):"")}`);  // 未填時鏡射 §B 影像診斷所見（多選合併）
+    {const cks=Object.keys(CXR_MAP),cdx=(S.hc.cxrDx||[]).filter(k=>CXR_MAP[k]).sort((a,b)=>cks.indexOf(a)-cks.indexOf(b));
+    L.push(`CXR: ${fv("accCXR")||(cdx.length?sl(joinAnd(cdx.map(k=>CXR_MAP[k][0]))):"")}`);}  // 未填時鏡射 §B 影像診斷所見（多選合併）
     const otherLine=parseBlood(inV("accOther"));
     L.push(`Other (CBC/DC, CRP...): ${otherLine?sl(esc(otherLine)):""}`);
     L.push("");
