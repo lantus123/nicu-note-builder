@@ -10,7 +10,9 @@ const update=process.argv.includes('--update'), force=process.argv.includes('--f
 const cnt=t=>(t.match(/____/g)||[]).length+(t.match(/(?<!_)__(?!_)/g)||[]).length;
 const FORBIDDEN=[ // 舊病句迴歸掃描（都是已修掉的措辭,重現=改壞了）
   'had been conducted','septic work-up','We would keep','planned to keep',
-  'cc/kg','critical baby care','LISA procedure','due to poor response'];
+  'cc/kg','critical baby care','LISA procedure','due to poor response','haemorrhage',
+  'pending for final report','delay of initial crying','Antibiotics course',
+  'Delivery was by vaginal delivery','Explained to family fully','pulmonary infiltrations'];
 
 const out=run();
 const fails=[];
@@ -35,7 +37,9 @@ for(const [name,r] of Object.entries(out)){
 // 佔位符紀律哨兵：14=全未表態情境,篩檢必須是佔位、不得被寫成全陰
 {const s14=out['14_稀疏欄位_佔位符測試'];
  if(s14&&!s14.error){
-   if(!/GBS\) culture, rapid plasma reagin \(RPR\), hepatitis B surface antigen \(HBsAg\), and human immunodeficiency virus \(HIV\) were ____/.test(s14.admission))
+   const unknownScreens=s14.admission.split(/\.\s+/).find(sentence=>
+     ['(GBS)','(RPR)','(HBsAg)','(HIV)'].every(label=>sentence.includes(label)));
+   if(!unknownScreens||!unknownScreens.includes('____'))
      fails.push('14: 未表態篩檢佔位句消失');
    if(/all negative/.test(s14.admission))fails.push('14: 未表態被寫成 all negative（捏造）');}}
 

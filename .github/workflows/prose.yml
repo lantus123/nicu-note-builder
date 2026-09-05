@@ -15,8 +15,8 @@ jobs:
           node-version: 20
       - name: index.html 與 _demo_structured.html 同步防呆
         run: bash build/build.sh --check
-      - name: 20 情境 golden master + 不變量
+      - name: 病歷情境、欄位覆蓋與敘述回歸測試
         working-directory: tests/prose
         run: |
           npm ci --no-audit --no-fund
-          node check.js
+          npm test
