@@ -367,6 +367,12 @@
         <button data-v="nsd">自然產 NSD</button><button data-v="cs">剖腹 C/S</button>
       </div>
     </div>
+    <div class="field">
+      <span class="lab">入院去處 <span class="q">（整份 note 一次選；未選則寫成 ____）</span></span>
+      <div class="seg" data-seg="dest">
+        <button data-v="NICU">NICU</button><button data-v="NBC">NBC</button><button data-v="BR">BR 嬰兒室</button>
+      </div>
+    </div>
     <div class="field" id="csUncomplWrap" hidden><span class="lab">生產過程 <span class="q">（未勾則不寫，順利與否需自行確認）</span></span>
       <div class="seg" data-tog="csUncompl"><button data-v="1" style="flex:0 1 auto">過程順利</button></div></div>
     <div class="field" id="csReasonWrap" hidden>
@@ -1179,13 +1185,14 @@
                 ["rubella","Rubella IgG","rubella IgG"],["hiv","HIV","HIV infection"],
                 ["gbs","GBS","group B streptococcus (GBS)"]];
   // planOn[k]: undefined=依規則自動, true/false=醫師手動覆寫
-  const S={gender:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,r:{},   // 性別/生產方式不預設：預設值會被寫進 note＝捏造事實
+  const S={gender:"",dest:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,r:{},   // dest=入院去處 NICU/NBC/BR，整份 note 一次選；不預設（Ryan 2026-09-19：要能選）   // 性別/生產方式不預設：預設值會被寫進 note＝捏造事實
            scr:{hbsag:"na",hbeag:"na",syphilis:"na",rubella:"neg",hiv:"na",gbs:"na"},   // 核心四項+HBeAg 預設未表態(neg 預設=把沒填寫成事實);rubella 的 neg 本義即未提及
            resus:"none",resp:"",surfactant:false,birthEvents:[],courseEvents:[],nextEventId:1,
            routeDrafts:{},continuitySignatures:{},lastRemoved:null,birthNegConfirmed:false,
            amnio:"none",nipt:"none",mgso4:"none",toco:"none",iap:"none",us:"na",ancReg:"na",
            fd:false,doic:false,msaf:false,msafGrade:"",
-           pathway:"direct",outborn:false,obRespType:"",obRespStable:false,obSx:[],obO2Dev:"",   // 支持與裝置皆不預設，避免寫成未確認事實。
+           // pathway 不預設：預選「直接入院」＝零點擊就斷言路徑（2026-09-19 住院醫師混亂盤點）
+           pathway:"",outborn:false,obRespType:"",obRespStable:false,obSx:[],obO2Dev:"",   // 支持與裝置皆不預設，避免寫成未確認事實。
            pwSbR:[],pwStandby:false,pwConsult:false,pwOnset:"observed",obM1Type:"",obM1Dev:"",
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
            dol:"1",numUnit:{promH:"hours"},mode:"adm",planAbx:"empirical",planAbxAuto:true,planOn:{},planExplained:false,noteDirty:false,noteCache:{},
@@ -1457,7 +1464,16 @@
     try{e.target.select();}catch(_){}
   },0);});
 
+  // 再點一次已選的＝取消。只限「空值本來就合法」的 seg（預設就是 ""）；growth/dol/us/ancReg 等有語意預設的不在內。
+  // 2026-08-18 待拍板「seg 誤點後無法回到未選，手機誤觸即永久斷言，只能重整頁面丟資料」→ 9/19 mockup 做進去，Ryan 沒反對。
+  const SEG_CLEARABLE=new Set(["gender","delivery","dest","pathway","obRespType","obO2Dev","obM1Type","obM1Dev"]);
   function segPick(seg,b,key,cb){
+    if(key&&SEG_CLEARABLE.has(key)&&b.getAttribute("aria-pressed")==="true"){
+      if(key==="pathway")switchPathway("");
+      seg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));
+      S[key]="";
+      if(cb)cb(); render(); return;
+    }
     if(key==="pathway")switchPathway(b.dataset.v);
     seg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));
     b.setAttribute("aria-pressed","true"); if(key)S[key]=b.dataset.v;
@@ -1549,7 +1565,7 @@
     const lead=place+(age?`${place?" ":""}${place?age[0].toLowerCase()+age.slice(1):age}`:"");
     if(e.kind==="assessment"){
       if(!e.breathing&&!e.tone&&!e.hr&&!e.support)return [lead?`${lead}, a reassessment was recorded.`:"A reassessment was recorded.",sentence(e.note||"")].filter(Boolean);
-      return assessmentText(e,lead||(scope==="birth"?"On reassessment in the delivery room":"On subsequent reassessment"));
+      return assessmentText(e,lead||(scope==="birth"?`On reassessment in ${deliveryPlace()}`:"On subsequent reassessment"));
     }
     const settings=eventSettings(e),device=e.device?` using ${e.device}`:"";
     const action={ppv:`the infant received positive-pressure ventilation (PPV)${device}${settings}`,
@@ -1569,15 +1585,20 @@
     }
     activeBirthEvents().forEach(e=>out.push(...eventNarrative(e,"birth")));
     const time=raw("birthFinalMin");
-    const final=readAssessment("birthFinal"),findings=assessmentText(final,time?`On reassessment at ${time} ${unitLabel(time,"minute")} of age`:"On reassessment in the delivery room");
+    const final=readAssessment("birthFinal"),findings=assessmentText(final,time?`On reassessment at ${time} ${unitLabel(time,"minute")} of age`:`On reassessment in ${deliveryPlace()}`);
     if(time&&!final.breathing&&!final.tone&&!final.hr&&!final.support)out.push(`A delivery-room reassessment was recorded at ${time} ${unitLabel(time,"minute")} of age${final.note?".":"; the findings were not specified."}`);
     out.push(...findings);
     return out;
   }
+  // 入院去處（Ryan 2026-09-19：要能選 NICU／NBC／BR）。英文寫法待 Ryan 校正；未選時寫成佔位符，不替使用者決定去處。
+  const DEST_EN={NICU:"our NICU",NBC:"our NBC",BR:"our baby room (BR)"};
+  function destPhrase(blank="____"){return S.dest?DEST_EN[S.dest]:blank;}
+  // 產房／刀房依生產方式自動推（Ryan 2026-09-19：可以，但依 VD 或 CS 去選擇）；未選生產方式時維持原本的 delivery room。
+  function deliveryPlace(){return S.delivery==="cs"?"the operating room":"the delivery room";}
   function standbyNarrative(){
     if(!S.pwStandby)return "";
     const reasons=[...S.pwSbR,raw("pwSbRIn").replace(/[.。]+$/,"")].filter(Boolean);
-    return `${reasons.length?`Because of ${joinAnd(reasons)}, the` :"The"} pediatric team was called to stand by for the delivery.`;
+    return `${reasons.length?`Because of ${joinAnd(reasons)}, the` :"The"} pediatric team was called to stand by in ${deliveryPlace()} for the delivery.`;
   }
   function sourceMode(field){
     return field==="obM1Relation"||!S.outborn?raw("birthFinalSupport"):resolvedSupport("obM1Relation",S.obM1Type).mode;
@@ -1617,7 +1638,7 @@
     }
     if(S.pwConsult){
       const t=raw("pwConsultH"),reason=raw("pwConsultReason").replace(/[.。]+$/,"");
-      out.push(`The pediatric team was consulted${t?` at ${t} ${unitLabel(t,"hour")} of age`:""}${reason?` because of ${reason}`:" for evaluation"}.`);
+      out.push(`The pediatric team was consulted${S.pathway==="direct"?` in ${deliveryPlace()}`:""}${t?` at ${t} ${unitLabel(t,"hour")} of age`:""}${reason?` because of ${reason}`:" for evaluation"}.`);
     }
     if(raw("obCourse"))out.push(sentence(raw("obCourse")));
     if(S.outborn){
@@ -1637,9 +1658,9 @@
     if(support)out.push(support);
     if(mode==="ppv"&&S.obRespStable)out.push("Heart rate and oxygen saturation remained stable during positive-pressure ventilation.");
     S.courseEvents.forEach(e=>out.push(...eventNarrative(e,"course")));
-    if(S.outborn)out.push(`Subsequently, the infant was transferred from ${transferSource||"____"} to our hospital${closeAdmission?" and admitted to our NICU for further evaluation and management":""}${closeAdmission&&diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
-    else if(closeAdmission)out.push(`Subsequently, the infant was admitted to our NICU for further evaluation and management${diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
-    if(raw("obAdmissionStatus"))out.push(finish(`On admission to our NICU, ${raw("obAdmissionStatus").replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase())}`));
+    if(S.outborn)out.push(`Subsequently, the infant was transferred from ${transferSource||"____"} to our hospital${closeAdmission?` and admitted to ${destPhrase()} for further evaluation and management`:""}${closeAdmission&&diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
+    else if(closeAdmission)out.push(`Subsequently, the infant was admitted to ${destPhrase()} for further evaluation and management${diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
+    if(raw("obAdmissionStatus"))out.push(finish(`On admission to ${destPhrase()}, ${raw("obAdmissionStatus").replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase())}`));
     return out;
   }
   const ROUTE_KEYS=["obRespType","obRespStable","obSx","obO2Dev","pwOnset","obM1Type","obM1Dev","pwConsult","courseEvents","continuitySignatures"];
@@ -1831,7 +1852,7 @@
     sh("pwCourseWrap",true);
     const ladLab=document.getElementById("ladderALab");
     if(ladLab)ladLab.textContent=S.pathway==="outborn"?"我方處置·轉送中呼吸維持":S.pathway==="nursery"?"嬰兒室呼吸處置":"呼吸處置";
-    setCsum("pathway",[{direct:"直接入院",nursery:"嬰兒室觀察",outborn:"外接"}[S.pathway],S.pwStandby?"standby":"",S.pwConsult?"會診":""].filter(Boolean).join("・"),false);
+    setCsum("pathway",[{direct:"直接入院",nursery:"嬰兒室觀察",outborn:"外接"}[S.pathway]||"尚未選路徑",S.pwStandby?"standby":"",S.pwConsult?"會診":""].filter(Boolean).join("・"),false);
     timelineReview();
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
     const via = S.delivery==="cs" ? "cesarean section (C/S)" : S.delivery==="nsd" ? "vaginal delivery (VD)" : "";
@@ -2681,7 +2702,7 @@ ${opLine}`);
       :`Apgar scores were ${V("ap1")?sl(ap1):ph(ap1)} and ${V("ap5")?sl(ap5):ph(ap5)} at 1 and 5 minutes, respectively.`);
     // 與 Admission 共用實際事件，不再以累積階梯補出未記錄的 PPV、插管或藥物。
     birthNarrative().forEach(sentence=>birth.push(sl(esc(sentence))));
-    if(S.surfactant)birth.push(`${sl("Surfactant")} was administered in the delivery room.`);
+    if(S.surfactant)birth.push(`${sl("Surfactant")} was administered in ${deliveryPlace()}.`);
     if(S.r.pph.on)birth.push(`The mother had ${sl("postpartum hemorrhage (PPH)",true)}.`);
     L.push(birth.join(" "));
     L.push("");
@@ -2689,11 +2710,11 @@ ${opLine}`);
     const source=inV("obTransferFrom")||accObFac;
     const postnatal=postnatalNarrative({transferSource:source,diagnosis:admissionReason,closeAdmission:false});
     // 共用組稿器的末段入院評估接在 Acceptance 自己的入院結語之後。
-    const admissionAssessment=inV("obAdmissionStatus")&&postnatal.at(-1)?.startsWith("On admission to our NICU, ")?postnatal.pop():"";
+    const admissionAssessment=inV("obAdmissionStatus")&&postnatal.at(-1)?.startsWith(`On admission to ${destPhrase()}, `)?postnatal.pop():"";   // 必須與 postnatalNarrative 的那句同源，否則 Acceptance 認不出來會重複印
     const presentation=postnatal.map(sentence=>sl(esc(sentence)));
     if(S.outborn&&transferReason&&!tentativeDiagnosis)
-      presentation.push("The infant was admitted to our NICU for further evaluation and treatment.");
-    else presentation.push(`The infant was admitted to our NICU with ${admissionReason?sl(esc(admissionReason)):ph("____")} for further evaluation and treatment.`);
+      presentation.push(`The infant was admitted to ${destPhrase(ph("____"))} for further evaluation and treatment.`);
+    else presentation.push(`The infant was admitted to ${destPhrase(ph("____"))} with ${admissionReason?sl(esc(admissionReason)):ph("____")} for further evaluation and treatment.`);
     if(admissionAssessment)presentation.push(sl(esc(admissionAssessment)));
     // 接手狀態只用 A 區明選值；產房或 D 區較早的 ETT 不可覆蓋目前 room air。
     presentation.push(S.resp==="room air"?`At acceptance, the infant is ${sl("breathing room air")}.`
@@ -2770,13 +2791,12 @@ ${opLine}`);
   }
 
   // 初始選取狀態
-  document.querySelectorAll('[data-seg="gender"] button,[data-seg="delivery"] button').forEach(b=>b.setAttribute("aria-pressed","false"));   // 無預設值，但仍需 toggle 語意
+  document.querySelectorAll('[data-seg="gender"] button,[data-seg="delivery"] button,[data-seg="dest"] button,[data-seg="pathway"] button').forEach(b=>b.setAttribute("aria-pressed","false"));   // 無預設值，但仍需 toggle 語意
   document.querySelector('[data-seg="growth"] [data-v="AGA"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="dol"] [data-v="1"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="us"] [data-v="na"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="ancReg"] [data-v="na"]').setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="nipt"] [data-v="none"]').setAttribute("aria-pressed","true");
-  document.querySelector('[data-seg="pathway"] [data-v="direct"]')?.setAttribute("aria-pressed","true");
   document.querySelector('[data-seg="pwOnset"] [data-v="observed"]')?.setAttribute("aria-pressed","true");
   document.querySelectorAll('[data-seg="obM1Type"] button').forEach(b=>b.setAttribute("aria-pressed","false"));
   document.querySelector('[data-rc="steroid"] [data-v="2"]')?.setAttribute("aria-pressed","true");

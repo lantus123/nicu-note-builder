@@ -20,7 +20,8 @@ const PPV_ETT=[set('birthResusStatus','performed'),birth('ppv'),
   set('event-1-fiO2','21'),set('event-1-pip','20'),set('event-1-peep','5'),set('event-1-device','Neopuff'),
   birth('intubation'),set('event-2-fiO2','30'),set('event-2-pip','18'),set('event-2-peep','5'),set('event-2-rr','40')];
 
-const BASE=[seg('gender','male'),set('matAge','32'),set('gravida','2'),set('para','1'),set('ap1','8'),set('ap5','9'),{click:'[data-scrall] [data-v="neg"]'}];   // 篩檢預設已改未表態,BASE 代表典型用法=按「全部陰性」;14 不含 BASE 故自動覆蓋 na 佔位路徑
+// 去處改可選後，語料庫明選 NICU 讓 golden 維持原字；未選時的佔位符另在 regression 測
+const BASE=[seg('gender','male'),seg('dest','NICU'),set('matAge','32'),set('gravida','2'),set('para','1'),set('ap1','8'),set('ap5','9'),{click:'[data-scrall] [data-v="neg"]'}];   // 篩檢預設已改未表態,BASE 代表典型用法=按「全部陰性」;14 不含 BASE 故自動覆蓋 na 佔位路徑
 const S={};
 S['01_早產31w_直接入院_RDS_surfactant']=[...BASE,set('gaW','31'),set('gaD','4'),set('bw','1480'),
   seg('delivery','cs'),tog('csUncompl'),ryn('steroid'),re('steroid','complete'),

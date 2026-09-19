@@ -268,7 +268,8 @@ test('course keeps related findings together without inventing treatment respons
 });
 
 test('a new route excludes another route draft from the plan and restoring it restores its rules',()=>{
-  const prior=[seg('obRespType','ett')];
+  // pathway 不再預設 direct（2026-09-19）：草稿是綁路徑的，這條測的是「切走再切回」，所以先明選 direct
+  const prior=[seg('pathway','direct'),seg('obRespType','ett')];
   const {plan}=notes([...prior,seg('pathway','nursery')]);
   assert.doesNotMatch(plan,/respiratory support with|OG decompression|arterial line/i);
   const restored=notes([...prior,seg('pathway','nursery'),seg('pathway','direct')]).plan;
@@ -482,6 +483,57 @@ test('procedures distinguish completed steps from prospective follow-up and exch
   assert.doesNotMatch(exchange,/\b(?:was|were) (?:transfused|administered|given|performed)\b/i);
   assert.doesNotMatch(procedure,/Newly-born|maxillo-facial|by tapes|in supine position|post-tapping|\bml\b/);
   includes(procedure,'secured with tape');
+});
+
+
+// ── 2026-09-19 拍板：入院去處可選、產房／刀房依生產方式、pathway 不預設、seg 可取消 ──
+test('destination is a placeholder until chosen, then names the chosen unit in both notes',()=>{
+  const none=notes([]);
+  includes(none.admission,'admitted to ____ for further evaluation');
+  assert.doesNotMatch(none.admission,/our NICU|our NBC|baby room/);
+  const nbc=notes([seg('dest','NBC')]);
+  includes(nbc.admission,'admitted to our NBC for further evaluation and management');
+  includes(nbc.acceptance,'admitted to our NBC');
+  assert.doesNotMatch(nbc.admission,/our NICU/);
+  includes(notes([seg('dest','BR')]).admission,'admitted to our baby room (BR)');
+  includes(notes([seg('dest','NICU')]).admission,'admitted to our NICU');
+});
+test('admission-status sentence follows the chosen destination and is not duplicated in acceptance',()=>{
+  const {admission,acceptance}=notes([seg('dest','NBC'),set('obAdmissionStatus','the infant was tachypneic with mild retractions')]);
+  includes(admission,'On admission to our NBC, the infant was tachypneic');
+  assert.equal((acceptance.match(/tachypneic with mild retractions/g)||[]).length,1,'acceptance must reuse the sentence once, not duplicate it');
+});
+test('standby and reassessment name the operating room for C/S and the delivery room for NSD',()=>{
+  const nsd=notes([seg('dest','NICU'),toggle('pwStandby'),pick('msel','pwSbR','preterm labor')]);
+  includes(nsd.admission,'called to stand by in the delivery room for the delivery');
+  const cs=notes([seg('dest','NICU'),seg('delivery','cs'),toggle('pwStandby'),pick('msel','pwSbR','preterm labor')]);
+  includes(cs.admission,'called to stand by in the operating room for the delivery');
+  assert.doesNotMatch(cs.admission,/stand by in the delivery room/);
+});
+test('consult location is added only for an explicit direct pathway',()=>{
+  const direct=notes([seg('dest','NICU'),seg('delivery','cs'),seg('pathway','direct'),toggle('pwConsult')]);
+  includes(direct.admission,'was consulted in the operating room');
+  const nursery=notes([seg('dest','NICU'),seg('delivery','cs'),seg('pathway','nursery'),toggle('pwConsult')]);
+  assert.doesNotMatch(nursery.admission,/consulted in the (operating|delivery) room/);
+  const unset=notes([seg('dest','NICU'),seg('delivery','cs'),toggle('pwConsult')]);
+  assert.doesNotMatch(unset.admission,/consulted in the (operating|delivery) room/,'no pathway chosen ⇒ no asserted place');
+});
+test('pathway has no default and can be un-picked by clicking the same button again',()=>{
+  const blank=notes([seg('dest','NICU')]).admission;
+  assert.doesNotMatch(blank,/initially cared for in the nursery|referring hospital/);
+  const nursery=notes([seg('dest','NICU'),seg('pathway','nursery')]).admission;
+  includes(nursery,'initially cared for in the nursery');
+  const unpicked=notes([seg('dest','NICU'),seg('pathway','nursery'),seg('pathway','nursery')]).admission;
+  assert.doesNotMatch(unpicked,/initially cared for in the nursery/,'second click on the same pathway must clear it');
+  assert.equal(unpicked,blank,'un-picked pathway must render exactly like never picked');
+});
+test('clearable segments can be un-picked; segments with semantic defaults cannot',()=>{
+  const chosen=notes([seg('dest','NBC'),seg('dest','NBC')]).admission;
+  includes(chosen,'admitted to ____');
+  const female=notes([seg('gender','female')]).admission, cleared=notes([seg('gender','female'),seg('gender','female')]).admission;
+  includes(female,'female'); assert.doesNotMatch(cleared,/\bfemale\b/);
+  const dolTwice=notes([seg('dol','0'),seg('dol','0')]).acceptance;
+  includes(dolTwice,'0 d/o');   // dol 有語意預設，再點不可清空
 });
 
 let failed=0;
