@@ -63,8 +63,10 @@ function withPage(check){
     seg('gender','female');input('gaW','39');input('gaD','0');input('bw','3200');
     seg('delivery','nsd');input('gravida','2');input('para','1');input('matAge','31');
     input('ap1','8');input('ap5','9');seg('dol','0');
-    const birthToggle=get('#birthCard .section-toggle');
-    if(birthToggle.getAttribute('aria-expanded')!=='true')birthToggle.click();
+    // 2026-09-20 故事優先：第 5＋6 區合併成時間線，pathway 不再預設。這裡用「調整細節」裡的路徑開關
+    // 直接選 direct（等同舊預設：直接入院、standby／會診皆關），讓各站出現又不動到兩個開關；
+    // 各測試仍可用 seg('pathway',…)／toggle(…) 自行改，控制項 id／data-* 與以前相同。
+    seg('pathway','direct');
     check(api);
     assert.deepEqual(errors,[],'Birth/admission interactions must not raise page errors');
   }finally{W.close();}
@@ -208,16 +210,17 @@ test('DOIC of zero minutes is a recorded value, not an empty field',({toggle,inp
   assert.match(note(),/(?:DOIC|duration of intact cord|intact cord)[^.]*0\s*(?:minutes?|min\b)/i);
 });
 
-test('the route bridge reuses birth data and offers a working return-to-birth action',({input,get,click})=>{
+test('filled journey stops collapse into a read-only summary that reuses birth data and reopen on demand',({input,get,click})=>{
   input('birthBreathing','apnea');input('birthFinalNote','Synthetic bridge observation');
-  const bridge=get('#birthBridge');
-  assert.ok(!bridge.isContentEditable,'The carried summary must not create another editable record');
-  assert.match(bridge.textContent,/Synthetic bridge observation/);
-  click('#birthCard .section-toggle');
-  assert.ok(get('#birthBreathing').closest('[hidden]'),'This check starts with the original record collapsed');
-  click('#editBirth');
-  const initial=get('#birthBreathing');
-  assert.ok(!initial.closest('[hidden]'),'Returning to the original birth record must reveal its fields');
+  const stop=get('li[data-stop="drEnd"]'), sum=stop.querySelector('.sum');
+  assert.ok(stop.classList.contains('closed'),'A filled stop that is not the current one starts collapsed');
+  assert.ok(!sum.isContentEditable,'The carried summary must not create another editable record');
+  assert.match(sum.textContent,/Synthetic bridge observation/);
+  click('[data-stop-toggle="drEnd"]');
+  assert.ok(!stop.classList.contains('closed'),'Reopening a stop must reveal its fields');
+  assert.equal(stop.querySelector('.sum').textContent,'','An open stop shows its fields, not the summary');
+  const birth=get('li[data-stop="birth"]');
+  assert.match(birth.querySelector('.sum').textContent||'',/Apnea/,'The birth stop summary reuses the recorded observation');
 });
 
 test('confirmed continuing PPV is a continuation, not another administration',({add,input,seg,note})=>{

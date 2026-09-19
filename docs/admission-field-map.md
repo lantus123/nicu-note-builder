@@ -2,6 +2,10 @@
 
 本文件只涵蓋這次第 5、6 區的時間線改版，以及這些資料與 Admission、Acceptance、NI plan 的連接；不是全專案歷史欄位均已完成稽核的聲明。所有紀錄須由使用者核對後再貼回 HIS。
 
+## 2026-09-20 呈現層：故事卡與時間線
+
+第 5、6 區合併為 `#pathwayCard`「出生到入院」。`applyStory(k)` 依 `STORY` 表設定 `pathway`／`pwStandby`／`pwConsult`（走既有 `switchPathway` 與 `[data-tog]`），`deriveStory()` 由三個開關反推故事字母（給故事卡高亮與區塊摘要）。`renderJourney()` 在每次 `renderAdm` 末尾執行：依路徑決定各 `li[data-stop]` 的顯隱、`order`、標籤與白話說明；`journeySummary(id)` 從既有欄位讀出一行摘要；`S.journeyOpen` 記住手動展開／收合，換路徑時重置。所有欄位 id／`data-*` 與本文件其餘各表相同，只是父層變成時間線的站。
+
 ## 敘事與資料歸屬
 
 填寫區塊順序仍配合手寫 chart。產出的 Admission 是完整敘述，依「出生觀察 → 實際處置 → 再評估 → 後續路徑 → 入院」串接，不改成 HPI／Assessment 分段模板。

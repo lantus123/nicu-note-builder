@@ -315,6 +315,52 @@
     .gp-apgar #matAge+.u{grid-column:2 / 4}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ── 出生到入院：故事卡 → 直線時間線 → 一站一卡（2026-09-20）── */
+  #pathwayCard .journey-lede{margin:0 0 14px;font-size:13.5px;color:var(--ink-2);max-width:62ch}
+  #pathwayCard .stories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  @media(max-width:559px){#pathwayCard .stories{grid-template-columns:minmax(0,1fr)}}
+  #pathwayCard .story{text-align:left;display:grid;grid-template-columns:34px minmax(0,1fr);gap:3px 12px;align-items:start;padding:13px 14px 11px;min-height:44px;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;color:inherit;font:inherit;cursor:pointer;transition:border-color .15s,background .15s}
+  #pathwayCard .story:hover{border-color:var(--ink-3)}
+  #pathwayCard .story[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft)}
+  #pathwayCard .story .k{grid-row:1/4;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:15px;background:var(--surface-2);color:var(--ink-2)}
+  #pathwayCard .story[aria-checked="true"] .k{background:var(--accent);color:var(--on-accent)}
+  #pathwayCard .story .t{font-weight:700;font-size:15px;color:var(--ink);line-height:1.3}
+  #pathwayCard .story .d{font-size:13px;color:var(--ink-2);line-height:1.45}
+  #pathwayCard .story .p{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:3px;letter-spacing:.02em}
+  #pathwayCard .story[aria-checked="true"] .p{color:var(--accent-ink)}
+  #storyHelp b{color:var(--ink-2);font-weight:600}
+  #pathwayCard .tl{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column}
+  #pathwayCard .tl li{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:14px;position:relative}
+  #pathwayCard .tl li[hidden]{display:none}   /* display:grid 特異性高過 UA 的 [hidden]，不補這行隱藏的站會照畫（實機截圖抓到） */
+  #pathwayCard .tl li::before{content:"";position:absolute;left:13px;top:0;bottom:0;width:2px;background:var(--line)}
+  #pathwayCard .tl li.first::before{top:16px}
+  #pathwayCard .tl li.last::before{bottom:auto;height:16px}
+  #pathwayCard .tl li.has::before{background:var(--accent)}
+  #pathwayCard .tl .dot{grid-column:1;grid-row:1;width:14px;height:14px;border-radius:50%;border:2px solid var(--line);background:var(--surface);margin:10px 0 0 7px;position:relative;z-index:1;transition:all .15s}
+  #pathwayCard .tl li.has .dot{background:var(--accent);border-color:var(--accent)}
+  #pathwayCard .tl li.cur .dot{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+  #pathwayCard .tl .hd{grid-column:2;grid-row:1;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;width:100%;min-height:34px;padding:6px 0;background:none;border:0;text-align:left;color:inherit;font:inherit;cursor:pointer;border-radius:6px}
+  #pathwayCard .tl .hd:hover .t{color:var(--accent-ink)}
+  #pathwayCard .tl .hd .t{font-weight:700;font-size:15px;color:var(--ink)}
+  #pathwayCard .tl li.cur .hd .t{color:var(--accent-ink)}
+  #pathwayCard .tl .hd .sum{font-size:13px;color:var(--ink-2);line-height:1.5;overflow-wrap:anywhere}
+  #pathwayCard .tl .hd .sum.empty{color:var(--ink-3)}
+  #pathwayCard .tl .hd .caret{margin-left:auto;color:var(--ink-3);font-size:12px;transition:transform .15s}
+  #pathwayCard .tl li.closed .hd .caret{transform:rotate(-90deg)}
+  #pathwayCard .tl .body{grid-column:2;grid-row:2;padding:0 0 22px;min-width:0}
+  #pathwayCard .tl li.closed .body{display:none}
+  #pathwayCard .tl li.closed .hd{padding-bottom:14px}
+  #pathwayCard .tl .stop-plain{margin:0 0 12px;font-size:13.5px;color:var(--ink-2);line-height:1.5;max-width:60ch}
+  #pathwayCard .tl .stop-plain:empty{display:none}
+  #pathwayCard .tl .clinical-stage{margin:0;padding:0;border:0}
+  #pathwayCard .tl .field:last-child{margin-bottom:0}
+  #pathwayCard .journey-adj{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+  #pathwayCard .journey-adj>summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-3);min-height:34px;display:flex;align-items:center;gap:6px;list-style:none}
+  #pathwayCard .journey-adj>summary::before{content:"▸";transition:transform .15s}
+  #pathwayCard .journey-adj[open]>summary::before{transform:rotate(90deg)}
+  #pathwayCard .journey-adj[open]>summary{margin-bottom:12px}
 </style>
 
 <div class="wrap">
@@ -503,12 +549,42 @@
       </div></div>
   </section>
 
-  <!-- 5. 產房急救與出生事件 -->
-  <section class="card collap collapsed" id="birthCard">
-    <h2 class="sec-h"><span class="n">5</span>產房急救與出生事件 <span class="csum" data-csum="resus"></span><span class="chev">▾</span></h2>
-    <div class="clinical-stage">
-      <h3 class="stage-title">① 出生當下</h3>
-      <p class="man-h">只記錄實際觀察；未填不會視為正常。Apgar 沿用第 1 區。</p>
+  <!-- 5. 出生到入院（原第 5＋6 區。2026-09-20 故事優先重設計：先選故事，再沿時間線一站一站填；
+       所有控制項 id／data-* 與原本相同，只是換了父層；底層 state 與敘事引擎不變） -->
+  <section class="card" id="pathwayCard">
+    <h2 class="sec-h"><span class="n">5</span>出生到入院 <span class="csum" data-csum="pathway"></span></h2>
+    <p class="man-h journey-lede">先選這個寶寶的故事，下面會依時間順序一站一站出現要填的東西。每一站都寫了「這裡填什麼」；不確定就先空著——沒填的不會被寫成正常。</p>
+    <div class="stories" role="radiogroup" aria-label="入院故事">
+      <button type="button" class="story" role="radio" aria-checked="false" data-story="A"><span class="k">A</span><span class="t">產前 standby，直接入院</span><span class="d">本院出生。兒科在產前就到產房／刀房待命，處置後直接入院。</span><span class="p">standby → 出生 → 產房 → 入院</span></button>
+      <button type="button" class="story" role="radio" aria-checked="false" data-story="B"><span class="k">B</span><span class="t">出生後會診，直接入院</span><span class="d">本院出生。出生後才叫兒科到產房／刀房，處置後直接入院。</span><span class="p">出生 → 會診 → 產房 → 入院</span></button>
+      <button type="button" class="story" role="radio" aria-checked="false" data-story="C"><span class="k">C</span><span class="t">嬰兒室觀察後轉入</span><span class="d">本院出生，先到嬰兒室（BR）。之後出現狀況，會診後轉入。</span><span class="p">出生 → 嬰兒室 → 會診 → 入院</span></button>
+      <button type="button" class="story" role="radio" aria-checked="false" data-story="D"><span class="k">D</span><span class="t">外院出生，我方外接</span><span class="d">在外院出生。外院會診我方，外接團隊去接，轉送入院。</span><span class="p">外院 → 會診 → 抵達 → 轉送 → 入院</span></button>
+    </div>
+    <p class="man-h" id="storyHelp"><b>不確定選哪個？</b>先選最接近的，之後每一站都能改。混合情況（例如 standby 過、但寶寶還是先去了嬰兒室）：選 C，再到最下面「調整細節」把 standby 勾起來。再點一次已選的故事可取消。</p>
+    <div id="birthCard">
+    <ol class="tl" id="journey" hidden aria-label="出生到入院時間線">
+      <li data-stop="standby" hidden>
+        <span class="dot" aria-hidden="true"></span>
+        <button type="button" class="hd" data-stop-toggle="standby" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
+        <div class="body"><p class="man-h stop-plain"></p>
+<div class="field" id="pwSbWrap" hidden><span class="lab">Standby 原因 <span class="q">（多選；產房發生的事在下面的站填，這裡不重填）</span></span>
+      <div class="seg risk" data-msel="pwSbR" style="flex-wrap:wrap;margin-bottom:7px">
+        <button type="button" data-on data-v="fetal distress" style="flex:0 1 auto">Fetal distress</button>
+        <button type="button" data-on data-v="meconium-stained amniotic fluid" style="flex:0 1 auto">MSAF</button>
+        <button type="button" data-on data-v="preterm labor" style="flex:0 1 auto">Preterm labor</button>
+        <button type="button" data-on data-v="multiple gestation" style="flex:0 1 auto">Multiple gestation</button>
+        <button type="button" data-on data-v="breech presentation" style="flex:0 1 auto">Breech</button>
+        <button type="button" data-on data-v="congenital anomaly" style="flex:0 1 auto">Anomaly</button>
+      </div>
+      <label class="lab" for="pwSbRIn">其他 standby 原因 <span class="q">（選填，英文）</span></label><input class="tin" id="pwSbRIn" placeholder="或自行輸入…"></div>
+            </div>
+      </li>
+      <li data-stop="birth" hidden>
+        <span class="dot" aria-hidden="true"></span>
+        <button type="button" class="hd" data-stop-toggle="birth" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
+        <div class="body"><p class="man-h stop-plain"></p>
+<div class="clinical-stage">
+            <p class="man-h">只記錄實際觀察；未填不會視為正常。Apgar 沿用第 1 區。</p>
       <div class="clinical-grid">
         <div class="field"><label class="lab" for="birthBreathing">呼吸情形</label>
           <select class="tin" id="birthBreathing"><option value="">未記錄</option><option value="crying">有哭聲</option><option value="spontaneous">有自主呼吸</option><option value="apnea">無自主呼吸 / Apnea</option><option value="gasping">喘息樣呼吸 / Gasping</option><option value="labored">呼吸費力</option><option value="ineffective">呼吸無效</option></select></div>
@@ -520,8 +596,38 @@
       <div class="field"><label class="lab" for="birthInitialNote">其他出生觀察 <span class="q">（選填，英文）</span></label><input class="tin" id="birthInitialNote" placeholder="補充未涵蓋的實際觀察"></div>
     </div>
     <div class="clinical-stage">
-      <h3 class="stage-title">② 實際處置與再評估</h3>
-      <div class="field"><label class="lab" for="birthResusStatus">產房急救紀錄</label>
+    <span class="lab">出生事件 <span class="q">（有才勾）</span></span>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      <div class="seg risk" data-tog="fd"><button type="button" data-v="1" data-on style="flex:0 1 auto">Fetal distress</button></div>
+      <div class="seg risk" data-tog="doic"><button type="button" data-v="1" data-on style="flex:0 1 auto">DOIC</button></div>
+      <div class="seg risk" data-tog="msaf"><button type="button" data-v="1" data-on style="flex:0 1 auto">MSAF</button></div>
+    </div>
+    <div class="num" id="doicMinWrap" hidden style="margin-top:9px"><label class="u" for="doicMin">DOIC</label>
+      <input type="number" id="doicMin" placeholder="__" min="0"><span class="u">分鐘</span></div>
+    <div class="field" id="msafGradeWrap" hidden style="margin-top:9px"><span class="lab">MSAF 稠度 <span class="q">（選填）</span></span>
+      <div class="seg" data-seg="msafGrade"><button type="button" data-v="thin">Thin 稀</button><button type="button" data-v="moderate">Moderate 中</button><button type="button" data-v="thick">Thick 稠</button></div></div>
+    <div class="seg" data-tog="birthNegConfirmed" style="margin-top:10px"><button type="button" data-v="1" style="flex:0 1 auto">確認未勾選的出生事件均未發生（FD／DOIC／MSAF）</button></div>
+    </div>
+            </div>
+      </li>
+      <li data-stop="consult" hidden>
+        <span class="dot" aria-hidden="true"></span>
+        <button type="button" class="hd" data-stop-toggle="consult" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
+        <div class="body"><p class="man-h stop-plain"></p>
+<div class="field" id="pwConsultWrap" hidden>
+      <div class="row2">
+        <div class="field"><label class="lab" for="pwConsultReason">出生後會診原因 <span class="q">（選填，英文）</span></label><input class="tin" id="pwConsultReason" placeholder="例：respiratory distress"></div>
+        <div class="field"><label class="lab" for="pwConsultH">會診於生後 <span class="q">（選填）</span></label><div class="num"><input type="number" id="pwConsultH" min="0" step="0.1" placeholder="未記錄"><span class="u">小時</span></div></div>
+      </div>
+    </div>
+            </div>
+      </li>
+      <li data-stop="dr" hidden>
+        <span class="dot" aria-hidden="true"></span>
+        <button type="button" class="hd" data-stop-toggle="dr" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
+        <div class="body"><p class="man-h stop-plain"></p>
+<div class="clinical-stage">
+            <div class="field"><label class="lab" for="birthResusStatus">產房急救紀錄</label>
         <select class="tin" id="birthResusStatus"><option value="">未記錄</option><option value="none">已確認無需急救</option><option value="performed">有施作，依發生順序新增</option></select></div>
       <div id="birthActionsWrap" hidden>
         <p class="man-h">每次只新增實際施作的項目，不自動包含其他處置；反覆處置或中途評估可再次新增。時間與參數選填。</p>
@@ -531,9 +637,14 @@
         <div id="birthEvents"></div>
       </div>
     </div>
-    <div class="clinical-stage">
-      <h3 class="stage-title">③ 產房處置結束時</h3>
-      <p class="man-h">記錄實際最後狀態，供第 6 區承接；未填不會推定已改善或支持已停止。</p>
+            </div>
+      </li>
+      <li data-stop="drEnd" hidden>
+        <span class="dot" aria-hidden="true"></span>
+        <button type="button" class="hd" data-stop-toggle="drEnd" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
+        <div class="body"><p class="man-h stop-plain"></p>
+<div class="clinical-stage">
+            <p class="man-h">記錄離開產房時的實際狀態，下一站會自動承接；未填不會推定已改善或支持已停止。</p>
       <div class="clinical-grid">
         <div class="field"><label class="lab" for="birthFinalBreathing">呼吸情形</label>
           <select class="tin" id="birthFinalBreathing"><option value="">未記錄</option><option value="crying">有哭聲</option><option value="spontaneous">有自主呼吸</option><option value="apnea">無自主呼吸 / Apnea</option><option value="gasping">喘息樣呼吸 / Gasping</option><option value="labored">呼吸費力</option><option value="ineffective">呼吸無效</option></select></div>
@@ -548,61 +659,31 @@
       </div>
       <div class="field"><label class="lab" for="birthFinalNote">結束時補充 <span class="q">（選填，英文）</span></label><input class="tin" id="birthFinalNote" placeholder="補充當時的實際狀況"></div>
     </div>
-    <div class="clinical-stage">
-    <h3 class="stage-title">出生事件 <span class="q">（有才勾）</span></h3>
-    <div style="display:flex;flex-wrap:wrap;gap:6px">
-      <div class="seg risk" data-tog="fd"><button type="button" data-v="1" data-on style="flex:0 1 auto">Fetal distress</button></div>
-      <div class="seg risk" data-tog="doic"><button type="button" data-v="1" data-on style="flex:0 1 auto">DOIC</button></div>
-      <div class="seg risk" data-tog="msaf"><button type="button" data-v="1" data-on style="flex:0 1 auto">MSAF</button></div>
-    </div>
-    <div class="num" id="doicMinWrap" hidden style="margin-top:9px"><label class="u" for="doicMin">DOIC</label>
-      <input type="number" id="doicMin" placeholder="__" min="0"><span class="u">分鐘</span></div>
-    <div class="field" id="msafGradeWrap" hidden style="margin-top:9px"><span class="lab">MSAF 稠度 <span class="q">（選填）</span></span>
-      <div class="seg" data-seg="msafGrade"><button type="button" data-v="thin">Thin 稀</button><button type="button" data-v="moderate">Moderate 中</button><button type="button" data-v="thick">Thick 稠</button></div></div>
-    <div class="seg" data-tog="birthNegConfirmed" style="margin-top:10px"><button type="button" data-v="1" style="flex:0 1 auto">確認未勾選的出生事件均未發生（FD／DOIC／MSAF）</button></div>
-    </div>
-    <p class="clinical-review" id="birthReview" role="status"></p>
-  </section>
-
-  <!-- 6. 入院路徑（承接產房紀錄；路徑與團隊介入分開記錄） -->
-  <section class="card" id="pathwayCard">
-    <h2 class="sec-h"><span class="n">6</span>入院路徑 <span class="csum" data-csum="pathway"></span></h2>
-    <div class="continuity-card">
-      <div class="continuity-head"><span>承接產房紀錄</span><button type="button" id="editBirth">回第 5 區修改</button></div>
-      <div id="birthBridge">產房狀況尚未記錄；可直接補充已知的後續經過。</div>
-    </div>
-    <div class="field"><span class="lab">孩子的入院路徑</span>
-    <div class="seg" data-seg="pathway" style="flex-wrap:wrap">
-      <button type="button" data-v="direct" style="flex:0 1 auto">直接入院</button>
-      <button type="button" data-v="nursery" style="flex:0 1 auto">嬰兒室觀察後轉入</button>
-      <button type="button" data-v="outborn" style="flex:0 1 auto">外院轉入 Outborn</button>
-    </div></div>
-    <div class="field"><span class="lab">團隊介入 <span class="q">（依實際經過，可同時選取）</span></span>
-      <div style="display:flex;flex-wrap:wrap;gap:7px">
-        <div class="seg" data-tog="pwStandby"><button type="button" data-v="1" style="flex:0 1 auto">產前 standby</button></div>
-        <div class="seg" data-tog="pwConsult"><button type="button" data-v="1" style="flex:0 1 auto">出生後會診</button></div>
-      </div>
-    </div>
-    <div class="field" id="pwSbWrap" hidden><span class="lab">Standby 原因 <span class="q">（多選；產房處置沿用第 5 區，不重填）</span></span>
-      <div class="seg risk" data-msel="pwSbR" style="flex-wrap:wrap;margin-bottom:7px">
-        <button type="button" data-on data-v="fetal distress" style="flex:0 1 auto">Fetal distress</button>
-        <button type="button" data-on data-v="meconium-stained amniotic fluid" style="flex:0 1 auto">MSAF</button>
-        <button type="button" data-on data-v="preterm labor" style="flex:0 1 auto">Preterm labor</button>
-        <button type="button" data-on data-v="multiple gestation" style="flex:0 1 auto">Multiple gestation</button>
-        <button type="button" data-on data-v="breech presentation" style="flex:0 1 auto">Breech</button>
-        <button type="button" data-on data-v="congenital anomaly" style="flex:0 1 auto">Anomaly</button>
-      </div>
-      <label class="lab" for="pwSbRIn">其他 standby 原因 <span class="q">（選填，英文）</span></label><input class="tin" id="pwSbRIn" placeholder="或自行輸入…"></div>
-    <div class="field" id="pwConsultWrap" hidden>
-      <div class="row2">
-        <div class="field"><label class="lab" for="pwConsultReason">出生後會診原因 <span class="q">（選填，英文）</span></label><input class="tin" id="pwConsultReason" placeholder="例：respiratory distress"></div>
-        <div class="field"><label class="lab" for="pwConsultH">會診於生後 <span class="q">（選填）</span></label><div class="num"><input type="number" id="pwConsultH" min="0" step="0.1" placeholder="未記錄"><span class="u">小時</span></div></div>
-      </div>
-    </div>
-    <div id="outbornWrap" hidden style="margin-top:10px">
+            </div>
+      </li>
+      <li data-stop="obCare" hidden>
+        <span class="dot" aria-hidden="true"></span>
+        <button type="button" class="hd" data-stop-toggle="obCare" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
+        <div class="body"><p class="man-h stop-plain"></p>
+<div id="outbornWrap" hidden style="margin-top:10px">
       <div class="field"><label class="lab" for="obFacility">出生院所 <span class="q">（自動＝同產檢地點）</span></label><select class="tin" id="obFacility"></select></div>
       <div class="field"><label class="lab" for="obTransferFrom">轉入來源 <span class="q">（自動＝同出生院所）</span></label><select class="tin" id="obTransferFrom"></select></div>
-      <div class="field"><span class="lab">轉入原因 <span class="q">(due to…；點選帶入)</span></span>
+          </div>
+<div class="field" id="obM1Wrap" hidden><span class="lab">外院後續呼吸支持 <span class="q">（我方抵達前；同一次產房處置不重填）</span></span>
+      <div class="seg" data-seg="obM1Type"><button type="button" data-v="">未記錄</button><button type="button" data-v="room">Room air</button><button type="button" data-v="o2">O₂</button><button type="button" data-v="cpap">CPAP</button><button type="button" data-v="ppv">PPV</button><button type="button" data-v="ett">ETT</button></div>
+      <div id="obM1O2Wrap" hidden style="margin-top:8px">
+        <div class="seg" data-seg="obM1Dev" style="margin-bottom:7px"><button type="button" data-v="">未記錄</button><button type="button" data-v="hood">Hood</button><button type="button" data-v="cannula">Nasal cannula</button><button type="button" data-v="mask">Mask</button></div>
+        <div class="num"><label class="u" for="obM1Flow">流量</label><input type="number" id="obM1Flow" placeholder="未記錄" min="0" step="0.5" style="max-width:90px"><span class="u">L/min</span></div>
+      </div>
+      <div class="support-relation"><label class="lab" for="obM1Relation">外院後續支持與產房結束時的關係</label><select class="tin" id="obM1Relation"><option value="">未記錄</option><option value="continued">確認持續同前</option><option value="new">新開始</option><option value="changed">已調整支持</option><option value="repeat">停止後再次施作</option></select></div>
+    </div>
+            </div>
+      </li>
+      <li data-stop="obConsult" hidden>
+        <span class="dot" aria-hidden="true"></span>
+        <button type="button" class="hd" data-stop-toggle="obConsult" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
+        <div class="body"><p class="man-h stop-plain"></p>
+<div class="field"><span class="lab">轉入原因 <span class="q">(due to…；點選帶入)</span></span>
         <div class="seg" data-fill="obReason" style="flex-wrap:wrap;margin-bottom:7px">
           <button type="button" data-v="prematurity" style="flex:0 1 auto">Prematurity</button>
           <button type="button" data-v="respiratory distress" style="flex:0 1 auto">Resp distress</button>
@@ -613,8 +694,21 @@
           <button type="button" data-v="the need for a higher level of care" style="flex:0 1 auto">Higher care</button>
         </div>
         <label class="scr-legend" for="obReason">轉入原因（英文）</label><input class="tin" id="obReason" placeholder="或自行輸入…"></div>
-    </div>
-    <div class="field" id="pwSxWrap" hidden style="margin-top:10px"><span class="lab">後續症狀 <span class="q">（多選；出生當下已記錄的狀況不必再填，除非需交代後續變化）</span></span>
+            </div>
+      </li>
+      <li data-stop="obArrive" hidden>
+        <span class="dot" aria-hidden="true"></span>
+        <button type="button" class="hd" data-stop-toggle="obArrive" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
+        <div class="body"><p class="man-h stop-plain"></p>
+<div class="field" id="obArrWrap" hidden><label class="lab" for="obArrival">我方抵達外院時狀況 <span class="q">（選填，英文；非抵達本院時）</span></label>
+      <input class="tin" id="obArrival" placeholder="例：the infant was tachypneic with SpO2 88% under an oxygen hood"></div>
+            </div>
+      </li>
+      <li data-stop="route" hidden>
+        <span class="dot" aria-hidden="true"></span>
+        <button type="button" class="hd" data-stop-toggle="route" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
+        <div class="body"><p class="man-h stop-plain"></p>
+<div class="field" id="pwSxWrap" hidden style="margin-top:10px"><span class="lab">後續症狀 <span class="q">（多選；出生當下已記錄的狀況不必再填，除非需交代後續變化）</span></span>
       <div class="seg risk" data-msel="obSx" style="flex-wrap:wrap">
         <button type="button" data-on data-v="tachypnea" style="flex:0 1 auto">Tachypnea</button>
         <button type="button" data-on data-v="subcostal retractions" style="flex:0 1 auto">Retractions</button>
@@ -632,16 +726,6 @@
     <div class="field" id="pwOnsetWrap" hidden><span class="lab">症狀與前段的關係</span>
       <div class="seg" data-seg="pwOnset"><button type="button" data-v="observed">有觀察到，起始未明</button><button type="button" data-v="developed">新出現</button><button type="button" data-v="persisted">持續存在</button><button type="button" data-v="recurrent">再次出現</button></div>
       <div class="num" id="pwOnsetHWrap" style="margin-top:8px"><label class="u" for="pwOnsetH">生後時間（選填）</label><input type="number" id="pwOnsetH" placeholder="未記錄" min="0" step="0.1" style="max-width:90px"><label class="scr-legend" for="pwOnsetUnit">生後時間單位</label><select class="tin" id="pwOnsetUnit" style="flex:0 1 135px;max-width:100%"><option value="">未記錄</option><option value="hours">小時</option><option value="minutes">分鐘</option></select></div></div>
-    <div class="field" id="obM1Wrap" hidden><span class="lab">外院後續呼吸支持 <span class="q">（我方抵達前；同一次產房處置不重填）</span></span>
-      <div class="seg" data-seg="obM1Type"><button type="button" data-v="">未記錄</button><button type="button" data-v="room">Room air</button><button type="button" data-v="o2">O₂</button><button type="button" data-v="cpap">CPAP</button><button type="button" data-v="ppv">PPV</button><button type="button" data-v="ett">ETT</button></div>
-      <div id="obM1O2Wrap" hidden style="margin-top:8px">
-        <div class="seg" data-seg="obM1Dev" style="margin-bottom:7px"><button type="button" data-v="">未記錄</button><button type="button" data-v="hood">Hood</button><button type="button" data-v="cannula">Nasal cannula</button><button type="button" data-v="mask">Mask</button></div>
-        <div class="num"><label class="u" for="obM1Flow">流量</label><input type="number" id="obM1Flow" placeholder="未記錄" min="0" step="0.5" style="max-width:90px"><span class="u">L/min</span></div>
-      </div>
-      <div class="support-relation"><label class="lab" for="obM1Relation">外院後續支持與產房結束時的關係</label><select class="tin" id="obM1Relation"><option value="">未記錄</option><option value="continued">確認持續同前</option><option value="new">新開始</option><option value="changed">已調整支持</option><option value="repeat">停止後再次施作</option></select></div>
-    </div>
-    <div class="field" id="obArrWrap" hidden><label class="lab" for="obArrival">我方抵達外院時狀況 <span class="q">（選填，英文；非抵達本院時）</span></label>
-      <input class="tin" id="obArrival" placeholder="例：the infant was tachypneic with SpO2 88% under an oxygen hood"></div>
     <div class="field" id="pwLadderWrap" hidden><span class="lab" id="ladderALab">呼吸處置</span>
       <div class="field"><label class="lab" for="obRespRelation">與前一階段呼吸支持的關係</label><select class="tin" id="obRespRelation"><option value="">未記錄</option><option value="continued">確認持續同前</option><option value="new">新開始</option><option value="changed">已調整支持</option><option value="repeat">停止後再次施作</option><option value="stopped">已停止前段支持</option></select></div>
       <div id="pathwaySupportControls">
@@ -667,13 +751,39 @@
     </details>
     <div class="field" id="pwCourseWrap" hidden><label class="lab" for="obCourse">過程補充 <span class="q">（選填，英文；保留完整內容）</span></label>
       <textarea class="tarea" id="obCourse" rows="2" placeholder="例：initially cared for in the nursery; the transport team was contacted…"></textarea></div>
-    <div class="field"><label class="lab" for="obAdmissionStatus">入院時狀況 <span class="q">（選填，英文；與我方抵達外院時分開）</span></label><input class="tin" id="obAdmissionStatus" placeholder="補充抵達本院並入院時的實際狀況"></div>
+            </div>
+      </li>
+      <li data-stop="adm" hidden>
+        <span class="dot" aria-hidden="true"></span>
+        <button type="button" class="hd" data-stop-toggle="adm" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
+        <div class="body"><p class="man-h stop-plain"></p>
+<div class="field"><label class="lab" for="obAdmissionStatus">入院時狀況 <span class="q">（選填，英文；與我方抵達外院時分開）</span></label><input class="tin" id="obAdmissionStatus" placeholder="補充抵達本院並入院時的實際狀況"></div>
+            </div>
+      </li>
+    </ol>
+    </div>
+    <p class="clinical-review" id="birthReview" role="status"></p>
     <p class="clinical-review" id="pathwayReview" role="status"></p>
+    <details class="journey-adj" id="journeyAdj">
+      <summary>調整細節 <span class="q">（混合情況才需要：故事卡背後的三個開關）</span></summary>
+      <div class="field"><span class="lab">孩子的入院路徑</span>
+    <div class="seg" data-seg="pathway" style="flex-wrap:wrap">
+      <button type="button" data-v="direct" style="flex:0 1 auto">直接入院</button>
+      <button type="button" data-v="nursery" style="flex:0 1 auto">嬰兒室觀察後轉入</button>
+      <button type="button" data-v="outborn" style="flex:0 1 auto">外院轉入 Outborn</button>
+    </div></div>
+    <div class="field"><span class="lab">團隊介入 <span class="q">（依實際經過，可同時選取）</span></span>
+      <div style="display:flex;flex-wrap:wrap;gap:7px">
+        <div class="seg" data-tog="pwStandby"><button type="button" data-v="1" style="flex:0 1 auto">產前 standby</button></div>
+        <div class="seg" data-tog="pwConsult"><button type="button" data-v="1" style="flex:0 1 auto">出生後會診</button></div>
+      </div>
+    </div>
+        </details>
   </section>
 
   <!-- 7. 填空（自由文字，之後成稿可直接改） -->
   <section class="card">
-    <h2 class="sec-h"><span class="n">7</span>暫定診斷 · 母病歷號 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">自由文字</span></h2>
+    <h2 class="sec-h"><span class="n">6</span>暫定診斷 · 母病歷號 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">自由文字</span></h2>
     <div class="field"><span class="lab">暫定診斷 <span class="q">（點選帶入，可再改）</span></span>
       <div class="seg" data-fill="tentDx" style="flex-wrap:wrap;margin-bottom:7px">
         <button data-v="healthy term newborn" style="flex:0 1 auto">健康足月</button>
@@ -1195,7 +1305,7 @@
            pathway:"",outborn:false,obRespType:"",obRespStable:false,obSx:[],obO2Dev:"",   // 支持與裝置皆不預設，避免寫成未確認事實。
            pwSbR:[],pwStandby:false,pwConsult:false,pwOnset:"observed",obM1Type:"",obM1Dev:"",
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
-           dol:"1",numUnit:{promH:"hours"},mode:"adm",planAbx:"empirical",planAbxAuto:true,planOn:{},planExplained:false,noteDirty:false,noteCache:{},
+           dol:"1",numUnit:{promH:"hours"},mode:"adm",journeyOpen:{},planAbx:"empirical",planAbxAuto:true,planOn:{},planExplained:false,noteDirty:false,noteCache:{},
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
            procOpt:{alineSide:"right",alineArtery:"radial",uacPos:"high",chestSide:"right",chestType:"pigtail",chestICS:"4th",lpCompl:"nil",betABO:"",betRh:""},
            acc:{resp:[],abx:[],line:[],vac:[],rop:"notyet",aabr:"notyet",nbs:"notyet",respDates:{},lineDates:{}},
@@ -1722,9 +1832,10 @@
       drawEvents(scope);render();
       (focusId?document.getElementById(`event-${focusId}-minutes`):document.querySelector(`[data-undo-event="${scope}"]`))?.focus();return true;
     }
-    if(b.id==="editBirth"){
-      const card=document.getElementById("birthCard");if(card.classList.contains("collapsed"))card.querySelector(".sec-h button")?.click();
-      document.getElementById("birthBreathing")?.focus();card.scrollIntoView?.({block:"start",behavior:"smooth"});return true;
+    const story=b.closest(".story");
+    if(story){applyStory(story.dataset.story);return true;}
+    if(b.dataset.stopToggle){
+      const li=b.closest("li"); S.journeyOpen[b.dataset.stopToggle]=li.classList.contains("closed"); render(); return true;
     }
     return false;
   }
@@ -1765,6 +1876,79 @@
       if(raw("birthFinalMin"))parts.push(`最後評估：生後 ${raw("birthFinalMin")} 分鐘`);if(final.note)parts.push(final.note);
       bridge.textContent=parts.join(" → ")||"產房狀況尚未記錄。前段摘要會顯示在這裡，不會自動判定正常或穩定。";}
     [["birthReview",birth],["pathwayReview",path]].forEach(([id,items])=>{const el=document.getElementById(id);if(el){el.textContent=[...new Set(items)].join(" ");el.hidden=!items.length;}});
+  }
+
+  // ── 故事優先（2026-09-20）：故事卡只是設定既有三個開關 pathway／pwStandby／pwConsult 的組合；
+  //    時間線每一站包著原本的控制項（id／data-* 不變），依路徑排序與顯隱；填過的站收成一行摘要。
+  const STORY={A:{pathway:"direct",standby:true,consult:false},B:{pathway:"direct",standby:false,consult:true},
+               C:{pathway:"nursery",standby:false,consult:true},D:{pathway:"outborn",standby:false,consult:false}};
+  function deriveStory(){
+    if(S.pathway==="outborn")return "D"; if(S.pathway==="nursery")return "C";
+    if(S.pathway==="direct")return S.pwStandby?"A":"B"; return "";
+  }
+  function setTog(key,on){S[key]=!!on;document.querySelectorAll(`[data-tog="${key}"] button`).forEach(b=>b.setAttribute("aria-pressed",String(!!on)));}
+  function applyStory(k){
+    const cur=deriveStory();
+    if(cur===k){ switchPathway(""); setTog("pwStandby",false); setTog("pwConsult",false); }
+    else{ const st=STORY[k]; if(S.pathway!==st.pathway)switchPathway(st.pathway); setTog("pwStandby",st.standby); setTog("pwConsult",st.consult); }
+    document.querySelectorAll('[data-seg="pathway"] button').forEach(b=>b.setAttribute("aria-pressed",String(!!S.pathway&&b.dataset.v===S.pathway)));
+    S.journeyOpen={}; render();
+    if(S.pathway){const el=document.getElementById("journey");el&&el.scrollIntoView?.({block:"start",behavior:"smooth"});}
+  }
+  const optTxt=id=>{const el=document.getElementById(id);return el&&el.value&&el.selectedOptions&&el.selectedOptions[0]?el.selectedOptions[0].textContent.trim():"";};
+  const segTxt=key=>[...document.querySelectorAll(`[data-seg="${key}"] button[aria-pressed="true"]`)].map(b=>b.textContent.trim()).filter(t=>t&&t!=="未記錄").join("・");
+  const mselTxt=key=>[...document.querySelectorAll(`[data-msel="${key}"] button[aria-pressed="true"]`)].map(b=>b.textContent.trim()).join("・");
+  function journeySummary(id){
+    const j=a=>a.filter(Boolean).join(" · "), active=activeBirthEvents();
+    switch(id){
+      case "standby":return j([mselTxt("pwSbR"),raw("pwSbRIn")]);
+      case "birth":return j([optTxt("birthBreathing"),optTxt("birthTone"),raw("birthHR")&&`HR ${raw("birthHR")}`,raw("birthInitialNote"),S.fd&&"Fetal distress",S.doic&&`DOIC${raw("doicMin")?` ${raw("doicMin")} 分`:""}`,S.msaf&&"MSAF",S.birthNegConfirmed&&"已確認 FD／DOIC／MSAF 未發生"]);
+      case "consult":return j([raw("pwConsultReason"),raw("pwConsultH")&&`生後 ${raw("pwConsultH")} 小時`]);
+      case "dr":return active.length?active.map(e=>EVENT_NAMES[e.kind]).join(" → "):raw("birthResusStatus")==="none"?"已確認無需急救":raw("birthResusStatus")==="performed"?"有施作（尚未新增項目）":"";
+      case "drEnd":return j([optTxt("birthFinalSupport"),raw("birthFinalMin")&&`生後 ${raw("birthFinalMin")} 分`,optTxt("birthFinalBreathing"),optTxt("birthFinalTone"),raw("birthFinalHR")&&`HR ${raw("birthFinalHR")}`,raw("birthFinalNote")]);
+      case "obCare":return j([raw("obFacility"),raw("obTransferFrom")&&raw("obTransferFrom")!==raw("obFacility")&&`轉自 ${raw("obTransferFrom")}`,segTxt("obM1Type"),optTxt("obM1Relation")]);
+      case "obConsult":return raw("obReason");
+      case "obArrive":return raw("obArrival");
+      case "route":return j([mselTxt("obSx"),raw("pwOnsetH")&&`生後 ${raw("pwOnsetH")} ${raw("pwOnsetUnit")==="minutes"?"分":"小時"}`,segTxt("obRespType"),optTxt("obRespRelation"),S.courseEvents.length&&`後續事件 ${S.courseEvents.length} 筆`,raw("obCourse")]);
+      case "adm":return raw("obAdmissionStatus");
+    }
+    return "";
+  }
+  let journeyLastPathway=null;
+  function renderJourney(){
+    const story=deriveStory();
+    document.querySelectorAll("#pathwayCard .story").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.story===story)));
+    const ol=document.getElementById("journey"); if(!ol)return;
+    if(journeyLastPathway!==S.pathway){S.journeyOpen={};journeyLastPathway=S.pathway;}
+    if(!S.pathway){ol.hidden=true;return;}
+    ol.hidden=false;
+    const place=S.delivery==="cs"?"刀房":"產房", ob=S.pathway==="outborn", nu=S.pathway==="nursery", dest=S.dest||"院";
+    const stops=[
+      {id:"standby",show:!!S.pwStandby&&!ob,order:10,lab:"產前 standby",plain:`兒科為什麼在${place}待命。產房發生的事在下面的站填，這裡不重複。`},
+      {id:"birth",show:true,order:20,lab:ob?"外院出生（依外院病摘）":"出生當下",plain:ob?"外院病摘有寫才填；不知道就整站空著，note 不會替外院補。":"寶寶剛出來時你看到什麼。只記實際觀察，沒記錄不會被寫成正常；Apgar 沿用第 1 區。"},
+      {id:"consult",show:!!S.pwConsult&&!ob,order:nu?60:30,lab:nu?"會診":"出生後會診",plain:nu?"嬰兒室為了什麼叫兒科、大約生後幾小時。":`出生後在${place}為了什麼叫兒科。（產前就在場的話請改選故事 A）`},
+      {id:"dr",show:true,order:ob?22:40,lab:ob?"外院產房處置（依病摘）":`${place}處置`,plain:`${ob?"外院":""}${place}有沒有急救。每按一次「＋」就是實際做了一次，沒做的不要按；沒有急救就選「已確認無需急救」。`},
+      {id:"drEnd",show:true,order:ob?24:50,lab:ob?"外院產房結束時":`${place}結束時`,plain:`離開${place}時寶寶掛什麼、什麼狀態。下一站會自動接著寫，不用再選「持續同前」。`},
+      {id:"obCare",show:ob,order:30,lab:"外院處置",plain:"外院在我們到之前做了什麼、掛什麼（依外院紀錄）。"},
+      {id:"obConsult",show:ob,order:35,lab:"外院會診我方",plain:"外院為什麼會診我方（轉入原因）。"},
+      {id:"obArrive",show:ob,order:40,lab:"我方抵達外院",plain:"我們的團隊到外院時看到什麼（不是到本院時）。",opt:true},
+      {id:"route",show:true,order:ob?50:nu?55:60,lab:ob?"轉送":nu?"嬰兒室":"入院前處置",plain:ob?"轉送途中掛什麼；跟外院一樣就選一樣的，系統會寫「持續」。":nu?"在嬰兒室出現了什麼、掛了什麼、大約生後幾小時。":"從產房到入院之間有沒有前處理（症狀、呼吸支持）。沒有就整站空著。",opt:!nu},
+      {id:"adm",show:true,order:90,lab:`入 ${dest}`,plain:`到 ${dest} 時的狀況（選填，英文）。`,opt:true},
+    ];
+    const visible=stops.filter(x=>x.show).sort((a,b)=>a.order-b.order);   // order 必須是整數：CSS order 不吃小數（實機驗出）
+    const cur=visible.find(x=>!journeySummary(x.id));
+    stops.forEach(st=>{
+      const li=ol.querySelector(`li[data-stop="${st.id}"]`); if(!li)return;
+      li.hidden=!st.show; li.style.order=st.order;
+      const sum=journeySummary(st.id), has=!!sum, isCur=!!(cur&&cur.id===st.id);
+      const open=S.journeyOpen[st.id]!==undefined?S.journeyOpen[st.id]:isCur;
+      li.classList.toggle("has",has); li.classList.toggle("cur",isCur); li.classList.toggle("closed",!open);
+      li.classList.toggle("first",!!visible[0]&&visible[0].id===st.id); li.classList.toggle("last",!!visible.length&&visible[visible.length-1].id===st.id);
+      li.querySelector(".t").textContent=st.lab;
+      const sumEl=li.querySelector(".sum"); sumEl.textContent=open?"":(has?(sum.length>72?sum.slice(0,72)+"…":sum):(st.opt?"可空・尚未填":"尚未填")); sumEl.classList.toggle("empty",!has);
+      li.querySelector(".hd").setAttribute("aria-expanded",String(open));
+      li.querySelector(".stop-plain").textContent=st.plain;
+    });
   }
 
   function render(){
@@ -1852,7 +2036,8 @@
     sh("pwCourseWrap",true);
     const ladLab=document.getElementById("ladderALab");
     if(ladLab)ladLab.textContent=S.pathway==="outborn"?"我方處置·轉送中呼吸維持":S.pathway==="nursery"?"嬰兒室呼吸處置":"呼吸處置";
-    setCsum("pathway",[{direct:"直接入院",nursery:"嬰兒室觀察",outborn:"外接"}[S.pathway]||"尚未選路徑",S.pwStandby?"standby":"",S.pwConsult?"會診":""].filter(Boolean).join("・"),false);
+    {const st=deriveStory(); setCsum("pathway",st?[`${st} · `+{direct:"直接入院",nursery:"嬰兒室觀察",outborn:"外接"}[S.pathway],S.pwStandby?"standby":"",S.pwConsult?"會診":""].filter(Boolean).join("・"):"尚未選故事",!st);}
+    renderJourney();
     timelineReview();
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
     const via = S.delivery==="cs" ? "cesarean section (C/S)" : S.delivery==="nsd" ? "vaginal delivery (VD)" : "";
