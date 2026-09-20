@@ -131,6 +131,15 @@ test('a new birth PPV carries NRP 9th-edition initial settings, flagged until ed
   assert.ok(!row(event).querySelector('.nrp-hint'),'editing any value removes the default flag');
   assert.match(note(),/PIP 22 cmH2O/);assert.doesNotMatch(get('#birthReview').textContent,/尚未核對/);
 });
+test('accepting the NRP defaults as-is clears the reminder without changing the values',({add,row,note,get})=>{
+  const event=add('ppv'), card=row(event);
+  assert.match(get('#birthReview').textContent,/尚未核對/);
+  card.querySelector('[data-nrp-accept]').click();
+  assert.ok(!row(event).querySelector('.nrp-hint'),'the hint is gone after accepting');
+  assert.doesNotMatch(get('#birthReview').textContent,/尚未核對/);
+  assert.match(note(),/FiO2 21%[^.]*PIP 25 cmH2O[^.]*PEEP 5 cmH2O/,'values are kept exactly');
+  assert.equal(row(event).querySelector('[data-event-field="pip"]').value,'25');
+});
 test('NRP initial oxygen and pressure follow gestational age; course-scope PPV and intubation stay blank',({add,row,input,seg,note})=>{
   input('gaW','30');
   const preterm=add('ppv'), c=row(preterm);

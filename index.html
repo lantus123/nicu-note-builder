@@ -319,6 +319,7 @@
   /* NRP 預設帶入的設定值：虛線框＋淡字，改過才變成一般輸入 */
   :is(#birthCard,#pathwayCard) .clinical-event input.nrp-default{border-style:dashed;color:var(--ink-3)}
   :is(#birthCard,#pathwayCard) .clinical-event .nrp-hint{margin:8px 0 0;color:var(--accent-ink)}
+  :is(#birthCard,#pathwayCard) .clinical-event .nrp-accept{margin-left:6px;min-height:30px;padding:3px 10px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-soft);color:var(--accent-ink);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
   /* ── 出生到入院：故事卡 → 直線時間線 → 一站一卡（2026-09-20）── */
   #pathwayCard .journey-lede{margin:0 0 14px;font-size:13.5px;color:var(--ink-2);max-width:62ch}
   #pathwayCard .stories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -751,7 +752,7 @@
       <div id="courseEvents"></div>
     </details>
     <div class="field" id="pwCourseWrap" hidden><label class="lab" for="obCourse">過程補充 <span class="q">（選填，英文；保留完整內容）</span></label>
-      <textarea class="tarea" id="obCourse" rows="2" placeholder="例：initially cared for in the nursery; the transport team was contacted…"></textarea></div>
+      <textarea class="tarea" id="obCourse" rows="2" placeholder="例：initially cared for in the baby room; the transport team was contacted…"></textarea></div>
             </div>
       </li>
       <li data-stop="brEval" hidden>
@@ -1686,7 +1687,9 @@
     if(TONE[a.tone])parts.push(TONE[a.tone]);
     if(SUPPORT[a.support]&&!spontaneousInAir)parts.push(a.support==="room"?"was breathing room air":`was receiving ${SUPPORT[a.support]}`);
     const hr=a.hr!==undefined&&a.hr!==""?`a heart rate of ${a.hr} beats/min`:"";
-    const finding=parts.length?joinAnd(parts)+(hr?`, with ${hr}`:""):hr?`had ${hr}`:"";
+    // 「had labored breathing and had poor muscle tone」→ 同一個開頭動詞（had／was）只留第一次（2026-09-20 順流程時抓到）
+    const lead0=(parts[0]||"").match(/^(had|was) /); const deduped=parts.map((x,i)=>i>0&&lead0&&x.startsWith(lead0[0])?x.slice(lead0[0].length):x);
+    const finding=parts.length?joinAnd(deduped)+(hr?`, with ${hr}`:""):hr?`had ${hr}`:"";
     return [finding?`${lead}, the infant ${finding}.`:"",sentence(a.note||"")].filter(Boolean);
   }
   function eventSettings(e){
@@ -1897,7 +1900,7 @@
     events.filter(e=>e.nrp).forEach(e=>{
       const card=host.querySelector(`[data-event-id="${e.id}"]`); if(!card)return;
       card.querySelectorAll('[data-event-field="fiO2"],[data-event-field="pip"],[data-event-field="peep"]').forEach(inp=>inp.classList.add("nrp-default"));
-      card.insertAdjacentHTML("beforeend",`<p class="man-h nrp-hint">已帶入 ${NRP.edition} 初始設定（PIP ${e.pip}／PEEP ${e.peep} cmH₂O、FiO₂ ${e.fiO2}%，依 GA；通氣率 ${NRP.ventilation.rate} 不寫入）。請依實際核對；改任一值即視為實際紀錄。</p>`);
+      card.insertAdjacentHTML("beforeend",`<p class="man-h nrp-hint">已帶入 ${NRP.edition} 初始設定（PIP ${e.pip}／PEEP ${e.peep} cmH₂O、FiO₂ ${e.fiO2}%，依 GA；通氣率 ${NRP.ventilation.rate} 不寫入）。請依實際核對；改任一值即視為實際紀錄。 <button type="button" class="nrp-accept" data-nrp-accept="${e.id}">值正確，採用</button></p>`);
     });
     if(S.lastRemoved?.scope===scope&&(scope==="birth"||S.lastRemoved.pathway===S.pathway))host.insertAdjacentHTML("beforeend",`<div class="seg event-add"><button type="button" data-undo-event="${scope}">復原剛移除的事件</button></div>`);
   }
@@ -1911,6 +1914,9 @@
       if(scope==="birth"&&kind!=="assessment")document.getElementById("birthResusStatus").value="performed";
       drawEvents(scope);const details=document.getElementById(scope+"Events").closest("details");if(details)details.open=true;
       render();document.getElementById(`event-${event.id}-minutes`)?.focus();return true;
+    }
+    if(b.dataset.nrpAccept){   // 住院醫師確認 NRP 預設就是實際值：拿掉「尚未核對」，值不變
+      const ev=S.birthEvents.find(x=>String(x.id)===b.dataset.nrpAccept); if(ev){ev.nrp=false; drawEvents("birth"); render();} return true;
     }
     if(b.dataset.undoEvent){const removed=S.lastRemoved;if(removed&&removed.scope===b.dataset.undoEvent&&(removed.scope==="birth"||removed.pathway===S.pathway)){
       S[removed.scope+"Events"].splice(removed.index,0,removed.event);S.lastRemoved=null;
