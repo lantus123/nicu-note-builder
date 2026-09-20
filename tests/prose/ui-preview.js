@@ -44,10 +44,12 @@ const seed=({click,input})=>{
   input('gaW','34');input('gaD','0');input('bw','2487');
 };
 
-test('desktop preview starts visible with reading and normal-size settings',()=>withPage(({d,note})=>{
+test('desktop preview starts visible in review mode with normal-size settings',()=>withPage(({d,note})=>{
+  // 2026-09-20 Ryan：醫師編輯時應顯示校閱模式 ⇒ 預設校閱（data-reading=false），閱讀模式手動切。
   const dock=d.querySelector('.dock'),toggle=d.getElementById('dockToggle');
-  assert.equal(dock.dataset.reading,'true');assert.equal(dock.dataset.font,'normal');
-  assert.equal(d.getElementById('previewReading').getAttribute('aria-pressed'),'true');
+  assert.equal(dock.dataset.reading,'false');assert.equal(dock.dataset.font,'normal');
+  assert.equal(d.getElementById('previewReading').getAttribute('aria-pressed'),'false');
+  assert.equal(d.getElementById('previewReading').textContent,'校閱模式');
   assert.equal(d.getElementById('previewFont').value,'normal');
   assert.equal(toggle.hidden,true);assert.equal(toggle.getAttribute('aria-expanded'),'true');
   assert.equal(toggle.getAttribute('aria-controls'),'previewBody');
@@ -55,6 +57,15 @@ test('desktop preview starts visible with reading and normal-size settings',()=>
   assert.equal(d.querySelector('.preview-tools').hidden,false);
   assert.equal(dock.classList.contains('collapsed'),false);
   assert.ok(note.textContent.trim());assert.equal(note.querySelectorAll('.note-change').length,0);
+}));
+
+test('focusing the note to edit while in reading mode switches back to review mode',()=>withPage(({d,note})=>{
+  const dock=d.querySelector('.dock'),btn=d.getElementById('previewReading');
+  btn.click();
+  assert.equal(dock.dataset.reading,'true');assert.equal(btn.textContent,'閱讀模式');
+  note.dispatchEvent(new d.defaultView.FocusEvent('focusin',{bubbles:true}));
+  assert.equal(dock.dataset.reading,'false','editing must show review marks');
+  assert.equal(btn.getAttribute('aria-pressed'),'false');assert.equal(btn.textContent,'校閱模式');
 }));
 
 for(const matchMedia of [true,false])test(`mobile preview starts collapsed (${matchMedia?'media query':'width fallback'})`,()=>
@@ -89,15 +100,15 @@ for(const mode of ['adm','plan','acc','proc'])test(`${mode} reading and font set
     click(`[data-tab="${mode}"]`);
     if(mode==='proc')click('[data-proctog] [data-v="intub"]');
     const text=note.textContent,markup=note.innerHTML;
-    click('#previewReading');
-    assert.equal(d.querySelector('.dock').dataset.reading,'false');
-    assert.equal(d.getElementById('previewReading').getAttribute('aria-pressed'),'false');
+    click('#previewReading');   // 預設校閱（2026-09-20），第一次點切到閱讀
+    assert.equal(d.querySelector('.dock').dataset.reading,'true');
+    assert.equal(d.getElementById('previewReading').getAttribute('aria-pressed'),'true');
     for(const size of ['large','small','normal']){
       input('previewFont',size);assert.equal(d.querySelector('.dock').dataset.font,size);
       assert.equal(note.textContent,text);assert.equal(note.innerHTML,markup);
     }
     click('#previewReading');
-    assert.equal(d.querySelector('.dock').dataset.reading,'true');
+    assert.equal(d.querySelector('.dock').dataset.reading,'false');
     assert.equal(note.textContent,text);assert.equal(note.innerHTML,markup);
     assert.equal(d.getElementById('regen').hidden,true,'Display changes must not mark a note as manually edited');
   }));

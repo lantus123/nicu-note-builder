@@ -117,13 +117,32 @@ for(const [kind,required,forbidden] of [
   for(const expression of forbidden)assert.doesNotMatch(note(),expression);
 });
 
-test('new PPV parameters and timing are blank and do not become factual defaults',({add,row,note})=>{
-  const event=add('ppv');
-  for(const field of ['minutes','fiO2','pip','peep']){
-    const el=row(event).querySelector(`[data-event-field="${field}"]`);
-    assert.ok(el,`Missing PPV ${field}`);assert.equal(el.value,'');
-  }
-  assert.doesNotMatch(note(),/FiO[₂2][^.;]*21|PIP[^.;]*20|PEEP[^.;]*5|at (?:1|2|3) minutes? of (?:age|life)/i);
+// 2026-09-20 Ryan：產房急救 PPV 依 NRP 第 9 版預設帶入（≥32 週 PIP 25／PEEP 5；≥35 週 FiO₂ 21%），
+// 帶入即標示、改任一值即視為實際紀錄；時間仍空白；其他事件（插管等）與 course 範圍的 PPV 不帶預設。
+test('a new birth PPV carries NRP 9th-edition initial settings, flagged until edited; timing stays blank',({add,row,eventInput,note,get})=>{
+  const event=add('ppv'), card=row(event);
+  const v=f=>card.querySelector(`[data-event-field="${f}"]`).value;
+  assert.equal(v('minutes'),'');assert.equal(v('fiO2'),'21');assert.equal(v('pip'),'25');assert.equal(v('peep'),'5');
+  assert.ok(card.querySelector('.nrp-hint'),'the card must say the values are NRP defaults');
+  assert.ok(card.querySelector('[data-event-field="pip"]').classList.contains('nrp-default'));
+  assert.match(note(),/positive-pressure ventilation \(PPV\) was initiated[^.]*FiO2 21%[^.]*PIP 25 cmH2O[^.]*PEEP 5 cmH2O/i);
+  assert.match(get('#birthReview').textContent,/NRP[^。]*尚未核對/);
+  eventInput(event,'pip','22');
+  assert.ok(!row(event).querySelector('.nrp-hint'),'editing any value removes the default flag');
+  assert.match(note(),/PIP 22 cmH2O/);assert.doesNotMatch(get('#birthReview').textContent,/尚未核對/);
+});
+test('NRP initial oxygen and pressure follow gestational age; course-scope PPV and intubation stay blank',({add,row,input,seg,note})=>{
+  input('gaW','30');
+  const preterm=add('ppv'), c=row(preterm);
+  assert.equal(c.querySelector('[data-event-field="fiO2"]').value,'30');assert.equal(c.querySelector('[data-event-field="pip"]').value,'20');
+  input('gaW','33');
+  const mid=add('ppv'), m=row(mid);
+  assert.equal(m.querySelector('[data-event-field="fiO2"]').value,'21');assert.equal(m.querySelector('[data-event-field="pip"]').value,'25');
+  const tube=add('intubation');
+  for(const f of ['fiO2','pip','peep','rr'])assert.equal(row(tube).querySelector(`[data-event-field="${f}"]`).value,'',`intubation ${f} must stay blank`);
+  seg('pathway','direct');
+  const later=add('ppv','course');
+  for(const f of ['fiO2','pip','peep'])assert.equal(row(later).querySelector(`[data-event-field="${f}"]`).value,'',`course PPV ${f} must stay blank`);
 });
 
 test('entered PPV timing and individual parameters are retained',({add,eventInput,note})=>{

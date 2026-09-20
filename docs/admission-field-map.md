@@ -43,7 +43,7 @@
 | `kind` | 全部 | `ppv`、`intubation`、`compressions`、`epinephrine`、`assessment`；後續事件另有 `o2`、`cpap`。每個項目只表示本身，不包含其他處置。 |
 | `minutes` | 全部 | 已填時寫生後幾分鐘；未填時使用不含精確時間的敘述。 |
 | `location` | 第 6 區後續事件 | 英文實際地點；未填不把它自動當成產房、外院或 NICU。 |
-| `fiO2` | PPV、插管、CPAP、O₂ | 只列輸入值及 `%`，不使用預設治療設定。 |
+| `fiO2` | PPV、插管、CPAP、O₂ | 只列輸入值及 `%`。**例外（2026-09-20）**：產房急救 PPV 新增時依 `NRP` 表預設帶入 FiO₂／PIP／PEEP（依 GA），事件帶 `nrp:true` 標示直到醫師改過任一值；`timelineReview` 提醒「尚未核對」。插管與 course 範圍不帶預設。 |
 | `pip`、`peep`、`rr` | 適用的呼吸支持事件 | PIP／PEEP 使用 cmH₂O；CPAP 的 `peep` 寫成 pressure；`rr` 僅在插管事件提供。 |
 | `flow`、`device` | 適用的呼吸支持事件 | 氧氣流量以 L/min；裝置依實際英文記錄。 |
 | `duration` | 胸外按壓 | 已填時列按壓持續分鐘數。 |

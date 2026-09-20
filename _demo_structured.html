@@ -313,6 +313,9 @@
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
+  /* NRP 預設帶入的設定值：虛線框＋淡字，改過才變成一般輸入 */
+  :is(#birthCard,#pathwayCard) .clinical-event input.nrp-default{border-style:dashed;color:var(--ink-3)}
+  :is(#birthCard,#pathwayCard) .clinical-event .nrp-hint{margin:8px 0 0;color:var(--accent-ink)}
   /* ── 出生到入院：故事卡 → 直線時間線 → 一站一卡（2026-09-20）── */
   #pathwayCard .journey-lede{margin:0 0 14px;font-size:13.5px;color:var(--ink-2);max-width:62ch}
   #pathwayCard .stories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -1103,7 +1106,7 @@
 </div>
 
 <!-- 即時預覽 -->
-<div class="dock" data-reading="true" data-font="normal">
+<div class="dock" data-reading="false" data-font="normal">
   <div class="dock-h"><span class="t" id="dockLabel">即時預覽 · Admission Summary</span>
     <span class="dock-actions" style="display:flex;gap:7px">
       <button class="copy" id="dockToggle" aria-label="收合病歷預覽" aria-expanded="true" aria-controls="previewBody">收合預覽 ▾</button>
@@ -1112,7 +1115,7 @@
     <span class="copy-status" id="copyStatus" role="status" aria-live="polite" aria-atomic="true" hidden></span>
   </div>
   <div class="preview-tools" aria-label="病歷顯示設定">
-    <button type="button" id="previewReading" aria-pressed="true" aria-label="切換閱讀與校閱模式">閱讀模式</button>
+    <button type="button" id="previewReading" aria-pressed="false" aria-label="切換閱讀與校閱模式">校閱模式</button>
     <label for="previewFont">字級</label>
     <select id="previewFont" aria-label="病歷字級"><option value="small">小</option><option value="normal" selected>標準</option><option value="large">大</option></select>
   </div>
@@ -1692,6 +1695,29 @@
     if(e.flow!==undefined&&e.flow!=="")settings.push(`flow ${e.flow} L/min`);
     return settings.length?` (${settings.join(", ")})`:"";
   }
+  // ── NRP 第 9 版（2025 AHA/AAP 指引，2025-10 發布；講師 2026-06-01 前須改用）──────────────────
+  // Ryan 2026-09-20：產房急救 PPV 依最新版 NRP 預設帶入；其他急救措施寫法也參考 NRP。
+  // 這張表是唯一真相：數值依 AAP 第 9 版科學變更表（OPQIC 整理）——起始 PIP 由 20 提高到 25 cmH₂O（≥32 週）、
+  // PEEP 5、通氣率 30–60/min、起始氧 ≥35 週 21%／32–34 週 21–30%／<32 週 ≥30%。院內教材若不同，只改這裡。
+  // 帶入的值會標示「NRP 預設」直到醫師改過任一值；沒改就照值寫進病歷（這是 Ryan 明示接受的預設，與 8/18 去捏造原則的例外）。
+  const NRP={
+    edition:"NRP 9th ed. (2025 AHA/AAP)",
+    ventilation:{
+      peep:5,
+      rate:"30–60/min",
+      pip:ga=>(ga!==""&&Number(ga)<32)?20:25,                        // ≥32 週 25；<32 週 20（第 8 版沿用值）；GA 未填視為足月
+      fio2:ga=>(ga===""||Number(ga)>=35)?21:Number(ga)>=32?21:30,     // 32–34 週指引為 21–30%，取下界 21；<32 週 ≥30% 取 30
+    },
+    // 敘事句型：動詞與術語對齊 NRP（initiated／performed／administered），不自動補入未記錄的數值（比例、劑量）
+    phrase:{
+      ppv:(device,settings)=>`positive-pressure ventilation (PPV) was initiated${device}${settings}`,
+      intubation:settings=>`endotracheal intubation was performed${settings?` and ventilation was continued through the endotracheal tube${settings}`:""}`,
+      compressions:duration=>`chest compressions were initiated${duration}`,
+      epinephrine:(dose,route)=>`epinephrine${dose} was administered${route}`,
+      o2:(device,settings)=>`supplemental oxygen was administered${device}${settings}`,
+      cpap:(device,settings)=>`CPAP was provided${device}${settings}`,
+    },
+  };
   function eventNarrative(e,scope){
     const age=e.minutes!==undefined&&e.minutes!==""?`At ${e.minutes} ${unitLabel(e.minutes,"minute")} of age`:"";
     const place=e.location?`${/^(?:the )?(?:baby room|nursery|delivery room|NICU|ward|operating room)$/i.test(e.location)?"In":"At"} ${e.location}`:"";
@@ -1701,12 +1727,12 @@
       return assessmentText(e,lead||(scope==="birth"?`On reassessment in ${deliveryPlace()}`:"On subsequent reassessment"));
     }
     const settings=eventSettings(e),device=e.device?` using ${e.device}`:"";
-    const action={ppv:`the infant received positive-pressure ventilation (PPV)${device}${settings}`,
-      intubation:`the infant was intubated${settings?` and received mechanical ventilation${settings}`:""}`,
-      compressions:`chest compressions were performed${e.duration?` for ${e.duration} ${unitLabel(e.duration,"minute")}`:""}`,
-      epinephrine:`epinephrine${e.drugDose?` (${e.drugDose})`:""} was administered${e.drugRoute?` via ${e.drugRoute}`:""}`,
-      o2:`supplemental oxygen was administered${device}${settings}`,
-      cpap:`CPAP was provided${device}${settings}`}[e.kind];
+    const action={ppv:NRP.phrase.ppv(device,settings),
+      intubation:NRP.phrase.intubation(settings),
+      compressions:NRP.phrase.compressions(e.duration?` for ${e.duration} ${unitLabel(e.duration,"minute")}`:""),
+      epinephrine:NRP.phrase.epinephrine(e.drugDose?` (${e.drugDose})`:"",e.drugRoute?` via ${e.drugRoute}`:""),
+      o2:NRP.phrase.o2(device,settings),
+      cpap:NRP.phrase.cpap(device,settings)}[e.kind];
     if(!action)return [];
     return [sentence(lead?`${lead}, ${action}`:action),sentence(e.note||"")].filter(Boolean);
   }
@@ -1865,12 +1891,20 @@
       fields+=textField(e,"note","此事件補充（完整英文句，選填）");
       return `<div class="clinical-event" data-event-id="${e.id}" data-event-scope="${scope}" data-event-kind="${e.kind}"><div class="event-head"><strong><span class="event-number">${i+1}</span> ${EVENT_NAMES[e.kind]}</strong><div class="event-tools"><button type="button" data-event-action="up" aria-label="上移第 ${i+1} 個事件" ${i===0?"disabled":""}>↑</button><button type="button" data-event-action="down" aria-label="下移第 ${i+1} 個事件" ${i===events.length-1?"disabled":""}>↓</button><button type="button" data-event-action="remove" aria-label="移除第 ${i+1} 個事件">移除</button></div></div><div class="event-fields">${fields}</div></div>`;
     }).join("");
+    events.filter(e=>e.nrp).forEach(e=>{
+      const card=host.querySelector(`[data-event-id="${e.id}"]`); if(!card)return;
+      card.querySelectorAll('[data-event-field="fiO2"],[data-event-field="pip"],[data-event-field="peep"]').forEach(inp=>inp.classList.add("nrp-default"));
+      card.insertAdjacentHTML("beforeend",`<p class="man-h nrp-hint">已帶入 ${NRP.edition} 初始設定（PIP ${e.pip}／PEEP ${e.peep} cmH₂O、FiO₂ ${e.fiO2}%，依 GA；通氣率 ${NRP.ventilation.rate} 不寫入）。請依實際核對；改任一值即視為實際紀錄。</p>`);
+    });
     if(S.lastRemoved?.scope===scope&&(scope==="birth"||S.lastRemoved.pathway===S.pathway))host.insertAdjacentHTML("beforeend",`<div class="seg event-add"><button type="button" data-undo-event="${scope}">復原剛移除的事件</button></div>`);
   }
   function eventClick(b){
     const scope=b.dataset.addBirth?"birth":b.dataset.addCourse?"course":"",kind=b.dataset.addBirth||b.dataset.addCourse;
     if(scope&&EVENT_NAMES[kind]){
       const event={id:S.nextEventId++,kind};S[scope+"Events"].push(event);
+      if(scope==="birth"&&kind==="ppv"){   // 產房急救 PPV 帶 NRP 第 9 版初始設定（依 GA），標示為預設直到醫師改過任一值
+        const ga=V("gaW"); Object.assign(event,{fiO2:String(NRP.ventilation.fio2(ga)),pip:String(NRP.ventilation.pip(ga)),peep:String(NRP.ventilation.peep),nrp:true});
+      }
       if(scope==="birth"&&kind!=="assessment")document.getElementById("birthResusStatus").value="performed";
       drawEvents(scope);const details=document.getElementById(scope+"Events").closest("details");if(details)details.open=true;
       render();document.getElementById(`event-${event.id}-minutes`)?.focus();return true;
@@ -1897,14 +1931,15 @@
   function updateEventField(el){
     if(!el.dataset.eventField)return;
     const card=el.closest("[data-event-id]"),e=S[card.dataset.eventScope+"Events"].find(x=>String(x.id)===card.dataset.eventId);
-    if(e)e[el.dataset.eventField]=el.value;
+    if(e){e[el.dataset.eventField]=el.value; if(e.nrp&&["fiO2","pip","peep"].includes(el.dataset.eventField)){e.nrp=false; drawEvents(card.dataset.eventScope); document.getElementById(el.id)?.focus();}}
   }
   function timelineReview(){
     const birth=[],path=[],active=activeBirthEvents(),final=readAssessment("birthFinal");
     let last=-1;
     active.forEach(e=>{if(e.minutes!==undefined&&e.minutes!==""){const n=Number(e.minutes);if(n<last)birth.push("事件時間與排列順序不同，請核對或移動事件。");last=n;}
       if(e.kind==="epinephrine"&&(!e.drugDose||!e.drugRoute))birth.push("已記錄 epinephrine；劑量／途徑尚未填齊，不會自動補入。");
-      if(["ppv","intubation","cpap"].includes(e.kind)&&!e.fiO2&&!e.pip&&!e.peep)birth.push("已記錄呼吸處置；設定尚未填寫，不會使用預設值。");});
+      if(["ppv","intubation","cpap"].includes(e.kind)&&!e.fiO2&&!e.pip&&!e.peep)birth.push("已記錄呼吸處置；設定尚未填寫，不會使用預設值。");
+      if(e.kind==="ppv"&&e.nrp)birth.push(`PPV 設定目前是 ${NRP.edition} 預設帶入、尚未核對：請確認 PIP／PEEP／FiO₂ 與實際相符（改任一值即視為已核對）。`);});
     if(raw("birthFinalMin")&&last>Number(raw("birthFinalMin")))birth.push("最後評估時間早於前面的事件，請核對。");
     if(raw("birthResusStatus")==="performed"&&!birthHasAction())birth.push("已選有急救，請補上實際處置。");
     if(raw("birthResusStatus")!=="performed"&&S.birthEvents.some(e=>e.kind!=="assessment"))birth.push("先前處置已保留，目前不寫入；選回「有急救」可恢復。觀察紀錄仍保留於敘述。");
@@ -3094,12 +3129,16 @@ ${opLine}`);
   let previewMobileCollapsed=true, previewHighlightTimer=null, lastPreviewWrite=null;
 
   // 顯示設定只改外觀，不重組病歷，也不影響手改鎖定。
-  previewReading.addEventListener("click",e=>{
-    e.stopPropagation();
-    const reading=previewDock.dataset.reading!=="true";
+  // 預設校閱（Ryan 2026-09-20）：填寫與手改的整個過程都是「編輯」，校閱模式才看得到自動帶入／空格／手改的標記；
+  // 閱讀模式留給最後通讀與複製，手動切。醫師點進病歷手改時若在閱讀模式，自動切回校閱。
+  function setPreviewReading(reading){
     previewDock.dataset.reading=String(reading);
     previewReading.setAttribute("aria-pressed",String(reading));
     previewReading.textContent=reading?"閱讀模式":"校閱模式";
+  }
+  previewReading.addEventListener("click",e=>{
+    e.stopPropagation();
+    setPreviewReading(previewDock.dataset.reading!=="true");
   });
   previewFont.addEventListener("change",e=>{
     e.stopPropagation();
@@ -3205,6 +3244,7 @@ ${opLine}`);
   }
   function clearDirty(){S.noteDirty=false; noteEl.classList.remove("editing"); document.getElementById("regen").hidden=true; const eh=document.getElementById("editHint"); if(eh)eh.hidden=true;}
   noteEl.addEventListener("input",markDirty);
+  noteEl.addEventListener("focusin",()=>{if(previewDock.dataset.reading==="true")setPreviewReading(false);});   // 編輯時一律校閱模式
   // 只有使用者手打/貼上的字包成 .edited 上色（自動值仍青綠、未填仍灰）
   noteEl.addEventListener("beforeinput",e=>{
     let text=null;
