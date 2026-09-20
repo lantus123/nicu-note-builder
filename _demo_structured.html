@@ -1739,8 +1739,19 @@
     if(!action)return [];
     return [sentence(lead?`${lead}, ${action}`:action),sentence(e.note||"")].filter(Boolean);
   }
-  function birthNarrative(){
-    const out=assessmentText(readAssessment("birth"),"At birth");
+  function consultSentence(){
+    const t=raw("pwConsultH"),reason=raw("pwConsultReason").replace(/[.。]+$/,"");
+    return `The pediatric team was consulted${S.pathway==="direct"?` in ${deliveryPlace()}`:""}${t?` at ${t} ${unitLabel(t,"hour")} of age`:""}${reason?` because of ${reason}`:" for evaluation"}.`;
+  }
+  // 兩份 note 的產房段統一順序：出生觀察 → Apgar → （故事 B 的會診）→ 產房處置 → 再評估。
+  // 2026-09-20 順八個情境時發現 Admission 把 Apgar 放在整段之後、Acceptance 放在整段之前，
+  // 且故事 B 的會診句寫在急救之後，與時間線站序矛盾 ⇒ 拆成 birthObservation／birthCourse 兩段由呼叫端夾 Apgar。
+  function birthObservation(){return assessmentText(readAssessment("birth"),"At birth");}
+  function birthNarrative(){return [...birthObservation(),...birthCourse()];}
+  function birthCourse(){
+    const out=[];
+    // 故事 B（出生後會診、直接入院）：先叫兒科到產房、再處置 ⇒ 會診句在處置之前。
+    if(S.pwConsult&&S.pathway==="direct")out.push(consultSentence());
     if(raw("birthResusStatus")==="none")out.push("No resuscitation was required at birth.");
     else if(raw("birthResusStatus")==="performed"){
       if(!birthHasAction())out.push("Resuscitation was performed at birth; the interventions were not specified.");
@@ -1830,10 +1841,7 @@
         out.push(`${done}${res}.`);   // 沒勾結果就只寫做了檢查，不寫成正常（去捏造）
       }
     }
-    if(S.pwConsult){
-      const t=raw("pwConsultH"),reason=raw("pwConsultReason").replace(/[.。]+$/,"");
-      out.push(`The pediatric team was consulted${S.pathway==="direct"?` in ${deliveryPlace()}`:""}${t?` at ${t} ${unitLabel(t,"hour")} of age`:""}${reason?` because of ${reason}`:" for evaluation"}.`);
-    }
+    if(S.pwConsult&&S.pathway!=="direct")out.push(consultSentence());   // direct 的會診句改由 birthNarrative 放在出生觀察之後、處置之前（故事 B：先叫兒科來、再處置）
     if(raw("obCourse"))out.push(sentence(raw("obCourse")));
     if(S.outborn){
       const outside=supportSentence("obM1Relation",S.obM1Type,"at the referring hospital",{
@@ -1930,7 +1938,9 @@
     const story=b.closest(".story");
     if(story){applyStory(story.dataset.story);return true;}
     if(b.dataset.stopToggle){
-      const li=b.closest("li"); S.journeyOpen[b.dataset.stopToggle]=li.classList.contains("closed"); render(); return true;
+      const li=b.closest("li"), opening=li.classList.contains("closed");
+      if(opening)for(const k of Object.keys(S.journeyOpen))if(k!==b.dataset.stopToggle)delete S.journeyOpen[k];   // 點開一站＝把別站收起（手風琴）
+      S.journeyOpen[b.dataset.stopToggle]=opening; render(); return true;
     }
     return false;
   }
@@ -1959,6 +1969,10 @@
       if(r.relation==="stopped"&&(!r.source||r.source==="room"||S.continuitySignatures[field]!==r.source))path.push("前段呼吸支持未記錄或已改變，請重新確認停止了哪項支持。");
     });
     if(/\bno resuscitation\b/i.test([raw("birthInitialNote"),raw("birthFinalNote"),raw("obCourse")].join(" "))&&birthHasAction())path.push("自由文字提及 no resuscitation，但已有急救事件，請確認是否為不同時點。");
+    if(S.pathway==="direct"&&S.pwConsult&&raw("pwConsultH")){
+      const mins=active.filter(e=>e.minutes!==undefined&&e.minutes!=="").map(e=>Number(e.minutes));
+      if(mins.length&&Number(raw("pwConsultH"))*60>Math.min(...mins))path.push("會診時間晚於第一個產房處置：note 依故事 B 把會診寫在處置之前；若處置是在會診前由產科／護理執行，請在事件補充註明，或改用「調整細節」關掉會診。");
+    }
     if(S.pathway==="nursery"){
       if(S.brEval.includes("maternal")&&!maternalRiskPhrases().length)path.push("勾了「母體風險因子」，但第 2 區沒有發燒、PROM 或 GBS 陽性的紀錄；note 只會寫 maternal risk factors，請補第 2 區或改原因。");
       if(S.brWorkup.length&&!S.brFindings.length)path.push("嬰兒室檢查已勾但結果未填：note 只寫做了檢查，不會寫成正常；無異常請勾「結果無異常（確認）」。");
@@ -2022,7 +2036,11 @@
   // 用 capture 階段，確保在 document 上那些會呼叫 render() 的處理器之前記下來。
   ["pointerdown","focusin","input","change"].forEach(type=>document.addEventListener(type,e=>{
     const body=e.target&&e.target.closest&&e.target.closest("#journey > li > .body"); if(!body)return;
-    const li=body.parentElement; if(li&&li.dataset.stop&&S.journeyOpen[li.dataset.stop]!==true)S.journeyOpen[li.dataset.stop]=true;
+    const li=body.parentElement; if(!li||!li.dataset.stop)return;
+    if(S.journeyOpen[li.dataset.stop]===true)return;
+    // 手風琴（2026-09-20 順八個情境時發現：一路填完六站全開著）：開始填這一站，其他站回到自動規則→有資料的收成一行
+    for(const k of Object.keys(S.journeyOpen))if(k!==li.dataset.stop)delete S.journeyOpen[k];
+    S.journeyOpen[li.dataset.stop]=true;
   },true));
   function renderJourney(){
     const story=deriveStory();
@@ -2031,7 +2049,7 @@
     if(journeyLastPathway!==S.pathway){S.journeyOpen={};journeyLastPathway=S.pathway;}
     if(!S.pathway){ol.hidden=true;return;}
     ol.hidden=false;
-    const place=S.delivery==="cs"?"刀房":"產房", ob=S.pathway==="outborn", nu=S.pathway==="nursery", dest=S.dest||"院";
+    const place=S.delivery==="cs"?"刀房":"產房", ob=S.pathway==="outborn", nu=S.pathway==="nursery", dest=S.dest||"";
     const stops=[
       {id:"standby",show:!!S.pwStandby&&!ob,order:10,lab:"產前 standby",plain:`兒科為什麼在${place}待命。產房發生的事在下面的站填，這裡不重複。`},
       {id:"birth",show:true,order:20,lab:ob?"外院出生（依外院病摘）":"出生當下",plain:ob?"外院病摘有寫才填；不知道就整站空著，note 不會替外院補。":"寶寶剛出來時你看到什麼。只記實際觀察，沒記錄不會被寫成正常；Apgar 沿用第 1 區。"},
@@ -2043,7 +2061,7 @@
       {id:"obArrive",show:ob,order:40,lab:"我方抵達外院",plain:"我們的團隊到外院時看到什麼（不是到本院時）。",opt:true},
       {id:"route",show:true,order:ob?50:nu?55:60,lab:ob?"轉送":nu?"嬰兒室":"入院前處置",plain:ob?"轉送途中掛什麼；跟外院一樣就選一樣的，系統會寫「持續」。":nu?"在嬰兒室出現了什麼、掛了什麼、大約生後幾小時。兒科去看與抽血在下一站填。":"從產房到入院之間有沒有前處理（症狀、呼吸支持）。沒有就整站空著。",opt:!nu},
       {id:"brEval",show:nu,order:57,lab:"兒科評估・抽血",plain:"兒科為什麼去看（不是會診）、在嬰兒室抽了什麼、結果如何。有異常才會寫進 note；沒異常要明確勾「結果無異常」，否則只寫做了檢查。"},
-      {id:"adm",show:true,order:90,lab:`入 ${dest}`,plain:`到 ${dest} 時的狀況（選填，英文）。`,opt:true},
+      {id:"adm",show:true,order:90,lab:dest?`入 ${dest}`:"入院",plain:dest?`到 ${dest} 時的狀況（選填，英文）。`:"入院時的狀況（選填，英文）。去處請在第 1 區選 NICU／NBC／BR。",opt:true},
     ];
     const visible=stops.filter(x=>x.show).sort((a,b)=>a.order-b.order);   // order 必須是整數：CSS order 不吃小數（實機驗出）
     const cur=visible.find(x=>!journeySummary(x.id));
@@ -2370,8 +2388,8 @@
       // 全陰、無 csUncompl：外接時與 Apgar 併句（改法12）由下方 Apgar 段處理；此處先存句
       if(!S.outborn)P2.push(`No ${sl(joinOr(beNeg))} was noted.`);   // 陰性所見主動陳述,消 There-was 開頭
     }
-    // 初始觀察→獨立處置→重新評估；Apgar 獨立總結，不表示等待評分後才急救。
-    P2.push(...birthNarrative().map(esc));
+    // 出生觀察 → Apgar → 處置 → 再評估（與 Acceptance 同序）；Apgar 獨立總結，不表示等待評分後才急救。
+    P2.push(...birthObservation().map(esc));
     {const a10=V("ap10");
      const apgarClause=a10
        ? `Apgar scores were ${V("ap1")?sl(ap1):ph(ap1)}, ${V("ap5")?sl(ap5):ph(ap5)}, and ${sl(a10)} at 1, 5, and 10 minutes, respectively`
@@ -2380,6 +2398,7 @@
        // 改法12：外接開段 lead-in——事件陰性與 Apgar 併一句（陰性句在上方刻意未推）
        P2.push(`At delivery, there was no ${sl(joinOr(beNeg))}, and ${apgarClause}.`);
      else P2.push(`${apgarClause.charAt(0).toUpperCase()+apgarClause.slice(1)}.`);}
+    P2.push(...birthCourse().map(esc));
     if(S.surfactant)P2.push(`${sl("Surfactant",true)} was administered.`);
     // ── 暫定診斷問題清單（自動生成；短標籤給 chip、完整句給 note 的 # 清單）──
     // 未表態時不可寫「with or without」——診斷欄的兩可斷言無法做風險分層，比留空格更難處理
@@ -2995,12 +3014,13 @@ ${opLine}`);
       ?`The infant's first cry was delayed by ${sl(`${esc(minutes)} ${unitLabel(minutes,"minute")} (DOIC)`,true)}.`
       :`The infant had ${sl("delayed initial crying (DOIC)",true)}.`);}
     if(S.birthNegConfirmed&&!S.fd&&!S.msaf&&!S.doic)birth.push(`No ${sl("fetal distress, meconium-stained amniotic fluid (MSAF), or delayed initial crying (DOIC)")} was reported.`);
+    // 出生觀察 → Apgar → 處置 → 再評估（與 Admission 同序）；與 Admission 共用實際事件，不再以累積階梯補出未記錄的 PPV、插管或藥物。
+    birthObservation().forEach(sentence=>birth.push(sl(esc(sentence))));
     const ap10=inV("ap10");
     birth.push(ap10
       ?`Apgar scores were ${V("ap1")?sl(ap1):ph(ap1)}, ${V("ap5")?sl(ap5):ph(ap5)}, and ${sl(esc(ap10))} at 1, 5, and 10 minutes, respectively.`
       :`Apgar scores were ${V("ap1")?sl(ap1):ph(ap1)} and ${V("ap5")?sl(ap5):ph(ap5)} at 1 and 5 minutes, respectively.`);
-    // 與 Admission 共用實際事件，不再以累積階梯補出未記錄的 PPV、插管或藥物。
-    birthNarrative().forEach(sentence=>birth.push(sl(esc(sentence))));
+    birthCourse().forEach(sentence=>birth.push(sl(esc(sentence))));
     if(S.surfactant)birth.push(`${sl("Surfactant")} was administered in ${deliveryPlace()}.`);
     if(S.r.pph.on)birth.push(`The mother had ${sl("postpartum hemorrhage (PPH)",true)}.`);
     L.push(birth.join(" "));

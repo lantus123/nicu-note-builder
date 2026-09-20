@@ -8,7 +8,7 @@
 
 ## 敘事與資料歸屬
 
-填寫區塊順序仍配合手寫 chart。產出的 Admission 是完整敘述，依「出生觀察 → 實際處置 → 再評估 → 後續路徑 → 入院」串接，不改成 HPI／Assessment 分段模板。
+填寫區塊順序仍配合手寫 chart。產出的 Admission 是完整敘述，依「出生觀察 → Apgar → （直接入院的會診句）→ 實際處置 → 再評估 → 後續路徑 → 入院」串接，不改成 HPI／Assessment 分段模板；Acceptance 的 Brief history 用同一個順序（`birthObservation()`／`birthCourse()` 兩段由呼叫端夾 Apgar）。
 
 - 同一次處置只輸入一次；第 6 區的產房摘要是唯讀引用，不是第二份紀錄。
 - 相同處置在不同時間再次發生時，另建事件，不用文字去重刪掉真正的再次處置。
@@ -58,6 +58,7 @@
 | `S.pathway` | 後續路徑的場域與入院結語 | `direct`、`nursery`、`outborn` 三者擇一；**無預設**（2026-09-19 起），未選時第 6 區摘要顯示「尚未選路徑」、路徑專屬欄位隱藏、結語不寫路徑。再點一次已選項目可取消。 |
 | `S.dest`（第 1 區） | Admission 結語、`On admission to …` 句、Acceptance 入院句 | `NICU`／`NBC`／`BR` 擇一，整份 note 一次選；未選寫成 `____`。英文 `our NICU`／`our NBC`／`our baby room`（Ryan 2026-09-20 確認 BR＝baby room）。 |
 | `S.delivery` → `deliveryPlace()` | standby 句、產房再評估句、Acceptance surfactant 句、直接入院的會診句 | `cs` 寫 operating room、其餘寫 delivery room；不另設地點欄位。 |
+| `S.pwConsult`、`pwConsultH`、`pwConsultReason` → `consultSentence()` | 直接入院：出生觀察與 Apgar 之後、產房處置之前（故事 B 先叫兒科到產房再處置）；嬰兒室／外接：後續路徑段 | 會診小時數換算後晚於第一個處置分鐘數時，`timelineReview` 提醒核對，不重排。 |
 | `S.outborn` | 外院相關欄位與敘事的顯示條件 | 由 `S.pathway === "outborn"` 衍生，不是第二個獨立路徑。 |
 | `S.pwStandby`、`S.pwSbR`、`pwSbRIn` | 分娩之前的兒科 standby 背景 | 與路徑分開；原因只在 standby 啟用時使用。 |
 | `S.pwConsult`、`pwConsultReason`、`pwConsultH` | 出生後會診經過 | 與路徑及 standby 可並存；生後小時與原因都選填。 |

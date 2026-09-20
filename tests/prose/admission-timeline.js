@@ -205,8 +205,8 @@ test('two separately recorded PPV episodes retain their distinct times',({add,ev
   const assessment=add('assessment');eventInput(assessment,'breathing','spontaneous');
   const second=add('ppv');eventInput(second,'minutes','5');
   assert.equal(rows('birth').length,3);
-  before(note(),/1 minute|1 min\b/i,/spontaneous|spontaneously/i);
-  before(note(),/spontaneous|spontaneously/i,/5 minutes|5 min\b/i);
+  before(note(),/At 1 minute of age/i,/spontaneous|spontaneously/i);
+  before(note(),/spontaneous|spontaneously/i,/At 5 minutes of age/i);
 });
 
 test('explicitly no resuscitation does not erase unconfirmed observations or imply normality',({input,note})=>{
@@ -270,6 +270,46 @@ test('working inside a journey stop keeps it open instead of collapsing to the n
   assert.ok(birth.classList.contains('closed'),'only the header click collapses it');
   assert.match(birth.querySelector('.sum').textContent,/有哭聲/);
   assert.ok(!dr.classList.contains('closed'),'collapsing the finished stop opens the next empty one');
+});
+
+test('story B: the delivery-room consultation is narrated after the birth observation and before treatment',({toggle,input,add,note,get,eventInput})=>{
+  toggle('pwConsult');input('pwConsultReason','grunting');input('pwConsultH','0.2');
+  input('birthBreathing','labored');const ppv=add('ppv');
+  const text=note();
+  before(text,/At birth, the infant had labored breathing/,/Apgar scores were/);
+  before(text,/Apgar scores were/,/consulted in the delivery room .*?because of grunting/);
+  before(text,/consulted in the delivery room/,/positive-pressure ventilation \(PPV\) was initiated/i);
+  assert.equal((text.match(/was consulted/g)||[]).length,1,'the consultation is stated once');
+  input('pwConsultH','2');eventInput(ppv,'minutes','1');
+  assert.match(get('#pathwayReview').textContent,/會診時間晚於第一個產房處置/);
+});
+test('Admission and Acceptance narrate the delivery room in the same order: observation, Apgar, treatment, reassessment',({input,add,note,get,click})=>{
+  input('birthBreathing','apnea');input('ap1','4');input('ap5','7');add('ppv');input('birthFinalMin','10');input('birthFinalBreathing','spontaneous');
+  const adm=note();
+  before(adm,/At birth, the infant was apneic/,/Apgar scores were 4 and 7/);
+  before(adm,/Apgar scores were 4 and 7/,/positive-pressure ventilation \(PPV\) was initiated/i);
+  before(adm,/positive-pressure ventilation \(PPV\) was initiated/i,/On reassessment at 10 minutes of age/);
+  click('[data-tab="acc"]');const acc=note();
+  before(acc,/At birth, the infant was apneic/,/Apgar scores were 4 and 7/);
+  before(acc,/Apgar scores were 4 and 7/,/positive-pressure ventilation \(PPV\) was initiated/i);
+  before(acc,/positive-pressure ventilation \(PPV\) was initiated/i,/On reassessment at 10 minutes of age/);
+});
+test('the journey behaves like an accordion: starting the next stop collapses the previous one into its summary',({get,input,click})=>{
+  const birth=get('li[data-stop="birth"]'),dr=get('li[data-stop="dr"]');
+  input('birthBreathing','crying');
+  assert.ok(!birth.classList.contains('closed'));assert.ok(dr.classList.contains('closed'));
+  click('[data-stop-toggle="dr"]');
+  assert.ok(!dr.classList.contains('closed'),'opening the next stop');
+  assert.ok(birth.classList.contains('closed'),'the previous stop collapses');
+  assert.match(birth.querySelector('.sum').textContent,/有哭聲/);
+  input('birthResusStatus','none');
+  assert.ok(!dr.classList.contains('closed'));assert.ok(birth.classList.contains('closed'));
+  const openCount=[...get('#journey').querySelectorAll('li')].filter(li=>!li.hidden&&!li.classList.contains('closed')).length;
+  assert.equal(openCount,1,'only the stop being worked on is open');
+});
+test('the admission stop is labelled 入院 until a destination is chosen',({get,click})=>{
+  click('[data-seg="dest"] [data-v="NICU"]');assert.equal(get('li[data-stop="adm"] .t').textContent,'入 NICU');
+  click('[data-seg="dest"] [data-v="NICU"]');assert.equal(get('li[data-stop="adm"] .t').textContent,'入院');
 });
 
 test('confirmed continuing PPV is a continuation, not another administration',({add,input,seg,note})=>{
