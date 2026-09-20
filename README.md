@@ -37,7 +37,7 @@
 
 - 表單保留手寫 chart 的區塊順序；第 5 區依「出生觀察 → 實際處置／再評估 → 產房最後狀態」填寫，輸出仍是完整英文敘述。
 - PPV、插管、胸外按壓與 epinephrine 分別記錄，不再由急救階梯推定其他處置；新增實際處置即確認有施作，不必先切換狀態。再評估可獨立記錄，反覆事件可調整順序及復原剛移除的項目。
-- **產房急救 PPV 依 NRP 第 9 版（2025 AHA/AAP，2025-10 發布）預設帶入**（Ryan 2026-09-20）：新增 PPV 事件時依 GA 帶入 PIP（≥32 週 25、<32 週 20 cmH₂O）、PEEP 5、FiO₂（≥35 週 21%、32–34 週取下界 21%、<32 週 30%）；通氣率 30–60/min 不寫入。帶入的值以虛線框＋提示標示「NRP 預設，請核對」，並在核對提醒列出；醫師改任一值即視為實際紀錄。沒改就照值寫進病歷——這是 Ryan 明示接受的預設，是「預設值不寫成事實」原則的唯一例外。插管、course 範圍的 PPV 不帶預設。所有 NRP 數值與句型集中在程式的 `NRP` 表（來源：AAP 第 9 版科學變更表的 OPQIC／pw.live 整理），院內教材若不同只改那一張表。
+- **產房急救 PPV 依 NRP 第 9 版（2025 AHA/AAP，2025-10 發布）預設帶入**（Ryan 2026-09-20）：新增 PPV 事件時依 GA 帶入 PIP（≥32 週 25、<32 週 20 cmH₂O）、PEEP 5、FiO₂（≥35 週 21%；<35 週一律 30%——指引 32–34 週為 21–30%、<32 週 ≥30%，Ryan 定「指引可 30% 就統一 30%」）；通氣率 30–60/min 不寫入。帶入的值以虛線框＋提示標示「NRP 預設，請核對」，並在核對提醒列出；醫師改任一值即視為實際紀錄。沒改就照值寫進病歷——這是 Ryan 明示接受的預設，是「預設值不寫成事實」原則的唯一例外。插管、course 範圍的 PPV 不帶預設。所有 NRP 數值與句型集中在程式的 `NRP` 表（來源：AAP 第 9 版科學變更表的 OPQIC／pw.live 整理），院內教材若不同只改那一張表。
 - 急救事件的英文句型對齊 NRP 用語（`positive-pressure ventilation (PPV) was initiated`、`endotracheal intubation was performed and ventilation was continued through the endotracheal tube`、`chest compressions were initiated`、`epinephrine … was administered`）；不自動補入未記錄的比例、劑量或間隔。第 9 版把 PPV 改稱 ventilation，病歷仍保留 (PPV) 以免歧義。
 - 第 6 區承接唯讀產房摘要，再選直接入院、嬰兒室觀察或外院轉入；standby 與出生後會診分開選，可與路徑並存。
 - 支持延續需明確確認；症狀區分新出現、持續或再次發生。未記錄不當成正常、未施作或已改善，FD／DOIC／MSAF 的陰性敘述需額外確認。

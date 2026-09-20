@@ -137,7 +137,7 @@ test('NRP initial oxygen and pressure follow gestational age; course-scope PPV a
   assert.equal(c.querySelector('[data-event-field="fiO2"]').value,'30');assert.equal(c.querySelector('[data-event-field="pip"]').value,'20');
   input('gaW','33');
   const mid=add('ppv'), m=row(mid);
-  assert.equal(m.querySelector('[data-event-field="fiO2"]').value,'21');assert.equal(m.querySelector('[data-event-field="pip"]').value,'25');
+  assert.equal(m.querySelector('[data-event-field="fiO2"]').value,'30','32–34 週指引 21–30%，Ryan 定統一 30%');assert.equal(m.querySelector('[data-event-field="pip"]').value,'25');
   const tube=add('intubation');
   for(const f of ['fiO2','pip','peep','rr'])assert.equal(row(tube).querySelector(`[data-event-field="${f}"]`).value,'',`intubation ${f} must stay blank`);
   seg('pathway','direct');
