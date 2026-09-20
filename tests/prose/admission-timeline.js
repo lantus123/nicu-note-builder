@@ -231,15 +231,36 @@ test('DOIC of zero minutes is a recorded value, not an empty field',({toggle,inp
 
 test('filled journey stops collapse into a read-only summary that reuses birth data and reopen on demand',({input,get,click})=>{
   input('birthBreathing','apnea');input('birthFinalNote','Synthetic bridge observation');
-  const stop=get('li[data-stop="drEnd"]'), sum=stop.querySelector('.sum');
-  assert.ok(stop.classList.contains('closed'),'A filled stop that is not the current one starts collapsed');
+  const stop=get('li[data-stop="drEnd"]');
+  // 2026-09-20：正在填的站會被釘住展開（不再一輸入就收合）；收合是使用者點站名的動作
+  assert.ok(!stop.classList.contains('closed'),'a stop that was just edited stays open');
+  click('[data-stop-toggle="drEnd"]');
+  const sum=stop.querySelector('.sum');
+  assert.ok(stop.classList.contains('closed'),'the header click collapses it into a summary');
   assert.ok(!sum.isContentEditable,'The carried summary must not create another editable record');
   assert.match(sum.textContent,/Synthetic bridge observation/);
   click('[data-stop-toggle="drEnd"]');
   assert.ok(!stop.classList.contains('closed'),'Reopening a stop must reveal its fields');
   assert.equal(stop.querySelector('.sum').textContent,'','An open stop shows its fields, not the summary');
   const birth=get('li[data-stop="birth"]');
+  if(!birth.classList.contains('closed'))click('[data-stop-toggle="birth"]');   // 剛編輯過的站是釘住展開的，收起才看得到摘要
   assert.match(birth.querySelector('.sum').textContent||'',/Apnea/,'The birth stop summary reuses the recorded observation');
+});
+
+test('working inside a journey stop keeps it open instead of collapsing to the next stop',({get,input,click})=>{
+  // 2026-09-20 Ryan：「點任一內容即跳下一步驟」。原本一輸入就不再是「現在這站」而被收合。
+  const birth=get('li[data-stop="birth"]');
+  assert.ok(!birth.classList.contains('closed'),'the first empty stop starts open');
+  const dr=get('li[data-stop="dr"]');
+  input('birthBreathing','crying');
+  assert.ok(!birth.classList.contains('closed'),'entering data must not collapse the stop being edited');
+  assert.ok(dr.classList.contains('closed'),'while a stop is being edited, the next stop must not auto-open');
+  input('birthTone','good');
+  assert.ok(!birth.classList.contains('closed'),'further edits keep it open');
+  click('[data-stop-toggle="birth"]');
+  assert.ok(birth.classList.contains('closed'),'only the header click collapses it');
+  assert.match(birth.querySelector('.sum').textContent,/有哭聲/);
+  assert.ok(!dr.classList.contains('closed'),'collapsing the finished stop opens the next empty one');
 });
 
 test('confirmed continuing PPV is a continuation, not another administration',({add,input,seg,note})=>{

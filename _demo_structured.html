@@ -2010,6 +2010,14 @@
     return "";
   }
   let journeyLastPathway=null;
+  // 2026-09-20 Ryan：「為什麼點任一內容即跳下一步驟？」——原本「現在填這站」＝第一個沒資料的站，
+  // 使用者一輸入，那站就有資料、不再是現在這站 ⇒ 被自動收合、下一站展開。
+  // 修：在站內點過／輸入過就把該站釘住展開（S.journeyOpen[id]=true），只有點站名或換故事才收。
+  // 用 capture 階段，確保在 document 上那些會呼叫 render() 的處理器之前記下來。
+  ["pointerdown","focusin","input","change"].forEach(type=>document.addEventListener(type,e=>{
+    const body=e.target&&e.target.closest&&e.target.closest("#journey > li > .body"); if(!body)return;
+    const li=body.parentElement; if(li&&li.dataset.stop&&S.journeyOpen[li.dataset.stop]!==true)S.journeyOpen[li.dataset.stop]=true;
+  },true));
   function renderJourney(){
     const story=deriveStory();
     document.querySelectorAll("#pathwayCard .story").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.story===story)));
@@ -2037,7 +2045,10 @@
       const li=ol.querySelector(`li[data-stop="${st.id}"]`); if(!li)return;
       li.hidden=!st.show; li.style.order=st.order;
       const sum=journeySummary(st.id), has=!!sum, isCur=!!(cur&&cur.id===st.id);
-      const open=S.journeyOpen[st.id]!==undefined?S.journeyOpen[st.id]:isCur;
+      // 自動展開「現在這站」只在沒有任何站被釘住（正在填）時發生：使用者收起手上那站，下一個空站才展開。
+      // 否則填 A 站時 B 站在下面長出來，仍有「跳下一步」的感覺（2026-09-20 實機驗）。
+      const pinned=Object.values(S.journeyOpen).some(v=>v===true);
+      const open=S.journeyOpen[st.id]!==undefined?S.journeyOpen[st.id]:(isCur&&!pinned);
       li.classList.toggle("has",has); li.classList.toggle("cur",isCur); li.classList.toggle("closed",!open);
       li.classList.toggle("first",!!visible[0]&&visible[0].id===st.id); li.classList.toggle("last",!!visible.length&&visible[visible.length-1].id===st.id);
       li.querySelector(".t").textContent=st.lab;
