@@ -495,7 +495,7 @@ test('destination is a placeholder until chosen, then names the chosen unit in b
   includes(nbc.admission,'admitted to our NBC for further evaluation and management');
   includes(nbc.acceptance,'admitted to our NBC');
   assert.doesNotMatch(nbc.admission,/our NICU/);
-  includes(notes([seg('dest','BR')]).admission,'admitted to our baby room (BR)');
+  includes(notes([seg('dest','BR')]).admission,'admitted to our baby room for further evaluation');
   includes(notes([seg('dest','NICU')]).admission,'admitted to our NICU');
 });
 test('admission-status sentence follows the chosen destination and is not duplicated in acceptance',()=>{
@@ -520,11 +520,11 @@ test('consult location is added only for an explicit direct pathway',()=>{
 });
 test('pathway has no default and can be un-picked by clicking the same button again',()=>{
   const blank=notes([seg('dest','NICU')]).admission;
-  assert.doesNotMatch(blank,/initially cared for in the nursery|referring hospital/);
+  assert.doesNotMatch(blank,/initially cared for in the baby room|referring hospital/);
   const nursery=notes([seg('dest','NICU'),seg('pathway','nursery')]).admission;
-  includes(nursery,'initially cared for in the nursery');
+  includes(nursery,'initially cared for in the baby room');
   const unpicked=notes([seg('dest','NICU'),seg('pathway','nursery'),seg('pathway','nursery')]).admission;
-  assert.doesNotMatch(unpicked,/initially cared for in the nursery/,'second click on the same pathway must clear it');
+  assert.doesNotMatch(unpicked,/initially cared for in the baby room/,'second click on the same pathway must clear it');
   assert.equal(unpicked,blank,'un-picked pathway must render exactly like never picked');
 });
 test('clearable segments can be un-picked; segments with semantic defaults cannot',()=>{
@@ -534,6 +534,45 @@ test('clearable segments can be un-picked; segments with semantic defaults canno
   includes(female,'female'); assert.doesNotMatch(cleared,/\bfemale\b/);
   const dolTwice=notes([seg('dol','0'),seg('dol','0')]).acceptance;
   includes(dolTwice,'0 d/o');   // dol 有語意預設，再點不可清空
+});
+
+
+// ── 2026-09-20 故事 C（Ryan）：嬰兒室有狀況／母體風險 → 兒科去看（不是會診）→ 嬰兒室抽血 → 結果異常才收 ──
+test('story C: the baby-room evaluation is not a consultation and derives maternal risk factors from section 2',()=>{
+  const {admission}=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','obSx','tachypnea'),seg('pwOnset','persisted'),
+    pick('ryn','fever','yes'),pick('ryn','prom','yes'),pick('rc','prom','prom'),set('promH','18'),screen('gbs','pos'),
+    pick('msel','brEval','persist24'),pick('msel','brEval','maternal')]);
+  includes(admission,'initially cared for in the baby room');
+  includes(admission,'tachypnea persisted beyond 24 hours of age');
+  includes(admission,'maternal risk factors (');includes(admission,'maternal fever');includes(admission,'PROM for 18 hours');includes(admission,'maternal GBS colonization');
+  includes(admission,'the pediatric team was asked to evaluate the infant in the baby room');
+  assert.doesNotMatch(admission,/was consulted|nursery/i);
+});
+test('story C: baby-room work-up findings are recorded once and justify the admission',()=>{
+  const {admission,acceptance}=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brWorkup','cbc'),pick('msel','brWorkup','crp'),
+    pick('msel','brFindings','bandemia'),pick('msel','brFindings','crp'),set('brCrp','12.3')]);
+  includes(admission,'complete blood count with differential');
+  includes(admission,'were obtained in the baby room, which showed bandemia and an elevated CRP level (12.3 mg/dL).');
+  includes(admission,'The infant was therefore admitted to our NBC');
+  assert.doesNotMatch(admission,/Subsequently, the infant was admitted/);
+  includes(acceptance,'bandemia');
+  assert.equal((admission.match(/bandemia/g)||[]).length,1,'the finding is stated once');
+});
+test('story C: a work-up without recorded results is not written as normal; an explicit confirmation is',()=>{
+  const pending=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brWorkup','cbc')]).admission;
+  includes(pending,'A complete blood count with differential was obtained in the baby room.');
+  assert.doesNotMatch(pending,/unremarkable|normal|therefore/i);
+  const normal=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brWorkup','cbc'),pick('msel','brFindings','normal')]).admission;
+  includes(normal,'and the results were unremarkable');
+  includes(normal,'Subsequently, the infant was admitted');
+  // 勾了異常再勾「無異常」⇒ 互斥，只剩無異常
+  const flipped=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brFindings','bandemia'),pick('msel','brFindings','normal')]).admission;
+  assert.doesNotMatch(flipped,/bandemia/);includes(flipped,'unremarkable');
+});
+test('story C: maternal-risk reason without any recorded risk falls back to a generic phrase',()=>{
+  const {admission}=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brEval','maternal')]);
+  includes(admission,'Because maternal risk factors, the pediatric team was asked to evaluate');
+  assert.doesNotMatch(admission,/maternal risk factors \(/);
 });
 
 let failed=0;

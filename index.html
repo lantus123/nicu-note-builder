@@ -557,7 +557,7 @@
     <div class="stories" role="radiogroup" aria-label="入院故事">
       <button type="button" class="story" role="radio" aria-checked="false" data-story="A"><span class="k">A</span><span class="t">產前 standby，直接入院</span><span class="d">本院出生。兒科在產前就到產房／刀房待命，處置後直接入院。</span><span class="p">standby → 出生 → 產房 → 入院</span></button>
       <button type="button" class="story" role="radio" aria-checked="false" data-story="B"><span class="k">B</span><span class="t">出生後會診，直接入院</span><span class="d">本院出生。出生後才叫兒科到產房／刀房，處置後直接入院。</span><span class="p">出生 → 會診 → 產房 → 入院</span></button>
-      <button type="button" class="story" role="radio" aria-checked="false" data-story="C"><span class="k">C</span><span class="t">嬰兒室觀察後轉入</span><span class="d">本院出生，先到嬰兒室（BR）。之後出現狀況，會診後轉入。</span><span class="p">出生 → 嬰兒室 → 會診 → 入院</span></button>
+      <button type="button" class="story" role="radio" aria-checked="false" data-story="C"><span class="k">C</span><span class="t">嬰兒室觀察後轉入</span><span class="d">本院出生，先到嬰兒室（baby room）。出狀況或有母體風險時兒科去看（不算會診）、先在嬰兒室抽血，結果異常才收入。</span><span class="p">出生 → 嬰兒室 → 兒科評估・抽血 → 入院</span></button>
       <button type="button" class="story" role="radio" aria-checked="false" data-story="D"><span class="k">D</span><span class="t">外院出生，我方外接</span><span class="d">在外院出生。外院會診我方，外接團隊去接，轉送入院。</span><span class="p">外院 → 會診 → 抵達 → 轉送 → 入院</span></button>
     </div>
     <p class="man-h" id="storyHelp"><b>不確定選哪個？</b>先選最接近的，之後每一站都能改。混合情況（例如 standby 過、但寶寶還是先去了嬰兒室）：選 C，再到最下面「調整細節」把 standby 勾起來。再點一次已選的故事可取消。</p>
@@ -584,8 +584,7 @@
         <button type="button" class="hd" data-stop-toggle="birth" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
 <div class="clinical-stage">
-            <p class="man-h">只記錄實際觀察；未填不會視為正常。Apgar 沿用第 1 區。</p>
-      <div class="clinical-grid">
+            <div class="clinical-grid">
         <div class="field"><label class="lab" for="birthBreathing">呼吸情形</label>
           <select class="tin" id="birthBreathing"><option value="">未記錄</option><option value="crying">有哭聲</option><option value="spontaneous">有自主呼吸</option><option value="apnea">無自主呼吸 / Apnea</option><option value="gasping">喘息樣呼吸 / Gasping</option><option value="labored">呼吸費力</option><option value="ineffective">呼吸無效</option></select></div>
         <div class="field"><label class="lab" for="birthTone">肌張力</label>
@@ -644,8 +643,7 @@
         <button type="button" class="hd" data-stop-toggle="drEnd" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
 <div class="clinical-stage">
-            <p class="man-h">記錄離開產房時的實際狀態，下一站會自動承接；未填不會推定已改善或支持已停止。</p>
-      <div class="clinical-grid">
+            <div class="clinical-grid">
         <div class="field"><label class="lab" for="birthFinalBreathing">呼吸情形</label>
           <select class="tin" id="birthFinalBreathing"><option value="">未記錄</option><option value="crying">有哭聲</option><option value="spontaneous">有自主呼吸</option><option value="apnea">無自主呼吸 / Apnea</option><option value="gasping">喘息樣呼吸 / Gasping</option><option value="labored">呼吸費力</option><option value="ineffective">呼吸無效</option></select></div>
         <div class="field"><label class="lab" for="birthFinalTone">肌張力</label>
@@ -752,6 +750,31 @@
     <div class="field" id="pwCourseWrap" hidden><label class="lab" for="obCourse">過程補充 <span class="q">（選填，英文；保留完整內容）</span></label>
       <textarea class="tarea" id="obCourse" rows="2" placeholder="例：initially cared for in the nursery; the transport team was contacted…"></textarea></div>
             </div>
+      </li>
+      <li data-stop="brEval" hidden>
+        <span class="dot" aria-hidden="true"></span>
+        <button type="button" class="hd" data-stop-toggle="brEval" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
+        <div class="body"><p class="man-h stop-plain"></p>
+    <div class="field" id="brEvalWrap"><span class="lab">兒科為什麼去看 <span class="q">（多選；這不是正式會診，note 寫 asked to evaluate）</span></span>
+      <div class="seg risk" data-msel="brEval" style="flex-wrap:wrap;margin-bottom:7px">
+        <button type="button" data-on data-v="persist24" style="flex:0 1 auto">症狀持續超過 24 小時</button>
+        <button type="button" data-on data-v="maternal" style="flex:0 1 auto">母體風險因子（自動帶第 2 區：發燒／PROM／GBS）</button>
+      </div>
+      <label class="lab" for="brEvalIn">其他原因 <span class="q">（選填，英文）</span></label><input class="tin" id="brEvalIn" placeholder="或自行輸入…"></div>
+    <div class="field"><span class="lab">嬰兒室檢查 <span class="q">（多選；抽了什麼）</span></span>
+      <div class="seg" data-msel="brWorkup" style="flex-wrap:wrap">
+        <button type="button" data-v="cbc" style="flex:0 1 auto">CBC/DC</button><button type="button" data-v="crp" style="flex:0 1 auto">CRP</button><button type="button" data-v="bc" style="flex:0 1 auto">B/C</button><button type="button" data-v="glucose" style="flex:0 1 auto">Blood sugar</button><button type="button" data-v="cxr" style="flex:0 1 auto">CXR</button>
+      </div></div>
+    <div class="field"><span class="lab">結果 <span class="q">（多選；有異常才勾；無異常要明確勾「無異常」，否則不寫）</span></span>
+      <div class="seg risk" data-msel="brFindings" style="flex-wrap:wrap;margin-bottom:7px">
+        <button type="button" data-on data-v="bandemia" style="flex:0 1 auto">Bandemia</button><button type="button" data-on data-v="leukocytosis" style="flex:0 1 auto">白血球↑</button><button type="button" data-on data-v="leukopenia" style="flex:0 1 auto">白血球↓</button><button type="button" data-on data-v="crp" style="flex:0 1 auto">CRP↑</button><button type="button" data-on data-v="hypoglycemia" style="flex:0 1 auto">低血糖</button><button type="button" data-on data-v="cxr" style="flex:0 1 auto">CXR 異常</button><button type="button" data-v="normal" style="flex:0 1 auto">結果無異常（確認）</button>
+      </div>
+      <div class="row2">
+        <div class="field" id="brCrpWrap" hidden><label class="lab" for="brCrp">CRP 值 <span class="q">（選填）</span></label><div class="num"><input type="number" id="brCrp" min="0" step="0.1" placeholder="未記錄"><span class="u">mg/dL</span></div></div>
+        <div class="field" id="brGluWrap" hidden><label class="lab" for="brGlu">血糖值 <span class="q">（選填）</span></label><div class="num"><input type="number" id="brGlu" min="0" placeholder="未記錄"><span class="u">mg/dL</span></div></div>
+      </div>
+      <label class="lab" for="brFindIn">其他結果 <span class="q">（選填，英文）</span></label><input class="tin" id="brFindIn" placeholder="e.g. CXR showed bilateral haziness"></div>
+        </div>
       </li>
       <li data-stop="adm" hidden>
         <span class="dot" aria-hidden="true"></span>
@@ -1302,7 +1325,7 @@
            amnio:"none",nipt:"none",mgso4:"none",toco:"none",iap:"none",us:"na",ancReg:"na",
            fd:false,doic:false,msaf:false,msafGrade:"",
            // pathway 不預設：預選「直接入院」＝零點擊就斷言路徑（2026-09-19 住院醫師混亂盤點）
-           pathway:"",outborn:false,obRespType:"",obRespStable:false,obSx:[],obO2Dev:"",   // 支持與裝置皆不預設，避免寫成未確認事實。
+           pathway:"",outborn:false,obRespType:"",obRespStable:false,obSx:[],brEval:[],brWorkup:[],brFindings:[],obO2Dev:"",   // 支持與裝置皆不預設，避免寫成未確認事實。
            pwSbR:[],pwStandby:false,pwConsult:false,pwOnset:"observed",obM1Type:"",obM1Dev:"",
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
            dol:"1",numUnit:{promH:"hours"},mode:"adm",journeyOpen:{},planAbx:"empirical",planAbxAuto:true,planOn:{},planExplained:false,noteDirty:false,noteCache:{},
@@ -1536,6 +1559,9 @@
       b.setAttribute("aria-pressed",S.habit[k]?"true":"false"); render(); return;}
     const ms=b.closest("[data-msel]"); if(ms){const k=ms.dataset.msel,v=b.dataset.v,arr=S[k],i=arr.indexOf(v);
       if(i<0)arr.push(v);else arr.splice(i,1); b.setAttribute("aria-pressed",arr.includes(v)?"true":"false");
+      if(k==="brFindings"&&arr.includes(v)){   // 「結果無異常（確認）」與任何異常項互斥：不能同時寫 unremarkable 又寫 bandemia
+        if(v==="normal")arr.splice(0,arr.length,"normal"); else {const j=arr.indexOf("normal"); if(j>=0)arr.splice(j,1);}
+        ms.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(arr.includes(x.dataset.v))));}
       if(k==="pwSbR"&&arr.includes(v)){   // standby 原因命中出生事件→自動勾(可再取消),避免與「There was no fetal distress…」矛盾
         if(v==="fetal distress"&&!S.fd){S.fd=true; document.querySelector('[data-tog="fd"] button')?.setAttribute("aria-pressed","true");}
         if(v==="meconium-stained amniotic fluid"&&!S.msaf){S.msaf=true; document.querySelector('[data-tog="msaf"] button')?.setAttribute("aria-pressed","true"); const w=document.getElementById("msafGradeWrap"); if(w)w.hidden=false;}}
@@ -1671,7 +1697,7 @@
   }
   function eventNarrative(e,scope){
     const age=e.minutes!==undefined&&e.minutes!==""?`At ${e.minutes} ${unitLabel(e.minutes,"minute")} of age`:"";
-    const place=e.location?`${/^(?:the )?(?:nursery|delivery room|NICU|ward|operating room)$/i.test(e.location)?"In":"At"} ${e.location}`:"";
+    const place=e.location?`${/^(?:the )?(?:baby room|nursery|delivery room|NICU|ward|operating room)$/i.test(e.location)?"In":"At"} ${e.location}`:"";
     const lead=place+(age?`${place?" ":""}${place?age[0].toLowerCase()+age.slice(1):age}`:"");
     if(e.kind==="assessment"){
       if(!e.breathing&&!e.tone&&!e.hr&&!e.support)return [lead?`${lead}, a reassessment was recorded.`:"A reassessment was recorded.",sentence(e.note||"")].filter(Boolean);
@@ -1701,7 +1727,7 @@
     return out;
   }
   // 入院去處（Ryan 2026-09-19：要能選 NICU／NBC／BR）。英文寫法待 Ryan 校正；未選時寫成佔位符，不替使用者決定去處。
-  const DEST_EN={NICU:"our NICU",NBC:"our NBC",BR:"our baby room (BR)"};
+  const DEST_EN={NICU:"our NICU",NBC:"our NBC",BR:"our baby room"};   // Ryan 2026-09-20：BR 就寫 baby room
   function destPhrase(blank="____"){return S.dest?DEST_EN[S.dest]:blank;}
   // 產房／刀房依生產方式自動推（Ryan 2026-09-19：可以，但依 VD 或 CS 去選擇）；未選生產方式時維持原本的 delivery room。
   function deliveryPlace(){return S.delivery==="cs"?"the operating room":"the delivery room";}
@@ -1735,16 +1761,48 @@
     const ps=eventSettings({...settings,kind:mode==="ett"?"intubation":mode});
     return sentence(`${action} ${context}${device}${ps}`);
   }
+  // 母體風險因子直接從第 2 區帶（發燒／PROM 時數／GBS 陽性），不在嬰兒室那站重填
+  function maternalRiskPhrases(){
+    const r=[];
+    if(S.r.fever&&S.r.fever.on)r.push("maternal fever");
+    if(S.r.prom&&S.r.prom.on){const hr=V("promH"); r.push(`${S.r.prom.val==="pprom"?"PPROM":"PROM"}${hr?` for ${hr} ${unitLabel(hr,S.numUnit.promH==="days"?"day":"hour")}`:""}`);}
+    if(S.scr.gbs==="pos")r.push("maternal GBS colonization");
+    return r;
+  }
   function postnatalNarrative({transferSource="",diagnosis="",closeAdmission=true}={}){
     diagnosis=diagnosis.replace(/[.。]+$/,"");
     const out=[],sx=joinAnd(S.obSx),h=raw("pwOnsetH"),u=raw("pwOnsetUnit");
-    if(S.pathway==="nursery")out.push("The infant was initially cared for in the nursery.");
-    const context=S.outborn?"Before transfer":S.pathway==="nursery"?"During nursery observation":"Before admission";
+    let brAbnormal=false;   // 嬰兒室檢查有異常 ⇒ 結語用 therefore（收入的理由就是它）
+    if(S.pathway==="nursery")out.push("The infant was initially cared for in the baby room.");
+    const context=S.outborn?"Before transfer":S.pathway==="nursery"?"During observation in the baby room":"Before admission";
     if(sx){
       const timing=h&&u?` at ${h} ${unitLabel(h,u==="minutes"?"minute":"hour")} of age`:"";
       const verb={developed:"developed",persisted:"persisted",recurrent:"recurred",observed:"were noted"}[S.pwOnset]||"were noted";
       const observed=S.pwOnset==="observed"||!S.pwOnset;
       out.push(`${context}, ${sx} ${observed?(S.obSx.length===1?"was noted":"were noted"):verb}${timing}.`);
+    }
+    // 故事 C（2026-09-20 Ryan）：嬰兒室有狀況或有母體風險 → 兒科去看（不是會診）→ 在嬰兒室抽血 → 結果異常才收。
+    if(S.pathway==="nursery"){
+      const why=[];
+      if(S.brEval.includes("persist24"))why.push(sx?`${sx} persisted beyond 24 hours of age`:"the symptoms persisted beyond 24 hours of age");
+      if(S.brEval.includes("maternal")){const mr=maternalRiskPhrases(); why.push(mr.length?`maternal risk factors (${joinAnd(mr)})`:"maternal risk factors");}
+      const whyOther=raw("brEvalIn").replace(/[.。]+$/,""); if(whyOther)why.push(whyOther);
+      if(why.length)out.push(`Because ${joinAnd(why)}, the pediatric team was asked to evaluate the infant in the baby room.`);
+      const WU={cbc:"a complete blood count with differential",crp:"C-reactive protein",bc:"blood culture",glucose:"blood glucose",cxr:"chest radiography"};
+      const wu=S.brWorkup.map(k=>WU[k]).filter(Boolean), fd=[];
+      if(S.brFindings.includes("bandemia"))fd.push("bandemia");
+      if(S.brFindings.includes("leukocytosis"))fd.push("leukocytosis");
+      if(S.brFindings.includes("leukopenia"))fd.push("leukopenia");
+      if(S.brFindings.includes("crp"))fd.push(`an elevated CRP level${raw("brCrp")?` (${raw("brCrp")} mg/dL)`:""}`);
+      if(S.brFindings.includes("hypoglycemia"))fd.push(`hypoglycemia${raw("brGlu")?` (blood glucose ${raw("brGlu")} mg/dL)`:""}`);
+      if(S.brFindings.includes("cxr"))fd.push("an abnormal chest radiograph");
+      const fdOther=raw("brFindIn").replace(/[.。]+$/,""); if(fdOther)fd.push(fdOther);
+      brAbnormal=fd.length>0;
+      if(wu.length||fd.length||S.brFindings.includes("normal")){
+        const done=wu.length?`${joinAnd(wu).replace(/^./,c=>c.toUpperCase())} ${wu.length>1?"were":"was"} obtained in the baby room`:"A work-up was performed in the baby room";
+        const res=fd.length?`, which showed ${joinAnd(fd)}`:S.brFindings.includes("normal")?", and the results were unremarkable":"";
+        out.push(`${done}${res}.`);   // 沒勾結果就只寫做了檢查，不寫成正常（去捏造）
+      }
     }
     if(S.pwConsult){
       const t=raw("pwConsultH"),reason=raw("pwConsultReason").replace(/[.。]+$/,"");
@@ -1761,7 +1819,7 @@
       if(arrival)out.push(finish(`On our team's arrival at the referring hospital, ${arrival.replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase())}`));
     }
     const mode=pathwaySupportMode(),support=supportSentence("obRespRelation",S.obRespType,
-      S.outborn?"during transport":S.pathway==="nursery"?"in the nursery":"before admission",{
+      S.outborn?"during transport":S.pathway==="nursery"?"in the baby room":"before admission",{
         device:mode==="o2"?({hood:"an oxygen hood",cannula:"a nasal cannula",mask:"a face mask"})[S.obO2Dev]:"",
         flow:mode==="o2"?raw("obO2Flow"):"",fiO2:["cpap","ppv","ett"].includes(mode)?raw("obFiO2"):"",
         pip:["ppv","ett"].includes(mode)?raw("obIP"):"",peep:["cpap","ppv","ett"].includes(mode)?raw("obPEEP"):"",rr:mode==="ett"?raw("obRR"):""});
@@ -1769,16 +1827,16 @@
     if(mode==="ppv"&&S.obRespStable)out.push("Heart rate and oxygen saturation remained stable during positive-pressure ventilation.");
     S.courseEvents.forEach(e=>out.push(...eventNarrative(e,"course")));
     if(S.outborn)out.push(`Subsequently, the infant was transferred from ${transferSource||"____"} to our hospital${closeAdmission?` and admitted to ${destPhrase()} for further evaluation and management`:""}${closeAdmission&&diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
-    else if(closeAdmission)out.push(`Subsequently, the infant was admitted to ${destPhrase()} for further evaluation and management${diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
+    else if(closeAdmission)out.push(`${brAbnormal?"The infant was therefore admitted":"Subsequently, the infant was admitted"} to ${destPhrase()} for further evaluation and management${diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
     if(raw("obAdmissionStatus"))out.push(finish(`On admission to ${destPhrase()}, ${raw("obAdmissionStatus").replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase())}`));
     return out;
   }
-  const ROUTE_KEYS=["obRespType","obRespStable","obSx","obO2Dev","pwOnset","obM1Type","obM1Dev","pwConsult","courseEvents","continuitySignatures"];
-  const ROUTE_FIELDS=["obFacility","obTransferFrom","obReason","obM1Flow","obArrival","obO2Flow","obFiO2","obIP","obPEEP","obRR","obCourse","pwOnsetH","pwOnsetUnit","pwConsultReason","pwConsultH","obAdmissionStatus","obRespRelation","obM1Relation"];
+  const ROUTE_KEYS=["obRespType","obRespStable","obSx","brEval","brWorkup","brFindings","obO2Dev","pwOnset","obM1Type","obM1Dev","pwConsult","courseEvents","continuitySignatures"];
+  const ROUTE_FIELDS=["obFacility","obTransferFrom","obReason","obM1Flow","obArrival","obO2Flow","obFiO2","obIP","obPEEP","obRR","obCourse","pwOnsetH","pwOnsetUnit","pwConsultReason","pwConsultH","obAdmissionStatus","obRespRelation","obM1Relation","brEvalIn","brCrp","brGlu","brFindIn"];
   function switchPathway(next){
     if(next===S.pathway)return;
     S.routeDrafts[S.pathway]={state:Object.fromEntries(ROUTE_KEYS.map(k=>[k,JSON.parse(JSON.stringify(S[k]))])),fields:Object.fromEntries(ROUTE_FIELDS.map(id=>[id,V(id)]))};
-    const saved=S.routeDrafts[next],defaults={obRespType:"",obRespStable:false,obSx:[],obO2Dev:"",pwOnset:"observed",obM1Type:"",obM1Dev:"",pwConsult:false,courseEvents:[],continuitySignatures:{}};
+    const saved=S.routeDrafts[next],defaults={obRespType:"",obRespStable:false,obSx:[],brEval:[],brWorkup:[],brFindings:[],obO2Dev:"",pwOnset:"observed",obM1Type:"",obM1Dev:"",pwConsult:false,courseEvents:[],continuitySignatures:{}};
     ROUTE_KEYS.forEach(k=>S[k]=saved?saved.state[k]:defaults[k]);
     ROUTE_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)el.value=saved?saved.fields[id]||"":"";});
     S.pathway=next;
@@ -1863,6 +1921,10 @@
       if(r.relation==="stopped"&&(!r.source||r.source==="room"||S.continuitySignatures[field]!==r.source))path.push("前段呼吸支持未記錄或已改變，請重新確認停止了哪項支持。");
     });
     if(/\bno resuscitation\b/i.test([raw("birthInitialNote"),raw("birthFinalNote"),raw("obCourse")].join(" "))&&birthHasAction())path.push("自由文字提及 no resuscitation，但已有急救事件，請確認是否為不同時點。");
+    if(S.pathway==="nursery"){
+      if(S.brEval.includes("maternal")&&!maternalRiskPhrases().length)path.push("勾了「母體風險因子」，但第 2 區沒有發燒、PROM 或 GBS 陽性的紀錄；note 只會寫 maternal risk factors，請補第 2 區或改原因。");
+      if(S.brWorkup.length&&!S.brFindings.length)path.push("嬰兒室檢查已勾但結果未填：note 只寫做了檢查，不會寫成正常；無異常請勾「結果無異常（確認）」。");
+    }
     const bridge=document.getElementById("birthBridge");
     if(bridge){const initial=readAssessment("birth"),parts=[];
       if(initial.breathing)parts.push(`出生：${document.getElementById("birthBreathing").selectedOptions[0].textContent}`);
@@ -1881,7 +1943,7 @@
   // ── 故事優先（2026-09-20）：故事卡只是設定既有三個開關 pathway／pwStandby／pwConsult 的組合；
   //    時間線每一站包著原本的控制項（id／data-* 不變），依路徑排序與顯隱；填過的站收成一行摘要。
   const STORY={A:{pathway:"direct",standby:true,consult:false},B:{pathway:"direct",standby:false,consult:true},
-               C:{pathway:"nursery",standby:false,consult:true},D:{pathway:"outborn",standby:false,consult:false}};
+               C:{pathway:"nursery",standby:false,consult:false},D:{pathway:"outborn",standby:false,consult:false}};
   function deriveStory(){
     if(S.pathway==="outborn")return "D"; if(S.pathway==="nursery")return "C";
     if(S.pathway==="direct")return S.pwStandby?"A":"B"; return "";
@@ -1910,6 +1972,7 @@
       case "obConsult":return raw("obReason");
       case "obArrive":return raw("obArrival");
       case "route":return j([mselTxt("obSx"),raw("pwOnsetH")&&`生後 ${raw("pwOnsetH")} ${raw("pwOnsetUnit")==="minutes"?"分":"小時"}`,segTxt("obRespType"),optTxt("obRespRelation"),S.courseEvents.length&&`後續事件 ${S.courseEvents.length} 筆`,raw("obCourse")]);
+      case "brEval":return j([mselTxt("brEval"),raw("brEvalIn"),mselTxt("brWorkup"),mselTxt("brFindings"),raw("brCrp")&&`CRP ${raw("brCrp")}`,raw("brGlu")&&`血糖 ${raw("brGlu")}`,raw("brFindIn")]);
       case "adm":return raw("obAdmissionStatus");
     }
     return "";
@@ -1932,7 +1995,8 @@
       {id:"obCare",show:ob,order:30,lab:"外院處置",plain:"外院在我們到之前做了什麼、掛什麼（依外院紀錄）。"},
       {id:"obConsult",show:ob,order:35,lab:"外院會診我方",plain:"外院為什麼會診我方（轉入原因）。"},
       {id:"obArrive",show:ob,order:40,lab:"我方抵達外院",plain:"我們的團隊到外院時看到什麼（不是到本院時）。",opt:true},
-      {id:"route",show:true,order:ob?50:nu?55:60,lab:ob?"轉送":nu?"嬰兒室":"入院前處置",plain:ob?"轉送途中掛什麼；跟外院一樣就選一樣的，系統會寫「持續」。":nu?"在嬰兒室出現了什麼、掛了什麼、大約生後幾小時。":"從產房到入院之間有沒有前處理（症狀、呼吸支持）。沒有就整站空著。",opt:!nu},
+      {id:"route",show:true,order:ob?50:nu?55:60,lab:ob?"轉送":nu?"嬰兒室":"入院前處置",plain:ob?"轉送途中掛什麼；跟外院一樣就選一樣的，系統會寫「持續」。":nu?"在嬰兒室出現了什麼、掛了什麼、大約生後幾小時。兒科去看與抽血在下一站填。":"從產房到入院之間有沒有前處理（症狀、呼吸支持）。沒有就整站空著。",opt:!nu},
+      {id:"brEval",show:nu,order:57,lab:"兒科評估・抽血",plain:"兒科為什麼去看（不是會診）、在嬰兒室抽了什麼、結果如何。有異常才會寫進 note；沒異常要明確勾「結果無異常」，否則只寫做了檢查。"},
       {id:"adm",show:true,order:90,lab:`入 ${dest}`,plain:`到 ${dest} 時的狀況（選填，英文）。`,opt:true},
     ];
     const visible=stops.filter(x=>x.show).sort((a,b)=>a.order-b.order);   // order 必須是整數：CSS order 不吃小數（實機驗出）
@@ -2034,6 +2098,7 @@
     sh("obStableField",supportMode==="ppv");
     sh("dolOtherWrap",S.dol==="x");
     sh("pwCourseWrap",true);
+    sh("brCrpWrap",S.brFindings.includes("crp"));sh("brGluWrap",S.brFindings.includes("hypoglycemia"));
     const ladLab=document.getElementById("ladderALab");
     if(ladLab)ladLab.textContent=S.pathway==="outborn"?"我方處置·轉送中呼吸維持":S.pathway==="nursery"?"嬰兒室呼吸處置":"呼吸處置";
     {const st=deriveStory(); setCsum("pathway",st?[`${st} · `+{direct:"直接入院",nursery:"嬰兒室觀察",outborn:"外接"}[S.pathway],S.pwStandby?"standby":"",S.pwConsult?"會診":""].filter(Boolean).join("・"):"尚未選故事",!st);}

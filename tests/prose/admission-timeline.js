@@ -276,10 +276,10 @@ test('standby and a subsequent consultation coexist with the nursery admission r
   input('pwOnsetH','2');input('pwOnsetUnit','hours');
   toggle('pwConsult');input('pwConsultReason','synthetic later concern');input('pwConsultH','2');
   const text=note();
-  assert.match(text,/stand by|standby/i);assert.match(text,/nursery/i);assert.match(text,/consult/i);
+  assert.match(text,/stand by|standby/i);assert.match(text,/baby room/i);assert.match(text,/consult/i);
   assert.match(text,/synthetic antenatal indication/);assert.match(text,/synthetic later concern/);
-  before(text,/stand by|standby/i,/nursery/i);
-  before(text,/nursery/i,/synthetic later concern/);
+  before(text,/stand by|standby/i,/baby room/i);
+  before(text,/baby room/i,/synthetic later concern/);
 });
 
 test('hidden standby and consultation reasons are retained without leaking into the narrative',({toggle,input,note})=>{

@@ -56,11 +56,14 @@
 | 欄位／狀態 | 寫入位置 | 條件與用途 |
 | --- | --- | --- |
 | `S.pathway` | 後續路徑的場域與入院結語 | `direct`、`nursery`、`outborn` 三者擇一；**無預設**（2026-09-19 起），未選時第 6 區摘要顯示「尚未選路徑」、路徑專屬欄位隱藏、結語不寫路徑。再點一次已選項目可取消。 |
-| `S.dest`（第 1 區） | Admission 結語、`On admission to …` 句、Acceptance 入院句 | `NICU`／`NBC`／`BR` 擇一，整份 note 一次選；未選寫成 `____`。英文對照見 `DEST_EN`。 |
+| `S.dest`（第 1 區） | Admission 結語、`On admission to …` 句、Acceptance 入院句 | `NICU`／`NBC`／`BR` 擇一，整份 note 一次選；未選寫成 `____`。英文 `our NICU`／`our NBC`／`our baby room`（Ryan 2026-09-20 確認 BR＝baby room）。 |
 | `S.delivery` → `deliveryPlace()` | standby 句、產房再評估句、Acceptance surfactant 句、直接入院的會診句 | `cs` 寫 operating room、其餘寫 delivery room；不另設地點欄位。 |
 | `S.outborn` | 外院相關欄位與敘事的顯示條件 | 由 `S.pathway === "outborn"` 衍生，不是第二個獨立路徑。 |
 | `S.pwStandby`、`S.pwSbR`、`pwSbRIn` | 分娩之前的兒科 standby 背景 | 與路徑分開；原因只在 standby 啟用時使用。 |
 | `S.pwConsult`、`pwConsultReason`、`pwConsultH` | 出生後會診經過 | 與路徑及 standby 可並存；生後小時與原因都選填。 |
+| `S.brEval`、`brEvalIn` | 嬰兒室路徑：兒科去看的原因句（`asked to evaluate`，不是會診） | `persist24`＝症狀持續超過 24 小時；`maternal`＝母體風險因子，由 `maternalRiskPhrases()` 從第 2 區帶（`S.r.fever`、`S.r.prom`＋`promH`、`S.scr.gbs==="pos"`），第 2 區沒紀錄則只寫 maternal risk factors 並提醒。 |
+| `S.brWorkup` | 嬰兒室檢查句 | `cbc`／`crp`／`bc`／`glucose`／`cxr`；只寫做了什麼。 |
+| `S.brFindings`、`brCrp`、`brGlu`、`brFindIn` | 檢查結果；有異常時結語改 `therefore` | 異常項與 `normal` 互斥；沒勾結果不寫成正常。 |
 | `S.obSx` | 後續症狀句 | 第 5 區已記錄的同一個初始觀察不用重填；需交代持續、復發或新增症狀才在此記錄。 |
 | `S.pwOnset` | 後續症狀的動詞 | `observed`＝觀察到、起始未明；`developed`＝新出現；`persisted`＝持續；`recurrent`＝再次出現。 |
 | `pwOnsetH`、`pwOnsetUnit` | 症狀的生後時間 | 數值及 `hours`／`minutes` 均確認才寫時間；不把空白單位當成小時。 |
