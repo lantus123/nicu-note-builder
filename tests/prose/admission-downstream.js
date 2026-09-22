@@ -170,7 +170,8 @@ test('回歸：母體 PROM 仍能從風險列填進來並進入感染風險',pag
 
 test('餵食計畫分流：足月 room air 不寫母乳庫／早產兒配方／OG，早產維持原句，足月掛支持只寫 OG',page=>{
   const {input,seg,story,onTab}=page;
-  seg('gender','male');seg('delivery','nsd');seg('dest','NBC');story('B');input('birthResusStatus','none');
+  // withPage 已預設 gender=male／GA 39／BW 3100；resp 與 gender 都在 SEG_CLEARABLE，再點一次會清空，不可重複點
+  seg('delivery','nsd');seg('dest','NBC');story('B');input('birthResusStatus','none');
   input('gaW','39');input('bw','3100');
   const term=onTab('plan');
   assert.match(term,/Encourage exclusive breast milk feeding by direct breastfeeding/);
@@ -180,11 +181,17 @@ test('餵食計畫分流：足月 room air 不寫母乳庫／早產兒配方／O
   const termSupport=onTab('plan');
   assert.match(termSupport,/enteral feeding with breast milk via an OG tube/);
   assert.doesNotMatch(termSupport,/human milk bank|preterm infant formula|trophic/);
+  // 足月 SGA → 配方奶改成「考慮 PDF」，仍不寫母乳庫／早產兒配方（Ryan 2026-09-23）
+  input('bw','2100');
+  const sga=onTab('plan');
+  assert.match(sga,/via an OG tube[^\n]*post-discharge formula \(PDF\)/);
+  assert.doesNotMatch(sga,/term infant formula|human milk bank|preterm infant formula/);
   // 早產 → 原本兩句
   input('gaW','33');input('bw','1800');
   const preterm=onTab('plan');
   assert.match(preterm,/trophic feeding/);
   assert.match(preterm,/human milk bank/);
+  assert.doesNotMatch(preterm,/PDF/);
 });
 
 let failures=0;
