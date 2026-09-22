@@ -781,6 +781,14 @@
         <span class="dot" aria-hidden="true"></span>
         <button type="button" class="hd" data-stop-toggle="adm" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
+<div class="field"><span class="lab">入院時呼吸支持 <span class="q">（同時供 NI plan 與 Acceptance 使用；Acceptance A 區改的是同一個值）</span></span>
+  <div class="seg" data-seg="resp" style="flex-wrap:wrap">
+    <button type="button" data-v="room air" style="flex:0 1 auto">Room air</button><button type="button" data-v="NC" style="flex:0 1 auto">NC</button><button type="button" data-v="HFNC" style="flex:0 1 auto">HFNC</button>
+    <button type="button" data-v="bubble CPAP" style="flex:0 1 auto">bubble CPAP</button><button type="button" data-v="NCPAP" style="flex:0 1 auto">NCPAP</button>
+    <button type="button" data-v="NSIMV+PS" style="flex:0 1 auto">NSIMV+PS</button><button type="button" data-v="NIVPC" style="flex:0 1 auto">NIVPC</button>
+    <button type="button" data-v="ETT+SIMV+PS" style="flex:0 1 auto">ETT+SIMV+PS</button><button type="button" data-v="ETT+HFOV" style="flex:0 1 auto">ETT+HFOV</button>
+    <button type="button" data-v="ETT+HFOV+iNO" style="flex:0 1 auto">ETT+HFOV+iNO</button>
+  </div></div>
 <div class="field"><label class="lab" for="obAdmissionStatus">入院時狀況 <span class="q">（選填，英文；與我方抵達外院時分開）</span></label><input class="tin" id="obAdmissionStatus" placeholder="補充抵達本院並入院時的實際狀況"></div>
             </div>
       </li>
@@ -829,6 +837,8 @@
     <section class="card">
       <h2 class="sec-h">NI 計畫設定 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">其餘依週數＋admission 自動帶</span></h2>
       <div class="iap-warn" id="planWarn" hidden></div>
+      <!-- 去處 BR（嬰兒室）不產生 NI plan：整組設定控制項一起收起，只留 #planWarn 的中文提示 -->
+      <div id="planControls">
       <div class="field"><span class="lab">抗生素處方</span>
         <div class="seg" data-seg="planAbx" style="flex-wrap:wrap">
           <button data-v="none" style="flex:0 1 auto">無</button>
@@ -851,6 +861,7 @@
       <div class="field"><span class="lab">已向家屬解釋 <span class="q">（未勾則不寫入，這句是告知義務的舉證）</span></span>
         <div class="seg" data-tog="planExplained"><button data-v="1" style="flex:0 1 auto">Plan explained to the family</button></div></div>
       <p class="man-h" style="margin-top:4px">診斷／治療／預後三段依 GA、SGA/LGA、IDM、fetal distress/DOIC、呼吸支持、surfactant 等自動組出。複製後可再改。</p>
+      </div><!-- /planControls -->
     </section>
   </div>
 
@@ -865,7 +876,7 @@
         <button data-v="ETT+SIMV+PS" style="flex:0 1 auto">ETT+SIMV+PS</button><button data-v="ETT+HFOV" style="flex:0 1 auto">ETT+HFOV</button>
         <button data-v="ETT+HFOV+iNO" style="flex:0 1 auto">ETT+HFOV+iNO</button>
       </div>
-      <p class="man-h" style="margin-top:9px">日齡、PMA 與出生資料沿用 Admission；目前體重請填 J 區。此處選接手時的呼吸支持，先前的呼吸進程填 D 區。</p>
+      <p class="man-h" style="margin-top:9px">這裡與 Admission 時間線最後一站的「入院時呼吸支持」是<b>同一個值</b>，在任一處改都會同步；日齡、PMA 與出生資料沿用 Admission，目前體重請填 J 區。先前的呼吸進程填 D 區。</p>
     </section>
 
     <section class="card">
@@ -1603,7 +1614,8 @@
 
   // 再點一次已選的＝取消。只限「空值本來就合法」的 seg（預設就是 ""）；growth/dol/us/ancReg 等有語意預設的不在內。
   // 2026-08-18 待拍板「seg 誤點後無法回到未選，手機誤觸即永久斷言，只能重整頁面丟資料」→ 9/19 mockup 做進去，Ryan 沒反對。
-  const SEG_CLEARABLE=new Set(["gender","delivery","dest","pathway","obRespType","obO2Dev","obM1Type","obM1Dev"]);
+  // resp（入院時呼吸支持）在 Admission 最後一站與 Acceptance A 區各有一組按鈕，同一個 S.resp；再點一次＝清空。
+  const SEG_CLEARABLE=new Set(["gender","delivery","dest","pathway","obRespType","obO2Dev","obM1Type","obM1Dev","resp"]);
   function segPick(seg,b,key,cb){
     if(key&&SEG_CLEARABLE.has(key)&&b.getAttribute("aria-pressed")==="true"){
       if(key==="pathway")switchPathway("");
@@ -1768,6 +1780,45 @@
   function destPhrase(blank="____"){return S.dest?DEST_EN[S.dest]:blank;}
   // 產房／刀房依生產方式自動推（Ryan 2026-09-19：可以，但依 VD 或 CS 去選擇）；未選生產方式時維持原本的 delivery room。
   function deliveryPlace(){return S.delivery==="cs"?"the operating room":"the delivery room";}
+  // 去處決定 NI plan 的配置（2026-09-23 Ryan 拍板：BR 不產生 plan、NBC 用非加護病房配置）。
+  // ⚠ NBC 細項待 Ryan 校正——這張表是單一真相，要改配置只改這裡，不要在 renderPlan 裡另開判斷。
+  const DEST_PLAN={
+    NICU:{giraffe:true, minimalHandling:true, alineRule:true},
+    NBC:{giraffe:false, minimalHandling:false, alineRule:false},
+    BR:null
+  };
+  const destPlan=()=>S.dest&&S.dest in DEST_PLAN?DEST_PLAN[S.dest]:DEST_PLAN.NICU;   // 未選去處沿用 NICU 規則（維持現行行為）
+  // 呼吸相關症狀：原本 renderAdm 的 OB_RESP_SX 與 renderAcc 的 respSx 是兩份同內容清單，合併成這一個常數。
+  const RESP_SX=["tachypnea","subcostal retractions","grunting","nasal flaring","cyanosis","desaturation","apnea"];
+  // 入院問題清單＝DX chip／入院結語／Acceptance 入院原因／NI plan 的單一真相。
+  // 2026-09-23 之前這四處各自推導，離產房掛 CPAP、嬰兒室抽血異常都只進敘事，不進診斷也不進 plan。
+  function admissionProblems(){
+    const gw=parseInt(V("gaW")||"0",10);
+    const pwSx=["direct","nursery","outborn"].includes(S.pathway);
+    return {
+      respiratory: S.resus!=="none"                                            // 產房急救事件
+        ||["o2","cpap","ppv","ett"].includes(raw("birthFinalSupport"))         // 離開產房時仍掛著支持
+        ||(pwSx&&(["o2","cpap","ppv","ett"].includes(pathwaySupportMode())||S.obSx.some(x=>RESP_SX.includes(x))))
+        ||(S.outborn&&["o2","cpap","ppv","ett"].includes(resolvedSupport("obM1Relation",S.obM1Type).mode))
+        ||(S.outborn&&/respiratory distress/i.test(raw("obReason")))
+        ||(!!S.resp&&S.resp!=="room air")                                      // 入院時呼吸支持
+        ||(S.pathway==="nursery"&&S.brFindings.includes("cxr")),
+      infection: S.pathway==="nursery"&&["bandemia","leukocytosis","leukopenia","crp"].some(k=>S.brFindings.includes(k)),
+      hypoglycemia: (pwSx&&S.obSx.includes("hypoglycemia"))||(S.pathway==="nursery"&&S.brFindings.includes("hypoglycemia")),
+      jaundice: pwSx&&S.obSx.includes("jaundice"),
+      preterm: gw>0&&gw<37
+    };
+  }
+  // 暫定診斷：醫師打了就用醫師的，否則依嚴重度依序挑一個；全無問題時回空字串（不替使用者捏一個診斷）。
+  function primaryDx(){
+    const tent=raw("tentDx").replace(/[.。]+$/,""); if(tent)return tent;
+    const p=admissionProblems();
+    return p.respiratory?"respiratory distress"
+      :p.infection?"suspected neonatal sepsis"
+      :p.hypoglycemia?"neonatal hypoglycemia"
+      :p.jaundice?"neonatal hyperbilirubinemia"
+      :p.preterm?"prematurity":"";
+  }
   function standbyNarrative(){
     if(!S.pwStandby)return "";
     const reasons=[...S.pwSbR,raw("pwSbRIn").replace(/[.。]+$/,"")].filter(Boolean);
@@ -1821,10 +1872,11 @@
     // 故事 C（2026-09-20 Ryan）：嬰兒室有狀況或有母體風險 → 兒科去看（不是會診）→ 在嬰兒室抽血 → 結果異常才收。
     if(S.pathway==="nursery"){
       const why=[];
-      if(S.brEval.includes("persist24"))why.push(sx?`${sx} persisted beyond 24 hours of age`:"the symptoms persisted beyond 24 hours of age");
+      // Because of + 名詞片語（2026-09-23）：原本寫 `Because ${...}`，遇到名詞片語就成了「Because maternal risk factors…」。
+      if(S.brEval.includes("persist24"))why.push(sx?`persistence of ${sx} beyond 24 hours of age`:"persistent symptoms beyond 24 hours of age");
       if(S.brEval.includes("maternal")){const mr=maternalRiskPhrases(); why.push(mr.length?`maternal risk factors (${joinAnd(mr)})`:"maternal risk factors");}
       const whyOther=raw("brEvalIn").replace(/[.。]+$/,""); if(whyOther)why.push(whyOther);
-      if(why.length)out.push(`Because ${joinAnd(why)}, the pediatric team was asked to evaluate the infant in the baby room.`);
+      if(why.length)out.push(`Because of ${joinAnd(why)}, the pediatric team was asked to evaluate the infant in the baby room.`);
       const WU={cbc:"a complete blood count with differential",crp:"C-reactive protein",bc:"blood culture",glucose:"blood glucose",cxr:"chest radiography"};
       const wu=S.brWorkup.map(k=>WU[k]).filter(Boolean), fd=[];
       if(S.brFindings.includes("bandemia"))fd.push("bandemia");
@@ -1862,7 +1914,13 @@
     S.courseEvents.forEach(e=>out.push(...eventNarrative(e,"course")));
     if(S.outborn)out.push(`Subsequently, the infant was transferred from ${transferSource||"____"} to our hospital${closeAdmission?` and admitted to ${destPhrase()} for further evaluation and management`:""}${closeAdmission&&diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
     else if(closeAdmission)out.push(`${brAbnormal?"The infant was therefore admitted":"Subsequently, the infant was admitted"} to ${destPhrase()} for further evaluation and management${diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
-    if(raw("obAdmissionStatus"))out.push(finish(`On admission to ${destPhrase()}, ${raw("obAdmissionStatus").replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase())}`));
+    // 入院時呼吸支持＋入院時狀況合併成一句。closeAdmission===false（Acceptance 呼叫）時不寫呼吸支持：
+    // Acceptance 自己有「At acceptance, the infant is receiving…」句，且靠 startsWith(`On admission to X, `) 把這句 pop 走。
+    const admStatus=raw("obAdmissionStatus").replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase());
+    const admResp=closeAdmission&&S.resp?(S.resp==="room air"?"breathing room air":`receiving respiratory support with ${S.resp}`):"";
+    if(admResp&&admStatus)out.push(finish(`On admission to ${destPhrase()}, the infant was ${admResp}; ${admStatus}`));
+    else if(admResp)out.push(finish(`On admission to ${destPhrase()}, the infant was ${admResp}`));
+    else if(admStatus)out.push(finish(`On admission to ${destPhrase()}, ${admStatus}`));
     return out;
   }
   const ROUTE_KEYS=["obRespType","obRespStable","obSx","brEval","brWorkup","brFindings","obO2Dev","pwOnset","obM1Type","obM1Dev","pwConsult","courseEvents","continuitySignatures"];
@@ -2025,7 +2083,7 @@
       case "obArrive":return raw("obArrival");
       case "route":return j([mselTxt("obSx"),raw("pwOnsetH")&&`生後 ${raw("pwOnsetH")} ${raw("pwOnsetUnit")==="minutes"?"分":"小時"}`,segTxt("obRespType"),optTxt("obRespRelation"),S.courseEvents.length&&`後續事件 ${S.courseEvents.length} 筆`,raw("obCourse")]);
       case "brEval":return j([mselTxt("brEval"),raw("brEvalIn"),mselTxt("brWorkup"),mselTxt("brFindings"),raw("brCrp")&&`CRP ${raw("brCrp")}`,raw("brGlu")&&`血糖 ${raw("brGlu")}`,raw("brFindIn")]);
-      case "adm":return raw("obAdmissionStatus");
+      case "adm":return j([S.resp,raw("obAdmissionStatus")]);
     }
     return "";
   }
@@ -2083,6 +2141,9 @@
   }
 
   function render(){
+    // 入院時呼吸支持有兩組按鈕（Admission 最後一站＋Acceptance A 區）共用 S.resp；
+    // segPick 只會更新被點的那一組，所以每次 render 都把兩組的 aria-pressed 重新對齊。
+    document.querySelectorAll('[data-seg="resp"] button').forEach(b=>b.setAttribute("aria-pressed",String(!!S.resp&&b.dataset.v===S.resp)));
     // 相容既有 Plan 規則的粗分類；敘述永遠使用獨立事件，不由此反推下層處置。
     const kinds=activeBirthEvents().map(e=>e.kind);
     S.resus=kinds.includes("compressions")?"cpr":kinds.includes("intubation")?"intubation":kinds.includes("ppv")?"ppv":"none";
@@ -2120,8 +2181,8 @@
     const matAge=inV("matAge"), csR=clause("csReason"), admR=clause("admReason"), tentDx=clause("tentDx"), chartNo=inV("chartNo");
     const wc=getWeightClass(parseInt(V("bw")||"0",10));
     document.getElementById("wclass").textContent = wc?wc.pill:"";
-    const lvl={none:0,ppv:1,intubation:2,cpr:3}[S.resus]||0;
-    const respSick = lvl>0;   // admission 只看產房急救階梯；呼吸支持已移至 acceptance
+    // 呼吸／感染／低血糖／黃疸／早產四處同源（renderAdm 裡 pr 已被 S.r.prom 佔用，故命名 probs）
+    const probs=admissionProblems();
     const P0=[], P1=[], P2=[];
 
     const csw=document.getElementById("csReasonWrap"); if(csw)csw.hidden=(S.delivery!=="cs");
@@ -2411,13 +2472,10 @@
       : gw<37
       ? {s:"Prematurity", f:`Prematurity, GA ${gaTxt}, BW ${bw} g, ${S.growth==="?"?ph("____"):S.growth}`}
       : {s:"Term newborn",f:`Term newborn, GA ${gaTxt}, BW ${bw} g, ${S.growth==="?"?ph("____"):S.growth}`});
-    const OB_RESP_SX=["tachypnea","subcostal retractions","grunting","nasal flaring","cyanosis","desaturation","apnea"];
-    const pwRespSick=(pwSx&&(["o2","cpap","ppv","ett"].includes(pathwaySupportMode())||S.obSx.some(x=>OB_RESP_SX.includes(x))))
-      ||(S.outborn&&["o2","cpap","ppv","ett"].includes(resolvedSupport("obM1Relation",S.obM1Type).mode))
-      ||(S.outborn&&/respiratory distress/i.test(inV("obReason")));   // 轉入原因寫呼吸窘迫→DX 同步
-    if(respSick||pwRespSick)DX.push({s:"Respiratory distress",f:"Respiratory distress"});
-    if(pwSx&&S.obSx.includes("hypoglycemia"))DX.push({s:"Hypoglycemia",f:"Neonatal hypoglycemia"});
-    if(pwSx&&S.obSx.includes("jaundice"))DX.push({s:"Hyperbilirubinemia",f:"Neonatal hyperbilirubinemia"});
+    if(probs.respiratory)DX.push({s:"Respiratory distress",f:"Respiratory distress"});
+    if(probs.infection)DX.push({s:"Suspected sepsis",f:"Suspected neonatal sepsis"});
+    if(probs.hypoglycemia)DX.push({s:"Hypoglycemia",f:"Neonatal hypoglycemia"});
+    if(probs.jaundice)DX.push({s:"Hyperbilirubinemia",f:"Neonatal hyperbilirubinemia"});
     if(S.fd)DX.push({s:"Fetal distress",f:"Fetal distress"});
     if(S.doic)DX.push({s:"DOIC",f:`Delayed initial crying (DOIC)${doicMin?` (${doicMin} ${unitLabel(doicMin,"minute")})`:""}`});
     if(S.msaf)DX.push({s:"MSAF",f:`Infant born through ${S.msafGrade?S.msafGrade+" ":""}meconium-stained amniotic fluid (MSAF)`});
@@ -2433,7 +2491,7 @@
 
     // 同一組後續事件供 Admission / Acceptance 共用，前段事件只引用一次。
     const postnatalStart=P2.length;
-    const closingDx=raw("tentDx")||((respSick||pwRespSick)?"respiratory distress":gw&&gw<37?"prematurity":"");
+    const closingDx=primaryDx();   // 與 DX chip、Acceptance 入院原因同源（primaryDx 內已優先取 tentDx）
     const inheritedSource=raw("obFacility")||raw("ancPlace");
     const source=raw("obTransferFrom")||(inheritedSource===(raw("homeHosp")||"TPEMMH")?"":inheritedSource);
     P2.push(...postnatalNarrative({transferSource:source,diagnosis:closingDx}).map(esc));
@@ -2835,40 +2893,63 @@ ${opLine}`);
     const preterm=gw>0&&gw<37, veryPreterm=gw>0&&gw<32, bwN=parseInt(V("bw")||"0",10);
     const SGA=S.growth==="SGA", LGA=S.growth==="LGA", IDM=S.r.gdm.on;
     const lvl={none:0,ppv:1,intubation:2,cpr:3}[S.resus]||0;
+    const planControls=document.getElementById("planControls");
+    // 去處 BR（嬰兒室）：不產生 NI plan。中文提示只能放 #planWarn——note 是用 innerText 複製走的，會被貼進 HIS。
+    if(S.dest==="BR"){
+      const pw=document.getElementById("planWarn");
+      if(pw){pw.hidden=false; pw.textContent="⚠ 入院去處為 BR（嬰兒室）：不產生 NI plan；改去處請回 Admission 第 1 區。";}
+      if(planControls)planControls.hidden=true;
+      if(!S.noteDirty)writeNote("","text");
+      return;
+    }
+    if(planControls)planControls.hidden=false;
+    const cfg=destPlan();   // NICU／NBC 的配置差異一律讀 DEST_PLAN
     // 既往支持只供既有自動計畫規則參考，不等同於已確認的接手時支持。
     const pathwayMode=pathwaySupportMode();
     const pathwayResp=({room:"room air",o2:({hood:"oxygen via an oxygen hood",cannula:"oxygen via a nasal cannula",mask:"oxygen via a face mask"})[S.obO2Dev]||"supplemental oxygen",
       cpap:"CPAP",ppv:"Neopuff PPV",ett:"mechanical ventilation via ETT"}[pathwayMode]||"");
-    const ruleResp=S.resp||S.acc.resp[S.acc.resp.length-1]||pathwayResp;
+    // 離開產房時仍掛著的支持是鏈尾：足月兒沒按 PPV 事件、直接掛 CPAP 進來時，plan 原本讀不到任何呼吸狀態。
+    const birthFinalResp={room:"room air",o2:"supplemental oxygen",cpap:"CPAP",ppv:"Neopuff PPV",ett:"mechanical ventilation via ETT"}[raw("birthFinalSupport")]||"";
+    const ruleResp=S.resp||S.acc.resp[S.acc.resp.length-1]||pathwayResp||birthFinalResp;
     const invasive=ruleResp?/ETT/.test(ruleResp):lvl>=2;
     const respSupport=ruleResp?ruleResp!=="room air":lvl>=1;
-    const infRisk=["pos","pend","nd"].includes(S.scr.gbs)||S.r.prom.on||S.r.fever.on;   // na=未表態不算風險
+    const pr=admissionProblems();
+    const infRisk=["pos","pend","nd"].includes(S.scr.gbs)||S.r.prom.on||S.r.fever.on||pr.infection;   // na=未表態不算風險；嬰兒室已見 bandemia/CRP↑ 等 → 直接算感染風險
 
     // 這些是臨床決定不是可推導的事實：規則只給預設值，最終由 planOn 覆寫，且按鈕一律顯示生效狀態
-    const RULE={sepsis:infRisk||preterm||respSupport||S.fd||S.doic, csf:false,
-                biogram:S.fd||S.doic, sga:SGA, aline:S.hc.aline||invasive,
+    const RULE={sepsis:infRisk||preterm||respSupport||S.fd||S.doic||pr.respiratory, csf:false,
+                biogram:S.fd||S.doic, sga:SGA, aline:S.hc.aline||(cfg.alineRule&&invasive),
                 pn:preterm||veryPreterm||invasive, minimal:veryPreterm||invasive, og:respSupport};
     const ON=k=>S.planOn[k]===undefined?!!RULE[k]:S.planOn[k];
     document.querySelectorAll('[data-planon] button').forEach(x=>x.setAttribute("aria-pressed",ON(x.dataset.v)?"true":"false"));
     {const r=document.getElementById("planOnReset"); if(r)r.hidden=!Object.keys(S.planOn).length;}
 
     const D=[];
-    if(ON("sepsis"))
-      D.push(`Obtain a sepsis work-up, including CBC/DC, CRP, B/C, CXR, and urine GBS Ag${ON("csf")?", with CSF analysis":""}`);
+    // 嬰兒室已經抽過的項目不要再開一次：plan 只寫還沒做的，並註明哪些是在嬰兒室做的。
+    const BR_ITEMS={cbc:"CBC/DC",crp:"CRP",bc:"B/C",cxr:"CXR"};   // glucose 不屬於 sepsis work-up 清單
+    const FULL=["CBC/DC","CRP","B/C","CXR","urine GBS Ag"];
+    const brDone=S.pathway==="nursery"?S.brWorkup.map(k=>BR_ITEMS[k]).filter(Boolean):[];
+    const brRemaining=FULL.filter(x=>!brDone.includes(x));
+    if(ON("sepsis")){
+      const csfTail=ON("csf")?", with CSF analysis":"";
+      if(!brDone.length)D.push(`Obtain a sepsis work-up, including ${joinAnd(FULL)}${csfTail}`);
+      else if(brRemaining.length)D.push(`Obtain the remaining sepsis work-up, including ${joinAnd(brRemaining)}${csfTail} (${joinAnd(brDone)} ${brDone.length>1?"were":"was"} obtained in the baby room)`);
+      else D.push(`Follow up the sepsis work-up obtained in the baby room (${joinAnd(brDone)})${csfTail}`);
+    }
     else if(ON("csf"))D.push("Perform a lumbar puncture for CSF analysis");
     if(ON("biogram")){const w=(S.fd&&S.doic)?"fetal distress and delayed initial crying (DOIC)":S.fd?"fetal distress":S.doic?"delayed initial crying (DOIC)":"perinatal insult";
       D.push(`Obtain a work-up for ${w}, including a biogram, to evaluate tissue damage`);}
     if(ON("sga"))D.push(`Obtain a work-up for SGA, including IgM testing and a urine viral culture`);
     const dexR=[]; if(preterm)dexR.push("prematurity"); if(SGA)dexR.push("SGA"); if(LGA)dexR.push("LGA"); if(IDM)dexR.push("infant of a diabetic mother (IDM)");
-    const pwSx=["direct","nursery","outborn"].includes(S.pathway);   // 症狀屬於後續路徑，不以 standby／會診事件取代路徑。
-    if(pwSx&&S.obSx.includes("hypoglycemia"))dexR.push("neonatal hypoglycemia");
+    // 症狀屬於後續路徑，不以 standby／會診事件取代路徑；嬰兒室抽出的低血糖也算（pr.hypoglycemia 已涵蓋兩者）。
+    if(pr.hypoglycemia)dexR.push("neonatal hypoglycemia");
     if(dexR.length)D.push(`Check Dex STAT and Q6H (indications: ${joinAnd(dexR)})`);
-    if(pwSx&&S.obSx.includes("jaundice"))D.push(`Check the bilirubin level and monitor neonatal jaundice`);
+    if(pr.jaundice)D.push(`Check the bilirubin level and monitor neonatal jaundice`);
     if(ON("aline"))D.push(S.hc.aline?"An arterial line was placed for ABP monitoring and frequent phlebotomy.":"Place an arterial line for ABP monitoring and frequent phlebotomy");
 
     const T=[];
-    T.push((veryPreterm||(bwN>0&&bwN<1500))?"Provide incubator (Giraffe) care, with a radiant warmer PRN":(preterm||(bwN>0&&bwN<2500))?"Provide incubator care, with a radiant warmer PRN":"Provide care under an open warmer");
-    if(ON("minimal"))T.push("Minimize handling in critically ill infants");
+    T.push((veryPreterm||(bwN>0&&bwN<1500))?(cfg.giraffe?"Provide incubator (Giraffe) care, with a radiant warmer PRN":"Provide incubator care, with a radiant warmer PRN"):(preterm||(bwN>0&&bwN<2500))?"Provide incubator care, with a radiant warmer PRN":"Provide care under an open warmer");
+    if(cfg.minimalHandling&&ON("minimal"))T.push("Minimize handling in critically ill infants");
     T.push("Monitor EKG and SpO2");
     T.push("Record the body weight daily");
     const rmode=S.resp&&S.resp!=="room air"?S.resp:"";   // 不把出生或住院歷程中的模式當成目前應持續的模式。
@@ -2949,14 +3030,10 @@ ${opLine}`);
     const birthDate=inV("birthDate"); let birthTime=inV("birthTime").replace(/[^\d:]/g,"");
     if(/^\d{3,4}$/.test(birthTime))birthTime=birthTime.length===3?birthTime[0]+":"+birthTime.slice(1):birthTime.slice(0,2)+":"+birthTime.slice(2);
     const bornWhen=[birthTime?`at ${sl(esc(birthTime))}`:"",birthDate?`on ${sl(esc(fmtDate(birthDate)))}`:""].filter(Boolean).join(" ");
-    const pwSx=["direct","nursery","outborn"].includes(S.pathway);
-    const lvl={none:0,ppv:1,intubation:2,cpr:3}[S.resus]||0;
-    const respSx=["tachypnea","subcostal retractions","grunting","nasal flaring","cyanosis","desaturation","apnea"];
-    const respConcern=lvl>0||(pwSx&&(["o2","cpap","ppv","ett"].includes(pathwaySupportMode())||S.obSx.some(x=>respSx.includes(x))))
-      ||(S.outborn&&["o2","cpap","ppv","ett"].includes(S.obM1Type));
     // admReason 是媽媽的入院原因；嬰兒的診斷沿用 Admission 的暫定診斷。
+    // 原本自己算一套 respConcern，與 DX chip／入院結語不同源；改讀 primaryDx()（外接轉入原因的優先順序維持現狀）。
     const tentativeDiagnosis=clause("tentDx"), transferReason=S.outborn?clause("obReason"):"";
-    const admissionReason=tentativeDiagnosis||transferReason||(respConcern?"respiratory distress":gw&&gw<37?"prematurity":"");
+    const admissionReason=tentativeDiagnosis||transferReason||primaryDx();
     const periAuto=[];
     if(S.r.gdm.on){const treatment={diet:"diet-controlled ",oha:"",insulin:""}[S.r.gdm.val]||"";
       periAuto.push(treatment+"gestational diabetes mellitus (GDM)"+(S.r.gdm.val==="oha"?" treated with oral hypoglycemic agents":S.r.gdm.val==="insulin"?" treated with insulin":""));}

@@ -7,7 +7,7 @@
 | 分頁 | 內容 |
 |------|------|
 | **Admission** | 出生摘要、母體背景、產程與入院經過的敘述式段落；自動 AGA/SGA/LGA（Fenton 2025）＋暫定診斷清單 |
-| **NI plan** | 依週數＋admission 選擇自動組出 Diagnostic／Therapeutic／Prognostic 三段計畫 |
+| **NI plan** | 依週數＋admission 選擇自動組出 Diagnostic／Therapeutic／Prognostic 三段計畫；去處為 BR 時不產生 plan |
 | **Acceptance** | 沿用出生資料產生敘述式 Brief history；Hospital course 依呼吸及感染問題串接，ABG 貼上自動判酸鹼；目前體重另填 |
 | **Procedure** | 勾選 8 種 procedure（intubation／A-line／LISA／LP／UAC／UVC／chest tube／exchange transfusion），依體重自動帶 ETT size・深度・劑量等 |
 
@@ -46,6 +46,14 @@
 - **入院去處在第 1 區選 NICU／NBC／BR**，整份 note 一次選；Admission 結語、入院時狀況句與 Acceptance 都跟著寫 `our NICU`／`our NBC`／`our baby room`，未選時寫成 `____`。
 - **產房／刀房由生產方式自動決定**：NSD 寫 delivery room、C/S 寫 operating room，用於 standby 句、產房再評估句、Acceptance 的 surfactant 句；會診句只在明選「直接入院」時才加地點（嬰兒室路徑的會診地點不是產房）。
 - 新欄位的用途、跨分頁範圍與刻意排除的資料見 [Admission 欄位對照](docs/admission-field-map.md)。這份對照涵蓋本次時間線改版，不代表全專案歷史欄位已完成全面稽核。
+
+## NI plan 讀 admission 的哪些東西（2026-09-23）
+
+- **去處決定配置**：`DEST_PLAN` 是單一真相（程式裡 `DEST_EN` 旁邊）。`BR`（嬰兒室）**不產生 NI plan**——note 清空、plan 設定控制項收起，`#planWarn` 顯示中文提示「改去處請回 Admission 第 1 區」（中文只進 UI，不進 note，因為 note 是用 innerText 複製走的）。`NBC` 用**非加護病房配置**：不寫 Giraffe、不寫 Minimize handling、A-line 不因插管自動列入。`NICU`（及未選去處）維持原本的加護配置。**NBC 細項待 Ryan 校正，要改就改 `DEST_PLAN` 那張表。**
+- **呼吸狀態的來源鏈**：`S.resp`（入院時呼吸支持）→ D 區 Respiratory course 最後一項 → 入院前／轉送中的支持 → **產房結束時支持**（`birthFinalSupport`）。加最後這一段之前，足月兒沒按 PPV 事件、離產房直接掛 CPAP 進來時，plan 讀不到任何呼吸狀態、不會列 OG decompression 也不會開 sepsis work-up。
+- **嬰兒室抽血結果進 plan**：`brFindings` 出現 bandemia／白血球↑↓／CRP↑ 就算感染風險（自動 empirical 抗生素）；低血糖進 Dex 指徵。`brWorkup` 已抽過的項目不再重開——plan 改寫成「Obtain the remaining sepsis work-up, including …（… were obtained in the baby room）」。
+- **入院時呼吸支持**（Admission 時間線最後一站）與 **Acceptance A 區**是同一個值（`S.resp`），在任一處改都同步，再點一次可清空。Admission 敘事因此多一句 `On admission to our NICU, the infant was receiving respiratory support with NCPAP.`；同時填了「入院時狀況」就併成一句（分號接）。
+- **暫定診斷四處同源**：DX chip、Admission 入院結語、Acceptance 入院原因、NI plan 全部讀 `admissionProblems()`／`primaryDx()`。以前三套各自推導，chip 有 Hypoglycemia 而結語與 acceptance 寫 `____`。
 
 ## 填寫介面
 

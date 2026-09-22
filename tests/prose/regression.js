@@ -543,7 +543,7 @@ test('story C: the baby-room evaluation is not a consultation and derives matern
     pick('ryn','fever','yes'),pick('ryn','prom','yes'),pick('rc','prom','prom'),set('promH','18'),screen('gbs','pos'),
     pick('msel','brEval','persist24'),pick('msel','brEval','maternal')]);
   includes(admission,'initially cared for in the baby room');
-  includes(admission,'tachypnea persisted beyond 24 hours of age');
+  includes(admission,'Because of persistence of tachypnea beyond 24 hours of age');   // 2026-09-23：Because of + 名詞片語
   includes(admission,'maternal risk factors (');includes(admission,'maternal fever');includes(admission,'PROM for 18 hours');includes(admission,'maternal GBS colonization');
   includes(admission,'the pediatric team was asked to evaluate the infant in the baby room');
   assert.doesNotMatch(admission,/was consulted|nursery/i);
@@ -571,7 +571,7 @@ test('story C: a work-up without recorded results is not written as normal; an e
 });
 test('story C: maternal-risk reason without any recorded risk falls back to a generic phrase',()=>{
   const {admission}=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brEval','maternal')]);
-  includes(admission,'Because maternal risk factors, the pediatric team was asked to evaluate');
+  includes(admission,'Because of maternal risk factors, the pediatric team was asked to evaluate');   // 2026-09-23：Because of + 名詞片語
   assert.doesNotMatch(admission,/maternal risk factors \(/);
 });
 

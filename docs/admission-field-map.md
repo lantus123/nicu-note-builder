@@ -79,7 +79,8 @@
 | `S.obRespStable` | PPV 時 HR／SpO₂ 穩定的確認句 | 僅明確勾選且當時模式為 PPV 才寫；不擴大成所有生命徵象正常。 |
 | `S.courseEvents[]` | 後續評估與額外／再次處置 | 與前面的基本路徑支持分開；不重填同一次事件。時間、地點選填但需核對排列順序。 |
 | `obCourse` | 後續經過補充 | 保留完整英文內容；不從自由文字自動建立結構化處置或自行裁決矛盾。 |
-| `obAdmissionStatus` | 抵達本院並入院時的觀察句 | 與 `obArrival`、產房結束狀態及 Acceptance 當下狀態分開。 |
+| `S.resp`（入院站「入院時呼吸支持」，`[data-seg="resp"]`） | Admission 的 `On admission to …` 句、NI plan 的呼吸／OG／A-line 規則、Acceptance「At acceptance…」句 | **與 Acceptance A 區是同一個值**，兩處各有一組按鈕、`render()` 每次同步 `aria-pressed`；再點一次清空（在 `SEG_CLEARABLE` 內）。只寫明選的當下支持，不由產房或轉送歷程推定。 |
+| `obAdmissionStatus` | 抵達本院並入院時的觀察句 | 與 `obArrival`、產房結束狀態及 Acceptance 當下狀態分開。與 `S.resp` 同時有值時併成一句（`…the infant was receiving respiratory support with NCPAP; <狀況>.`）。 |
 | 第 7 區 `tentDx` | 入院結語的暫定診斷 | 沿用既有診斷來源／規則，不由轉送前後的連接詞推定新診斷。 |
 
 ## 支持連續性與未記錄的處理
