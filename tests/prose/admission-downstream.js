@@ -174,7 +174,8 @@ test('餵食計畫分流：足月 room air 不寫母乳庫／早產兒配方／O
   seg('delivery','nsd');seg('dest','NBC');story('B');input('birthResusStatus','none');
   input('gaW','39');input('bw','3100');
   const term=onTab('plan');
-  assert.match(term,/Encourage exclusive breast milk feeding by direct breastfeeding/);
+  assert.match(term,/Bottle-feed with the mother's expressed breast milk/);
+  assert.doesNotMatch(term,/direct breastfeeding/);
   assert.doesNotMatch(term,/human milk bank|preterm infant formula|OG tube|trophic/);
   // 足月但入院時掛 NCPAP → 只寫 OG，仍不寫母乳庫／早產兒配方
   seg('resp','NCPAP');

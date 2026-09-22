@@ -2977,7 +2977,8 @@ ${opLine}`);
     }else{
       const formula=SGA?"consider a post-discharge formula (PDF) for catch-up growth if breast milk is insufficient (SGA)":"use term infant formula only if breast milk is unavailable";
       if(respSupport)T.push(`Initiate enteral feeding with breast milk via an OG tube once the breathing pattern stabilizes; encourage exclusive breast milk feeding, and ${formula}`);
-      else T.push(`Encourage exclusive breast milk feeding by direct breastfeeding or with expressed breast milk; ${formula}`);
+      // 住院中無法親餵，媽媽提供擠出母乳由病房瓶餵（Ryan 2026-09-23）
+      else T.push(`Bottle-feed with the mother's expressed breast milk and encourage exclusive breast milk feeding; ${formula}`);
     }
 
     const Pr=[]; if(S.planExplained)Pr.push("The plan was explained to the family.");   // 告知家屬是已發生的事件,不可預設斷言
