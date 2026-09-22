@@ -2972,8 +2972,16 @@ ${opLine}`);
         ? "HBV vaccine: first dose deferred until body weight exceeds 2200 g (this dose is not counted in the 3-dose series)"
         : "HBV vaccine: first dose within 24 hours after birth");}
     if(ON("pn"))T.push("Advance nutritional support with parenteral nutrition (PN)");
-    T.push("Initiate early enteral trophic feeding with breast milk once the infant's general condition and breathing pattern stabilize; encourage exclusive breast milk feeding");
-    T.push("For enteral feeding, use an OG tube and prioritize the mother's own breast milk, followed by donor human milk from the human milk bank, and then preterm infant formula or preterm special care formula");
+    // 餵食計畫依成熟度與呼吸支持分流（2026-09-23 Ryan：足月不該寫母乳庫、早產兒配方、OG feeding）。
+    // 早產或 LBW 維持原本兩句；足月掛呼吸支持只寫 OG；足月 room air 就是親餵／擠出母乳。
+    if(preterm||(bwN>0&&bwN<2500)){
+      T.push("Initiate early enteral trophic feeding with breast milk once the infant's general condition and breathing pattern stabilize; encourage exclusive breast milk feeding");
+      T.push("For enteral feeding, use an OG tube and prioritize the mother's own breast milk, followed by donor human milk from the human milk bank, and then preterm infant formula or preterm special care formula");
+    }else if(respSupport){
+      T.push("Initiate enteral feeding with breast milk via an OG tube once the breathing pattern stabilizes; encourage exclusive breast milk feeding, using term infant formula only if breast milk is unavailable");
+    }else{
+      T.push("Encourage exclusive breast milk feeding by direct breastfeeding or with expressed breast milk; use term infant formula only if breast milk is unavailable");
+    }
 
     const Pr=[]; if(S.planExplained)Pr.push("The plan was explained to the family.");   // 告知家屬是已發生的事件,不可預設斷言
     if(preterm){

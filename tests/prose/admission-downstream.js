@@ -168,6 +168,25 @@ test('回歸：母體 PROM 仍能從風險列填進來並進入感染風險',pag
   assert.match(onTab('plan'),/empirical antibiotics/);
 });
 
+test('餵食計畫分流：足月 room air 不寫母乳庫／早產兒配方／OG，早產維持原句，足月掛支持只寫 OG',page=>{
+  const {input,seg,story,onTab}=page;
+  seg('gender','male');seg('delivery','nsd');seg('dest','NBC');story('B');input('birthResusStatus','none');
+  input('gaW','39');input('bw','3100');
+  const term=onTab('plan');
+  assert.match(term,/Encourage exclusive breast milk feeding by direct breastfeeding/);
+  assert.doesNotMatch(term,/human milk bank|preterm infant formula|OG tube|trophic/);
+  // 足月但入院時掛 NCPAP → 只寫 OG，仍不寫母乳庫／早產兒配方
+  seg('resp','NCPAP');
+  const termSupport=onTab('plan');
+  assert.match(termSupport,/enteral feeding with breast milk via an OG tube/);
+  assert.doesNotMatch(termSupport,/human milk bank|preterm infant formula|trophic/);
+  // 早產 → 原本兩句
+  input('gaW','33');input('bw','1800');
+  const preterm=onTab('plan');
+  assert.match(preterm,/trophic feeding/);
+  assert.match(preterm,/human milk bank/);
+});
+
 let failures=0;
 for(const [name,check] of tests){
   try{check();console.log(`PASS ${name}`);}
