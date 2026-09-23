@@ -83,6 +83,21 @@
 | `obAdmissionStatus` | 抵達本院並入院時的觀察句 | 與 `obArrival`、產房結束狀態及 Acceptance 當下狀態分開。與 `S.resp` 同時有值時併成一句（`…the infant was receiving respiratory support with NCPAP; <狀況>.`）。 |
 | 第 7 區 `tentDx` | 入院結語的暫定診斷 | 沿用既有診斷來源／規則，不由轉送前後的連接詞推定新診斷。 |
 
+## 第 6 區：家庭樹（Pedigree，2026-09-23）
+
+Admission note 結尾 `Pedigree:` 之後由 `buildPedigree(S.pedStyle)` 產生純文字樹，內容一律 escape 後包在 `<span class="pedigree">`；只進 Admission。缺的資訊整段省略，不補佔位，樹內不得出現 `__`（複製鈕以 `_{2,}` 統計未填空格）。
+
+| 欄位／狀態 | 寫入位置 | 條件與用途 |
+| --- | --- | --- |
+| `fatherAge` | 家庭樹父親註記（`Father 35y`） | 只有填了才寫年齡；空白時只寫 `Father`，不補佔位也不推估。 |
+| 第 1 區 `matAge`、`gravida`、`para`、`abortion` | 家庭樹母親註記（`Mother 32y G3P2A1`） | 沿用同一組欄位，不在第 6 區重填；缺哪一段就省略哪一段（只有 G 就只寫 `G3`）。 |
+| `S.consang`（`[data-tog="consang"]`） | 父母之間的連線 | 勾選才把 `-`／`─` 換成 `=`／`═`；不勾不代表已確認非近親婚，只是不主張。 |
+| `S.sibs[]`（`sex`／`age`／`note`／`affected`／`twin`） | 子代列的手足 | 依陣列順序由左至右＝出生序（最年長在前）。`sex` **不預選**，未選畫 `< >`／`◇`，再點一次已選的性別可回到未選；`age`／`note` 為英文自由文字，空白就不畫該列；`affected` 畫實心；`twin` 與本人合成同一個子代單元並畫分叉。動態控制項為 `sib-{id}-age`／`sib-{id}-note` 與 `data-sib-field`／`data-sibseg`／`data-sibtog`／`data-sib-action`。 |
+| `S.nextSibId` | 手足列識別 | 只供 UI 操作，不寫進病歷。 |
+| 第 1 區 `S.gender` | 本人（proband）符號 | 本人自動畫在最後（同胎組內也在最後），年齡固定 `NB`，一律加箭頭；未選性別畫未知符號，不預設男女。 |
+| 第 2 區 `S.parent.thal`／`g6pd`／`thyroid` | 父母符號實心與註記病名 | `father`／`mother`／`both` 決定哪一側實心，病名接在該側註記後（`thalassemia`／`G6PD deficiency`／`thyroid disease`）；`none` 不畫實心也不寫「無」。 |
+| `S.pedStyle`（`[data-seg="pedStyle"]`，`localStorage` 鍵 `nicu_ped_style`） | 整棵樹的符號表與字元寬度 | `ascii`（預設，全 1 欄，任何等寬字型都對齊）或 `symbol`（□○◇ 與框線字元算 2 欄，只在全形寬度正確的字型下對齊）。樣式只改畫法，不改內容；貼進 HIS 歪掉時換另一種。 |
+
 ## 支持連續性與未記錄的處理
 
 - 空白關係只描述已確認的當時支持，不用 `continued`、`initiated`、`reintubated` 等帶有事件關係的用語。

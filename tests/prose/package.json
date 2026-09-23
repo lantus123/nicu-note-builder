@@ -3,7 +3,7 @@
   "private": true,
   "description": "20 情境 headless 文體驗收：golden master + 佔位符紀律不變量",
   "scripts": {
-    "test": "node check.js && node regression.js && node prenatal-narrative.js && node admission-timeline.js && node admission-downstream.js && node ui-screening.js && node ui-navigation.js && node ui-preview.js && node ui-clipboard.js && node ui-campus.js",
+    "test": "node check.js && node regression.js && node prenatal-narrative.js && node admission-timeline.js && node admission-downstream.js && node pedigree.js && node ui-screening.js && node ui-navigation.js && node ui-preview.js && node ui-clipboard.js && node ui-campus.js",
     "update": "node check.js --update"
   },
   "dependencies": {
