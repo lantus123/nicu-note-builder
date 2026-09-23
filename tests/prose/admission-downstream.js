@@ -221,6 +221,19 @@ test('Admission 記錄產房插管 → Procedure 自動勾 Intubation；手動�
   assert.equal(get('#procIntubHint').hidden,true);
 });
 
+test('週數邊界：36+6 是 late preterm、37+0 是 term、42+0 是 post-term；GA 空白不寫 term',page=>{
+  const {input,note,dx}=page;
+  const head=()=>note().split('\n')[0];
+  input('gaW','36');input('gaD','6');
+  assert.match(head(),/late preterm male infant/);assert.equal(dx()[0],'Prematurity');
+  input('gaW','37');input('gaD','0');
+  assert.match(head(),/ term male infant/);assert.equal(dx()[0],'Term newborn');
+  input('gaW','42');input('gaD','0');
+  assert.match(head(),/post-term male infant/);assert.equal(dx()[0],'Post-term newborn');
+  input('gaW','');input('gaD','');
+  assert.doesNotMatch(head(),/\bterm\b/);assert.equal(dx()[0],'Newborn');
+});
+
 let failures=0;
 for(const [name,check] of tests){
   try{check();console.log(`PASS ${name}`);}

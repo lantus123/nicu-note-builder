@@ -1665,7 +1665,8 @@
   const joinAnd=a=>a.length===0?"":a.length===1?a[0]:a.length===2?`${a[0]} and ${a[1]}`:`${a.slice(0,-1).join(", ")}, and ${a[a.length-1]}`;
   const joinOr =a=>a.length===0?"":a.length===1?a[0]:a.length===2?`${a[0]} or ${a[1]}`:`${a.slice(0,-1).join(", ")}, or ${a[a.length-1]}`;
   const unitLabel=(value,singular,plural=singular+"s")=>String(value??"").trim()!==""&&Number(value)===1?singular:plural;
-  const gaCat=w=>w<28?"extremely preterm":w<32?"very preterm":w<34?"moderately preterm":w<37?"late preterm":"term";
+  // ≥42 週為 post-term（WHO）；2026-09-23 前 42 週以上也寫 term
+  const gaCat=w=>w<28?"extremely preterm":w<32?"very preterm":w<34?"moderately preterm":w<37?"late preterm":w>=42?"post-term":"term";
   const sizeLong={AGA:"appropriate for gestational age",SGA:"small for gestational age",LGA:"large for gestational age"};
   const fmtDate=d=>{if(!d)return "";
     try{const dt=new Date(d+"T00:00:00");
@@ -2261,7 +2262,7 @@
     {const wp=[]; if(bt)wp.push(`at ${bt}`); if(bds)wp.push(`on ${bds}`); if(wp.length)bornWhen=wp.join(" ");}
     // 改法6：was delivered 消 newborn-was-born 同根重複;成熟度詞純 GA 推導(WHO 分帶),GA 空→無詞
     // 語序採審查修正:delivered in {地點} 緊鄰,避免 "to a mother in {地點}" 被讀成修飾 mother
-    const matW=gw?(gw<28?"extremely preterm":gw<32?"very preterm":gw<34?"moderately preterm":gw<37?"late preterm":"term"):"";
+    const matW=gw?(gw<28?"extremely preterm":gw<32?"very preterm":gw<34?"moderately preterm":gw<37?"late preterm":gw>=42?"post-term":"term"):"";
     let s1=`This ${dolTxt?sl(dolTxt)+" ":(dolN==="0"?"":ph("__-day-old")+" ")}${matW?sl(matW)+" ":""}${sex?sl(sex):ph("____")} infant was delivered at ${birthPlace}${bornWhen?" "+sl(bornWhen):""} via ${via?sl(via):ph("____")}`;
     if(S.delivery==="cs") s1+=` for ${csR?sl(csR):ph("____")}`;
     s1+=`, at a gestational age of ${gw?sl(gaTxt):ph(gaTxt)}`;
@@ -2485,6 +2486,8 @@
       ? {s:"Newborn",     f:`Newborn, GA ${gaTxt}, BW ${bw} g, ${S.growth==="?"?ph("____"):S.growth}`}
       : gw<37
       ? {s:"Prematurity", f:`Prematurity, GA ${gaTxt}, BW ${bw} g, ${S.growth==="?"?ph("____"):S.growth}`}
+      : gw>=42
+      ? {s:"Post-term newborn",f:`Post-term newborn, GA ${gaTxt}, BW ${bw} g, ${S.growth==="?"?ph("____"):S.growth}`}
       : {s:"Term newborn",f:`Term newborn, GA ${gaTxt}, BW ${bw} g, ${S.growth==="?"?ph("____"):S.growth}`});
     if(probs.respiratory)DX.push({s:"Respiratory distress",f:"Respiratory distress"});
     if(probs.infection)DX.push({s:"Suspected sepsis",f:"Suspected neonatal sepsis"});
