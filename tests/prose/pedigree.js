@@ -57,7 +57,6 @@ function withPage(check){
     const hit=selector=>{const el=card().querySelector(selector);assert.ok(el,`Missing sib control: ${selector}`);el.click();};
     return{id,card,
       sex:v=>hit(`[data-sibseg="sex"] [data-v="${v}"]`),
-      affected:()=>hit('[data-sibtog="affected"] button'),
       twin:()=>hit('[data-sibtog="twin"] button'),
       hasTwin:()=>!!card().querySelector('[data-sibtog="twin"]'),
       age:v=>input(`sib-${id}-age`,v),
@@ -93,36 +92,36 @@ test('例 A：最小樹（父母＋本人）逐字相符',({seg,input,tree})=>{
     '  □───┬───○',
     '  Father          Mother 30y G1P1',
     '          │',
-    '        →□',
+    '        →■',
     '          NB'].join('\n'));
 });
 
 // ── 例 B：父 35、母 32 G3P2A1、手足兩位、本人女 ───────────────────────────────
 // 座標：子代中心 10／18／26，junction 18，父親符號 10、母親 26（符號佔中心欄與其右一欄）。
-test('例 B：兩位手足＋帶病＋備註逐字相符，各列落在同一組中心欄',({seg,input,click,addSib,tree})=>{
+test('例 B：兩位手足＋診斷備註逐字相符（本人實心、手足空心），各列落在同一組中心欄',({seg,input,click,addSib,tree})=>{
   seg('gender','female');input('matAge','32');input('gravida','3');input('para','2');
   click('#addAbortion');input('abortion','1');input('fatherAge','35');
   const a=addSib();a.sex('male');a.age('5y');
-  const b=addSib();b.sex('female');b.age('3y');b.note('G6PD deficiency');b.affected();
+  const b=addSib();b.sex('female');b.age('3y');b.note('G6PD deficiency');
   assert.equal(tree(),[
     '          □───┬───○',
     '          Father 35y      Mother 32y G3P2A1',
     '                  │',
     '          ┌───┼───┐',
     '          │      │      │',
-    '          □      ●    →○',
+    '          □      ○    →●',
     '          5y      3y      NB',
     '                  G6PD deficiency'].join('\n'));
   // 同一棵樹再用顯示欄位量一次：精確字串若日後被誤更新，欄位錯位仍會被抓到
   const lines=tree().split('\n');
-  assert.deepEqual(colsOf(lines[0],'□○'),[10,26],'父母符號起始欄');
+  assert.deepEqual(colsOf(lines[0],'□○■●◆'),[10,26],'父母符號起始欄');
   assert.equal(colOf(lines[0],'┬'),18,'父母線中點 ┬ 起始欄');
   assert.equal(colOf(lines[2],'│'),18,'主幹 │ 起始欄');
   // 橫桿：兩端 ┌ ┐、單元中心 ┬；junction 與子代接點重合時用 ┼（例 B 的 18 正好是中間單元）
   assert.deepEqual(colsOf(lines[3],'┌┬┐┴┼'),[10,18,26],'橫桿接點起始欄');
   assert.equal([...lines[3]].filter(c=>c==='┼').length,1,'junction 與子代接點重合 → ┼');
   assert.deepEqual(colsOf(lines[4],'│'),[10,18,26],'子代主幹 │ 起始欄');
-  assert.deepEqual(colsOf(lines[5],'□●○'),[10,18,26],'子代符號起始欄');
+  assert.deepEqual(colsOf(lines[5],'□●○■◆'),[10,18,26],'子代符號起始欄');
   assert.equal(colOf(lines[5],'→'),24,'本人箭頭緊貼符號左邊（2 欄）');
   noTrailing(lines);
 });
@@ -142,8 +141,8 @@ test('例 C：同胎組畫成分叉，成員中心 18／24 對齊',({seg,addSib,
   assert.deepEqual(colsOf(lines[fork],'┌┬┐┴┼'),[18,20,24],'分叉列：成員中心 18／24，組接點 20');
   assert.deepEqual(colsOf(lines[fork],'│'),[10],'非同胎的單元在分叉列仍畫主幹');
   const syms=lines[lines.length-2];
-  assert.deepEqual(colsOf(syms,'□○◇'),[10,18,24],'符號起始欄＝中心（單元 1 在 10、同胎成員在 18／24）');
-  assert.ok(syms.includes('→□'),`本人在同胎組最後、緊貼箭頭\n${syms}`);
+  assert.deepEqual(colsOf(syms,'□○◇■●◆'),[10,18,24],'符號起始欄＝中心（單元 1 在 10、同胎成員在 18／24）');
+  assert.ok(syms.includes('→■'),`本人在同胎組最後、緊貼箭頭\n${syms}`);
   noTrailing(lines);
 });
 
@@ -160,7 +159,7 @@ test('刪除手足後重畫，樹回到剩下的人',({seg,addSib,sibCards,tree}
   const after=tree();
   assert.ok(after.includes('5y'),'留下來的手足還在');
   assert.ok(!after.includes('3y'),`刪掉的手足不得留在樹上\n${after}`);
-  assert.deepEqual(colsOf(after.split('\n')[after.split('\n').length-2],'□○◇'),[10,18],
+  assert.deepEqual(colsOf(after.split('\n')[after.split('\n').length-2],'□○◇■●◆'),[10,18],
     '剩兩個子代單元：中心 10／18');
   a.remove();
   assert.equal(sibCards().length,0);
@@ -179,16 +178,16 @@ test('手足未選性別畫成 ◇（不預選、不當成男或女）',({seg,ad
 });
 
 // ── 本人與父母的資料來源 ─────────────────────────────────────────────────────
-test('本人性別沿用第 1 區，父母帶病畫實心並附病名',({seg,click,input,tree})=>{
+test('本人性別沿用第 1 區並畫實心；父母家族史只附病名、符號維持空心',({seg,click,input,tree})=>{
   seg('gender','female');input('matAge','32');input('fatherAge','40');
   click('[data-par="g6pd"] [data-v="father"]');
   click('[data-par="thyroid"] [data-v="mother"]');
   const lines=tree().split('\n');
-  assert.equal(lines[0],'  ■───┬───●','父母都帶病 → 兩邊都實心');
+  assert.equal(lines[0],'  □───┬───○','父母家族史陽性也維持空心（實心只表示本人）');
   assert.ok(lines[1].includes('Father 40y, G6PD deficiency'),lines[1]);
   assert.ok(lines[1].includes('Mother 32y, thyroid disease')||lines[2]?.includes('Mother 32y, thyroid disease'),
     `母親註記要帶病名\n${lines.join('\n')}`);
-  assert.ok(lines[lines.length-2].includes('→○'),'本人性別沿用第 1 區（女）');
+  assert.ok(lines[lines.length-2].includes('→●'),'本人性別沿用第 1 區（女）且實心');
 });
 
 // ── 規格鐵則 ─────────────────────────────────────────────────────────────────
@@ -205,7 +204,7 @@ test('什麼都沒填也畫最小樹，年齡／GPA 缺就整段省略',({tree})
     '  □───┬───○',
     '  Father          Mother',
     '          │',
-    '        →◇',
+    '        →◆',
     '          NB'].join('\n'));
 });
 
@@ -221,13 +220,13 @@ test('例 F：離婚前段＋未婚父母，半手足掛在左邊那段',({seg,i
     '  ○╱╱─┬───□╌╌╌┬╌╌╌○',
     '                  Father 36y      Mother 30y G1P1',
     '          │              │',
-    '          ○            →□',
+    '          ○            →■',
     '          8y              NB'].join('\n'));
   const lines=tree().split('\n');
-  assert.deepEqual(colsOf(lines[0],'□○'),[2,18,34],'成人符號起始欄：其他伴侶 2、父 18、母 34');
+  assert.deepEqual(colsOf(lines[0],'□○■●◆'),[2,18,34],'成人符號起始欄：其他伴侶 2、父 18、母 34');
   assert.deepEqual(colsOf(lines[0],'┬'),[10,26],'兩段 junction 在各自兩人的中點');
   assert.deepEqual(colsOf(lines[2],'│'),[10,26],'兩條主幹各自掛在自己的 junction 底下');
-  assert.deepEqual(colsOf(lines[3],'□○'),[10,26],'子代符號起始欄＝各組 junction');
+  assert.deepEqual(colsOf(lines[3],'□○■●◆'),[10,26],'子代符號起始欄＝各組 junction');
   assert.equal(colOf(lines[3],'→'),24,'本人箭頭緊貼符號左邊（2 欄）');
   noTrailing(lines);
 });
@@ -245,7 +244,7 @@ test('例 G：母親側兩位半手足，橫桿只在右組，中組畫主幹',(
     '          │              │',
     '          │          ┌─┴─┐',
     '          │          │      │',
-    '        →○          □      ○',
+    '        →●          □      ○',
     '          NB          10y     7y'].join('\n'));
   const lines=tree().split('\n');
   assert.deepEqual(colsOf(lines[3],'┌┬┐┴┼'),[22,26,30],'橫桿列在右組 22→30，junction 26 也是接點（左側沒有伴侶就不留席位）');
@@ -261,7 +260,7 @@ test('例 H：父親不詳畫 ◇ 並寫 Father unknown（不寫年齡）',({seg
     '  ◇───┬───○',
     '  Father unknown  Mother 28y G1P1',
     '          │',
-    '        →□',
+    '        →■',
     '          NB'].join('\n'));
 });
 
@@ -287,13 +286,13 @@ test('兩邊各 3 個半手足＋中間 2 位手足：D 放大成 24，三組符
   const s2=addSib();s2.sex('female');s2.age('4y');
   const lines=tree().split('\n');
   // 中組 hw=8、兩側 hw=8 → D=max(16,8+8+8)=24；成人中心 2／26／50／74
-  assert.deepEqual(colsOf(lines[0],'□○'),[2,26,50,74],'成人符號起始欄，相鄰成人距離 24');
+  assert.deepEqual(colsOf(lines[0],'□○■●◆'),[2,26,50,74],'成人符號起始欄，相鄰成人距離 24');
   assert.deepEqual(colsOf(lines[0],'┬'),[14,38,62],'三段 junction 各在兩人中點');
   const syms=lines[lines.length-2];
-  const cols=colsOf(syms,'□○◇');
+  const cols=colsOf(syms,'□○◇■●◆');
   assert.equal(cols.length,9,`子代符號應有 9 個（3＋3＋3）\n${syms}`);
   cols.forEach((x,i)=>{ if(i)assert.ok(x-cols[i-1]>=4,`第 ${i} 與第 ${i+1} 個符號起始欄只差 ${x-cols[i-1]}\n${syms}`); });
-  colsOf(lines[0],'□○').forEach((x,i,all)=>{ if(i)assert.ok(x-all[i-1]>=4,'成人符號也不得重疊'); });
+  colsOf(lines[0],'□○■●◆').forEach((x,i,all)=>{ if(i)assert.ok(x-all[i-1]>=4,'成人符號也不得重疊'); });
 });
 
 // ── 半手足增刪與「完全沒啟用就回到原樣」 ─────────────────────────────────────
@@ -304,7 +303,7 @@ test('半手足刪掉後重畫；三個開關都回到未選時與例 A 逐字�
     '  □───┬───○',
     '  Father          Mother 30y G1P1',
     '          │',
-    '        →□',
+    '        →■',
     '          NB'].join('\n'),'起點＝例 A');
   otherRel('fatherOther','divorced');
   const h=addSib('fatherOther');h.sex('female');h.age('8y');

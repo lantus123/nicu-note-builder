@@ -2312,7 +2312,8 @@
   function buildPedigree(){
     const st=PED_STYLE;
     const symOf=(sex,aff)=>st.sym[sex==="male"?"male":sex==="female"?"female":"unknown"][aff?1:0];   // 性別未選＝未知 ◇
-    const mkSib=s=>({sex:s.sex||"",age:(s.age||"").trim(),note:(s.note||"").trim(),affected:!!s.affected,proband:false,x:0});
+    // 實心只給本人（Ryan 2026-09-23：本人用實心、不標帶病；診斷與症狀寫在備註）
+    const mkSib=s=>({sex:s.sex||"",age:(s.age||"").trim(),note:(s.note||"").trim(),proband:false,x:0});
     const sibs=S.sibs||[], ped=S.ped, fo=ped.fatherOther, mo=ped.motherOther;
     const hasL=pedOtherOn(fo), hasR=pedOtherOn(mo);
     // 接點（不是成員符號）也佔 2 欄，必須與符號同奇偶才接得上；
@@ -2330,7 +2331,7 @@
     // 中組的單元規則不變：一般手足各一個單元；同胎組（twin 手足＋本人）合成一個單元，本人永遠在最後。
     const midUnits=[];
     sibs.filter(s=>!s.twin).forEach(s=>midUnits.push([mkSib(s)]));
-    midUnits.push([...sibs.filter(s=>s.twin).map(mkSib),{sex:S.gender||"",age:"NB",note:"",affected:false,proband:true,x:0}]);
+    midUnits.push([...sibs.filter(s=>s.twin).map(mkSib),{sex:S.gender||"",age:"NB",note:"",proband:true,x:0}]);
     const groups=[];
     if(hasL)groups.push({key:"L",units:layout((fo.kids||[]).map(k=>[mkSib(k)]))});
     groups.push({key:"M",units:layout(midUnits)});
@@ -2365,8 +2366,9 @@
     const otherTxt=o=>{const a=String(o.age||"").trim(), n=String(o.note||"").trim(); return (a?a+"y":"")+(n?(a?", ":"")+n:"");};
     const adults=[];   // 其他伴侶的性別固定（半手足的另一位生物學父母），不提供選項
     if(hasL)adults.push({x:xF-D,sym:symOf("female",false),txt:otherTxt(fo)});
-    adults.push({x:xF,sym:symOf(ped.fatherUnknown?"":"male",fDx.length>0),txt:fTxt});
-    adults.push({x:xF+D,sym:symOf("female",mDx.length>0),txt:mTxt});
+    // 父母一律空心；家族史只接在註記後面（實心只表示本人）
+    adults.push({x:xF,sym:symOf(ped.fatherUnknown?"":"male",false),txt:fTxt});
+    adults.push({x:xF+D,sym:symOf("female",false),txt:mTxt});
     if(hasR)adults.push({x:xF+D*2,sym:symOf("male",false),txt:otherTxt(mo)});
     adults.forEach(a=>cv.put(a.x,y,a.sym));
     // 關係線：married 實線、unmarried 虛線字元、divorced 在靠左那位成人右邊兩道斜線
@@ -2411,7 +2413,7 @@
     }
     // ⑦ 符號列（本人左邊緊貼箭頭）⑧ 年齡列 ⑨ 備註列
     const mems=[]; groups.forEach(g=>g.units.forEach(u=>u.forEach(mem=>mems.push(mem))));
-    mems.forEach(mem=>{ if(mem.proband)cv.put(mem.x-PED_CW,y,st.arrow); cv.put(mem.x,y,symOf(mem.sex,mem.affected)); });
+    mems.forEach(mem=>{ if(mem.proband)cv.put(mem.x-PED_CW,y,st.arrow); cv.put(mem.x,y,symOf(mem.sex,mem.proband)); });
     y++;
     y=pedTextRow(cv,y,mems.map(mem=>[mem.x,mem.age]));
     y=pedTextRow(cv,y,mems.map(mem=>[mem.x,mem.note]));
@@ -2437,21 +2439,20 @@
             <div class="seg" data-sibseg="sex"><button type="button" data-v="male" aria-pressed="${s.sex==="male"}">男</button><button type="button" data-v="female" aria-pressed="${s.sex==="female"}">女</button></div></div>
           <label class="field" style="margin:0" for="sib-${s.id}-age"><span class="lab">年齡 <span class="q">（英文，如 5y／18m）</span></span>
             <input class="tin" id="sib-${s.id}-age" data-sib-field="age" value="${htmlEscape(s.age||"")}" placeholder="5y"></label>
-          <label class="field" style="margin:0" for="sib-${s.id}-note"><span class="lab">備註 <span class="q">（英文，選填）</span></span>
-            <input class="tin" id="sib-${s.id}-note" data-sib-field="note" value="${htmlEscape(s.note||"")}" placeholder="G6PD deficiency"></label>
+          <label class="field" style="margin:0" for="sib-${s.id}-note"><span class="lab">診斷／症狀 <span class="q">（英文，選填；畫在年齡下一行）</span></span>
+            <input class="tin" id="sib-${s.id}-note" data-sib-field="note" value="${htmlEscape(s.note||"")}" placeholder="G6PD deficiency"></label>${cfg.twin?`
           <div class="field" style="margin:0"><span class="lab">標記</span>
             <div style="display:flex;flex-wrap:wrap;gap:7px">
-              <div class="seg" data-sibtog="affected"><button type="button" data-v="1" aria-pressed="${!!s.affected}" style="flex:0 1 auto">帶病</button></div>${cfg.twin?`
-              <div class="seg" data-sibtog="twin"><button type="button" data-v="1" aria-pressed="${!!s.twin}" style="flex:0 1 auto">同胎</button></div>`:""}
-            </div></div>
+              <div class="seg" data-sibtog="twin"><button type="button" data-v="1" aria-pressed="${!!s.twin}" style="flex:0 1 auto">同胎</button></div>
+            </div></div>`:""}
         </div></div>`).join("");
     });
   }
-  // 子代列的點擊：刪除／性別（再點一次回到未選）／帶病／同胎；三個清單同一條路徑，靠 data-sib-list 分辨
+  // 子代列的點擊：刪除／性別（再點一次回到未選）／同胎；三個清單同一條路徑，靠 data-sib-list 分辨
   function sibClick(b){
     const addName=Object.keys(PED_LISTS).find(n=>PED_LISTS[n].add===b.id);
     if(addName){
-      const s={id:S.nextSibId++,sex:"",age:"",note:"",affected:false,twin:false};
+      const s={id:S.nextSibId++,sex:"",age:"",note:"",twin:false};
       pedKids(addName).push(s); drawSibs(addName); render(); document.getElementById(`sib-${s.id}-age`)?.focus(); return true;
     }
     const card=b.closest("[data-sib-id]"); if(!card)return false;
