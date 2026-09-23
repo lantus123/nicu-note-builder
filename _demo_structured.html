@@ -1076,6 +1076,7 @@
         <button data-v="chest" style="flex:0 1 auto">Chest tube</button>
         <button data-v="bet" style="flex:0 1 auto">Exchange transfusion</button>
       </div>
+      <p class="man-h" id="procIntubHint" hidden>已依 Admission 記錄的插管自動勾選 Intubation；點一下可取消，取消後不再自動。</p>
       <div id="opt_aline" hidden style="margin-top:13px">
         <p class="man-h" style="margin:0 0 5px">Arterial line — 部位</p>
         <div class="seg" data-po="alineSide" style="margin-bottom:6px"><button data-v="right" style="flex:0 1 auto">Right 右</button><button data-v="left" style="flex:0 1 auto">Left 左</button></div>
@@ -1342,6 +1343,7 @@
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
            dol:"1",numUnit:{promH:"hours"},mode:"adm",journeyOpen:{},planAbx:"empirical",planAbxAuto:true,planOn:{},planExplained:false,noteDirty:false,noteCache:{},
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
+           procIntubAuto:true,   // Intubation 是否仍由 Admission 的插管紀錄自動勾選；手動點過即 false
            procOpt:{alineSide:"right",alineArtery:"radial",uacPos:"high",chestSide:"right",chestType:"pigtail",chestICS:"4th",lpCompl:"nil",betABO:"",betRh:""},
            acc:{resp:[],abx:[],line:[],vac:[],rop:"notyet",aabr:"notyet",nbs:"notyet",respDates:{},lineDates:{}},
            hc:{workup:false,workupItems:["CBC/DC","CRP","B/C","GJ/C","CXR","urine GBS Ag"],
@@ -1540,7 +1542,7 @@
       if(i<0)arr.push(v);else arr.splice(i,1); b.setAttribute("aria-pressed",arr.includes(v)?"true":"false"); render(); return;}
     const hcp=b.closest("[data-hc]"); if(hcp){const k=hcp.dataset.hc; S.hc[k]=b.dataset.v;
       hcp.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===b.dataset.v?"true":"false")); render(); return;}
-    const ptg=b.closest("[data-proctog]"); if(ptg){const k=b.dataset.v; S.proc[k]=!S.proc[k];
+    const ptg=b.closest("[data-proctog]"); if(ptg){const k=b.dataset.v; S.proc[k]=!S.proc[k]; if(k==="intub")S.procIntubAuto=false;
       b.setAttribute("aria-pressed",S.proc[k]?"true":"false"); render(); return;}
     const po=b.closest("[data-po]"); if(po){const k=po.dataset.po; S.procOpt[k]=b.dataset.v;
       po.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===b.dataset.v?"true":"false")); render(); return;}
@@ -1808,6 +1810,12 @@
       jaundice: pwSx&&S.obSx.includes("jaundice"),
       preterm: gw>0&&gw<37
     };
+  }
+  // 我方施作的插管：產房事件、後續事件、或轉送途中新插管（外院已插的不算我方 procedure）。供 Procedure「Intubation」自動勾選。
+  function ourIntubation(){
+    return activeBirthEvents().some(e=>e.kind==="intubation")
+      ||S.courseEvents.some(e=>e.kind==="intubation")
+      ||(S.outborn&&S.obRespType==="ett"&&["new","repeat"].includes(raw("obRespRelation")));
   }
   // 暫定診斷：醫師打了就用醫師的，否則依嚴重度依序挑一個；全無問題時回空字串（不替使用者捏一個診斷）。
   function primaryDx(){
@@ -2148,6 +2156,9 @@
     const kinds=activeBirthEvents().map(e=>e.kind);
     S.resus=kinds.includes("compressions")?"cpr":kinds.includes("intubation")?"intubation":kinds.includes("ppv")?"ppv":"none";
     S.outborn=(S.pathway==="outborn");   // 外接併入入院路徑單選器,S.outborn 為衍生值(P1出生地/acceptance繼承沿用)
+    // Admission 記錄了我方插管 → Procedure「Intubation」自動勾選（2026-09-23 Ryan：聯動）；手動點過就交給使用者
+    if(S.procIntubAuto)S.proc.intub=ourIntubation();
+    {const ib=document.querySelector('[data-proctog] [data-v="intub"]'); if(ib)ib.setAttribute("aria-pressed",S.proc.intub?"true":"false");}
     document.getElementById("birthHospWrap").hidden=S.outborn;   // 外接出生院所由 obFacility 填寫，避免兩個可填欄位互相覆蓋
     if(S.noteDirty)pulseRegen();   // 手改鎖定中又動選單 → 閃「套用最新選擇」提示已記錄
     updateGrowthUI();   // 依 GA/體重/性別自動判定 AGA/SGA/LGA（除非手動改）
@@ -2515,11 +2526,13 @@
     const bwN=parseInt(V("bw")||"0",10), bwKg=bwN/1000;
     const op=(document.getElementById("procOperator")||{value:""}).value.trim();
     const opLine=`[Operator] Dr. ${op||"______"}`;
-    const ettSize=bwN?(bwN<1000?"2.5":bwN<2000?"3.0":bwN<3000?"3.5":"4.0"):"____";
+    // ETT 尺寸依 NRP 現行表：<1000 g 2.5、1000–2000 g 3.0、>2000 g 3.5（2026-09-23 Ryan：原本 >3000 g 寫 4.0，改掉）
+    const ettSize=bwN?(bwN<1000?"2.5":bwN<=2000?"3.0":"3.5"):"____";
     const ettDepth=bwN?String(Math.round(bwKg+6)):"____";
     const betVol=bwN?String(Math.round(160*bwKg)):"____";
     const surfDrug=S.hc.surfDrug==="curosurf"?"Curosurf":"Survanta", surfDose=S.hc.surfDrug==="curosurf"?"2.5 mL/kg":"4 mL/kg";
     ["aline","lisa","uac","uvc","chest","lp","bet"].forEach(k=>{const el=document.getElementById("opt_"+k); if(el)el.hidden=!S.proc[k];});
+    {const h=document.getElementById("procIntubHint"); if(h)h.hidden=!(S.procIntubAuto&&S.proc.intub);}
     const iv=id=>{const el=document.getElementById(id); return el&&el.value.trim()?el.value.trim():"____";};
     const rw=id=>{const el=document.getElementById(id); return el&&el.value.trim()?el.value.trim():"";};
     const lisaTime=iv("lisaTimeIn"), lpVol=iv("lpVolIn");

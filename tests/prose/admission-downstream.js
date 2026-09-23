@@ -195,6 +195,32 @@ test('餵食計畫分流：足月 room air 不寫母乳庫／早產兒配方／O
   assert.doesNotMatch(preterm,/PDF/);
 });
 
+test('ETT 尺寸依 NRP 現行表：<1000 g 2.5、1000–2000 g 3.0、>2000 g 3.5，不再出現 4.0',page=>{
+  const {input,onTab,get}=page;
+  get('[data-proctog] [data-v="intub"]').click();
+  const size=()=>(onTab('proc').match(/A ([\d.]+)-mm endotracheal tube/)||[])[1];
+  input('bw','3100');assert.equal(size(),'3.5');
+  input('bw','4200');assert.equal(size(),'3.5');
+  input('bw','2000');assert.equal(size(),'3.0');
+  input('bw','1000');assert.equal(size(),'3.0');
+  input('bw','999');assert.equal(size(),'2.5');
+});
+
+test('Admission 記錄產房插管 → Procedure 自動勾 Intubation；手動取消後不再自動勾回',page=>{
+  const {story,addBirth,onTab,get,input}=page;
+  story('A');
+  const pressed=()=>get('[data-proctog] [data-v="intub"]').getAttribute('aria-pressed');
+  assert.doesNotMatch(onTab('proc'),/Tracheal intubation/);assert.equal(pressed(),'false');
+  addBirth('intubation');
+  assert.match(onTab('proc'),/Tracheal intubation/);assert.equal(pressed(),'true');
+  assert.equal(get('#procIntubHint').hidden,false,'自動勾選時要有提示');
+  get('[data-proctog] [data-v="intub"]').click();
+  assert.equal(pressed(),'false');assert.doesNotMatch(onTab('proc'),/Tracheal intubation/);
+  input('bw','2600');
+  assert.equal(pressed(),'false','手動取消後 re-render 不得自動勾回');
+  assert.equal(get('#procIntubHint').hidden,true);
+});
+
 let failures=0;
 for(const [name,check] of tests){
   try{check();console.log(`PASS ${name}`);}

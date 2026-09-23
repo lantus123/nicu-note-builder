@@ -54,6 +54,7 @@
 - **嬰兒室抽血結果進 plan**：`brFindings` 出現 bandemia／白血球↑↓／CRP↑ 就算感染風險（自動 empirical 抗生素）；低血糖進 Dex 指徵。`brWorkup` 已抽過的項目不再重開——plan 改寫成「Obtain the remaining sepsis work-up, including …（… were obtained in the baby room）」。
 - **入院時呼吸支持**（Admission 時間線最後一站）與 **Acceptance A 區**是同一個值（`S.resp`），在任一處改都同步，再點一次可清空。Admission 敘事因此多一句 `On admission to our NICU, the infant was receiving respiratory support with NCPAP.`；同時填了「入院時狀況」就併成一句（分號接）。
 - **暫定診斷四處同源**：DX chip、Admission 入院結語、Acceptance 入院原因、NI plan 全部讀 `admissionProblems()`／`primaryDx()`。以前三套各自推導，chip 有 Hypoglycemia 而結語與 acceptance 寫 `____`。
+- **Procedure 與 admission 的連動（2026-09-23）**：Admission 記錄了我方插管（產房事件、後續事件、或轉送途中新插管）時，Procedure 的「Intubation」自動勾選並顯示提示；手動點過一次就交給使用者，不再自動。ETT 尺寸依 NRP 現行表（<1000 g 2.5、1000–2000 g 3.0、>2000 g 3.5）。各 procedure 模板的「[Complications] None」為 Ryan 拍板保留的預設。
 
 ## 填寫介面
 
