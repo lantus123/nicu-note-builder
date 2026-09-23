@@ -135,15 +135,19 @@
   .autobox .reset{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);background:var(--surface);
     color:var(--ink-2);font:inherit;font-size:12px;font-weight:600;min-height:44px;padding:8px 10px;border-radius:8px;cursor:pointer}
   .man-h{font-size:12.5px;color:var(--ink-3);margin:10px 0 7px;line-height:1.65}
-  /* 家庭樹手足列：沿用出生事件卡的外觀，但 .clinical-event 的規則限定在 #birthCard/#pathwayCard，故另寫一份 */
-  #sibList .sib-item{border:1px solid var(--line);border-radius:11px;padding:14px;margin-top:12px;background:var(--surface-2);min-width:0;overflow-wrap:anywhere}
-  #sibList .sib-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin-bottom:12px;min-width:0}
-  #sibList .sib-num{display:inline-grid;place-items:center;min-width:24px;min-height:24px;padding:0 5px;margin-right:6px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink);font-size:12px;font-weight:700}
-  #sibList .sib-del{min-width:44px;min-height:44px;max-width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-2);font:inherit;font-size:13px;cursor:pointer}
-  #sibList .sib-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr));gap:12px;min-width:0}
-  #sibList .sib-fields>*{min-width:0;margin-bottom:0}
-  #sibList .sib-fields input{max-width:100%}
-  @media(max-width:420px){#sibList .sib-item{padding:11px}}
+  /* 家庭樹子代列（手足與半手足共用）：沿用出生事件卡的外觀，但 .clinical-event 的規則限定在 #birthCard/#pathwayCard，故另寫一份 */
+  :is(#sibList,.ped-kids) .sib-item{border:1px solid var(--line);border-radius:11px;padding:14px;margin-top:12px;background:var(--surface-2);min-width:0;overflow-wrap:anywhere}
+  :is(#sibList,.ped-kids) .sib-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin-bottom:12px;min-width:0}
+  :is(#sibList,.ped-kids) .sib-num{display:inline-grid;place-items:center;min-width:24px;min-height:24px;padding:0 5px;margin-right:6px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink);font-size:12px;font-weight:700}
+  :is(#sibList,.ped-kids) .sib-del{min-width:44px;min-height:44px;max-width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-2);font:inherit;font-size:13px;cursor:pointer}
+  :is(#sibList,.ped-kids) .sib-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr));gap:12px;min-width:0}
+  :is(#sibList,.ped-kids) .sib-fields>*{min-width:0;margin-bottom:0}
+  :is(#sibList,.ped-kids) .sib-fields input{max-width:100%}
+  @media(max-width:420px){:is(#sibList,.ped-kids) .sib-item{padding:11px}}
+  /* 其他伴侶的小孩：預設收合，不佔一般個案的版面 */
+  .ped-other{border:1px solid var(--line);border-radius:10px;padding:0 12px;margin-top:12px}
+  .ped-other>summary{min-height:44px;padding:11px 0;cursor:pointer;font-size:14px;font-weight:650;line-height:1.5}
+  .ped-other[open]{padding-bottom:12px}
   .wclass{font-size:11px;font-weight:700;color:var(--risk);margin-top:6px;letter-spacing:.02em;min-height:14px}
   .tin{width:100%;min-width:0;max-width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;
     background:var(--surface);color:var(--ink);font:inherit;font-size:16px;line-height:1.5}
@@ -861,13 +865,63 @@
         <div id="sibList"></div>
         <div class="seg" style="margin-top:12px"><button type="button" id="addSib" style="flex:0 1 auto">＋ 手足</button></div>
       </div>
+      <div class="row2">
+        <div class="field" style="margin:0"><span class="lab">父母關係 <span class="q">（未註明就選一般）</span></span>
+          <div class="seg" data-seg="pedRel">
+            <button type="button" data-v="married" aria-pressed="true" style="flex:0 1 auto">一般</button>
+            <button type="button" data-v="unmarried" style="flex:0 1 auto">未婚</button>
+            <button type="button" data-v="divorced" style="flex:0 1 auto">離婚・分居</button>
+          </div>
+        </div>
+        <div class="field" style="margin:0"><span class="lab">父親不詳 <span class="q">（符號改 &lt; &gt;，不寫年齡）</span></span>
+          <div class="seg" data-tog="fatherUnknown"><button type="button" data-v="1" style="flex:0 1 auto">父親不詳 Father unknown</button></div>
+        </div>
+      </div>
+      <details class="ped-other">
+        <summary>父親與其他伴侶的小孩 <span class="q">（選填；畫在父親左側）</span></summary>
+        <div class="row2">
+          <div class="field" style="margin:0"><span class="lab">關係 <span class="q">（不預選＝畫一般線）</span></span>
+            <div class="seg" data-pedrel="fatherOther">
+              <button type="button" data-v="divorced" style="flex:0 1 auto">離婚・分居</button>
+              <button type="button" data-v="unmarried" style="flex:0 1 auto">未婚</button>
+              <button type="button" data-v="married" style="flex:0 1 auto">未註明</button>
+            </div>
+          </div>
+          <div class="field" style="margin:0"><span class="lab">伴侶年齡 <span class="q">（選填）</span></span>
+            <div class="num"><input type="number" id="fatherOtherAge" data-ped-field="fatherOther:age" placeholder="38" min="14" max="80" inputmode="numeric" aria-label="父親的其他伴侶年齡"><span class="u">y/o</span></div>
+          </div>
+        </div>
+        <label class="field" for="fatherOtherNote"><span class="lab">伴侶備註 <span class="q">（英文，選填）</span></span>
+          <input class="tin" id="fatherOtherNote" data-ped-field="fatherOther:note" placeholder="deceased"></label>
+        <div id="fatherOtherKids" class="ped-kids"></div>
+        <div class="seg" style="margin-top:12px"><button type="button" id="addFatherOtherKid" style="flex:0 1 auto">＋ 小孩</button></div>
+      </details>
+      <details class="ped-other">
+        <summary>母親與其他伴侶的小孩 <span class="q">（選填；畫在母親右側）</span></summary>
+        <div class="row2">
+          <div class="field" style="margin:0"><span class="lab">關係 <span class="q">（不預選＝畫一般線）</span></span>
+            <div class="seg" data-pedrel="motherOther">
+              <button type="button" data-v="divorced" style="flex:0 1 auto">離婚・分居</button>
+              <button type="button" data-v="unmarried" style="flex:0 1 auto">未婚</button>
+              <button type="button" data-v="married" style="flex:0 1 auto">未註明</button>
+            </div>
+          </div>
+          <div class="field" style="margin:0"><span class="lab">伴侶年齡 <span class="q">（選填）</span></span>
+            <div class="num"><input type="number" id="motherOtherAge" data-ped-field="motherOther:age" placeholder="38" min="14" max="80" inputmode="numeric" aria-label="母親的其他伴侶年齡"><span class="u">y/o</span></div>
+          </div>
+        </div>
+        <label class="field" for="motherOtherNote"><span class="lab">伴侶備註 <span class="q">（英文，選填）</span></span>
+          <input class="tin" id="motherOtherNote" data-ped-field="motherOther:note" placeholder="deceased"></label>
+        <div id="motherOtherKids" class="ped-kids"></div>
+        <div class="seg" style="margin-top:12px"><button type="button" id="addMotherOtherKid" style="flex:0 1 auto">＋ 小孩</button></div>
+      </details>
       <div class="field"><span class="lab">樣式 <span class="q">（會記住）</span></span>
         <div class="seg" data-seg="pedStyle">
           <button type="button" data-v="ascii" style="flex:0 1 auto">ASCII（[ ] ( )）</button>
           <button type="button" data-v="symbol" style="flex:0 1 auto">符號（□ ○）</button>
         </div>
       </div>
-      <p class="man-h">本人（新生兒）自動放最後，性別沿用第 1 區；貼到 HIS 後若歪掉請改用另一種樣式。</p>
+      <p class="man-h">本人（新生兒）自動放最後，性別沿用第 1 區；貼到 HIS 後若歪掉請改用另一種樣式。離婚・分居畫 //，未婚畫虛線；各自其他伴侶的小孩畫在父親左側／母親右側。</p>
     </div>
   </section>
   </div><!-- /admSections -->
@@ -1382,6 +1436,10 @@
            pwSbR:[],pwStandby:false,pwConsult:false,pwOnset:"observed",obM1Type:"",obM1Dev:"",
            parent:{thal:"none",g6pd:"none",thyroid:"none"},thyType:"hyper",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},
            sibs:[],nextSibId:1,consang:false,pedStyle:"ascii",   // 家庭樹：手足清單（本人自動補在最後）、近親婚、樣式（ascii/symbol，存 localStorage）
+           // 家庭樹第二批：父母關係線型、父親不詳、父／母各自與其他伴侶的小孩（半手足；kids 與 S.sibs 同形，共用 nextSibId）
+           ped:{rel:"married",fatherUnknown:false,
+                fatherOther:{rel:"",age:"",note:"",kids:[]},
+                motherOther:{rel:"",age:"",note:"",kids:[]}},
            dol:"1",numUnit:{promH:"hours"},mode:"adm",journeyOpen:{},planAbx:"empirical",planAbxAuto:true,planOn:{},planExplained:false,noteDirty:false,noteCache:{},
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
            procIntubAuto:true,   // Intubation 是否仍由 Admission 的插管紀錄自動勾選；手動點過即 false
@@ -1552,6 +1610,7 @@
     if(eventClick(b))return;
     if(b.id==="addAbortion"){const input=document.getElementById("abortion"); input.hidden=false; b.hidden=true; input.focus(); return;}
     if(sibClick(b))return;   // 家庭樹手足列（自成一組 data-sib*，不與既有委派相撞）
+    if(pedClick(b))return;   // 家庭樹父母關係／父親不詳／其他伴侶關係（寫 S.ped，必須早於通用 data-seg／data-tog）
     const tab=b.closest("[data-tab]"); if(tab){const nel=document.getElementById("note");
       if(tab.dataset.tab===S.mode)return;
       rememberTabView(S.mode);
@@ -1634,9 +1693,12 @@
     const d=e.target.dataset; if(d&&d.dkey&&S.acc[d.dkey+"Dates"])S.acc[d.dkey+"Dates"][d.ditem]=e.target.value;
     if(e.target.id==="procOperator"){try{localStorage.setItem("nicu_operator",e.target.value);}catch(_){}}
     if(e.target.id==="homeHosp"){try{localStorage.setItem("nicu_home_hosp",e.target.value);}catch(_){}}
-    if(e.target.dataset&&e.target.dataset.sibField){   // 手足年齡／備註寫回 S.sibs（不重畫整張清單，免得游標跳走）
-      const card=e.target.closest("[data-sib-id]"), s=card&&S.sibs.find(x=>String(x.id)===card.dataset.sibId);
+    if(e.target.dataset&&e.target.dataset.sibField){   // 子代年齡／備註寫回該清單（不重畫整張清單，免得游標跳走）
+      const card=e.target.closest("[data-sib-id]");
+      const s=card&&pedKids(card.dataset.sibList||"sibs").find(x=>String(x.id)===card.dataset.sibId);
       if(s)s[e.target.dataset.sibField]=e.target.value;}
+    if(e.target.dataset&&e.target.dataset.pedField){   // 其他伴侶的年齡／備註（data-ped-field="fatherOther:age"）
+      const p=e.target.dataset.pedField.split(":"); if(S.ped[p[0]])S.ped[p[0]][p[1]]=e.target.value;}
     if(e.target.matches("input,textarea"))render();
   });
   document.addEventListener("change",e=>{
@@ -2232,12 +2294,14 @@
   // 預覽用：escape 後把 2 欄寬字元包成固定 2ch 的 inline-block，西文等寬字型（Menlo／Consolas）才會和 HIS 的中文等寬字型排出同樣的欄位；
   // innerText 複製只取文字，不受 span 影響（實機驗過）。
   const pedigreeHtml=text=>text.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])).replace(new RegExp(PED_WIDE.source,"g"),c=>`<span class="w2${/[─═]/.test(c)?" w2l":""}">${c}</span>`);   // 橫線字元在西文字型只有 1 欄寬，預覽用 scaleX(2) 拉滿 2ch 才不會呈虛線   // 顯示欄寬：符號／CJK 算 2，年齡備註等 ASCII 算 1
-  const PED_W=8, PED_L=10, PED_TWIN=6;        // 子代單元欄距、第一個單元中心、同胎組成員間距
+  const PED_W=8, PED_L=10, PED_TWIN=6, PED_D=16;   // 子代單元欄距、第一個單元中心、同胎組成員間距、相鄰成人中心距離的下限
+  // slash＝離婚・分居的兩道斜線，slashAt＝斜線離「靠左那位成人符號右緣」幾欄（ASCII 先留一格線再打斜線）
+  // dash＝符號樣式的未婚虛線字元（ASCII 的虛線靠「隔欄畫線」做，不需要另一個字元）
   const PED_STYLE={
     ascii:{sym:{male:["[ ]","[#]"],female:["( )","(#)"],unknown:["< >","<#>"]},
-           h:"-",v:"|",tee:"+",up:"+",both:"+",lc:"+",rc:"+",cons:"=",arrow:"->",off:1,symW:3,cw:1},
+           h:"-",v:"|",tee:"+",up:"+",both:"+",lc:"+",rc:"+",cons:"=",arrow:"->",off:1,symW:3,cw:1,slash:"//",slashAt:1},
     symbol:{sym:{male:["□","■"],female:["○","●"],unknown:["◇","◆"]},
-           h:"─",v:"│",tee:"┬",up:"┴",both:"┼",lc:"┌",rc:"┐",cons:"═",arrow:"→",off:0,symW:2,cw:2}
+           h:"─",v:"│",tee:"┬",up:"┴",both:"┼",lc:"┌",rc:"┐",cons:"═",arrow:"→",off:0,symW:2,cw:2,dash:"╌",slash:"╱╱",slashAt:0}
   };
   // off＝符號左緣相對中心的位移（ascii 置中於中心故 -1；symbol 佔中心欄與其右一欄故 0）
   const PED_DX={thal:"thalassemia",g6pd:"G6PD deficiency",thyroid:"thyroid disease"};
@@ -2263,71 +2327,135 @@
       y++; rest=next; }
     return y;
   }
+  // 其他伴侶（半手足的另一位生物學父母）：選了關係、填了年齡／備註、或有小孩，才算啟用；
+  // 完全沒動就整段不畫，輸出與單一家庭版逐字元相同。
+  const pedOtherOn=o=>!!(o&&(o.rel||String(o.age||"").trim()||String(o.note||"").trim()||(o.kids||[]).length));
   function buildPedigree(style){
     const st=PED_STYLE[style]||PED_STYLE.ascii;
     const symOf=(sex,aff)=>st.sym[sex==="male"?"male":sex==="female"?"female":"unknown"][aff?1:0];   // 性別未選＝未知 < > / ◇
     const mkSib=s=>({sex:s.sex||"",age:(s.age||"").trim(),note:(s.note||"").trim(),affected:!!s.affected,proband:false,x:0});
-    const sibs=S.sibs||[];
-    // 子代單元：一般手足各一個單元；同胎組（twin 手足＋本人）合成一個單元，本人永遠在最後
-    const units=[];
-    sibs.filter(s=>!s.twin).forEach(s=>units.push([mkSib(s)]));
-    units.push([...sibs.filter(s=>s.twin).map(mkSib),{sex:S.gender||"",age:"NB",note:"",affected:false,proband:true,x:0}]);
-    let pos=PED_L;
-    units.forEach(u=>{ u.forEach((mem,i)=>{mem.x=pos+PED_TWIN*i;});
-      u.center=Math.round(u.reduce((a,mem)=>a+mem.x,0)/u.length);
-      pos=u[u.length-1].x+PED_W; });
+    const sibs=S.sibs||[], ped=S.ped, fo=ped.fatherOther, mo=ped.motherOther;
+    const hasL=pedOtherOn(fo), hasR=pedOtherOn(mo);
     // 接點（不是成員符號）在符號樣式下也佔 2 欄，必須與符號同奇偶才接得上；
     // 兩人同胎組的中心＝成員中心平均，會落在奇數欄，故符號樣式把接點往左靠一欄（ascii 不受影響）。
     const hub=x=>(st.cw===2&&(x-PED_L)%2)?x-1:x;
-    const m=hub(Math.round((units[0].center+units[units.length-1].center)/2));
+    // 一組子代的局部座標：單元由左到右排，第一個單元的第一個成員在 0（實際欄位之後整組平移）
+    const layout=units=>{
+      let pos=0;
+      units.forEach(u=>{ u.forEach((mem,i)=>{mem.x=pos+PED_TWIN*i;});
+        u.center=Math.round(u.reduce((a,mem)=>a+mem.x,0)/u.length);
+        pos=u[u.length-1].x+PED_W; });
+      return units;
+    };
+    // 子代分三組：左＝父親與其他伴侶的小孩、中＝父母的小孩（含本人）、右＝母親與其他伴侶的小孩。
+    // 中組的單元規則不變：一般手足各一個單元；同胎組（twin 手足＋本人）合成一個單元，本人永遠在最後。
+    const midUnits=[];
+    sibs.filter(s=>!s.twin).forEach(s=>midUnits.push([mkSib(s)]));
+    midUnits.push([...sibs.filter(s=>s.twin).map(mkSib),{sex:S.gender||"",age:"NB",note:"",affected:false,proband:true,x:0}]);
+    const groups=[];
+    if(hasL)groups.push({key:"L",units:layout((fo.kids||[]).map(k=>[mkSib(k)]))});
+    groups.push({key:"M",units:layout(midUnits)});
+    if(hasR)groups.push({key:"R",units:layout((mo.kids||[]).map(k=>[mkSib(k)]))});
+    groups.forEach(g=>{ const n=g.units.length;
+      g.hw=n?(g.units[n-1].center-g.units[0].center)/2:0;                        // 該組跨距的一半（單一單元＝0）
+      g.gc=n?hub(Math.round((g.units[0].center+g.units[n-1].center)/2)):0; });   // 該組中心＝掛在 junction 底下的那一欄
+    const hwOf=k=>{const g=groups.find(x=>x.key===k); return g?g.hw:0;};
+    // 相鄰成人中心距離 D：相鄰兩組子代之間至少留一個單元欄距；取偶數向上（符號樣式取 4 的倍數，junction 在中點也要落在偶數欄）
+    const step=st.cw===2?4:2;
+    const D=Math.ceil(Math.max(PED_D,hwOf("L")+hwOf("M")+PED_W,hwOf("M")+hwOf("R")+PED_W)/step)*step;
+    const half=D/2, jRel={L:-half,M:half,R:half*3};   // 各段 junction 相對父親中心的位移（junction 在兩成人中點）
+    // 父親中心 xF：沒有任何其他伴侶＝維持原規則（子代局部原點落在第 10 欄，輸出逐字元不變）；
+    // 有其他伴侶時：左側有伴侶才在父親左邊留一個席位（沒有就不留，避免整棵樹右移 16 欄、貼進 HIS 一大段前導空白），
+    // 取最小值使最左成人與最左子代符號左緣都 ≥ 1。
+    let xF;
+    if(!hasL&&!hasR)xF=groups[0].gc+PED_L-half;
+    else{
+      xF=(hasL?D:0)+1+st.off;
+      groups.forEach(g=>{const need=1+st.off+g.gc-jRel[g.key]; if(need>xF)xF=need;});
+      if(st.cw===2&&xF%2)xF++;   // 符號樣式：成人與接點都要落在偶數欄
+    }
+    groups.forEach(g=>{ g.j=xF+jRel[g.key]; const shift=g.j-g.gc;
+      g.units.forEach(u=>{u.forEach(mem=>{mem.x+=shift;}); u.center+=shift;}); });
     const dxOf=who=>Object.keys(PED_DX).filter(k=>S.parent[k]===who||S.parent[k]==="both").map(k=>PED_DX[k]);
     const fDx=dxOf("father"), mDx=dxOf("mother");
     const cv=pedCanvas(); let y=0;
-    // ① 父母列：父在 m-8、母在 m+8，中間是父母線，m 處為接點；近親婚整條換成 ＝
-    const fL=(m-8)-st.off, mL=(m+8)-st.off, hch=S.consang?st.cons:st.h;
-    cv.put(fL,y,symOf("male",fDx.length>0)); cv.put(mL,y,symOf("female",mDx.length>0));
-    cv.fill(y,fL+st.symW,m-1,hch); cv.put(m,y,st.tee); cv.fill(y,m+st.cw,mL-1,hch);
-    y++;
-    // ② 父母註記列：左緣對齊各自符號左緣；缺的資訊整段省略，不留佔位
+    // ① 成人列（由左到右）：父親的其他伴侶 — 父 — 母 — 母親的其他伴侶；每兩人之間一段關係線，junction 在中點
     const gpa=(raw("gravida")?"G"+raw("gravida"):"")+(raw("para")?"P"+raw("para"):"")+(raw("abortion")?"A"+raw("abortion"):"");
-    const fTxt="Father"+(raw("fatherAge")?" "+raw("fatherAge")+"y":"")+(fDx.length?", "+fDx.join(", "):"");
+    // 父親不詳：符號改未知、註記寫 Father unknown（不寫年齡），關係線照畫
+    const fTxt="Father"+(ped.fatherUnknown?" unknown":(raw("fatherAge")?" "+raw("fatherAge")+"y":""))+(fDx.length?", "+fDx.join(", "):"");
     const mTxt="Mother"+(raw("matAge")?" "+raw("matAge")+"y":"")+(gpa?" "+gpa:"")+(mDx.length?", "+mDx.join(", "):"");
-    if(fL+fTxt.length-1>=mL-1){cv.put(fL,y++,fTxt); cv.put(mL,y++,mTxt);}   // 會重疊就拆兩行
-    else{cv.put(fL,y,fTxt); cv.put(mL,y,mTxt); y++;}
-    // ③ 主幹列
-    cv.put(m,y++,st.v);
+    const otherTxt=o=>{const a=String(o.age||"").trim(), n=String(o.note||"").trim(); return (a?a+"y":"")+(n?(a?", ":"")+n:"");};
+    const adults=[];   // 其他伴侶的性別固定（半手足的另一位生物學父母），不提供選項
+    if(hasL)adults.push({x:xF-D,sym:symOf("female",false),txt:otherTxt(fo)});
+    adults.push({x:xF,sym:symOf(ped.fatherUnknown?"":"male",fDx.length>0),txt:fTxt});
+    adults.push({x:xF+D,sym:symOf("female",mDx.length>0),txt:mTxt});
+    if(hasR)adults.push({x:xF+D*2,sym:symOf("male",false),txt:otherTxt(mo)});
+    adults.forEach(a=>cv.put(a.x-st.off,y,a.sym));
+    // 關係線：married 實線、unmarried 虛線、divorced 在靠左那位成人右邊兩道斜線；近親婚（＝／═）只作用在父母之間那段
+    const relLine=(y2,ax,bx,j,rel,hch)=>{
+      const a=ax-st.off+st.symW, b=bx-st.off-1;   // 從左邊成人符號右緣畫到右邊成人符號左緣
+      if(rel==="unmarried"){
+        if(st.cw===2){cv.fill(y2,a,j-1,st.dash); cv.fill(y2,j+st.cw,b,st.dash);}   // 符號樣式換成 2 欄寬的虛線字元（近親婚無雙線虛線字元，仍畫 ╌）
+        else for(let x=a;x<=b;x++){if(x!==j&&Math.abs(x-j)%2===0)cv.put(x,y2,hch);}   // ASCII 隔欄畫線 → - - -
+      }else{
+        cv.fill(y2,a,j-1,hch); cv.fill(y2,j+st.cw,b,hch);
+        if(rel==="divorced")cv.put(a+st.slashAt,y2,st.slash);
+      }
+      cv.put(j,y2,st.tee);
+    };
+    if(hasL)relLine(y,xF-D,xF,xF-half,fo.rel,st.h);
+    relLine(y,xF,xF+D,xF+half,ped.rel,S.consang?st.cons:st.h);
+    if(hasR)relLine(y,xF+D,xF+D*2,xF+half*3,mo.rel,st.h);
+    y++;
+    // ② 成人註記列：左緣對齊各自符號左緣；缺的資訊整段省略，不留佔位；撞在一起就自動往下拆行
+    y=pedTextRow(cv,y,adults.map(a=>[a.x-st.off,a.txt]));
+    // ③ 主幹列（有小孩的組才畫）
+    groups.forEach(g=>{if(g.units.length)cv.put(g.j,y,st.v);});
+    y++;
     // 橫桿／分叉共用：兩端 ┌ ┐、中間掛點 ┬、主幹接點 ┴（與掛點重合時 ┼）
     const joint=(list,center,y2)=>{
       const all=list.includes(center)?list.slice():list.concat([center]).sort((a,b)=>a-b);
       all.forEach((x,i)=>{const ch=i===0?st.lc:i===all.length-1?st.rc:(x===center?(list.includes(x)?st.both:st.up):st.tee); cv.put(x,y2,ch);});
       for(let i=0;i+1<all.length;i++)cv.fill(y2,all[i]+st.cw,all[i+1]-1,st.h);
     };
-    // ④⑤ 橫桿列＋子代主幹列（只有一個子代單元時整組省略）
-    if(units.length>1){
-      joint(units.map(u=>hub(u.center)),m,y); y++;
-      units.forEach(u=>cv.put(hub(u.center),y,st.v)); y++;
-    }
-    // ⑥ 同胎分叉列＋成員主幹列（有同胎組才有）
-    const twinUnit=units.find(u=>u.length>1);
-    if(twinUnit){
-      units.forEach(u=>{ if(u!==twinUnit){cv.put(hub(u.center),y,st.v);return;} joint(u.map(mem=>mem.x),hub(u.center),y); });
+    // ④⑤ 橫桿列＋子代主幹列（單一子代單元的組省略橫桿；但只要有任一組需要，三組都畫出這兩列，單元少的組畫主幹）
+    if(groups.some(g=>g.units.length>1)){
+      groups.forEach(g=>{ if(!g.units.length)return;
+        if(g.units.length>1)joint(g.units.map(u=>hub(u.center)),g.j,y); else cv.put(g.j,y,st.v); });
       y++;
-      units.forEach(u=>u.forEach(mem=>cv.put(mem.x,y,st.v))); y++;
+      groups.forEach(g=>g.units.forEach(u=>cv.put(hub(u.center),y,st.v))); y++;
+    }
+    // ⑥ 同胎分叉列＋成員主幹列（有同胎組才有；半手足沒有同胎）
+    let twinUnit=null;
+    groups.forEach(g=>g.units.forEach(u=>{if(u.length>1&&!twinUnit)twinUnit=u;}));
+    if(twinUnit){
+      groups.forEach(g=>g.units.forEach(u=>{ if(u!==twinUnit){cv.put(hub(u.center),y,st.v);return;} joint(u.map(mem=>mem.x),hub(u.center),y); }));
+      y++;
+      groups.forEach(g=>g.units.forEach(u=>u.forEach(mem=>cv.put(mem.x,y,st.v)))); y++;
     }
     // ⑦ 符號列（本人左邊緊貼箭頭）⑧ 年齡列 ⑨ 備註列
-    const mems=[]; units.forEach(u=>u.forEach(mem=>mems.push(mem)));
+    const mems=[]; groups.forEach(g=>g.units.forEach(u=>u.forEach(mem=>mems.push(mem))));
     mems.forEach(mem=>{ const lx=mem.x-st.off; if(mem.proband)cv.put(lx-2,y,st.arrow); cv.put(lx,y,symOf(mem.sex,mem.affected)); });
     y++;
     y=pedTextRow(cv,y,mems.map(mem=>[mem.x-st.off,mem.age]));
     y=pedTextRow(cv,y,mems.map(mem=>[mem.x-st.off,mem.note]));
     return cv.text();
   }
-  // 手足列（動態清單，慣例同 drawEvents）
-  function drawSibs(){
-    const host=document.getElementById("sibList"); if(!host)return;
-    host.innerHTML=S.sibs.map((s,i)=>`<div class="sib-item" data-sib-id="${s.id}">
-        <div class="sib-head"><strong><span class="sib-num">${i+1}</span> 手足</strong>
-          <button type="button" class="sib-del" data-sib-action="remove" aria-label="刪除第 ${i+1} 位手足">刪除</button></div>
+  // 三個子代清單共用同一套列 UI（動態清單，慣例同 drawEvents）：
+  // 手足（可同胎）、父親／母親與其他伴侶的小孩（半手足，沒有同胎）。id 共用 S.nextSibId，故 sib-{id}-age 全域唯一。
+  const PED_LISTS={
+    sibs:{host:"sibList",label:"手足",twin:true,add:"addSib"},
+    fatherOther:{host:"fatherOtherKids",label:"小孩",twin:false,add:"addFatherOtherKid"},
+    motherOther:{host:"motherOtherKids",label:"小孩",twin:false,add:"addMotherOtherKid"}
+  };
+  const pedKids=name=>name==="sibs"?S.sibs:S.ped[name].kids;
+  function drawSibs(only){   // 不傳＝三個清單都重畫
+    Object.keys(PED_LISTS).forEach(name=>{
+      if(only&&only!==name)return;
+      const cfg=PED_LISTS[name], host=document.getElementById(cfg.host); if(!host)return;
+      host.innerHTML=pedKids(name).map((s,i)=>`<div class="sib-item" data-sib-id="${s.id}" data-sib-list="${name}">
+        <div class="sib-head"><strong><span class="sib-num">${i+1}</span> ${cfg.label}</strong>
+          <button type="button" class="sib-del" data-sib-action="remove" aria-label="刪除第 ${i+1} 位${cfg.label}">刪除</button></div>
         <div class="sib-fields">
           <div class="field" style="margin:0"><span class="lab">性別 <span class="q">（未選畫未知）</span></span>
             <div class="seg" data-sibseg="sex"><button type="button" data-v="male" aria-pressed="${s.sex==="male"}">男</button><button type="button" data-v="female" aria-pressed="${s.sex==="female"}">女</button></div></div>
@@ -2337,28 +2465,49 @@
             <input class="tin" id="sib-${s.id}-note" data-sib-field="note" value="${htmlEscape(s.note||"")}" placeholder="G6PD deficiency"></label>
           <div class="field" style="margin:0"><span class="lab">標記</span>
             <div style="display:flex;flex-wrap:wrap;gap:7px">
-              <div class="seg" data-sibtog="affected"><button type="button" data-v="1" aria-pressed="${!!s.affected}" style="flex:0 1 auto">帶病</button></div>
-              <div class="seg" data-sibtog="twin"><button type="button" data-v="1" aria-pressed="${!!s.twin}" style="flex:0 1 auto">同胎</button></div>
+              <div class="seg" data-sibtog="affected"><button type="button" data-v="1" aria-pressed="${!!s.affected}" style="flex:0 1 auto">帶病</button></div>${cfg.twin?`
+              <div class="seg" data-sibtog="twin"><button type="button" data-v="1" aria-pressed="${!!s.twin}" style="flex:0 1 auto">同胎</button></div>`:""}
             </div></div>
         </div></div>`).join("");
+    });
   }
-  // 手足列的點擊：刪除／性別（再點一次回到未選）／帶病／同胎
+  // 子代列的點擊：刪除／性別（再點一次回到未選）／帶病／同胎；三個清單同一條路徑，靠 data-sib-list 分辨
   function sibClick(b){
-    if(b.id==="addSib"){
+    const addName=Object.keys(PED_LISTS).find(n=>PED_LISTS[n].add===b.id);
+    if(addName){
       const s={id:S.nextSibId++,sex:"",age:"",note:"",affected:false,twin:false};
-      S.sibs.push(s); drawSibs(); render(); document.getElementById(`sib-${s.id}-age`)?.focus(); return true;
+      pedKids(addName).push(s); drawSibs(addName); render(); document.getElementById(`sib-${s.id}-age`)?.focus(); return true;
     }
     const card=b.closest("[data-sib-id]"); if(!card)return false;
-    const s=S.sibs.find(x=>String(x.id)===card.dataset.sibId); if(!s)return false;
+    const name=card.dataset.sibList||"sibs", arr=pedKids(name);
+    const s=arr.find(x=>String(x.id)===card.dataset.sibId); if(!s)return false;
     if(b.dataset.sibAction==="remove"){
-      S.sibs.splice(S.sibs.indexOf(s),1); drawSibs(); render();
-      (document.getElementById("addSib"))?.focus(); return true;
+      arr.splice(arr.indexOf(s),1); drawSibs(name); render();
+      (document.getElementById(PED_LISTS[name].add))?.focus(); return true;
     }
     const sseg=b.closest("[data-sibseg]");
     if(sseg){const k=sseg.dataset.sibseg; s[k]=(s[k]===b.dataset.v)?"":b.dataset.v;   // 誤點不必重來：再點一次＝回到未選
       sseg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.v===s[k]))); render(); return true;}
     const stog=b.closest("[data-sibtog]");
     if(stog){const k=stog.dataset.sibtog; s[k]=!s[k]; b.setAttribute("aria-pressed",String(!!s[k])); render(); return true;}
+    return false;
+  }
+  // 家庭樹第二批的控制項：狀態掛在 S.ped 底下，不能走寫頂層 S[key] 的 data-seg／data-tog 通用委派，故在此先攔下
+  function pedClick(b){
+    const rel=b.closest('[data-seg="pedRel"]');
+    if(rel){S.ped.rel=b.dataset.v;
+      rel.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.v===S.ped.rel)));
+      render(); return true;}
+    const fu=b.closest('[data-tog="fatherUnknown"]');
+    if(fu){S.ped.fatherUnknown=!S.ped.fatherUnknown;
+      b.setAttribute("aria-pressed",String(S.ped.fatherUnknown));
+      const age=document.getElementById("fatherAge"); if(age)age.disabled=S.ped.fatherUnknown;   // 不詳就不寫年齡，欄位一併停用
+      render(); return true;}
+    const other=b.closest("[data-pedrel]");
+    if(other){const o=S.ped[other.dataset.pedrel]; if(!o)return false;
+      o.rel=(o.rel===b.dataset.v)?"":b.dataset.v;   // 不預選；再點一次＝回到未選（未選時畫一般線）
+      other.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(!!o.rel&&x.dataset.v===o.rel)));
+      render(); return true;}
     return false;
   }
 

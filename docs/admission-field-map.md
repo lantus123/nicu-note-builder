@@ -93,7 +93,11 @@ Admission note 結尾 `Pedigree:` 之後由 `buildPedigree(S.pedStyle)` 產生�
 | 第 1 區 `matAge`、`gravida`、`para`、`abortion` | 家庭樹母親註記（`Mother 32y G3P2A1`） | 沿用同一組欄位，不在第 6 區重填；缺哪一段就省略哪一段（只有 G 就只寫 `G3`）。 |
 | `S.consang`（`[data-tog="consang"]`） | 父母之間的連線 | 勾選才把 `-`／`─` 換成 `=`／`═`；不勾不代表已確認非近親婚，只是不主張。 |
 | `S.sibs[]`（`sex`／`age`／`note`／`affected`／`twin`） | 子代列的手足 | 依陣列順序由左至右＝出生序（最年長在前）。`sex` **不預選**，未選畫 `< >`／`◇`，再點一次已選的性別可回到未選；`age`／`note` 為英文自由文字，空白就不畫該列；`affected` 畫實心；`twin` 與本人合成同一個子代單元並畫分叉。動態控制項為 `sib-{id}-age`／`sib-{id}-note` 與 `data-sib-field`／`data-sibseg`／`data-sibtog`／`data-sib-action`。 |
-| `S.nextSibId` | 手足列識別 | 只供 UI 操作，不寫進病歷。 |
+| `S.nextSibId` | 子代列識別 | 三個子代清單（手足、父親／母親與其他伴侶的小孩）共用同一個計數器，故 `sib-{id}-age` 全域唯一；只供 UI 操作，不寫進病歷。 |
+| `S.ped.rel`（`[data-seg="pedRel"]`） | 父母之間那段關係線 | `married`（預設，實線）／`unmarried`（虛線 `- - - `／`╌`）／`divorced`（靠左那位成人右邊兩道斜線 `-//---`／`╱╱`）。近親婚的 `=`／`═` 疊加在同一段上（近親＋離婚＝`=//===`）；符號樣式沒有雙線虛線字元，近親＋未婚仍畫 `╌`。 |
+| `S.ped.fatherUnknown`（`[data-tog="fatherUnknown"]`） | 父親符號與註記 | 勾選時符號改未知（`< >`／`◇`）、註記寫 `Father unknown` 且不寫年齡（`#fatherAge` 一併 disabled）；關係線照畫，帶病病名仍接在後面。 |
+| `S.ped.fatherOther`／`S.ped.motherOther`（`rel`／`age`／`note`／`kids[]`） | 半手足那一段：其他伴侶符號、該段關係線與掛在它底下的小孩 | 只要選了關係、填了年齡／備註、或有小孩就畫，都沒動就整段不畫（輸出與單一家庭版逐字元相同）。`rel` **不預選**，未選畫一般線，再點一次已選的可回到未選。伴侶性別固定（父親側畫女、母親側畫男），註記只有填了 `age`／`note` 才寫（`38y, deceased`）。`kids[]` 與 `S.sibs` 同形（`id`／`sex`／`age`／`note`／`affected`），**沒有 `twin`**；列的控制項多一個 `data-sib-list="sibs｜fatherOther｜motherOther"` 供 `drawSibs()`／`sibClick()`／input 委派分辨清單。伴侶年齡／備註欄位用 `data-ped-field="fatherOther:age"` 寫回狀態。 |
+| 版面 | 成人列與三組子代的欄位 | 成人由左到右＝父親的其他伴侶－父－母－母親的其他伴侶，相鄰中心距離 `D=max(16, hwL+hwM+8, hwM+hwR+8)` 取偶數（符號樣式取 4 的倍數），`hw` 是該組子代跨距的一半；每段 junction 在兩成人中點，該組子代以 junction 為中心對稱排列。只要有任一組需要橫桿列，三組都畫出橫桿與子代主幹兩列，單元少的組在那兩列畫主幹。 |
 | 第 1 區 `S.gender` | 本人（proband）符號 | 本人自動畫在最後（同胎組內也在最後），年齡固定 `NB`，一律加箭頭；未選性別畫未知符號，不預設男女。 |
 | 第 2 區 `S.parent.thal`／`g6pd`／`thyroid` | 父母符號實心與註記病名 | `father`／`mother`／`both` 決定哪一側實心，病名接在該側註記後（`thalassemia`／`G6PD deficiency`／`thyroid disease`）；`none` 不畫實心也不寫「無」。 |
 | `S.pedStyle`（`[data-seg="pedStyle"]`，`localStorage` 鍵 `nicu_ped_style`） | 整棵樹的符號表與字元寬度 | `ascii`（預設，全 1 欄，任何等寬字型都對齊）或 `symbol`（□○◇ 與框線字元算 2 欄，只在全形寬度正確的字型下對齊）。樣式只改畫法，不改內容；貼進 HIS 歪掉時換另一種。 |

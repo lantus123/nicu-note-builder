@@ -43,25 +43,31 @@ function withPage(check,seed){
   }
   const seg=(key,value)=>click(`[data-seg="${key}"] [data-v="${value}"]`);
   const toggle=key=>click(`[data-tog="${key}"] button`);
-  const sibCards=()=>[...d.querySelectorAll('#sibList [data-sib-id]')];
-  // 新增一位手足並回傳操作它的小工具；欄位 id 是 sib-{id}-age／sib-{id}-note
-  function addSib(){
-    const before=sibCards().map(el=>el.dataset.sibId);
-    click('#addSib');
-    const added=sibCards().filter(el=>!before.includes(el.dataset.sibId));
-    assert.equal(added.length,1,'＋手足 必須只新增一列');
+  // 三個子代清單：手足、父親與其他伴侶的小孩、母親與其他伴侶的小孩（列 UI 相同，靠 data-sib-list 分辨）
+  const PED_HOST={sibs:'#sibList',fatherOther:'#fatherOtherKids',motherOther:'#motherOtherKids'};
+  const PED_ADD={sibs:'#addSib',fatherOther:'#addFatherOtherKid',motherOther:'#addMotherOtherKid'};
+  const sibCards=(list='sibs')=>[...d.querySelectorAll(`${PED_HOST[list]} [data-sib-id]`)];
+  // 新增一位子代並回傳操作它的小工具；欄位 id 是 sib-{id}-age／sib-{id}-note（三個清單共用 id 池）
+  function addSib(list='sibs'){
+    const before=sibCards(list).map(el=>el.dataset.sibId);
+    click(PED_ADD[list]);
+    const added=sibCards(list).filter(el=>!before.includes(el.dataset.sibId));
+    assert.equal(added.length,1,`＋ 按鈕必須只在 ${list} 新增一列`);
     const id=added[0].dataset.sibId;
-    // 每次都重新查：新增／刪除會整段重畫 #sibList，抓著舊節點點下去不會冒泡到 document
-    const card=()=>{const el=d.querySelector(`#sibList [data-sib-id="${id}"]`);assert.ok(el,`手足 ${id} 已不在清單上`);return el;};
+    // 每次都重新查：新增／刪除會整段重畫清單，抓著舊節點點下去不會冒泡到 document
+    const card=()=>{const el=d.querySelector(`${PED_HOST[list]} [data-sib-id="${id}"]`);assert.ok(el,`子代 ${id} 已不在清單上`);return el;};
     const hit=selector=>{const el=card().querySelector(selector);assert.ok(el,`Missing sib control: ${selector}`);el.click();};
     return{id,card,
       sex:v=>hit(`[data-sibseg="sex"] [data-v="${v}"]`),
       affected:()=>hit('[data-sibtog="affected"] button'),
       twin:()=>hit('[data-sibtog="twin"] button'),
+      hasTwin:()=>!!card().querySelector('[data-sibtog="twin"]'),
       age:v=>input(`sib-${id}-age`,v),
       note:v=>input(`sib-${id}-note`,v),
       remove:()=>hit('[data-sib-action="remove"]')};
   }
+  // 其他伴侶的關係（不預選；再點一次回到未選）
+  const otherRel=(which,v)=>click(`[data-pedrel="${which}"] [data-v="${v}"]`);
   // note 只有一棵樹，取 "Pedigree:" 之後到結尾
   function tree(){
     const text=get('#note').textContent;
@@ -69,7 +75,7 @@ function withPage(check,seed){
     assert.ok(at>=0,`Admission note 必須以 Pedigree: 之後接家庭樹\n${text}`);
     return text.slice(at+'Pedigree:\n'.length);
   }
-  const api={W,d,get,click,input,seg,toggle,addSib,sibCards,tree};
+  const api={W,d,get,click,input,seg,toggle,addSib,sibCards,otherRel,tree};
   try{
     check(api);
     assert.deepEqual(errors,[],'家庭樹操作不得觸發頁面錯誤');
@@ -240,6 +246,140 @@ test('什麼都沒填也畫最小樹，年齡／GPA 缺就整段省略',({tree})
     '          |',
     '       ->< >',
     '         NB'].join('\n'));
+});
+
+// ── 例 F：父親前段離婚（有一女）＋父母未婚 ───────────────────────────────────
+// 左組 hw=0、中組 hw=0 → D=16；其他伴侶一啟用，成人列就是四個席位（未啟用的留白），
+// 故父親中心 18（其他伴侶 2、母 34），左 junction 10、中 junction 26。
+test('例 F：離婚前段＋未婚父母，半手足掛在左邊那段',({seg,input,otherRel,addSib,tree})=>{
+  seg('gender','male');input('matAge','30');input('gravida','1');input('para','1');input('fatherAge','36');
+  otherRel('fatherOther','divorced');
+  const h=addSib('fatherOther');h.sex('female');h.age('8y');
+  seg('pedRel','unmarried');
+  assert.equal(tree(),[
+    ' ( )-//---+------[ ]- - - + - - -( )',
+    '                 Father 36y      Mother 30y G1P1',
+    '          |               |',
+    '         ( )           ->[ ]',
+    '         8y              NB'].join('\n'));
+});
+
+// ── 例 G：只有母親有其他伴侶（未婚），兩個小孩 ───────────────────────────────
+// 中組 hw=0、右組 hw=4 → D=16；左側沒有伴侶不留席位：父 2、母 18、伴侶 34；中 junction 10、右 junction 26，右組單元中心 22／30。
+test('例 G：母親側兩位半手足，橫桿只在右組，中組畫主幹',({seg,input,otherRel,addSib,tree})=>{
+  seg('gender','female');input('matAge','35');input('gravida','3');input('para','2');input('fatherAge','40');
+  otherRel('motherOther','unmarried');
+  const a=addSib('motherOther');a.sex('male');a.age('10y');
+  const b=addSib('motherOther');b.sex('female');b.age('7y');
+  assert.equal(tree(),[
+    ' [ ]------+------( )- - - + - - -[ ]',
+    ' Father 40y      Mother 35y G3P2',
+    '          |               |',
+    '          |           +---+---+',
+    '          |           |       |',
+    '       ->( )         [ ]     ( )',
+    '         NB          10y     7y'].join('\n'));
+  const lines=tree().split('\n');
+  assert.deepEqual(colsOf(lines[3],'+'),[22,26,30],'橫桿列在右組 22→30，junction 26 也是 +（左側沒有伴侶就不留席位）');
+});
+
+// ── 例 H：父親不詳 ───────────────────────────────────────────────────────────
+test('例 H：父親不詳畫 < > 並寫 Father unknown（不寫年齡）',({seg,input,toggle,d,tree})=>{
+  seg('gender','male');input('matAge','28');input('gravida','1');input('para','1');
+  toggle('fatherUnknown');
+  assert.equal(d.getElementById('fatherAge').disabled,true,'父親不詳時年齡欄位要停用');
+  assert.equal(tree(),[
+    ' < >------+------( )',
+    ' Father unknown  Mother 28y G1P1',
+    '          |',
+    '       ->[ ]',
+    '         NB'].join('\n'));
+});
+
+// ── 例 I：例 F 切符號樣式 ────────────────────────────────────────────────────
+test('例 I：符號樣式的三段線與各列落在同一組欄位',({seg,input,otherRel,addSib,tree})=>{
+  seg('gender','male');input('matAge','30');input('gravida','1');input('para','1');input('fatherAge','36');
+  otherRel('fatherOther','divorced');
+  const h=addSib('fatherOther');h.sex('female');h.age('8y');
+  seg('pedRel','unmarried');seg('pedStyle','symbol');
+  const lines=tree().split('\n');
+  assert.match(lines[0],/^ *○╱╱─┬───□╌╌╌┬╌╌╌○$/,`第一列應為 ○╱╱─┬───□╌╌╌┬╌╌╌○ 形態\n${lines[0]}`);
+  assert.deepEqual(colsOf(lines[0],'○□'),[2,18,34],'成人符號起始欄：其他伴侶 2、父 18、母 34');
+  assert.deepEqual(colsOf(lines[0],'┬'),[10,26],'兩段 junction 在各自兩人的中點');
+  assert.deepEqual(colsOf(lines[2],'│'),[10,26],'兩條主幹各自掛在自己的 junction 底下');
+  assert.deepEqual(colsOf(lines[3],'○□'),[10,26],'子代符號起始欄＝各組 junction');
+  assert.equal(colOf(lines[3],'→'),24,'本人箭頭緊貼符號左邊（2 欄）');
+  assert.equal(lines[4],'          8y              NB','年齡左緣對齊符號左緣');
+  lines.forEach(l=>assert.doesNotMatch(l,/\s$/,`行尾不得留空白：${JSON.stringify(l)}`));
+});
+
+// ── 父母關係三種線型 ─────────────────────────────────────────────────────────
+test('父母關係三種線型（ASCII）＋近親婚仍只作用在父母那段',({seg,toggle,tree})=>{
+  seg('gender','male');
+  const first=()=>tree().split('\n')[0];
+  assert.equal(first(),' [ ]------+------( )','一般＝實線');
+  seg('pedRel','unmarried');
+  assert.equal(first(),' [ ]- - - + - - -( )','未婚＝虛線');
+  seg('pedRel','divorced');
+  assert.equal(first(),' [ ]-//---+------( )','離婚・分居＝靠左那位成人右邊兩道斜線');
+  toggle('consang');
+  assert.equal(first(),' [ ]=//===+======( )','近親＋離婚');
+  seg('pedRel','unmarried');
+  assert.equal(first(),' [ ]= = = + = = =( )','近親＋未婚');
+});
+
+test('父母關係三種線型（符號樣式）',({seg,tree})=>{
+  seg('gender','male');seg('pedStyle','symbol');
+  const first=()=>tree().split('\n')[0];
+  assert.equal(first(),'  □───┬───○','一般＝實線');
+  seg('pedRel','unmarried');
+  assert.equal(first(),'  □╌╌╌┬╌╌╌○','未婚＝虛線字元');
+  seg('pedRel','divorced');
+  assert.equal(first(),'  □╱╱─┬───○','離婚・分居＝兩個 ╱');
+});
+
+// ── 兩邊都有其他伴侶：D 放大、三組不重疊 ─────────────────────────────────────
+test('兩邊各 3 個半手足＋中間 2 位手足：D 放大成 24，三組符號不重疊',({seg,otherRel,addSib,tree})=>{
+  seg('gender','female');
+  ['fatherOther','motherOther'].forEach(which=>{
+    otherRel(which,'married');
+    ['10y','9y','8y'].forEach((age,i)=>{const k=addSib(which);k.sex(i%2?'female':'male');k.age(age);});
+  });
+  const s1=addSib();s1.sex('male');s1.age('6y');
+  const s2=addSib();s2.sex('female');s2.age('4y');
+  const lines=tree().split('\n');
+  // 中組 hw=8、兩側 hw=8 → D=max(16,8+8+8)=24；成人中心 2／26／50／74
+  assert.deepEqual(colsOf(lines[0],'[('),[1,25,49,73],'成人符號起始欄＝中心 −1，相鄰成人距離 24');
+  assert.deepEqual(colsOf(lines[0],'+'),[14,38,62],'三段 junction 各在兩人中點');
+  const syms=lines[lines.length-2];
+  const cols=colsOf(syms,'[(<');
+  assert.equal(cols.length,9,`子代符號應有 9 個（3＋3＋3）\n${syms}`);
+  cols.forEach((x,i)=>{ if(i)assert.ok(x-cols[i-1]>=4,`第 ${i} 與第 ${i+1} 個符號起始欄只差 ${x-cols[i-1]}\n${syms}`); });
+  colsOf(lines[0],'[(').forEach((x,i,all)=>{ if(i)assert.ok(x-all[i-1]>=4,'成人符號也不得重疊'); });
+});
+
+// ── 半手足增刪與「完全沒啟用就回到原樣」 ─────────────────────────────────────
+test('半手足刪掉後重畫；三個開關都回到未選時與例 A 逐字相同',({seg,input,otherRel,addSib,sibCards,tree})=>{
+  seg('gender','male');input('matAge','30');input('gravida','1');input('para','1');
+  const before=tree();
+  assert.equal(before,[
+    ' [ ]------+------( )',
+    ' Father          Mother 30y G1P1',
+    '          |',
+    '       ->[ ]',
+    '         NB'].join('\n'),'起點＝例 A');
+  otherRel('fatherOther','divorced');
+  const h=addSib('fatherOther');h.sex('female');h.age('8y');
+  assert.equal(sibCards('fatherOther').length,1,'半手足列在自己的清單裡');
+  assert.equal(sibCards().length,0,'不會混進手足清單');
+  assert.equal(h.hasTwin(),false,'半手足沒有「同胎」開關');
+  assert.ok(tree().includes('8y'),'半手足畫出來了');
+  h.remove();
+  assert.equal(sibCards('fatherOther').length,0,'刪除後清單要重畫');
+  assert.ok(!tree().includes('8y'),`刪掉的半手足不得留在樹上\n${tree()}`);
+  assert.ok(tree().split('\n')[0].includes('-//---'),'關係還在就照樣畫離婚線');
+  otherRel('fatherOther','divorced');   // 再點一次＝回到未選
+  assert.equal(tree(),before,'新欄位全部沒啟用時，輸出必須與例 A 逐字元相同');
 });
 
 let failures=0;
