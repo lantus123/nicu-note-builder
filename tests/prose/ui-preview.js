@@ -169,6 +169,16 @@ test('display settings and form updates preserve a manual note until explicit re
   assert.equal(d.getElementById('regen').hidden,true);
 }));
 
+test('the sticky edit hint carries its own apply button that regenerates like the header one',()=>withPage(page=>{
+  const {W,d,note,click,input}=page;seed(page);
+  const hint=d.getElementById('editHint');assert.equal(hint.hidden,true,'Hint stays hidden until a manual edit');
+  note.textContent='Synthetic manual text.';note.dispatchEvent(new W.Event('input',{bubbles:true}));
+  assert.equal(hint.hidden,false);assert.ok(hint.querySelector('#regenInline'),'Hint must contain the inline apply button');
+  input('bw','2599');assert.doesNotMatch(note.textContent,/2599/,'Locked preview must not regenerate on form changes');
+  click('#regenInline');
+  assert.match(note.textContent,/2599/);assert.equal(d.getElementById('regen').hidden,true);assert.equal(hint.hidden,true);
+}));
+
 test('explicit regeneration clears manual markup even when the text is unchanged',()=>withPage(({W,d,note,click})=>{
   const text=note.textContent,markup=note.innerHTML,first=note.firstChild;
   const range=d.createRange(),selection=W.getSelection();

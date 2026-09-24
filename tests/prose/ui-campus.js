@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const {JSDOM}=require('jsdom');
 const html=fs.readFileSync(__dirname+'/../../index.html','utf8');
 const LABELS=['台北','淡水','新竹','台東'];
-const EXTERNAL=['桃園秉坤','中壢秉坤','三重蕙心','民權禾馨','李木生','周天給','四季和安'];
+const EXTERNAL=['桃園秉坤','中壢秉坤','三重惠心','民權禾馨','李木生','周天給','四季和安'];
 const FACILITY_FIELDS=['ancPlace','birthHosp','obFacility','obTransferFrom'];
 
 function withPage(check,{persistedHome}={}){
@@ -18,11 +18,19 @@ function withPage(check,{persistedHome}={}){
     }
   });
   const W=dom.window,d=W.document;
-  const select=(id,value)=>{
+  // 共用院所清單的值；四個院所欄位是 input + list="hospList"，homeHosp 仍是 select。
+  const datalistValues=()=>[...d.querySelectorAll('#hospList option')].map(option=>option.value);
+  const select=(id,value,{custom=false}={})=>{
     const el=d.getElementById(id);
     assert.ok(el,`Missing facility field: ${id}`);
-    assert.ok([...el.options].some(option=>option.value===value),`Missing option: ${id}/${value}`);
-    el.value=value;el.dispatchEvent(new W.Event('change',{bubbles:true}));
+    if(el.tagName==='INPUT'){
+      // custom=true 代表刻意打清單外的自填字串，不檢查 datalist；其餘一定要在清單裡。
+      if(!custom)assert.ok(datalistValues().includes(value),`Missing datalist entry: ${id}/${value}`);
+      el.value=value;el.dispatchEvent(new W.Event('input',{bubbles:true}));
+    }else{
+      assert.ok([...el.options].some(option=>option.value===value),`Missing option: ${id}/${value}`);
+      el.value=value;el.dispatchEvent(new W.Event('change',{bubbles:true}));
+    }
     assert.equal(el.value,value,`Selection must survive rendering: ${id}/${value}`);
   };
   const click=selector=>{
@@ -34,7 +42,7 @@ function withPage(check,{persistedHome}={}){
     assert.ok(option,`Missing home campus: ${label}`);return option.value;
   };
   const note=()=>d.getElementById('note').textContent;
-  try{check({W,d,select,click,campuses,campusValue,note});assert.deepEqual(errors,[],'Campus interactions must not raise page errors');}
+  try{check({W,d,select,click,campuses,campusValue,note,datalistValues});assert.deepEqual(errors,[],'Campus interactions must not raise page errors');}
   finally{W.close();}
 }
 function birthSentence(text){
@@ -57,11 +65,18 @@ test('home hospital has exactly the four named campuses and retains legacy Taipe
   assert.ok(options.every(option=>!EXTERNAL.includes(option.value)),'External facilities must not appear in home campuses');
 }));
 
-for(const id of FACILITY_FIELDS)test(`${id} retains every external facility and accepts all four campuses`,()=>withPage(({d,select,campuses})=>{
-  const el=d.getElementById(id),values=[...el.options].map(option=>option.value);
-  assert.ok(values.includes(''),'The field-specific automatic/undocumented option must remain');
-  assert.equal(new Set(values).size,values.length,'Options must not be duplicated');
-  for(const value of [...EXTERNAL,...campuses().map(option=>option.value)])select(id,value);
+for(const id of FACILITY_FIELDS)test(`${id} is a typeable field backed by the shared facility datalist`,()=>withPage(({d,select,campuses,datalistValues})=>{
+  const el=d.getElementById(id);
+  assert.equal(el.tagName,'INPUT','Facility fields must accept typed input');
+  assert.equal(el.getAttribute('list'),'hospList','Facility fields must share one datalist');
+  assert.ok(el.placeholder.trim(),'The automatic/undocumented hint must survive as a placeholder');
+  assert.equal(el.value,'','A facility field starts empty, meaning automatic/undocumented');
+  const values=datalistValues();
+  assert.equal(new Set(values).size,values.length,'Datalist entries must not be duplicated');
+  for(const value of [...EXTERNAL,...campuses().map(option=>option.value)]){
+    assert.ok(values.includes(value),`Missing datalist entry: ${value}`);
+    select(id,value);
+  }
 }));
 
 test('every valid campus can be saved and restored on the next page load',()=>{
@@ -144,6 +159,27 @@ test('another MMH campus remains selectable as an explicit outside birth and tra
   for(const mode of ['adm','acc']){
     click(`[data-tab="${mode}"]`);assertBirthplace(note(),campusValue('淡水'));
     assert.ok(note().includes(`transferred from ${campusValue('台東')}`));
+  }
+}));
+
+test('a typed facility outside the list is written into both notes verbatim',()=>withPage(({select,click,note})=>{
+  const typed='Synthetic Clinic';
+  select('birthHosp',typed,{custom:true});
+  assertBirthplace(note(),typed);
+  click('[data-tab="acc"]');assertBirthplace(note(),typed);
+  click('[data-tab="adm"]');assertBirthplace(note(),typed);
+}));
+
+test('an empty transfer source inherits a typed outborn facility',()=>withPage(({d,select,click,note})=>{
+  const typed='Synthetic Birth Center';
+  click('[data-seg="pathway"] [data-v="outborn"]');
+  select('obFacility',typed,{custom:true});
+  assert.equal(d.getElementById('obTransferFrom').value,'','The transfer source stays automatic');
+  for(const mode of ['adm','acc']){
+    click(`[data-tab="${mode}"]`);
+    const text=note();
+    assertBirthplace(text,typed);
+    assert.ok(text.includes(`transferred from ${typed}`),`An empty transfer source must inherit the typed birth facility (${mode})`);
   }
 }));
 

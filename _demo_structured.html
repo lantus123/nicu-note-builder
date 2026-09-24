@@ -234,11 +234,13 @@
   .note .note-change{animation:notechange .9s ease-out}
   @keyframes notechange{from{background:var(--accent-soft)}to{background:transparent}}
   /* 手動編輯鎖定提示 + 醒目「套用最新選擇」鈕 */
-  .edit-hint{font-size:12.5px;line-height:1.65;color:var(--doc-edit);background:var(--risk-soft);
-    border:1px solid var(--risk-line);border-radius:9px;padding:10px 12px;margin-bottom:16px}
+  .edit-hint{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    font-size:12.5px;line-height:1.65;color:var(--doc-edit);background:var(--doc-bg);box-shadow:inset 0 0 0 200px var(--risk-soft);
+    border:1px solid var(--risk-line);border-radius:9px;padding:8px 12px;margin-bottom:16px}
+  .edit-hint .copy{flex:0 0 auto;padding:6px 10px;font-size:12.5px;border-color:var(--risk-line);color:var(--doc-edit);font-weight:700}
   .edit-hint b{color:inherit;font-weight:700}
   #regen{border-color:var(--risk-line);color:var(--doc-edit);font-weight:700}
-  #regen.pulse{animation:regpulse .55s ease}
+  #regen.pulse,#regenInline.pulse{animation:regpulse .55s ease}
   .mini-add{min-height:44px;min-width:44px;padding:0 8px;border:1px solid var(--line);background:transparent;color:var(--ink-2);border-radius:7px;font:inherit;font-size:12px;cursor:pointer}
   .iap-warn{margin-top:6px;padding:6px 8px;border-radius:6px;background:var(--risk-soft);border:1px solid var(--risk-line);font-size:12px;line-height:1.55}
   .iap-warn.pulse{animation:iapflash .9s ease}
@@ -398,6 +400,8 @@
   </div>
 
   <div id="admSections">
+  <!-- 產檢地點／出生院所／外接出生院所／轉入來源共用同一份院所清單：可打字搜尋、也可自填清單外的院所 -->
+  <datalist id="hospList"></datalist>
   <!-- 1. 寶寶基本 -->
   <section class="card">
     <h2 class="sec-h"><span class="n">1</span>寶寶基本（開頭骨架）</h2>
@@ -458,7 +462,7 @@
     <div class="field"><span class="lab">日期格式 <span class="q">（會記住）</span></span>
       <label style="display:flex;align-items:center;gap:8px;min-height:36px"><input type="checkbox" id="rocYear" style="width:18px;height:18px"><span style="font-size:13.5px">用民國紀年（115/8/11）</span></label></div>
     <div class="field" id="birthHospWrap"><span class="lab">出生院所 <span class="q">（born in…；預設同本院區）</span></span>
-      <select class="tin" id="birthHosp"></select></div>
+      <input class="tin" list="hospList" id="birthHosp" autocomplete="off" placeholder="同本院區（自動）"></div>
     <div class="field">
       <span class="lab">出生日期時間 <span class="q">（選填 · 24 小時制）</span></span>
       <div class="row2">
@@ -501,7 +505,7 @@
     <div class="field"><span class="lab">預產期 EDC <span class="q">（空白＝由 GA 反推）</span></span>
       <input type="date" class="tin" id="edc"></div>
     <div class="field"><span class="lab">產檢地點 <span class="q">（非 MMH 標 OBGYN clinic）</span></span>
-      <select class="tin" id="ancPlace"></select></div>
+      <input class="tin" list="hospList" id="ancPlace" autocomplete="off" placeholder="（未填）"></div>
     <div class="field"><span class="lab">產檢規律性 <span class="q">（未提及則不寫這句）</span></span>
       <div class="seg" data-seg="ancReg"><button data-v="na">未提及</button><button data-v="regular">規則</button><button data-v="irregular">不規則</button><button data-v="none">未產檢</button></div></div>
     <div class="field"><span class="lab">產前超音波</span>
@@ -684,8 +688,8 @@
         <button type="button" class="hd" data-stop-toggle="obCare" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
 <div id="outbornWrap" hidden style="margin-top:10px">
-      <div class="field"><label class="lab" for="obFacility">出生院所 <span class="q">（自動＝同產檢地點）</span></label><select class="tin" id="obFacility"></select></div>
-      <div class="field"><label class="lab" for="obTransferFrom">轉入來源 <span class="q">（自動＝同出生院所）</span></label><select class="tin" id="obTransferFrom"></select></div>
+      <div class="field"><label class="lab" for="obFacility">出生院所 <span class="q">（自動＝同產檢地點）</span></label><input class="tin" list="hospList" id="obFacility" autocomplete="off" placeholder="同產檢地點（自動）"></div>
+      <div class="field"><label class="lab" for="obTransferFrom">轉入來源 <span class="q">（自動＝同出生院所）</span></label><input class="tin" list="hospList" id="obTransferFrom" autocomplete="off" placeholder="同出生院所（自動）"></div>
           </div>
 <div class="field" id="obM1Wrap" hidden><span class="lab">外院後續呼吸支持 <span class="q">（我方抵達前；同一次產房處置不重填）</span></span>
       <div class="seg" data-seg="obM1Type"><button type="button" data-v="">未記錄</button><button type="button" data-v="room">Room air</button><button type="button" data-v="o2">O₂</button><button type="button" data-v="cpap">CPAP</button><button type="button" data-v="ppv">PPV</button><button type="button" data-v="ett">ETT</button></div>
@@ -1213,7 +1217,8 @@
     <select id="previewFont" aria-label="病歷字級"><option value="small">小</option><option value="normal" selected>標準</option><option value="large">大</option></select>
   </div>
   <div class="dock-body" id="previewBody">
-    <div class="edit-hint" id="editHint" hidden>✎ 手動編輯中 — 選單變更不會自動套用；按右上 <b>↻ 套用最新選擇</b> 才會重生成（會蓋掉手改）</div>
+    <!-- 釘在預覽頂端跟著捲動：使用者捲到 note 底部（例如家系圖）時仍看得到「為什麼沒更新」與套用鈕（2026-09-24 Ryan：列有出現但樹沒變） -->
+    <div class="edit-hint" id="editHint" hidden><span>✎ 手動編輯中 — 新的選擇不會自動套用；按此重生成（會蓋掉手改）</span><button type="button" class="copy" id="regenInline">↻ 套用最新選擇</button></div>
     <p class="note" id="note" contenteditable="true" spellcheck="false" autocapitalize="off" autocorrect="off"></p>
     <div class="dx" id="dx"></div>
   </div>
@@ -3551,19 +3556,77 @@ ${opLine}`);
     {value:"Hsinchu MacKay Memorial Hospital",label:"新竹"},
     {value:"Taitung MacKay Memorial Hospital",label:"台東"}
   ];
-  const HOSPITALS=[...HOME_CAMPUSES.map(c=>c.value),"桃園秉坤","中壢秉坤","三重蕙心","民權禾馨","李木生","周天給","四季和安"];
-  const hospOpts=HOSPITALS.map(h=>`<option value="${h}">${h}</option>`).join("");
+  // 院所清單：v＝寫進 note 的短名（也是 input 的值）、full＝全名。datalist 用 value/顯示文字兩段，
+  // Chrome 兩段都能搜（打「惠心」或「婦產科」都找得到）。清單外的院所使用者照打即可，不做正規化。
+  // 來源＝外接登記主檔的別名表整理；淡水／新竹馬偕已由 HOME_CAMPUSES 併入，不重複列。
+  const HOSPITALS=[
+    ...HOME_CAMPUSES.map(c=>({v:c.value,full:`馬偕紀念醫院 ${c.label}院區`})),
+    {v:"桃園秉坤",full:"桃園 秉坤婦幼醫院(桃園)"},
+    {v:"中壢秉坤",full:"中壢 秉坤婦幼醫院(平鎮)"},
+    {v:"三重惠心",full:"三重 惠心婦產科小兒科診所"},
+    {v:"民權禾馨",full:"禾馨民權婦幼診所"},
+    {v:"李木生",full:"木生婦幼診所"},
+    {v:"周天給",full:"新莊 天給婦產科診所"},
+    {v:"四季和安",full:"四季和安婦幼診所"},
+    {v:"中壢宏其",full:"中壢 宏其婦幼醫院"},
+    {v:"三重采新",full:"三重 采新婦幼診所"},
+    {v:"樹林遠祺",full:"樹林 遠祺婦產科診所"},
+    {v:"蘆洲宥宥",full:"蘆洲 宥宥婦幼診所"},
+    {v:"中壢徐文良",full:"中壢 徐文良婦產科醫院"},
+    {v:"三重東和",full:"三重 東和婦產科家庭醫學科診所"},
+    {v:"板橋豐禾",full:"板橋 豐禾婦產科"},
+    {v:"聯醫和平婦幼",full:"臺北市立聯合醫院 和平婦幼院區"},
+    {v:"禾馨新生",full:"禾馨新生婦幼診所"},
+    {v:"禾馨士林",full:"禾馨士林婦幼診所"},
+    {v:"土城永佳",full:"土城 永佳婦產科"},
+    {v:"樹林惠生保安",full:"樹林 惠生保安婦幼診所"},
+    {v:"汐止馨悅",full:"汐止 馨生(馨悅)婦產科小兒科"},
+    {v:"汐止慈心",full:"汐止 吳婦產科小兒科 (慈心醫療照護)"},
+    {v:"板橋雷世陽",full:"板橋 雷世陽婦產科"},
+    {v:"板橋合泰",full:"板橋 合泰婦產小兒聯合診所"},
+    {v:"板橋遠興",full:"板橋 遠興婦產科診所"},
+    {v:"板橋菡生",full:"板橋 菡生婦幼診所"},
+    {v:"蘆洲愛麗生",full:"蘆洲 愛麗生醫療"},
+    {v:"永和御生",full:"永和 御生婦幼"},
+    {v:"新店耕莘",full:"天主教新店耕莘醫院"},
+    {v:"永和耕莘",full:"天主教永和耕莘醫院"},
+    {v:"臺安醫院",full:"臺安醫院"},
+    {v:"雙和醫院",full:"衛生福利部雙和醫院"},
+    {v:"林口長庚",full:"林口長庚醫院"},
+    {v:"台北長庚",full:"台北長庚醫院"},
+    {v:"三總",full:"三軍總醫院"},
+    {v:"新光醫院",full:"新光吳火獅紀念醫院"},
+    {v:"台大兒童醫院",full:"臺大醫院兒童醫院"},
+    {v:"聯醫陽明",full:"臺北市立聯合醫院 陽明院區"},
+    {v:"聯醫仁愛",full:"臺北市立聯合醫院 仁愛院區"},
+    {v:"協和婦女醫院",full:"協和婦女醫院"},
+    {v:"中山醫院",full:"中山醫院"},
+    {v:"輔大醫院",full:"天主教輔仁大學附設醫院"},
+    {v:"部立台北醫院",full:"衛生福利部臺北醫院"},
+    {v:"部立桃園醫院",full:"衛生福利部桃園醫院"},
+    {v:"部立基隆醫院",full:"衛生福利部基隆醫院"},
+    {v:"桃園敏盛",full:"敏盛綜合醫院"},
+    {v:"恩主公醫院",full:"恩主公醫院"},
+    {v:"陽大附醫",full:"陽明大學附設醫院 蘭陽院區"},
+    {v:"羅東博愛",full:"羅東博愛醫院"},
+    {v:"羅東聖母",full:"羅東聖母醫院"},
+    {v:"許世賓婦產科",full:"許世賓婦產科診所"},
+    {v:"丁婦產科",full:"丁婦產科"},
+    {v:"吳坤光",full:"吳坤光婦產科診所"},
+    {v:"林正宗",full:"林正宗婦產科診所"},
+    {v:"李義男",full:"李義男婦產科診所"},
+    {v:"基隆王孫斌",full:"基隆 王孫斌婦產科診所"},
+    {v:"新月集產後護理之家",full:"新月集產後護理之家"}
+  ];
+  const hospOpts=HOSPITALS.map(h=>`<option value="${h.v}">${h.full}</option>`).join("");
   // C1 手機:整數欄用大 10 鍵盤、小數欄用小數鍵盤
   document.querySelectorAll('input[type="number"]').forEach(i=>{const st=parseFloat(i.step); i.setAttribute("inputmode",(!isNaN(st)&&st<1)?"decimal":"numeric");});
   try{const op=localStorage.getItem("nicu_operator"); if(op)document.getElementById("procOperator").value=op;}catch(_){}  // 記住上次操作醫師
-  document.getElementById("ancPlace").innerHTML=`<option value="">（未填）</option>`+hospOpts;
-  document.getElementById("obFacility").innerHTML=`<option value="">同產檢地點（自動）</option>`+hospOpts;
+  document.getElementById("hospList").innerHTML=hospOpts;   // 四個院所欄位共用這份 datalist；空白＝各欄位 placeholder 寫的自動／未填
   document.getElementById("homeHosp").innerHTML=HOME_CAMPUSES.map(c=>`<option value="${c.value}">${c.label}</option>`).join("");
-  document.getElementById("birthHosp").innerHTML=`<option value="">同本院區（自動）</option>`+hospOpts;
   try{const hh=localStorage.getItem("nicu_home_hosp"); if(HOME_CAMPUSES.some(c=>c.value===hh))document.getElementById("homeHosp").value=hh;}catch(_){}
   try{if(localStorage.getItem("nicu_roc")==="1")document.getElementById("rocYear").checked=true;}catch(_){}   // 記住院區,淡水/台北使用者不必每張重選
   drawSibs();
-  document.getElementById("obTransferFrom").innerHTML=`<option value="">同出生院所（自動）</option>`+hospOpts;
   document.querySelectorAll('[data-po]').forEach(seg=>{const btn=seg.querySelector(`[data-v="${S.procOpt[seg.dataset.po]}"]`); if(btn)btn.setAttribute("aria-pressed","true");});
   document.querySelectorAll("[data-as]").forEach(seg=>seg.querySelector('[data-v="notyet"]').setAttribute("aria-pressed","true"));
   document.querySelectorAll("[data-hc]").forEach(seg=>{const btn=seg.querySelector(`[data-v="${S.hc[seg.dataset.hc]}"]`); if(btn)btn.setAttribute("aria-pressed","true");});
@@ -3689,7 +3752,7 @@ ${opLine}`);
     previewBody.scrollTop=scrollTop; previewBody.scrollLeft=scrollLeft;
   }
   function pulseIap(){const el=document.getElementById("iapHint"); if(!el||el.hidden)return; el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse");}
-  function pulseRegen(){const b=document.getElementById("regen"); if(!b||b.hidden)return; b.classList.remove("pulse"); void b.offsetWidth; b.classList.add("pulse");}
+  function pulseRegen(){["regen","regenInline"].forEach(id=>{const b=document.getElementById(id); if(!b||b.hidden||b.closest("[hidden]"))return; b.classList.remove("pulse"); void b.offsetWidth; b.classList.add("pulse");});}
   function markDirty(){
     // 暫時的更新提示不進入手改快取；僅移除 class，保留文字節點與游標。
     if(previewHighlightTimer!=null){clearTimeout(previewHighlightTimer);previewHighlightTimer=null;}
@@ -3713,6 +3776,7 @@ ${opLine}`);
     markDirty();
   });
   document.getElementById("regen").addEventListener("click",()=>{delete S.noteCache[S.mode]; lastPreviewWrite=null; clearDirty(); render();});
+  document.getElementById("regenInline")?.addEventListener("click",()=>document.getElementById("regen").click());   // 提示列內的套用鈕＝同一個動作
   // 隱藏元素的 innerText 會退成 textContent，遺失手改時 div／br 的換行。
   // 只在收合時用離屏副本取得實際排版文字，不碰原預覽、游標或手改快取。
   function noteTextForCopy(){

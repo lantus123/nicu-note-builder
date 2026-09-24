@@ -68,7 +68,7 @@
 | `S.obSx` | 後續症狀句 | 第 5 區已記錄的同一個初始觀察不用重填；需交代持續、復發或新增症狀才在此記錄。 |
 | `S.pwOnset` | 後續症狀的動詞 | `observed`＝觀察到、起始未明；`developed`＝新出現；`persisted`＝持續；`recurrent`＝再次出現。 |
 | `pwOnsetH`、`pwOnsetUnit` | 症狀的生後時間 | 數值及 `hours`／`minutes` 均確認才寫時間；不把空白單位當成小時。 |
-| `obFacility`、`obTransferFrom` | 外院出生地與轉入來源 | 保留既有院所選擇／繼承規則；外院出生地與轉入來源可以不同。非外院路徑不引用這組草稿。 |
+| `obFacility`、`obTransferFrom` | 外院出生地與轉入來源 | 保留既有院所選擇／繼承規則；外院出生地與轉入來源可以不同。非外院路徑不引用這組草稿。2026-09-24 起改成 input＋共用 `<datalist id="hospList">`（與 `ancPlace`、`birthHosp` 同一份清單）：可打字搜尋短名或全名，清單外的院所自填後原文照寫、不做正規化；留白仍是繼承（`obFacility` 空＝同 `ancPlace`、`obTransferFrom` 空＝同出生院所），placeholder 只是提示、不是值。 |
 | `obReason` | 外接團隊的轉入原因 | 原因不自動等於確診；保留原文的不確定語意。 |
 | `S.obM1Type`、`obM1Relation` | 我方抵達前，外院後續呼吸支持 | 前段來源是 `birthFinalSupport`；不重複記成同一次插管。 |
 | `S.obM1Dev`、`obM1Flow` | 外院 O₂ 支持的適用細節 | 只屬於外院後續支持，不當成轉送或本院設定。 |
