@@ -120,6 +120,8 @@ Admission note 結尾 `Pedigree:` 之後由 `buildPedigree()` 產生純文字樹
 | Acceptance 目前支持 `S.resp` | 只表示接手當下；不被產房、轉送或 Hospital course 中較早的模式覆蓋。 |
 | Acceptance Hospital course `S.acc.resp` 等 | 保留既有住院歷程與日期；不把出生事件自動當成新的住院處置紀錄。 |
 | NI plan | 維持既有可手動覆寫的規則。`S.resus` 由有效出生處置衍生粗分類供既有規則參考，不再用粗分類反推下層處置。出生／路徑支持不直接寫成接手當下應持續的模式。 |
+| NI plan 週數／體重門檻（2026-09-24） | ROP、腦部超音波、hsPDA echo、PN、caffeine 與預後分層改讀 `PLAN_GA`（`renderPlan()` 前的單一真相表），不再只看「早產與否」。`gaW` 空白時四條 GA 規則都不觸發（維持以足月組稿），`bw` 空白時 BW 規則不觸發。四條都在「醫囑項目」有對應按鈕可手動覆寫，`↻ 全部回自動` 一併還原。 |
+| NI plan 的日期（2026-09-24） | 讀 `#birthDate`，經 `planDate(生後天數)` 換算，格式走與全站相同的 `fmtDate`，故 `#rocYear`（民國紀年）對 plan 的日期同樣生效。PMA 目標日＝`weeks*7-(gaW*7+gaD)`，可為負（已過）。`#birthDate` 未填時只輸出相對說法，不產生括號日期。 |
 | Procedure | 未將出生事件自動勾成 Procedure；處置筆記、既有計算與用藥規則保持其原本範圍。 |
 | `birthBridge`、`birthReview`、`pathwayReview` | 只供畫面摘要／核對，不是新的臨床欄位，也不直接複製進病歷。 |
 | `S.routeDrafts` | 切換路徑時保留各路徑本次開頁草稿；只有目前有效路徑輸出。重新整理後不保留病人草稿。 |

@@ -926,6 +926,10 @@
           <button data-v="pn" style="flex:0 1 auto">PN</button>
           <button data-v="minimal" style="flex:0 1 auto">Minimal handling</button>
           <button data-v="og" style="flex:0 1 auto">OG decompression</button>
+          <button data-v="caffeine" style="flex:0 1 auto">Caffeine</button>
+          <button data-v="rop" style="flex:0 1 auto">ROP 篩檢</button>
+          <button data-v="brainUS" style="flex:0 1 auto">腦部超音波</button>
+          <button data-v="echo" style="flex:0 1 auto">心臟超音波</button>
         </div>
         <button type="button" class="mini-add" id="planOnReset" style="margin-top:7px" hidden>↻ 全部回自動</button></div>
       <div class="field"><span class="lab">已向家屬解釋 <span class="q">（未勾則不寫入，這句是告知義務的舉證）</span></span>
@@ -3199,6 +3203,24 @@ ${opLine}`);
     return H;
   }
 
+  // ── NI plan 的週數／體重門檻（單一真相；院內 protocol 不同改這裡）──
+  // 一條規則只在這張表裡有一個數字；程式其他地方不得再出現 30/32/34/1500/1800 這些裸數字。
+  const PLAN_GA={
+    rop:{ga:30,bw:1500},      // GA ≤30 週或 BW ≤1500 g → ROP 篩檢（AAP 2018／台灣兒科醫學會）
+    brainUS:{ga:32,bw:1500},  // GA <32 週或 BW <1500 g → 常規腦部超音波（第 7–10 天、PMA 36 週）
+    echo:{ga:30},             // GA <30 週 → hsPDA 心臟超音波
+    pn:{ga:34,bw:1800},       // GA <34 週或 BW <1800 g（或插管）→ PN
+    caffeine:{ga:34},         // GA <34 週 → caffeine，至少到 PMA 34 週
+    tiers:{very:32,moderate:34}   // 預後段分層：<32／32–33+6／34–36+6
+  };
+  // 生後第 n 天的日曆日期；#birthDate 沒填就回空字串（plan 只留相對說法，不掰日期）。
+  // 一律走 fmtDate，所以民國紀年開關（#rocYear）對 plan 的日期同樣生效。
+  const planDate=n=>{const b=V("birthDate"); if(!b)return "";
+    const dt=new Date(b+"T00:00:00"); if(isNaN(dt.getTime()))return "";
+    dt.setDate(dt.getDate()+n);
+    const p=x=>String(x).padStart(2,"0");
+    return fmtDate(`${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())}`);};
+
   // ── NI plan（依 GA + admission 選擇自動組出診斷/治療/預後）──
   function renderPlan(){
     const gw=parseInt(V("gaW")||"0",10), gd=parseInt(V("gaD")||"0",10);
@@ -3229,10 +3251,21 @@ ${opLine}`);
     const pr=admissionProblems();
     const infRisk=["pos","pend","nd"].includes(S.scr.gbs)||S.r.prom.on||S.r.fever.on||pr.infection;   // na=未表態不算風險；嬰兒室已見 bandemia/CRP↑ 等 → 直接算感染風險
 
+    // 距離某個 PMA 週數還有幾天（生後第幾天）；可能為負＝已經過了，仍照算。
+    const daysToPMA=weeks=>weeks*7-(gw*7+gd);
+    // GA 沒填時 PMA 算不出來（會以 0 週當底），此時只寫相對說法不寫括號日期。
+    const pmaDate=weeks=>gw>0?planDate(daysToPMA(weeks)):"";
+
     // 這些是臨床決定不是可推導的事實：規則只給預設值，最終由 planOn 覆寫，且按鈕一律顯示生效狀態
+    // GA 空白（gw=0）時所有 GA 規則都不觸發，維持「以足月組稿」；BW 空白時 BW 規則同樣不觸發。
     const RULE={sepsis:infRisk||preterm||respSupport||S.fd||S.doic||pr.respiratory, csf:false,
                 biogram:S.fd||S.doic, sga:SGA, aline:S.hc.aline||(cfg.alineRule&&invasive),
-                pn:preterm||veryPreterm||invasive, minimal:veryPreterm||invasive, og:respSupport};
+                pn:(gw>0&&gw<PLAN_GA.pn.ga)||(bwN>0&&bwN<PLAN_GA.pn.bw)||invasive,
+                minimal:veryPreterm||invasive, og:respSupport,
+                rop:(gw>0&&gw<=PLAN_GA.rop.ga)||(bwN>0&&bwN<=PLAN_GA.rop.bw),
+                brainUS:(gw>0&&gw<PLAN_GA.brainUS.ga)||(bwN>0&&bwN<PLAN_GA.brainUS.bw),
+                echo:gw>0&&gw<PLAN_GA.echo.ga,
+                caffeine:gw>0&&gw<PLAN_GA.caffeine.ga};
     const ON=k=>S.planOn[k]===undefined?!!RULE[k]:S.planOn[k];
     document.querySelectorAll('[data-planon] button').forEach(x=>x.setAttribute("aria-pressed",ON(x.dataset.v)?"true":"false"));
     {const r=document.getElementById("planOnReset"); if(r)r.hidden=!Object.keys(S.planOn).length;}
@@ -3267,6 +3300,9 @@ ${opLine}`);
     T.push("Record the body weight daily");
     const rmode=S.resp&&S.resp!=="room air"?S.resp:"";   // 不把出生或住院歷程中的模式當成目前應持續的模式。
     if(rmode)T.push(`Provide respiratory support with ${rmode}`);
+    // Caffeine 屬於呼吸支持的一部分，排在呼吸模式之後、surfactant 之前；門檻見 PLAN_GA.caffeine
+    if(ON("caffeine")){const d34=pmaDate(PLAN_GA.caffeine.ga);
+      T.push(`Start caffeine citrate for apnea of prematurity (loading dose 20 mg/kg, then 5–10 mg/kg/day); continue until at least a PMA of ${PLAN_GA.caffeine.ga} weeks${d34?` (${d34})`:""} and 5–7 days without apnea`);}
     if(S.hc.surf){const drug=S.hc.surfDrug==="curosurf"?"Curosurf (1.25 or 2.5 mL/kg)":"Survanta (4 mL/kg)"; const route=S.hc.surfRoute==="lisa"?"LISA":"the endotracheal tube"; T.push(`Surfactant therapy: ${drug} via ${route}`);}
     if(ON("og"))T.push("Provide OG decompression");
     // 自動：有感染風險→Empirical、否則→none（不自動替健康兒開藥）；手動選過則尊重
@@ -3295,12 +3331,16 @@ ${opLine}`);
     }
 
     const Pr=[]; if(S.planExplained)Pr.push("The plan was explained to the family.");   // 告知家屬是已發生的事件,不可預設斷言
-    if(preterm){
-      Pr.push("Monitor for complications of prematurity: RDS, CLD, ROP, oxidative stress, NEC, PDA, IVH, etc.");
-      Pr.push("Arrange an ROP examination 4-6 weeks after birth (or after a PMA of 31 weeks)");
-      Pr.push("Obtain follow-up brain sonograms regularly, particularly during the first week of life");
-      Pr.push("Obtain echocardiography to assess for hsPDA if clinically indicated");
-    }
+    // 併發症監測依出生週數分層（<32／32–33+6／34–36+6），門檻見 PLAN_GA.tiers；足月不列
+    if(gw>0&&gw<PLAN_GA.tiers.very)Pr.push("Monitor for complications of prematurity: RDS, CLD, ROP, oxidative stress, NEC, PDA, IVH, etc.");
+    else if(gw>0&&gw<PLAN_GA.tiers.moderate)Pr.push("Monitor for complications of moderate prematurity: RDS, apnea of prematurity, feeding intolerance, hypoglycemia, and hyperbilirubinemia");
+    else if(preterm)Pr.push("Monitor for complications of late prematurity: hypothermia, hypoglycemia, feeding difficulty, and hyperbilirubinemia");
+    // ROP 首檢＝生後 28 天與 PMA 31 週取較晚者（AAP 2018）；GA 沒填就只用生後 28 天，不用算不出的 PMA
+    if(ON("rop")){const d=planDate(gw>0?Math.max(28,daysToPMA(31)):28);
+      Pr.push(`Arrange the first ROP screening examination${d?` on ${d}`:""} (at 4 weeks of age or a PMA of 31 weeks, whichever is later)`);}
+    if(ON("brainUS")){const d7=planDate(7), d10=planDate(10), d36=pmaDate(36);
+      Pr.push(`Obtain cranial ultrasonography at 7–10 days of age${d7?` (${d7}–${d10})`:""} and again at a PMA of 36 weeks${d36?` (${d36})`:""}`);}
+    if(ON("echo"))Pr.push("Obtain echocardiography to assess for hsPDA if clinically indicated");
 
     const sec=(t,a)=>t+":\n"+a.map(x=>"- "+x).join("\n");
     // 警示改放 UI 的 #planWarn，不進 note —— 複製走 innerText，中文提示會被貼進 HIS

@@ -7,7 +7,7 @@
 | 分頁 | 內容 |
 |------|------|
 | **Admission** | 出生摘要、母體背景、產程與入院經過的敘述式段落；自動 AGA/SGA/LGA（Fenton 2025）＋暫定診斷清單 |
-| **NI plan** | 依週數＋admission 選擇自動組出 Diagnostic／Therapeutic／Prognostic 三段計畫；去處為 BR 時不產生 plan |
+| **NI plan** | 依週數＋admission 選擇自動組出 Diagnostic／Therapeutic／Prognostic 三段計畫，早產醫囑**依出生週數／體重細分**（ROP、腦超、echo、PN、caffeine、預後分層）並自動換算日期；去處為 BR 時不產生 plan |
 | **Acceptance** | 沿用出生資料產生敘述式 Brief history；Hospital course 依呼吸及感染問題串接，ABG 貼上自動判酸鹼；目前體重另填 |
 | **Procedure** | 勾選 8 種 procedure（intubation／A-line／LISA／LP／UAC／UVC／chest tube／exchange transfusion），依體重自動帶 ETT size・深度・劑量等 |
 
@@ -55,6 +55,24 @@
 - **入院時呼吸支持**（Admission 時間線最後一站）與 **Acceptance A 區**是同一個值（`S.resp`），在任一處改都同步，再點一次可清空。Admission 敘事因此多一句 `On admission to our NICU, the infant was receiving respiratory support with NCPAP.`；同時填了「入院時狀況」就併成一句（分號接）。
 - **暫定診斷四處同源**：DX chip、Admission 入院結語、Acceptance 入院原因、NI plan 全部讀 `admissionProblems()`／`primaryDx()`。以前三套各自推導，chip 有 Hypoglycemia 而結語與 acceptance 寫 `____`。
 - **Procedure 與 admission 的連動（2026-09-23）**：Admission 記錄了我方插管（產房事件、後續事件、或轉送途中新插管）時，Procedure 的「Intubation」自動勾選並顯示提示；手動點過一次就交給使用者，不再自動。ETT 尺寸依 NRP 現行表（<1000 g 2.5、1000–2000 g 3.0、>2000 g 3.5）。各 procedure 模板的「[Complications] None」為 Ryan 拍板保留的預設。
+
+## NI plan 依出生週數細分（2026-09-24）
+
+以前只有「早產（<37 週）與否」一個開關：34 週和 24 週拿到一模一樣的 ROP／腦超／echo／PN 四條，晚期早產被開了用不到的檢查，極早產又少了 caffeine。現在改成**依出生週數與出生體重分流**，門檻集中在程式裡 `renderPlan()` 前面的 `PLAN_GA` 這張表——**院內 protocol 不同就改這裡，別去改各條規則的行內數字**：
+
+| 規則 | 門檻 | 產出 |
+|------|------|------|
+| ROP 篩檢 | GA ≤30 週或 BW ≤1500 g | 首檢日＝生後 28 天與 PMA 31 週**取較晚者**（AAP 2018／台灣兒科醫學會） |
+| 腦部超音波 | GA <32 週或 BW <1500 g | 第 7–10 天各一次、PMA 36 週再一次；不符條件就整條不寫（晚期早產不再列） |
+| hsPDA 心臟超音波 | GA <30 週 | 文字同舊版 |
+| PN | GA <34 週或 BW <1800 g，或已插管 | 文字同舊版 |
+| Caffeine | GA <34 週 | 排在呼吸支持之後、surfactant 之前；續用到 PMA 34 週且 5–7 天無 apnea |
+| 預後併發症監測 | <32／32–33+6／34–36+6 三段 | 分別寫 prematurity／moderate prematurity／late prematurity，足月不寫 |
+
+- **日期會自動算出來**：填了「出生日期」就在括號裡附上日曆日（生後第 n 天、或 PMA 目標週數換算的那一天），沒填就只留「at 4 weeks of age or a PMA of 31 weeks」這類相對說法，**不掰日期**。日期走的是跟 note 其他地方同一個格式器，所以勾了**民國紀年**（第 1 區）plan 的日期也跟著變 `115/8/29`。
+- **GA 沒填（gw=0）時四條 GA 規則一律不觸發**，維持既有的「以足月組稿」行為，`#planWarn` 的中文提醒照舊；BW 沒填時 BW 規則同樣不觸發。
+- **四條都可以手動覆寫**：「醫囑項目」新增 `Caffeine`／`ROP 篩檢`／`腦部超音波`／`心臟超音波` 四顆按鈕，點一下關掉或強制打開，按「↻ 全部回自動」全部回規則預設（跟既有 sepsis／PN／OG 那幾顆同一套機制）。
+- 驗收在 `tests/prose/plan-ga.js`（8 條，含日期換算、民國紀年、開關、GA／生日空白）。
 
 ## 家庭樹（Pedigree）（2026-09-23）
 
