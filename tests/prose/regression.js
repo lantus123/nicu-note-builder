@@ -183,21 +183,20 @@ test('+A exposes an editable field and records the entered parity detail',()=>wi
   assert.match(note(),/G2P1A2/);
 }));
 
-test('manual notes survive form edits and tab changes until explicit regeneration',()=>withPage(({W,d,click,input,note})=>{
-  const manual='Synthetic manually edited clinical narrative.';
+// 預覽唯讀（2026-09-24 Ryan：要手改就複製到 HIS 再改）：對 #note 的互動不得凍結重組。
+test('the preview follows form edits and tab changes with no manual lock',()=>withPage(({W,d,click,input,note})=>{
   const editor=d.getElementById('note');
-  editor.textContent=manual;
+  assert.equal(editor.hasAttribute('contenteditable'),false,'The preview must be read-only');
   editor.dispatchEvent(new W.Event('input',{bubbles:true}));
   input('bw','1820');
-  assert.equal(note(),manual);
-  assert.equal(d.getElementById('regen').hidden,false);
+  includes(note(),'1820');
   click('[data-tab="acc"]');
   click('[data-tab="adm"]');
-  assert.equal(note(),manual);
-  click('#regen');
   includes(note(),'1820');
-  assert.ok(!note().includes(manual));
-  assert.equal(d.getElementById('regen').hidden,true);
+  input('bw','1930');
+  includes(note(),'1930');
+  assert.ok(!note().includes('1820'));
+  assert.equal(d.getElementById('regen'),null,'The apply button must be gone');
 }));
 
 test('all visible Procedure inputs and options reach the selected procedures',()=>{

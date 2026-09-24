@@ -97,11 +97,12 @@ test('direct GBS risk selection retains the IAP prompt without recording prophyl
   select('gbs','na');assert.equal(hint.hidden,true);
 }));
 
-test('changing screening preserves a manual note until the latest selections are applied',()=>withPage(({W,d,pick,note})=>{
-  const el=d.getElementById('note');el.textContent='Manually reviewed note.';el.dispatchEvent(new W.Event('input',{bubbles:true}));
-  pick('gbs','pos');assert.equal(note(),'Manually reviewed note.');
-  const apply=d.getElementById('regen');assert.equal(apply.hidden,false);apply.click();
+// 預覽唯讀（2026-09-24 Ryan）：改篩檢就直接重組，不再需要按「套用最新選擇」。
+test('changing screening rewrites the read-only preview immediately',()=>withPage(({W,d,pick,note})=>{
+  const el=d.getElementById('note');el.dispatchEvent(new W.Event('input',{bubbles:true}));
+  pick('gbs','pos');
   assert.match(note(),/GBS\) culture was positive/);
+  assert.equal(d.getElementById('regen'),null,'The apply button must be gone');
 }));
 
 test('legacy scenario requests adapt to direct choices and report unavailable states',()=>{

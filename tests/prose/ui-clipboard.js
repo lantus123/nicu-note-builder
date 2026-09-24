@@ -26,8 +26,8 @@ async function check({collapsed,fail=false}){
     }});
   try{
     const W=dom.window,d=W.document,note=d.getElementById('note'),body=d.getElementById('previewBody');
+    // 合成的多節點預覽（span＋div）：只為驗證「複製不改寫來源、離屏副本會被移除」。
     note.innerHTML='<span>Synthetic first line.</span><div>Synthetic second line.</div>';
-    note.dispatchEvent(new W.Event('input',{bubbles:true}));
     if(collapsed){W.innerWidth=390;W.dispatchEvent(new W.Event('resize'));}
     assert.equal(body.hidden,collapsed);
     const markup=note.innerHTML,children=d.body.children.length;
@@ -35,7 +35,7 @@ async function check({collapsed,fail=false}){
     await new Promise(resolve=>setImmediate(resolve));
     assert.equal(note.innerHTML,markup,'Copy never rewrites the source note');
     assert.equal(d.body.children.length,children,'Temporary reader is removed');
-    assert.equal(d.getElementById('regen').hidden,false,'Manual lock is retained');
+    assert.equal(note.hasAttribute('contenteditable'),false,'The preview stays read-only');
     assert.equal(d.getElementById('copy').textContent,'複製','Button width stays stable');
     assert.equal(d.getElementById('copyStatus').hidden,false);
     assert.equal(d.getElementById('copyStatus').getAttribute('role'),'status');

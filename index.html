@@ -9,7 +9,7 @@
     --risk:#b45309; --risk-soft:#fbe6cf; --risk-line:#e6b877;
     --good:#15803d; --good-soft:#d8ede0;
     --doc-bg:#ffffff; --doc-ink:#263740; --doc-dim:#647780; --doc-hl:#0f766e;
-    --doc-line:#e0e6e9; --doc-abn:#98501b; --doc-edit:#895a16;
+    --doc-line:#e0e6e9; --doc-abn:#98501b;
     --radius:14px; --tap:44px;
     --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
@@ -22,7 +22,7 @@
       --risk:#f5b563; --risk-soft:#3a2c16; --risk-line:#6b5228;
       --good:#5fce87; --good-soft:#173021;
       --doc-bg:#121e27; --doc-ink:#e0e9ee; --doc-dim:#9aadb9; --doc-hl:#82d9ce;
-      --doc-line:#30424e; --doc-abn:#ffc18f; --doc-edit:#f6d38d;
+      --doc-line:#30424e; --doc-abn:#ffc18f;
     }
   }
   :root[data-theme="light"]{
@@ -31,7 +31,7 @@
     --accent:#0f766e; --accent-soft:#d3ece8; --accent-ink:#0b5952; --on-accent:#ffffff;
     --risk:#b45309; --risk-soft:#fbe6cf; --risk-line:#e6b877; --good:#15803d; --good-soft:#d8ede0;
     --doc-bg:#ffffff; --doc-ink:#263740; --doc-dim:#647780; --doc-hl:#0f766e;
-    --doc-line:#e0e6e9; --doc-abn:#98501b; --doc-edit:#895a16;
+    --doc-line:#e0e6e9; --doc-abn:#98501b;
   }
   :root[data-theme="dark"]{
     --bg:#10181e; --surface:#17232c; --surface-2:#1d2c36; --line:#33444f;
@@ -39,13 +39,13 @@
     --accent:#2dd4bf; --accent-soft:#173e3a; --accent-ink:#7ff0e2; --on-accent:#04211d;
     --risk:#f5b563; --risk-soft:#3a2c16; --risk-line:#6b5228; --good:#5fce87; --good-soft:#173021;
     --doc-bg:#121e27; --doc-ink:#e0e9ee; --doc-dim:#9aadb9; --doc-hl:#82d9ce;
-    --doc-line:#30424e; --doc-abn:#ffc18f; --doc-edit:#f6d38d;
+    --doc-line:#30424e; --doc-abn:#ffc18f;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
     -webkit-font-smoothing:antialiased;line-height:1.55;padding-bottom:calc(58vh + 24px)}
   button,input,select,textarea{touch-action:manipulation}
-  :where(button,input,select,textarea,[contenteditable]):focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+  :where(button,input,select,textarea):focus-visible{outline:3px solid var(--accent);outline-offset:3px}
   :where(button,input,select,textarea):disabled{cursor:not-allowed;opacity:.6}
   input::placeholder,textarea::placeholder{color:var(--ink-3);opacity:1}
   .wrap,.dock{position:relative}
@@ -213,11 +213,6 @@
   .dock-body{overflow-y:auto;overscroll-behavior:contain;min-height:0;padding:22px 20px calc(24px + env(safe-area-inset-bottom))}
   .note{font-family:var(--sans);font-size:15px;line-height:1.85;color:var(--doc-ink);white-space:pre-wrap;margin:0;
     overflow-wrap:anywhere;tab-size:4;font-variant-numeric:tabular-nums}
-  .note[contenteditable]{outline:none;border-radius:8px;padding:5px 7px;margin:-5px -7px;caret-color:var(--doc-hl);transition:box-shadow .15s,background .15s}
-  .note[contenteditable]:focus{background:var(--surface-2)}
-  .note[contenteditable]:focus-visible{outline:2px solid var(--doc-hl);outline-offset:4px}
-  .note .edited{color:var(--doc-edit);font-weight:600}
-  .note.editing{box-shadow:inset 0 0 0 1px var(--risk-line)}
   /* 家庭樹：預覽一定要等寬字型才看得出對齊（HIS 本身就是等寬）；顏色沿用 --doc-ink，亮暗主題都可讀 */
   .note .pedigree .w2{display:inline-block;width:2ch;text-align:center}
   .note .pedigree .w2l{transform:scaleX(2)}
@@ -233,22 +228,13 @@
   .dock[data-font="small"] .note{font-size:14px}
   .dock[data-font="normal"] .note{font-size:15px}
   .dock[data-font="large"] .note{font-size:17px}
-  .dock[data-reading="true"] .note :is(.slot,.slot.abn,.edited){color:inherit;font-weight:inherit}
+  .dock[data-reading="true"] .note :is(.slot,.slot.abn){color:inherit;font-weight:inherit}
   .note .note-change{animation:notechange .9s ease-out}
   @keyframes notechange{from{background:var(--accent-soft)}to{background:transparent}}
-  /* 手動編輯鎖定提示 + 醒目「套用最新選擇」鈕 */
-  .edit-hint{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
-    font-size:12.5px;line-height:1.65;color:var(--doc-edit);background:var(--doc-bg);box-shadow:inset 0 0 0 200px var(--risk-soft);
-    border:1px solid var(--risk-line);border-radius:9px;padding:8px 12px;margin-bottom:16px}
-  .edit-hint .copy{flex:0 0 auto;padding:6px 10px;font-size:12.5px;border-color:var(--risk-line);color:var(--doc-edit);font-weight:700}
-  .edit-hint b{color:inherit;font-weight:700}
-  #regen{border-color:var(--risk-line);color:var(--doc-edit);font-weight:700}
-  #regen.pulse,#regenInline.pulse{animation:regpulse .55s ease}
   .mini-add{min-height:44px;min-width:44px;padding:0 8px;border:1px solid var(--line);background:transparent;color:var(--ink-2);border-radius:7px;font:inherit;font-size:12px;cursor:pointer}
   .iap-warn{margin-top:6px;padding:6px 8px;border-radius:6px;background:var(--risk-soft);border:1px solid var(--risk-line);font-size:12px;line-height:1.55}
   .iap-warn.pulse{animation:iapflash .9s ease}
   @keyframes iapflash{0%{background:var(--risk-soft)}30%{background:var(--risk-line)}100%{background:var(--risk-soft)}}
-  @keyframes regpulse{0%{transform:scale(1)}28%{transform:scale(1.13);box-shadow:0 0 0 4px rgba(242,198,128,.28)}100%{transform:scale(1);box-shadow:none}}
   .note .slot{color:var(--doc-hl)}
   .note .slot.abn{color:var(--doc-abn);font-weight:650}
   .note .flash{background:rgba(111,214,200,.20);border-radius:3px;transition:background .5s}
@@ -1210,7 +1196,6 @@
   <div class="dock-h"><span class="t" id="dockLabel">即時預覽 · Admission Summary</span>
     <span class="dock-actions" style="display:flex;gap:7px">
       <button class="copy" id="dockToggle" aria-label="收合病歷預覽" aria-expanded="true" aria-controls="previewBody">收合預覽 ▾</button>
-      <button class="copy" id="regen" hidden>↻ 套用最新選擇</button>
       <button class="copy" id="copy">複製</button></span>
     <span class="copy-status" id="copyStatus" role="status" aria-live="polite" aria-atomic="true" hidden></span>
   </div>
@@ -1220,9 +1205,8 @@
     <select id="previewFont" aria-label="病歷字級"><option value="small">小</option><option value="normal" selected>標準</option><option value="large">大</option></select>
   </div>
   <div class="dock-body" id="previewBody">
-    <!-- 釘在預覽頂端跟著捲動：使用者捲到 note 底部（例如家系圖）時仍看得到「為什麼沒更新」與套用鈕（2026-09-24 Ryan：列有出現但樹沒變） -->
-    <div class="edit-hint" id="editHint" hidden><span>✎ 手動編輯中 — 新的選擇不會自動套用；按此重生成（會蓋掉手改）</span><button type="button" class="copy" id="regenInline">↻ 套用最新選擇</button></div>
-    <p class="note" id="note" contenteditable="true" spellcheck="false" autocapitalize="off" autocorrect="off"></p>
+    <!-- 預覽唯讀（2026-09-24 Ryan 拍板）：永遠跟著表單重組；要修改請複製到 HIS 再改 -->
+    <p class="note" id="note"></p>
     <div class="dx" id="dx"></div>
   </div>
 </div>
@@ -1434,7 +1418,7 @@
            ped:{rel:"married",fatherUnknown:false,
                 fatherOther:{rel:"",age:"",note:"",kids:[]},
                 motherOther:{rel:"",age:"",note:"",kids:[]}},
-           dol:"1",numUnit:{promH:"hours"},mode:"adm",journeyOpen:{},planAbx:"empirical",planAbxAuto:true,planOn:{},planExplained:false,noteDirty:false,noteCache:{},
+           dol:"1",numUnit:{promH:"hours"},mode:"adm",journeyOpen:{},planAbx:"empirical",planAbxAuto:true,planOn:{},planExplained:false,
            proc:{intub:false,aline:false,lisa:false,lp:false,uac:false,uvc:false,chest:false,bet:false},
            procIntubAuto:true,   // Intubation 是否仍由 Admission 的插管紀錄自動勾選；手動點過即 false
            procOpt:{alineSide:"right",alineArtery:"radial",uacPos:"high",chestSide:"right",chestType:"pigtail",chestICS:"4th",lpCompl:"nil",betABO:"",betRh:""},
@@ -1605,17 +1589,14 @@
     if(b.id==="addAbortion"){const input=document.getElementById("abortion"); input.hidden=false; b.hidden=true; input.focus(); return;}
     if(sibClick(b))return;   // 家庭樹手足列（自成一組 data-sib*，不與既有委派相撞）
     if(pedClick(b))return;   // 家庭樹父母關係／父親不詳／其他伴侶關係（寫 S.ped，必須早於通用 data-seg／data-tog）
-    const tab=b.closest("[data-tab]"); if(tab){const nel=document.getElementById("note");
+    const tab=b.closest("[data-tab]"); if(tab){
       if(tab.dataset.tab===S.mode)return;
       rememberTabView(S.mode);
-      if(S.noteDirty)S.noteCache[S.mode]=nel.innerHTML;   // 存目前分頁手改內容
       S.mode=tab.dataset.tab;
       tabButtons.forEach(x=>{
         const selected=x.dataset.tab===S.mode;
         x.setAttribute("aria-selected",String(selected)); x.tabIndex=selected?0:-1;
       });
-      if(S.noteCache[S.mode]!=null){nel.innerHTML=S.noteCache[S.mode]; markDirty();}
-      else clearDirty();
       render(); restoreTabView(S.mode,e.detail>0); return;}
     const am=b.closest("[data-am]"); if(am){const k=am.dataset.am,v=b.dataset.v,arr=S.acc[k],i=arr.indexOf(v);
       if(i<0)arr.push(v); else arr.splice(i,1);
@@ -2262,7 +2243,6 @@
     if(S.procIntubAuto)S.proc.intub=ourIntubation();
     {const ib=document.querySelector('[data-proctog] [data-v="intub"]'); if(ib)ib.setAttribute("aria-pressed",S.proc.intub?"true":"false");}
     document.getElementById("birthHospWrap").hidden=S.outborn;   // 外接出生院所由 obFacility 填寫，避免兩個可填欄位互相覆蓋
-    if(S.noteDirty)pulseRegen();   // 手改鎖定中又動選單 → 閃「套用最新選擇」提示已記錄
     updateGrowthUI();   // 依 GA/體重/性別自動判定 AGA/SGA/LGA（除非手動改）
     const admS=document.getElementById("admSections"); if(admS)admS.hidden=(S.mode!=="adm");
     const planForm=document.getElementById("planForm"); if(planForm)planForm.hidden=(S.mode!=="plan");
@@ -2832,13 +2812,11 @@
     P2.push(...postnatalNarrative({transferSource:source,diagnosis:closingDx}).map(esc));
 
     // 開頭摘要、母體／產前背景、產程與產房處置、入院前經過分段；只有入院結語時併回產程段。
-    if(!S.noteDirty){
-      const courseParts=P2.length-postnatalStart>1?[P2.slice(0,postnatalStart),P2.slice(postnatalStart)]:[P2];
-      writeNote([P0,P1,...courseParts].filter(p=>p.length).map(p=>p.join(" ")).join("\n\n")
-        + "\n\nTentative diagnosis:\n" + DX.map(d=>"# "+sl(d.f)).join("\n")
-        + `\n\nMaternal chart number: ${chartNo?sl(chartNo):ph("____")}\nPedigree:`
-        + `\n<span class="pedigree">${pedigreeHtml(buildPedigree())}</span>`,"html");   // 家庭樹一律 escape（手足備註是自由文字）
-    }
+    const courseParts=P2.length-postnatalStart>1?[P2.slice(0,postnatalStart),P2.slice(postnatalStart)]:[P2];
+    writeNote([P0,P1,...courseParts].filter(p=>p.length).map(p=>p.join(" ")).join("\n\n")
+      + "\n\nTentative diagnosis:\n" + DX.map(d=>"# "+sl(d.f)).join("\n")
+      + `\n\nMaternal chart number: ${chartNo?sl(chartNo):ph("____")}\nPedigree:`
+      + `\n<span class="pedigree">${pedigreeHtml(buildPedigree())}</span>`,"html");   // 家庭樹一律 escape（手足備註是自由文字）
     // 診斷 chip（與 # 清單同步）
     const dxWrap=document.getElementById("dx");
     dxWrap.innerHTML=`<span class="lbl">暫定診斷</span>`+DX.map(d=>`<span class="tag">${d.s}</span>`).join("");
@@ -3050,7 +3028,7 @@ Blood Exchange Transfusion
 ${opLine}`);
 
     const out=B.length?B.join("\n\n\n"):"（勾選上方 procedure，內容會自動帶入這裡，可再編輯）";
-    if(!S.noteDirty)writeNote(out,"text");
+    writeNote(out,"text");
   }
 
   // ── CBC/DC/CRP 貼上 → 整理成一列(+I/T ratio) ──
@@ -3237,7 +3215,7 @@ ${opLine}`);
       const pw=document.getElementById("planWarn");
       if(pw){pw.hidden=false; pw.textContent="⚠ 入院去處為 BR（嬰兒室）：不產生 NI plan；改去處請回 Admission 第 1 區。";}
       if(planControls)planControls.hidden=true;
-      if(!S.noteDirty)writeNote("","text");
+      writeNote("","text");
       return;
     }
     if(planControls)planControls.hidden=false;
@@ -3333,7 +3311,7 @@ ${opLine}`);
      if(!gw)w.push("GA 未填 → 以下以足月組稿，請回 Admission 填 GA");
      if(S.gender!=="male"&&S.gender!=="female")w.push("性別未填 → SGA/LGA 無法判定，相關醫囑未列入");
      const pw=document.getElementById("planWarn"); if(pw){pw.hidden=!w.length; pw.textContent=w.length?"⚠ "+w.join("；"):"";}}
-    if(!S.noteDirty)writeNote(
+    writeNote(
       [["Diagnostic plans",D],["Therapeutic plans",T],["Prognostic plans",Pr]].filter(([,a])=>a.length).map(([t,a])=>sec(t,a)).join("\n\n"),"text");   // 空段落不輸出光禿禿的標題
   }
 
@@ -3530,7 +3508,7 @@ ${opLine}`);
     L.push("");
     L.push("【Plan】"); L.push(fv("accPlan"));
 
-    if(!S.noteDirty)writeNote(L.join("\n"),"html");
+    writeNote(L.join("\n"),"html");
   }
 
   // 初始選取狀態
@@ -3648,9 +3626,9 @@ ${opLine}`);
   const previewMobileQuery=typeof window.matchMedia==="function"?window.matchMedia("(max-width: 799px)"):null;
   let previewMobileCollapsed=true, previewHighlightTimer=null, lastPreviewWrite=null;
 
-  // 顯示設定只改外觀，不重組病歷，也不影響手改鎖定。
-  // 預設校閱（Ryan 2026-09-20）：填寫與手改的整個過程都是「編輯」，校閱模式才看得到自動帶入／空格／手改的標記；
-  // 閱讀模式留給最後通讀與複製，手動切。醫師點進病歷手改時若在閱讀模式，自動切回校閱。
+  // 顯示設定只改外觀，不重組病歷。
+  // 預設校閱（Ryan 2026-09-20）：填寫過程中校閱模式才看得到自動帶入與未填空格的標記；
+  // 閱讀模式留給最後通讀與複製，手動切。
   function setPreviewReading(reading){
     previewDock.dataset.reading=String(reading);
     previewReading.setAttribute("aria-pressed",String(reading));
@@ -3741,7 +3719,6 @@ ${opLine}`);
     previewHighlightTimer=setTimeout(()=>noteEl.querySelectorAll(".note-change").forEach(el=>el.classList.remove("note-change")),900);
   }
   function writeNote(content,format){
-    if(S.noteDirty)return;
     const before=noteEl.textContent, previous=lastPreviewWrite;
     const sameView=previous&&previous.mode===S.mode&&previous.text===before;
     if(sameView&&previous.content===content&&previous.format===format)return;
@@ -3755,37 +3732,12 @@ ${opLine}`);
     previewBody.scrollTop=scrollTop; previewBody.scrollLeft=scrollLeft;
   }
   function pulseIap(){const el=document.getElementById("iapHint"); if(!el||el.hidden)return; el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse");}
-  function pulseRegen(){["regen","regenInline"].forEach(id=>{const b=document.getElementById(id); if(!b||b.hidden||b.closest("[hidden]"))return; b.classList.remove("pulse"); void b.offsetWidth; b.classList.add("pulse");});}
-  function markDirty(){
-    // 暫時的更新提示不進入手改快取；僅移除 class，保留文字節點與游標。
-    if(previewHighlightTimer!=null){clearTimeout(previewHighlightTimer);previewHighlightTimer=null;}
-    noteEl.querySelectorAll(".note-change").forEach(el=>el.classList.remove("note-change"));
-    S.noteDirty=true; noteEl.classList.add("editing"); document.getElementById("regen").hidden=false; const eh=document.getElementById("editHint"); if(eh)eh.hidden=false;
-  }
-  function clearDirty(){S.noteDirty=false; noteEl.classList.remove("editing"); document.getElementById("regen").hidden=true; const eh=document.getElementById("editHint"); if(eh)eh.hidden=true;}
-  noteEl.addEventListener("input",markDirty);
-  noteEl.addEventListener("focusin",()=>{if(previewDock.dataset.reading==="true")setPreviewReading(false);});   // 編輯時一律校閱模式
-  // 只有使用者手打/貼上的字包成 .edited 上色（自動值仍青綠、未填仍灰）
-  noteEl.addEventListener("beforeinput",e=>{
-    let text=null;
-    if(e.inputType==="insertText")text=e.data;
-    else if(e.inputType==="insertFromPaste"&&e.dataTransfer)text=e.dataTransfer.getData("text/plain");
-    if(text==null||text==="")return;   // 刪除/IME 等交給瀏覽器
-    e.preventDefault();
-    const sel=window.getSelection(); if(!sel.rangeCount)return;
-    const span=document.createElement("span"); span.className="edited"; span.textContent=text;
-    const r=sel.getRangeAt(0); r.deleteContents(); r.insertNode(span);
-    r.setStartAfter(span); r.collapse(true); sel.removeAllRanges(); sel.addRange(r);
-    markDirty();
-  });
-  document.getElementById("regen").addEventListener("click",()=>{delete S.noteCache[S.mode]; lastPreviewWrite=null; clearDirty(); render();});
-  document.getElementById("regenInline")?.addEventListener("click",()=>document.getElementById("regen").click());   // 提示列內的套用鈕＝同一個動作
-  // 隱藏元素的 innerText 會退成 textContent，遺失手改時 div／br 的換行。
-  // 只在收合時用離屏副本取得實際排版文字，不碰原預覽、游標或手改快取。
+  // 隱藏元素的 innerText 會退成 textContent，遺失排版換行（例如家系圖那段）。
+  // 只在收合時用離屏副本取得實際排版文字，不碰原預覽。
   function noteTextForCopy(){
     if(!previewBody.hidden)return noteEl.innerText;
     const copy=noteEl.cloneNode(true);
-    copy.removeAttribute("id"); copy.removeAttribute("contenteditable");
+    copy.removeAttribute("id");
     copy.setAttribute("aria-hidden","true"); copy.inert=true;
     copy.style.cssText="position:fixed;left:-10000px;top:0;width:600px;white-space:pre-wrap;opacity:0;pointer-events:none";
     document.body.appendChild(copy);

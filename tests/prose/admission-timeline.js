@@ -531,13 +531,13 @@ test('undoing a removed course event is available only on the route that owned i
   assert.doesNotMatch(note(),/Synthetic nursery undo marker/);
 });
 
-test('birth and pathway editing preserve a manually edited preview until explicit regeneration',({W,get,input,add,seg,note,click})=>{
-  const manual='Synthetic manually edited admission narrative.\nPreserve this exact second line.';
-  get('#note').textContent=manual;get('#note').dispatchEvent(new W.Event('input',{bubbles:true}));
+// 預覽唯讀（2026-09-24 Ryan）：對 #note 互動過後，出生與路徑的變更仍要立刻反映。
+test('birth and pathway editing rewrite the read-only preview immediately',({W,d,get,input,add,seg,note})=>{
+  get('#note').dispatchEvent(new W.Event('input',{bubbles:true}));
   input('birthBreathing','apnea');add('ppv');seg('pathway','nursery');
   input('obCourse','Synthetic new course detail');
-  assert.equal(note(),manual);assert.equal(get('#regen').hidden,false);
-  click('#regen');assert.match(note(),/Synthetic new course detail/);assert.match(note(),ppv);
+  assert.match(note(),/Synthetic new course detail/);assert.match(note(),ppv);
+  assert.equal(d.getElementById('regen'),null,'The apply button must be gone');
 });
 
 test('generated admission remains English narrative without clinical section headings or list scaffolding',({input,add,seg,symptom,note})=>{

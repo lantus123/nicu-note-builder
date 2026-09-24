@@ -59,13 +59,14 @@ test('desktop preview starts visible in review mode with normal-size settings',(
   assert.ok(note.textContent.trim());assert.equal(note.querySelectorAll('.note-change').length,0);
 }));
 
-test('focusing the note to edit while in reading mode switches back to review mode',()=>withPage(({d,note})=>{
-  const dock=d.querySelector('.dock'),btn=d.getElementById('previewReading');
+test('switching to reading mode and back only changes the labels, not the note',()=>withPage(({d,note})=>{
+  const dock=d.querySelector('.dock'),btn=d.getElementById('previewReading'),text=note.textContent;
   btn.click();
   assert.equal(dock.dataset.reading,'true');assert.equal(btn.textContent,'閱讀模式');
-  note.dispatchEvent(new d.defaultView.FocusEvent('focusin',{bubbles:true}));
-  assert.equal(dock.dataset.reading,'false','editing must show review marks');
-  assert.equal(btn.getAttribute('aria-pressed'),'false');assert.equal(btn.textContent,'校閱模式');
+  assert.equal(btn.getAttribute('aria-pressed'),'true');
+  btn.click();
+  assert.equal(dock.dataset.reading,'false');assert.equal(btn.textContent,'校閱模式');
+  assert.equal(note.textContent,text);
 }));
 
 for(const matchMedia of [true,false])test(`mobile preview starts collapsed (${matchMedia?'media query':'width fallback'})`,()=>
@@ -110,7 +111,6 @@ for(const mode of ['adm','plan','acc','proc'])test(`${mode} reading and font set
     click('#previewReading');
     assert.equal(d.querySelector('.dock').dataset.reading,'false');
     assert.equal(note.textContent,text);assert.equal(note.innerHTML,markup);
-    assert.equal(d.getElementById('regen').hidden,true,'Display changes must not mark a note as manually edited');
   }));
 
 test('only changed values are highlighted and the highlight expires without rewriting text',()=>withPage(async page=>{
@@ -157,59 +157,28 @@ for(const [label,before,after] of [
   }
 }));
 
-test('display settings and form updates preserve a manual note until explicit regeneration',()=>withPage(page=>{
+// 2026-09-24 Ryan 拍板：預覽唯讀，要手改就複製到 HIS 再改。舊的「手改鎖定」整套已移除。
+test('the preview keeps following the form even after the reader interacts with it',()=>withPage(page=>{
   const {W,d,note,click,input}=page;seed(page);
-  const manual='Synthetic manually edited narrative.\nKeep this exact second line.';
-  note.textContent=manual;note.dispatchEvent(new W.Event('input',{bubbles:true}));
-  assert.equal(d.getElementById('regen').hidden,false);
-  click('#previewReading');input('previewFont','large');input('bw','2599');
-  assert.equal(note.textContent,manual);assert.equal(d.getElementById('regen').hidden,false);
-  click('#regen');
-  assert.notEqual(note.textContent,manual);assert.match(note.textContent,/2599/);
-  assert.equal(d.getElementById('regen').hidden,true);
-}));
-
-test('the sticky edit hint carries its own apply button that regenerates like the header one',()=>withPage(page=>{
-  const {W,d,note,click,input}=page;seed(page);
-  const hint=d.getElementById('editHint');assert.equal(hint.hidden,true,'Hint stays hidden until a manual edit');
-  note.textContent='Synthetic manual text.';note.dispatchEvent(new W.Event('input',{bubbles:true}));
-  assert.equal(hint.hidden,false);assert.ok(hint.querySelector('#regenInline'),'Hint must contain the inline apply button');
-  input('bw','2599');assert.doesNotMatch(note.textContent,/2599/,'Locked preview must not regenerate on form changes');
-  click('#regenInline');
-  assert.match(note.textContent,/2599/);assert.equal(d.getElementById('regen').hidden,true);assert.equal(hint.hidden,true);
-}));
-
-test('explicit regeneration clears manual markup even when the text is unchanged',()=>withPage(({W,d,note,click})=>{
-  const text=note.textContent,markup=note.innerHTML,first=note.firstChild;
-  const range=d.createRange(),selection=W.getSelection();
-  range.setStart(first,0);range.setEnd(first,1);selection.removeAllRanges();selection.addRange(range);
-  note.dispatchEvent(new W.InputEvent('beforeinput',{
-    inputType:'insertText',data:first.textContent.slice(0,1),bubbles:true,cancelable:true
-  }));
-  assert.equal(note.textContent,text);
-  assert.equal(note.querySelectorAll('.edited').length,1,'A same-character replacement still counts as a manual edit');
-  assert.equal(d.getElementById('regen').hidden,false);
-  click('#regen');
-  assert.equal(note.textContent,text);assert.equal(note.innerHTML,markup);
-  assert.equal(note.querySelectorAll('.edited').length,0);
-  assert.equal(d.getElementById('regen').hidden,true);
-}));
-
-test('manual edits discard transient highlight classes without replacing nodes or replaying them from cache',()=>withPage(page=>{
-  const {W,d,note,click,input}=page;seed(page);input('bw','2488');
-  const marker=note.querySelector('.note-change'),markedText=marker?.firstChild;
-  assert.ok(marker,'The preceding automatic update should be highlighted');
-  const addendum=d.createTextNode(' Synthetic manual addendum.');note.appendChild(addendum);
-  const range=d.createRange(),selection=W.getSelection();
-  range.setStart(addendum,addendum.length);range.collapse(true);selection.removeAllRanges();selection.addRange(range);
+  // 舊版只要 #note 收到一次 input 就凍結重組；現在互動不得影響任何後續更新。
+  note.dispatchEvent(new W.FocusEvent('focusin',{bubbles:true}));
   note.dispatchEvent(new W.Event('input',{bubbles:true}));
-  const text=note.textContent;
-  assert.equal(note.querySelectorAll('.note-change').length,0);
-  assert.equal(marker.isConnected,true);assert.equal(marker.firstChild,markedText);
-  assert.equal(selection.anchorNode,addendum);assert.equal(selection.anchorOffset,addendum.length);
-  click('[data-tab="plan"]');click('[data-tab="adm"]');
-  assert.equal(note.textContent,text);assert.equal(note.querySelectorAll('.note-change').length,0);
-  assert.equal(d.getElementById('regen').hidden,false);
+  input('bw','2599');
+  assert.match(note.textContent,/2599/,'A form change must reach the preview immediately');
+  click('#previewReading');
+  assert.equal(d.querySelector('.dock').dataset.reading,'true');
+  note.dispatchEvent(new W.FocusEvent('focusin',{bubbles:true}));
+  assert.equal(d.querySelector('.dock').dataset.reading,'true','Touching the preview no longer forces review mode');
+  input('previewFont','large');input('bw','2601');
+  assert.match(note.textContent,/2601/,'Display settings must not stop the preview from following the form');
+  assert.doesNotMatch(note.textContent,/2599/);
+}));
+
+test('no manual-editing affordance remains in the preview',()=>withPage(({d,note})=>{
+  assert.equal(note.hasAttribute('contenteditable'),false,'The preview must be read-only');
+  assert.equal(d.querySelectorAll('[contenteditable]').length,0);
+  for(const id of ['regen','regenInline','editHint'])assert.equal(d.getElementById(id),null,`Removed control still present: ${id}`);
+  assert.equal(d.querySelectorAll('.edit-hint').length,0);
 }));
 
 test('escaped free text remains literal across display modes and later updates',()=>withPage(page=>{
@@ -222,7 +191,6 @@ test('escaped free text remains literal across display modes and later updates',
   assert.equal(note.textContent,text);assert.equal(note.querySelector('b'),null);
   input('bw','2488');
   assert.ok(note.textContent.includes(literal));assert.equal(note.querySelector('b'),null);
-  assert.equal(d.getElementById('regen').hidden,true);
 }));
 
 test('text-mode procedure updates preserve literal operator input',()=>withPage(page=>{
