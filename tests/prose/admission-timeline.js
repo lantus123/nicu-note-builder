@@ -62,7 +62,7 @@ function withPage(check){
   try{
     seg('gender','female');input('gaW','39');input('gaD','0');input('bw','3200');
     seg('delivery','nsd');input('gravida','2');input('para','1');input('matAge','31');
-    input('ap1','8');input('ap5','9');seg('dol','0');
+    input('ap1','8');input('ap5','9');seg('dol','1');
     // 2026-09-20 故事優先：第 5＋6 區合併成時間線，pathway 不再預設。這裡用「調整細節」裡的路徑開關
     // 直接選 direct（等同舊預設：直接入院、standby／會診皆關），讓各站出現又不動到兩個開關；
     // 各測試仍可用 seg('pathway',…)／toggle(…) 自行改，控制項 id／data-* 與以前相同。
@@ -238,26 +238,23 @@ test('DOIC of zero minutes is a recorded value, not an empty field',({toggle,inp
   assert.match(note(),/(?:DOIC|duration of intact cord|intact cord)[^.]*0\s*(?:minutes?|min\b)/i);
 });
 
-test('filled journey stops collapse into a read-only summary that reuses birth data and reopen on demand',({input,get,click})=>{
-  input('birthBreathing','apnea');input('birthFinalNote','Synthetic bridge observation');
+test('completed journey stages keep a read-only summary and reopen on demand',({input,get,click})=>{
+  input('birthBreathing','apnea');click('[data-stop-toggle="drEnd"]');input('birthFinalNote','Synthetic bridge observation');
   const stop=get('li[data-stop="drEnd"]');
-  // 2026-09-20：正在填的站會被釘住展開（不再一輸入就收合）；收合是使用者點站名的動作
-  assert.ok(!stop.classList.contains('closed'),'a stop that was just edited stays open');
-  click('[data-stop-toggle="drEnd"]');
+  assert.ok(!stop.classList.contains('closed'),'the explicitly selected stage stays active');
+  click('[data-stop-toggle="birth"]');
   const sum=stop.querySelector('.sum');
-  assert.ok(stop.classList.contains('closed'),'the header click collapses it into a summary');
+  assert.ok(stop.classList.contains('closed'),'selecting another stage closes it into a summary');
   assert.ok(!sum.isContentEditable,'The carried summary must not create another editable record');
   assert.match(sum.textContent,/Synthetic bridge observation/);
   click('[data-stop-toggle="drEnd"]');
-  assert.ok(!stop.classList.contains('closed'),'Reopening a stop must reveal its fields');
-  assert.equal(stop.querySelector('.sum').textContent,'','An open stop shows its fields, not the summary');
+  assert.ok(!stop.classList.contains('closed'),'Reopening a stage must reveal its fields in the fixed workspace');
+  assert.equal(stop.querySelector('.sum').textContent,'正在填寫');
   const birth=get('li[data-stop="birth"]');
-  if(!birth.classList.contains('closed'))click('[data-stop-toggle="birth"]');   // 剛編輯過的站是釘住展開的，收起才看得到摘要
   assert.match(birth.querySelector('.sum').textContent||'',/Apnea/,'The birth stop summary reuses the recorded observation');
 });
 
-test('working inside a journey stop keeps it open instead of collapsing to the next stop',({get,input,click})=>{
-  // 2026-09-20 Ryan：「點任一內容即跳下一步驟」。原本一輸入就不再是「現在這站」而被收合。
+test('editing never changes stage; only explicit navigation moves forward or backward',({get,input,click})=>{
   const birth=get('li[data-stop="birth"]');
   assert.ok(!birth.classList.contains('closed'),'the first empty stop starts open');
   const dr=get('li[data-stop="dr"]');
@@ -266,10 +263,12 @@ test('working inside a journey stop keeps it open instead of collapsing to the n
   assert.ok(dr.classList.contains('closed'),'while a stop is being edited, the next stop must not auto-open');
   input('birthTone','good');
   assert.ok(!birth.classList.contains('closed'),'further edits keep it open');
-  click('[data-stop-toggle="birth"]');
-  assert.ok(birth.classList.contains('closed'),'only the header click collapses it');
+  click('#journeyNext');
+  assert.ok(birth.classList.contains('closed'),'the next button moves away from the current stage');
   assert.match(birth.querySelector('.sum').textContent,/有哭聲/);
-  assert.ok(!dr.classList.contains('closed'),'collapsing the finished stop opens the next empty one');
+  assert.ok(!dr.classList.contains('closed'),'the next stage opens explicitly');
+  click('#journeyPrev');
+  assert.ok(!birth.classList.contains('closed'),'the previous button returns to the exact prior stage');
 });
 
 test('story B: the delivery-room consultation is narrated after the birth observation and before treatment',({toggle,input,add,note,get,eventInput})=>{
@@ -294,18 +293,19 @@ test('Admission and Acceptance narrate the delivery room in the same order: obse
   before(acc,/Apgar scores were 4 and 7/,/positive-pressure ventilation \(PPV\) was initiated/i);
   before(acc,/positive-pressure ventilation \(PPV\) was initiated/i,/On reassessment at 10 minutes of age/);
 });
-test('the journey behaves like an accordion: starting the next stop collapses the previous one into its summary',({get,input,click})=>{
+test('the journey stepper keeps exactly one explicit stage active',({get,input,click})=>{
   const birth=get('li[data-stop="birth"]'),dr=get('li[data-stop="dr"]');
   input('birthBreathing','crying');
   assert.ok(!birth.classList.contains('closed'));assert.ok(dr.classList.contains('closed'));
   click('[data-stop-toggle="dr"]');
-  assert.ok(!dr.classList.contains('closed'),'opening the next stop');
+  assert.ok(!dr.classList.contains('closed'),'opening the selected stage');
   assert.ok(birth.classList.contains('closed'),'the previous stop collapses');
   assert.match(birth.querySelector('.sum').textContent,/有哭聲/);
   input('birthResusStatus','none');
   assert.ok(!dr.classList.contains('closed'));assert.ok(birth.classList.contains('closed'));
   const openCount=[...get('#journey').querySelectorAll('li')].filter(li=>!li.hidden&&!li.classList.contains('closed')).length;
-  assert.equal(openCount,1,'only the stop being worked on is open');
+  assert.equal(openCount,1,'only the explicitly selected stage is active');
+  assert.equal(get('#journeyStage').textContent.includes('產房處置'),true,'the sticky progress label names the active stage');
 });
 test('the admission stop is labelled 入院 until a destination is chosen',({get,click})=>{
   click('[data-seg="dest"] [data-v="NICU"]');assert.equal(get('li[data-stop="adm"] .t').textContent,'入 NICU');

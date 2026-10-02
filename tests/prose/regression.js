@@ -13,7 +13,7 @@ const screen=(key,value)=>({cycle:[`.scr-row[data-scr="${key}"] .scr-btn`,value]
 const tab=mode=>({tab:mode});
 const BASE=[seg('gender','male'),set('gaW','40'),set('gaD','0'),set('bw','3500'),
   seg('delivery','nsd'),set('gravida','2'),set('para','1'),set('matAge','32'),
-  set('ap1','8'),set('ap5','9'),seg('dol','0')];
+  set('ap1','8'),set('ap5','9'),seg('dol','1')];
 
 function notes(steps,procedure=false){
   const result=render({steps:[...BASE,...steps],procedure});
@@ -531,8 +531,8 @@ test('clearable segments can be un-picked; segments with semantic defaults canno
   includes(chosen,'admitted to ____');
   const female=notes([seg('gender','female')]).admission, cleared=notes([seg('gender','female'),seg('gender','female')]).admission;
   includes(female,'female'); assert.doesNotMatch(cleared,/\bfemale\b/);
-  const dolTwice=notes([seg('dol','0'),seg('dol','0')]).acceptance;
-  includes(dolTwice,'0 d/o');   // dol 有語意預設，再點不可清空
+  const dolTwice=notes([seg('dol','1'),seg('dol','1')]).acceptance;
+  includes(dolTwice,'DOL 1');   // 出生當天 = DOL 1；有語意預設，再點不可清空
 });
 
 

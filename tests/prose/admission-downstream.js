@@ -57,7 +57,7 @@ function withPage(check){
   const api={W,d,get,click,input,seg,msel,story,riskYes,riskChoice,screening,addBirth,tab,note,dx,planWarn,onTab};
   try{
     seg('gender','male');input('gaW','39');input('gaD','0');input('bw','3100');
-    seg('delivery','nsd');seg('dest','NICU');seg('dol','0');
+    seg('delivery','nsd');seg('dest','NICU');seg('dol','1');
     input('ap1','8');input('ap5','9');input('gravida','1');input('para','1');input('matAge','30');
     check(api);
     assert.deepEqual(errors,[],'Downstream interactions must not raise page errors');

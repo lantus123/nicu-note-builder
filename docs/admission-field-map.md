@@ -2,15 +2,17 @@
 
 本文件只涵蓋這次第 5、6 區的時間線改版，以及這些資料與 Admission、Acceptance、NI plan 的連接；不是全專案歷史欄位均已完成稽核的聲明。所有紀錄須由使用者核對後再貼回 HIS。
 
-## 2026-09-20 呈現層：故事卡與時間線
+## 2026-10-02 呈現層：故事卡與固定工作區步驟列
 
-第 5、6 區合併為 `#pathwayCard`「出生到入院」。`applyStory(k)` 依 `STORY` 表設定 `pathway`／`pwStandby`／`pwConsult`（走既有 `switchPathway` 與 `[data-tog]`），`deriveStory()` 由三個開關反推故事字母（給故事卡高亮與區塊摘要）。`renderJourney()` 在每次 `renderAdm` 末尾執行：依路徑決定各 `li[data-stop]` 的顯隱、`order`、標籤與白話說明；`journeySummary(id)` 從既有欄位讀出一行摘要；`S.journeyOpen` 記住手動展開／收合，換路徑時重置。所有欄位 id／`data-*` 與本文件其餘各表相同，只是父層變成時間線的站。
+第 5、6 區合併為 `#pathwayCard`「本次入院經過」。`applyStory(k)` 依 `STORY` 表設定路徑；A–D 沿用出生後直接入院、先經嬰兒室或外院轉送，E 為已離開出生照護後再由門診／急診／預約住院。`deriveStory()` 由目前路徑與團隊介入狀態反推故事字母，供故事卡高亮與摘要使用。
+
+`renderJourney()` 依路徑建立可見站點；`S.journeyStep` 只在使用者按步驟、上一段或下一段時改變。各站內容移入固定的 `#journeyWorkspace`，輸入欄位、顯示條件改變及預覽更新都不會自動收合或跳到下一站。切換故事時，各路徑草稿由 `S.routeDrafts` 分開保存，並把工作區帶到該故事第一站。
 
 ## 敘事與資料歸屬
 
 填寫區塊順序仍配合手寫 chart。產出的 Admission 是完整敘述，依「出生觀察 → Apgar → （直接入院的會診句）→ 實際處置 → 再評估 → 後續路徑 → 入院」串接，不改成 HPI／Assessment 分段模板；Acceptance 的 Brief history 用同一個順序（`birthObservation()`／`birthCourse()` 兩段由呼叫端夾 Apgar）。
 
-- 同一次處置只輸入一次；第 6 區的產房摘要是唯讀引用，不是第二份紀錄。
+- 同一次處置只輸入一次；後續站點的產房摘要是唯讀引用，不是第二份紀錄。
 - 相同處置在不同時間再次發生時，另建事件，不用文字去重刪掉真正的再次處置。
 - 產房最後狀態、外院後續狀態、我方抵達外院、轉送期間、入院及 Acceptance 接手時，是不同時點。
 - 事件依使用者排列順序輸出；時間不一致時提示核對，不默默重排或補出時間。
@@ -25,7 +27,7 @@
 | `S.birthEvents[]` | 初始觀察之後、最終評估之前 | 獨立處置與中途評估按排列順序輸出；詳見事件欄位表。 |
 | `birthFinalBreathing`、`birthFinalTone`、`birthFinalHR` | 產房結束時的評估 | 不把新數值直接寫成「恢復」「改善」；仍需保留實際記錄的前後狀態。 |
 | `birthFinalMin` | 產房最後評估的生後時間 | 單位為分鐘；未填時不補出時刻。只有時間、沒有評估內容時交代曾在該時點評估、所見未指定，不補出正常觀察。 |
-| `birthFinalSupport` | 產房最後支持狀態；第 6 區支持銜接的來源 | 模式需明選；不以最後一個處置事件推定它仍持續。 |
+| `birthFinalSupport` | 產房最後支持狀態；後續路徑支持銜接的來源 | 模式需明選；不以最後一個處置事件推定它仍持續。 |
 | `birthFinalNote` | 產房最後評估後的補充句 | 不覆蓋初始觀察或後續入院狀況。 |
 | `S.fd`、`S.doic`、`S.msaf` | 出生事件敘述；相關既有診斷標籤 | 勾選才表示事件曾發生；取消勾選本身不表示陰性。 |
 | `doicMin` | DOIC 出生事件與相關診斷標籤 | 僅在 `S.doic` 啟用時採用，沿用同一個分鐘欄位。 |
@@ -42,7 +44,7 @@
 | `id` | 全部 | UI 操作與欄位識別，不寫進病歷。 |
 | `kind` | 全部 | `ppv`、`intubation`、`compressions`、`epinephrine`、`assessment`；後續事件另有 `o2`、`cpap`。每個項目只表示本身，不包含其他處置。 |
 | `minutes` | 全部 | 已填時寫生後幾分鐘；未填時使用不含精確時間的敘述。 |
-| `location` | 第 6 區後續事件 | 英文實際地點；未填不把它自動當成產房、外院或 NICU。 |
+| `location` | 後續路徑事件 | 英文實際地點；未填不把它自動當成產房、外院或 NICU。 |
 | `fiO2` | PPV、插管、CPAP、O₂ | 只列輸入值及 `%`。**例外（2026-09-20）**：產房急救 PPV 新增時依 `NRP` 表預設帶入 FiO₂／PIP／PEEP（依 GA），事件帶 `nrp:true` 標示直到醫師改過任一值；`timelineReview` 提醒「尚未核對」。插管與 course 範圍不帶預設。 |
 | `pip`、`peep`、`rr` | 適用的呼吸支持事件 | PIP／PEEP 使用 cmH₂O；CPAP 的 `peep` 寫成 pressure；`rr` 僅在插管事件提供。 |
 | `flow`、`device` | 適用的呼吸支持事件 | 氧氣流量以 L/min；裝置依實際英文記錄。 |
@@ -51,11 +53,11 @@
 | `breathing`、`tone`、`hr`、`support` | 再評估 | 只寫實際觀察；不自行加上治療有效或無效的判斷。 |
 | `note` | 全部 | 該事件的英文完整補充句；不當成全局病史去推論其他事件。 |
 
-## 第 6 區：後續路徑與團隊介入
+## 本次入院經過：路徑與團隊介入
 
 | 欄位／狀態 | 寫入位置 | 條件與用途 |
 | --- | --- | --- |
-| `S.pathway` | 後續路徑的場域與入院結語 | `direct`、`nursery`、`outborn` 三者擇一；**無預設**（2026-09-19 起），未選時第 6 區摘要顯示「尚未選路徑」、路徑專屬欄位隱藏、結語不寫路徑。再點一次已選項目可取消。 |
+| `S.pathway` | 後續路徑的場域與入院結語 | `direct`、`nursery`、`outborn`、`readmit` 四者擇一；**無預設**。未選時摘要顯示「尚未選路徑」、路徑專屬欄位隱藏、結語不寫路徑。再點一次已選項目可取消。 |
 | `S.dest`（第 1 區） | Admission 結語、`On admission to …` 句、Acceptance 入院句 | `NICU`／`NBC`／`BR` 擇一，整份 note 一次選；未選寫成 `____`。英文 `our NICU`／`our NBC`／`our baby room`（Ryan 2026-09-20 確認 BR＝baby room）。 |
 | `S.delivery` → `deliveryPlace()` | standby 句、產房再評估句、Acceptance surfactant 句、直接入院的會診句 | `cs` 寫 operating room、其餘寫 delivery room；不另設地點欄位。 |
 | `S.pwConsult`、`pwConsultH`、`pwConsultReason` → `consultSentence()` | 直接入院：出生觀察與 Apgar 之後、產房處置之前（故事 B 先叫兒科到產房再處置）；嬰兒室／外接：後續路徑段 | 會診小時數換算後晚於第一個處置分鐘數時，`timelineReview` 提醒核對，不重排。 |
@@ -82,6 +84,23 @@
 | `S.resp`（入院站「入院時呼吸支持」，`[data-seg="resp"]`） | Admission 的 `On admission to …` 句、NI plan 的呼吸／OG／A-line 規則、Acceptance「At acceptance…」句 | **與 Acceptance A 區是同一個值**，兩處各有一組按鈕、`render()` 每次同步 `aria-pressed`；再點一次清空（在 `SEG_CLEARABLE` 內）。只寫明選的當下支持，不由產房或轉送歷程推定。 |
 | `obAdmissionStatus` | 抵達本院並入院時的觀察句 | 與 `obArrival`、產房結束狀態及 Acceptance 當下狀態分開。與 `S.resp` 同時有值時併成一句（`…the infant was receiving respiratory support with NCPAP; <狀況>.`）。 |
 | 第 7 區 `tentDx` | 入院結語的暫定診斷 | 沿用既有診斷來源／規則，不由轉送前後的連接詞推定新診斷。 |
+
+### Story E：出院後再次就醫
+
+Story E 仍會引用第 1–4 區既有的產前、分娩、Apgar、出生觀察及處置，因此不需要也不允許在 E 重填出生史。工作區依序為「先前照護 → 返家後基準 → 本次症狀 → 就醫評估 → 入院」，Admission 仍輸出為連續敘述，不轉為條列模板。
+
+| 欄位／狀態 | 寫入位置 | 單一資料來源與核對規則 |
+| --- | --- | --- |
+| `admissionDate`、`birthDate`、`S.dol` | Admission 開頭、Acceptance DOL／PMA | 兩日期都有時以日曆日差加 1 自動計算，故出生當天＝DOL 1；PMA 增加 `DOL - 1` 天。手動 DOL 與日期不一致時提示，可一鍵回到自動值。 |
+| `S.readmitPrior`、`readmitPriorUnit`、`readmitPriorCourse` | 先前出生住院／照護經過 | 只描述實際經過；不從本次主訴反推前次治療。 |
+| `readmitDischargeDate`、`readmitDischargeWeight` | 前次出院句 | 出院日在出生前或本次入院後時提示核對；體重只表示前次出院，不當成本次體重。 |
+| `S.readmitFeeding`、`S.readmitBaseline`、`readmitHomeNote` | 返家後基準狀態 | 用來交代發病前餵食與已知基準；不重複本次病程。 |
+| `S.readmitProblems`、`readmitOnsetDOL`、`readmitComplaint`、`readmitCourse` | 本次症狀與病程 | 問題類型控制黃疸或一般症狀細節的顯示；症狀開始日齡晚於入院日齡時提示核對。 |
+| `readmitJaundiceDOL`、`S.readmitJaundiceSigns` | 黃疸細節 | 深色尿／淡色便的肯定與否定各自互斥；只寫明確選取的觀察。 |
+| `readmitIntake`、`readmitUrine`、`readmitActivity`、`readmitSickContact` | 一般病程細節 | 只在相關問題被選取時顯示；空白不補成正常。 |
+| `S.readmitSource`、`readmitSpO2`、`readmitTSB`、`readmitDB`、`readmitEvaluation`、`readmitTreatment` | 門診／急診／預約評估 | 黃疸檢驗只在黃疸問題啟用時採用；隱藏草稿不進病歷。 |
+| `readmitCurrentWeight` | Admission 就醫評估、Acceptance 體重 | **本次體重只輸入一次**。Story E 的 Acceptance 體重欄改成唯讀引用，不再提供第二個可矛盾的輸入。 |
+| `obAdmissionStatus`、`S.resp`、`S.dest` | 入院站、Admission 結語、Acceptance 當下狀態 | 與 A–D 共用單一入院狀態及呼吸支持來源；前次照護或門急診處置不會覆蓋接手當下狀態。 |
 
 ## 第 6 區：家庭樹（Pedigree，2026-09-23）
 

@@ -46,7 +46,7 @@ function withPage(check){
   const api={W,d,get,click,input,seg,planOn,check:check2,tab,note,onTab,planWarn};
   try{
     // 共同底稿：男嬰、NSD、去處 NICU、DOL 0；週數／體重／生日由各情境自己填
-    seg('gender','male');seg('delivery','nsd');seg('dest','NICU');seg('dol','0');
+    seg('gender','male');seg('delivery','nsd');seg('dest','NICU');seg('dol','1');
     input('ap1','8');input('ap5','9');input('gravida','1');input('para','1');input('matAge','30');
     check(api);
     assert.deepEqual(errors,[],'Plan interactions must not raise page errors');

@@ -5,7 +5,7 @@ const set=(id,value)=>({set:[id,value]});
 const seg=(key,value)=>({click:`[data-seg="${key}"] [data-v="${value}"]`});
 const BASE=[seg('gender','female'),set('gaW','39'),set('gaD','0'),set('bw','3200'),
   seg('delivery','nsd'),set('gravida','2'),set('para','1'),set('matAge','31'),
-  set('ap1','8'),set('ap5','9'),seg('dol','0')];
+  set('ap1','8'),set('ap5','9'),seg('dol','1')];
 const NIPT_FINDING='synthetic trisomy 21 risk', ACGH_FINDING='synthetic deletion finding';
 const cache=new Map();
 function notes(steps){

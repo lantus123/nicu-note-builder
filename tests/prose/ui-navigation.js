@@ -28,8 +28,8 @@ function withPage(check){
   finally{W.close();}
 }
 
-test('the six Admission sections retain their order (birth and pathway merged into one journey, 2026-09-20)',()=>withPage(({d})=>{
-  const names=['寶寶基本','母親病史','產前篩檢','產程用藥','出生到入院','暫定診斷'];
+test('the six Admission sections retain chart order while section 5 covers the current admission journey',()=>withPage(({d})=>{
+  const names=['寶寶基本','母親病史','產前篩檢','產程用藥','本次入院經過','暫定診斷'];
   const headings=[...d.querySelectorAll('#admSections > .card > .sec-h')];
   assert.equal(headings.length,names.length);
   names.forEach((name,i)=>assert.ok(headings[i].textContent.includes(name),`Section ${i+1}: ${name}`));
