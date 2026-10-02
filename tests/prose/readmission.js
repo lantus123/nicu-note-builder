@@ -40,6 +40,43 @@ test('birth day is DOL 1; date-derived DOL and PMA use elapsed days',({input,tab
   assert.match(note(),/^DOL 4, PMA 38\+5 wks/);
 });
 
+test('automatic mode is visible and filling only the birth date calculates through today',({W,input,get,note})=>{
+  assert.equal(get('#dolAutoReset').getAttribute('aria-pressed'),'true');
+  assert.notEqual(W.getComputedStyle(get('#dolAutoReset')).display,'none');
+  assert.equal(get('#admissionDate').value,'2026-08-30');
+  assert.equal(W.getComputedStyle(get('#dolManualWrap')).display,'none');
+  input('birthDate','2026-08-13');
+  assert.match(get('#dolStatus').textContent,/DOL 18.*今天 2026-08-30/);
+  assert.match(note(),/now on day of life 18/);
+  assert.equal(W.getComputedStyle(get('#dolManualWrap')).display,'none','a calculated DOL above 4 must not look like a manual entry');
+  input('birthDate','2026-08-30');
+  assert.match(note(),/now on day of life 1/);
+});
+
+test('backdated admission uses that date and the today action restores automatic calculation',({input,get,click,seg,tab,note})=>{
+  input('birthDate','2026-08-13');input('admissionDate','2026-08-25');
+  assert.match(get('#dolStatus').textContent,/DOL 13.*入院日 2026-08-25/);
+  click('#dolManual');
+  assert.equal(get('#dolManualWrap').hidden,false);
+  seg('dol','2');
+  assert.equal(get('#dolAutoReset').getAttribute('aria-pressed'),'false');
+  click('#admissionToday');
+  assert.equal(get('#admissionDate').value,'2026-08-30');
+  assert.equal(get('#dolAutoReset').getAttribute('aria-pressed'),'true');
+  assert.equal(get('#dolManualWrap').hidden,true);
+  assert.match(note(),/now on day of life 18/);
+  tab('acc');assert.match(note(),/^DOL 18, PMA 40\+5 wks/);
+});
+
+test('native date-picker change events recalculate DOL',({W,get,note})=>{
+  get('#birthDate').value='2026-08-27';
+  get('#birthDate').dispatchEvent(new W.Event('change',{bubbles:true}));
+  assert.match(note(),/now on day of life 4/);
+  get('#admissionDate').value='2026-08-28';
+  get('#admissionDate').dispatchEvent(new W.Event('change',{bubbles:true}));
+  assert.match(note(),/now on day of life 2/);
+});
+
 test('manual DOL mismatch is visible and can return to automatic calculation',({input,seg,click,get})=>{
   input('birthDate','2026-08-27');seg('dol','3');
   assert.match(get('#dolStatus').textContent,/日期推算為 DOL 4.*手動使用 DOL 3/);
@@ -81,6 +118,49 @@ test('story E uses five explicit and visibly isolated stages with problem-specif
   msel('readmitProblems','jaundice');assert.equal(get('#readmitJaundice').hidden,false);
   assert.equal(get('#readmitGeneral').hidden,true);
   msel('readmitProblems','poor-feeding');assert.equal(get('#readmitGeneral').hidden,false);
+});
+
+test('respiratory admission does not display or request bilirubin tests',({W,story,click,msel,input,get,note})=>{
+  story('E');click('[data-stop-toggle="illness"]');
+  msel('readmitProblems','respiratory');input('readmitComplaint','tachypnea');
+  input('readmitActivity','remained normal');
+  assert.notEqual(W.getComputedStyle(get('#readmitGeneral')).display,'none');
+  click('#journeyNext');
+  assert.equal(get('#journey li.cur').dataset.stop,'evaluation');
+  assert.equal(W.getComputedStyle(get('#readmitBiliWrap')).display,'none');
+  assert.match(note(),/tachypnea/);
+  assert.doesNotMatch(note(),/bilirubin|dark urine|pale stools/i);
+});
+
+test('switching jaundice to respiratory suppresses hidden drafts in both notes and stage summaries',({W,story,click,msel,input,get,tab,note})=>{
+  story('E');click('[data-stop-toggle="illness"]');msel('readmitProblems','jaundice');
+  input('readmitJaundiceDOL','3');msel('readmitJaundiceSigns','no dark urine');
+  click('#journeyNext');input('readmitTSB','15.2');input('readmitDB','0.6');
+  assert.notEqual(W.getComputedStyle(get('#readmitBiliWrap')).display,'none');
+  assert.match(note(),/total bilirubin level of 15\.2/);
+  click('#journeyPrev');msel('readmitProblems','jaundice');msel('readmitProblems','respiratory');
+  click('#journeyNext');
+  assert.equal(W.getComputedStyle(get('#readmitBiliWrap')).display,'none');
+  for(const mode of ['adm','acc']){
+    tab(mode);assert.match(note(),/respiratory symptoms/);
+    assert.doesNotMatch(note(),/bilirubin|dark urine|Jaundice was first noted/i);
+  }
+  tab('adm');click('[data-stop-toggle="adm"]');
+  assert.doesNotMatch(get('[data-stop="evaluation"] .sum').textContent,/TB |DB /);
+  click('[data-stop-toggle="illness"]');msel('readmitProblems','jaundice');click('#journeyNext');
+  assert.notEqual(W.getComputedStyle(get('#readmitBiliWrap')).display,'none');
+  assert.equal(get('#readmitTSB').value,'15.2');
+  assert.match(note(),/Jaundice was first noted on day of life 3/);
+  assert.match(note(),/respiratory symptoms/,'a jaundice-onset date must not suppress concurrent respiratory symptoms');
+  assert.match(note(),/total bilirubin level of 15\.2/);
+});
+
+test('general-condition drafts are excluded when only jaundice remains selected',({story,msel,input,note})=>{
+  story('E');msel('readmitProblems','respiratory');input('readmitSickContact','an older sibling had URI symptoms');
+  assert.match(note(),/older sibling had URI symptoms/);
+  msel('readmitProblems','respiratory');msel('readmitProblems','jaundice');
+  assert.doesNotMatch(note(),/older sibling had URI symptoms/);
+  assert.doesNotMatch(note(),/bilirubin level/,'unfilled bilirubin tests are optional');
 });
 
 test('route drafts survive A/E switching but inactive route facts never leak',({story,input,seg,note})=>{

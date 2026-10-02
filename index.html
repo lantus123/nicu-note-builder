@@ -42,6 +42,7 @@
     --doc-line:#30424e; --doc-abn:#ffc18f;
   }
   *{box-sizing:border-box}
+  [hidden]{display:none!important} /* 條件欄位以 hidden 為準，不能被 grid／flex 版面規則重新顯示 */
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
     -webkit-font-smoothing:antialiased;line-height:1.55;padding-bottom:calc(58vh + 24px)}
   button,input,select,textarea{touch-action:manipulation}
@@ -403,6 +404,7 @@
   #pathwayCard .problem-details[hidden]{display:none}
   #dolStatus{margin-top:8px;padding:9px 11px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);font-size:13px;line-height:1.5}
   #dolStatus.warn{background:var(--risk-soft);color:var(--risk)}
+  #admissionToday{min-height:var(--tap);padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--accent-ink);font:inherit;font-size:13px;font-weight:650;cursor:pointer}
   #consistencySummary{margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);font-size:13px;line-height:1.6;white-space:pre-line}
   #consistencySummary:empty{display:none}
   @media(max-width:640px){
@@ -504,12 +506,19 @@
       <div class="row2">
         <div class="field" style="margin:0"><input class="tin" type="date" id="admissionDate"></div>
         <div class="field" style="margin:0"><input class="tin" type="text" id="admissionTime" inputmode="numeric" placeholder="時:分（選填）" maxlength="5"></div>
-      </div></div>
-    <div class="field"><span class="lab">入院時日齡 <span class="q">（出生當天＝DOL 1；有兩個日期時自動計算）</span></span>
+      </div>
+      <button type="button" id="admissionToday" style="margin-top:7px">今天入院 · 自動計算日齡</button>
+    </div>
+    <div class="field"><span class="lab">入院時日齡 <span class="q">（出生當天＝DOL 1；依入院日計算，預設今天）</span></span>
+      <div class="seg" aria-label="日齡計算方式">
+        <button type="button" id="dolAutoReset" aria-pressed="true" aria-controls="dolManualWrap">自動計算</button>
+        <button type="button" id="dolManual" aria-pressed="false" aria-controls="dolManualWrap">手動填寫</button>
+      </div>
+      <div id="dolManualWrap" hidden style="margin-top:8px">
       <div class="seg" data-seg="dol"><button data-v="1">DOL 1</button><button data-v="2">DOL 2</button><button data-v="3">DOL 3</button><button data-v="4">DOL 4</button><button data-v="x">其他</button></div>
       <div class="num" id="dolOtherWrap" hidden style="margin-top:7px"><input type="number" id="dolOther" placeholder="__" min="1" max="120" inputmode="numeric" style="max-width:70px"><span class="u">DOL</span></div>
-      <div id="dolStatus" role="status">尚未填出生日期；目前使用手動 DOL 1。</div>
-      <button type="button" id="dolAutoReset" class="nrp-accept" hidden style="margin-top:7px">改回依日期自動計算</button>
+      </div>
+      <div id="dolStatus" role="status">填入出生日期後，自動依入院日（預設今天）計算。</div>
     </div>
     <div class="field">
       <div class="gp-apgar">
@@ -922,8 +931,8 @@
             <div class="field"><label class="lab" for="readmitSpO2">SpO₂ <span class="q">（選填）</span></label><div class="num"><input type="number" id="readmitSpO2" min="0" max="100" placeholder="未記錄"><span class="u">%</span></div></div>
           </div>
           <div class="row2" id="readmitBiliWrap" hidden>
-            <div class="field"><label class="lab" for="readmitTSB">Total bilirubin</label><div class="num"><input type="number" id="readmitTSB" min="0" step="0.1" placeholder="未記錄"><span class="u">mg/dL</span></div></div>
-            <div class="field"><label class="lab" for="readmitDB">Direct bilirubin</label><div class="num"><input type="number" id="readmitDB" min="0" step="0.1" placeholder="未記錄"><span class="u">mg/dL</span></div></div>
+            <div class="field"><label class="lab" for="readmitTSB">Total bilirubin <span class="q">（有檢驗才填）</span></label><div class="num"><input type="number" id="readmitTSB" min="0" step="0.1" placeholder="未記錄"><span class="u">mg/dL</span></div></div>
+            <div class="field"><label class="lab" for="readmitDB">Direct bilirubin <span class="q">（有檢驗才填）</span></label><div class="num"><input type="number" id="readmitDB" min="0" step="0.1" placeholder="未記錄"><span class="u">mg/dL</span></div></div>
           </div>
           <div class="field"><label class="lab" for="readmitEvaluation">門診／急診評估與檢查 <span class="q">（英文；不要重複前段病程）</span></label><textarea class="tarea" id="readmitEvaluation" rows="2" placeholder="例：mild subcostal retractions were noted"></textarea></div>
           <div class="field"><label class="lab" for="readmitTreatment">入院前已給予的處置 <span class="q">（選填，英文）</span></label><input class="tin" id="readmitTreatment" placeholder="例：nasal suction was performed"></div>
@@ -1739,6 +1748,8 @@
     if(e.target.closest(".reset")){S.growthAuto=true;render();return;}
     const b=e.target.closest("button"); if(!b)return;
     if(b.id==="dolAutoReset"){S.dolAuto=true;render();return;}
+    if(b.id==="dolManual"){S.dolAuto=false;render();return;}
+    if(b.id==="admissionToday"){document.getElementById("admissionDate").value=localToday();S.dolAuto=true;render();return;}
     if(b.id==="journeyPrev"){moveJourney(-1);return;}
     if(b.id==="journeyNext"){moveJourney(1);return;}
     if(eventClick(b))return;
@@ -1847,7 +1858,7 @@
     if(e.target.id==="rocYear"){try{localStorage.setItem("nicu_roc",e.target.checked?"1":"0");}catch(_){} render(); return;}   // checkbox 正規事件是 change
     if(e.target.id==="gaD"){let v=parseInt(e.target.value); if(isNaN(v))v=0; e.target.value=String(Math.max(0,Math.min(6,v))); render();}
     if(e.target.id==="homeHosp"){try{localStorage.setItem("nicu_home_hosp",e.target.value);}catch(_){}}
-    if(e.target.matches("select"))render();
+    if(e.target.matches('select, input[type="date"]'))render();
   });
   // C2 手機:數字欄 focus 時整段反白，直接覆蓋不必先刪
   document.addEventListener("focusin",e=>{if(e.target.matches('input[type="number"]'))setTimeout(()=>{
@@ -1929,6 +1940,7 @@
   const TONE={good:"had good muscle tone",poor:"had poor muscle tone",flaccid:"was flaccid"};
   const SUPPORT={room:"room air",o2:"supplemental oxygen",cpap:"CPAP",ppv:"positive-pressure ventilation (PPV)",ett:"mechanical ventilation via an endotracheal tube"};
   const raw=id=>V(id).trim();
+  const localToday=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;};
   const isoDay=v=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(v||""))return null;const [y,m,d]=v.split("-").map(Number),n=Date.UTC(y,m-1,d);return Number.isFinite(n)?n:null;};
   function manualDol(){const v=S.dol==="x"?raw("dolOther"):S.dol;return /^\d+$/.test(v)&&Number(v)>=1?Number(v):null;}
   function dolInfo(){
@@ -1948,11 +1960,13 @@
     const info=dolInfo();
     if(S.dolAuto&&info.calculated!==null){setDolValue(info.calculated);info.manual=info.calculated;info.value=info.calculated;info.elapsed=info.calculated-1;info.conflict=false;}
     const wrap=document.getElementById("dolOtherWrap");if(wrap)wrap.hidden=S.dol!=="x";
-    const status=document.getElementById("dolStatus"),reset=document.getElementById("dolAutoReset");
-    if(reset)reset.hidden=S.dolAuto||info.calculated===null;
+    const status=document.getElementById("dolStatus"),reset=document.getElementById("dolAutoReset"),manual=document.getElementById("dolManual"),controls=document.getElementById("dolManualWrap");
+    if(reset)reset.setAttribute("aria-pressed",String(S.dolAuto));
+    if(manual)manual.setAttribute("aria-pressed",String(!S.dolAuto));
+    if(controls)controls.hidden=S.dolAuto;
     if(status){status.classList.remove("warn");
       if(info.birth!==null&&info.admission!==null&&info.admission<info.birth){status.textContent="入院日期早於出生日期，請核對；目前不自動計算 DOL。";status.classList.add("warn");}
-      else if(info.calculated!==null&&S.dolAuto)status.textContent=`依出生與入院日期自動計算：DOL ${info.calculated}（實際經過 ${info.calculated-1} 天）。`;
+      else if(info.calculated!==null&&S.dolAuto)status.textContent=`依出生與入院日期自動計算：DOL ${info.calculated}（實際經過 ${info.calculated-1} 天；算至${raw("admissionDate")===localToday()?"今天 ":"入院日 "}${raw("admissionDate")}）。`;
       else if(info.calculated!==null&&info.conflict){status.textContent=`日期推算為 DOL ${info.calculated}，目前手動使用 DOL ${info.manual??"__"}。`;status.classList.add("warn");}
       else if(info.calculated!==null)status.textContent=`目前手動使用 DOL ${info.manual??"__"}；日期推算為 DOL ${info.calculated}。`;
       else status.textContent=`尚未填齊出生與入院日期；目前使用${S.dolAuto?"預設":"手動"} DOL ${info.manual??"__"}。`;}
@@ -2147,7 +2161,12 @@
   }
   function dolOnDate(date){const b=isoDay(raw("birthDate")),d=isoDay(date);return b!==null&&d!==null&&d>=b?Math.round((d-b)/86400000)+1:null;}
   const READMIT_PROBLEM_LABEL={jaundice:"jaundice","prolonged-jaundice":"persistent jaundice","poor-feeding":"poor feeding","weight-loss":"excessive weight loss or dehydration",fever:"fever","respiratory":"respiratory symptoms",apnea:"apnea or a cyanotic episode",gastrointestinal:"vomiting or abdominal symptoms","abnormal-screen":"an abnormal screening or laboratory result",care:"continued newborn care"};
+  const readmitDetails=()=>({
+    jaundice:S.readmitProblems.some(x=>x==="jaundice"||x==="prolonged-jaundice"),
+    general:S.readmitProblems.some(x=>["poor-feeding","weight-loss","fever","respiratory","apnea","gastrointestinal"].includes(x))
+  });
   function readmissionNarrative({diagnosis="",closeAdmission=true}={}){
+    const details=readmitDetails();
     const out=[],dischargeDate=raw("readmitDischargeDate"),dischargeDol=dolOnDate(dischargeDate),dischargeWeight=raw("readmitDischargeWeight"),priorCourse=raw("readmitPriorCourse");
     if(S.readmitPrior==="uneventful")out.push("The initial postnatal course was uneventful.");
     else if(S.readmitPrior==="treated"){
@@ -2161,25 +2180,30 @@
     const baseMap={"feeding well":"continued to feed well","active":"remained active","adequate urine output":"had adequate urine output"},base=S.readmitBaseline.map(x=>baseMap[x]).filter(Boolean);
     if(base.length)out.push(`After discharge, the infant ${joinAnd(base)}.`);
     if(raw("readmitHomeNote"))out.push(sentence(raw("readmitHomeNote")));
-    const probs=S.readmitProblems.map(x=>READMIT_PROBLEM_LABEL[x]).filter(Boolean),complaint=raw("readmitComplaint").replace(/[.。]+$/,"");
-    const onset=raw("readmitOnsetDOL"),jaundiceDol=raw("readmitJaundiceDOL");
-    if(jaundiceDol&&S.readmitProblems.some(x=>x==="jaundice"||x==="prolonged-jaundice"))out.push(`Jaundice was first noted on day of life ${jaundiceDol}.`);
+    const complaint=raw("readmitComplaint").replace(/[.。]+$/,"");
+    const onset=raw("readmitOnsetDOL"),jaundiceDol=details.jaundice?raw("readmitJaundiceDOL"):"";
+    const probs=S.readmitProblems.filter(x=>!jaundiceDol||!["jaundice","prolonged-jaundice"].includes(x)).map(x=>READMIT_PROBLEM_LABEL[x]).filter(Boolean);
+    if(jaundiceDol)out.push(`Jaundice was first noted on day of life ${jaundiceDol}.`);
     if(complaint)out.push(`The infant subsequently developed ${complaint}${onset?` on day of life ${onset}`:""}.`);
-    else if(probs.length&&!jaundiceDol)out.push(`The infant subsequently developed ${joinAnd(probs)}${onset?` on day of life ${onset}`:""}.`);
+    else if(probs.length)out.push(`The infant subsequently developed ${joinAnd(probs)}${onset?` on day of life ${onset}`:""}.`);
     if(raw("readmitCourse"))out.push(sentence(raw("readmitCourse")));
+    if(details.jaundice){
     const negatives=[];if(S.readmitJaundiceSigns.includes("no dark urine"))negatives.push("dark urine");if(S.readmitJaundiceSigns.includes("no pale stools"))negatives.push("pale stools");
     const positives=[];if(S.readmitJaundiceSigns.includes("dark urine"))positives.push("dark urine");if(S.readmitJaundiceSigns.includes("pale stools"))positives.push("pale stools");
     if(negatives.length===1)out.push(`No ${negatives[0]} was reported.`);else if(negatives.length===2)out.push(`Neither ${negatives[0]} nor ${negatives[1]} was reported.`);
     if(positives.length)out.push(`${joinAnd(positives).replace(/^./,c=>c.toUpperCase())} ${positives.length===1?"was":"were"} reported.`);
+    }
+    if(details.general){
     if(raw("readmitIntake"))out.push(sentence(`Oral intake ${raw("readmitIntake")}`));
     if(raw("readmitUrine"))out.push(sentence(`Urine output ${raw("readmitUrine")}`));
     if(raw("readmitActivity"))out.push(sentence(`Activity ${raw("readmitActivity")}`));
     if(raw("readmitSickContact"))out.push(sentence(`The sick-contact history was notable for ${raw("readmitSickContact")}`));
+    }
     if(S.readmitSource==="scheduled")out.push("The infant presented for a scheduled admission.");
     else {const source={clinic:"our outpatient clinic",emergency:"our emergency department"}[S.readmitSource];if(source)out.push(`The infant was brought to ${source} for evaluation.`);}
     const evalParts=[];if(raw("readmitCurrentWeight"))evalParts.push(`weight was ${raw("readmitCurrentWeight")} g`);if(raw("readmitSpO2"))evalParts.push(`SpO₂ was ${raw("readmitSpO2")}%`);
     if(evalParts.length)out.push(`At evaluation, ${joinAnd(evalParts)}.`);
-    const bili=[];if(raw("readmitTSB"))bili.push(`a total bilirubin level of ${raw("readmitTSB")} mg/dL`);if(raw("readmitDB"))bili.push(`a direct bilirubin level of ${raw("readmitDB")} mg/dL`);if(bili.length)out.push(`Serum testing showed ${joinAnd(bili)}.`);
+    if(details.jaundice){const bili=[];if(raw("readmitTSB"))bili.push(`a total bilirubin level of ${raw("readmitTSB")} mg/dL`);if(raw("readmitDB"))bili.push(`a direct bilirubin level of ${raw("readmitDB")} mg/dL`);if(bili.length)out.push(`Serum testing showed ${joinAnd(bili)}.`);}
     if(raw("readmitEvaluation"))out.push(sentence(raw("readmitEvaluation")));if(raw("readmitTreatment"))out.push(sentence(raw("readmitTreatment")));
     if(closeAdmission)out.push(`The infant was subsequently admitted to ${destPhrase()} for further evaluation and management${diagnosis?`, with a tentative diagnosis of ${diagnosis.replace(/[.。]+$/,"")}`:""}.`);
     const admStatus=raw("obAdmissionStatus").replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase()),admResp=closeAdmission&&S.resp?(S.resp==="room air"?"breathing room air":`receiving respiratory support with ${S.resp}`):"";
@@ -2434,7 +2458,7 @@
       case "prior":return j([segTxt("readmitPrior"),raw("readmitPriorUnit"),raw("readmitDischargeDate")&&`出院 ${raw("readmitDischargeDate")}`,raw("readmitDischargeWeight")&&`${raw("readmitDischargeWeight")} g`,segTxt("readmitFeeding"),raw("readmitPriorCourse")]);
       case "home":return j([mselTxt("readmitBaseline"),raw("readmitHomeNote")]);
       case "illness":return j([mselTxt("readmitProblems"),raw("readmitOnsetDOL")&&`DOL ${raw("readmitOnsetDOL")} 起`,raw("readmitComplaint"),raw("readmitCourse")]);
-      case "evaluation":return j([segTxt("readmitSource"),raw("readmitCurrentWeight")&&`${raw("readmitCurrentWeight")} g`,raw("readmitTSB")&&`TB ${raw("readmitTSB")}`,raw("readmitDB")&&`DB ${raw("readmitDB")}`,raw("readmitEvaluation"),raw("readmitTreatment")]);
+      case "evaluation":return j([segTxt("readmitSource"),raw("readmitCurrentWeight")&&`${raw("readmitCurrentWeight")} g`,readmitDetails().jaundice&&raw("readmitTSB")&&`TB ${raw("readmitTSB")}`,readmitDetails().jaundice&&raw("readmitDB")&&`DB ${raw("readmitDB")}`,raw("readmitEvaluation"),raw("readmitTreatment")]);
       case "adm":return j([S.resp,raw("obAdmissionStatus")]);
     }
     return "";
@@ -2502,7 +2526,7 @@
     if(stage)stage.textContent=`情境 ${story}・${active?.lab||"本次入院"}`;if(counter)counter.textContent=`第 ${idx+1}／${visible.length} 階段`;
     const prev=document.getElementById("journeyPrev"),next=document.getElementById("journeyNext");if(prev)prev.disabled=idx<=0;if(next){next.disabled=idx>=visible.length-1;next.textContent=idx>=visible.length-1?"已到最後階段":"完成並到下一階段 →";}
     // E 的條件欄位只由問題選擇控制；隱藏值保留草稿，但敘述只讀目前已選問題。
-    const jaundice=S.readmitProblems.some(x=>x==="jaundice"||x==="prolonged-jaundice"),general=S.readmitProblems.some(x=>["poor-feeding","weight-loss","fever","respiratory","apnea","gastrointestinal"].includes(x));
+    const {jaundice,general}=readmitDetails();
     const j=document.getElementById("readmitJaundice"),g=document.getElementById("readmitGeneral"),bili=document.getElementById("readmitBiliWrap"),prior=document.getElementById("readmitPriorDetail");
     if(j)j.hidden=!jaundice;if(bili)bili.hidden=!jaundice;if(g)g.hidden=!general;if(prior)prior.hidden=S.readmitPrior!=="treated";
   }
@@ -3934,7 +3958,7 @@ ${opLine}`);
     const c=document.querySelector(`[data-hcc="${k}"]`); if(c)c.hidden=!on;
     const r=seg.closest("[data-hcrow]"); if(r)r.classList.toggle("on",on);});
   syncDates("resp"); syncDates("line");
-  {const d=new Date(),p=n=>String(n).padStart(2,"0"),ad=document.getElementById("admissionDate");if(ad&&!ad.value)ad.value=`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;}
+  {const ad=document.getElementById("admissionDate");if(ad&&!ad.value)ad.value=localToday();}
 
   const noteEl=document.getElementById("note");
   const previewDock=document.querySelector(".dock"), previewBody=document.getElementById("previewBody");

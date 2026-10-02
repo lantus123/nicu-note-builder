@@ -91,12 +91,12 @@ Story E 仍會引用第 1–4 區既有的產前、分娩、Apgar、出生觀察
 
 | 欄位／狀態 | 寫入位置 | 單一資料來源與核對規則 |
 | --- | --- | --- |
-| `admissionDate`、`birthDate`、`S.dol` | Admission 開頭、Acceptance DOL／PMA | 兩日期都有時以日曆日差加 1 自動計算，故出生當天＝DOL 1；PMA 增加 `DOL - 1` 天。手動 DOL 與日期不一致時提示，可一鍵回到自動值。 |
+| `admissionDate`、`birthDate`、`S.dol` | Admission 開頭、Acceptance DOL／PMA | 「自動計算」預設啟用且始終可選，入院日預設今天，只填出生日期即以日曆日差加 1 計算，故出生當天＝DOL 1；PMA 增加 `DOL - 1` 天。回補病歷依實際入院日計算，「今天入院」會設回今天並恢復自動；手動 DOL 與日期不一致時提示。 |
 | `S.readmitPrior`、`readmitPriorUnit`、`readmitPriorCourse` | 先前出生住院／照護經過 | 只描述實際經過；不從本次主訴反推前次治療。 |
 | `readmitDischargeDate`、`readmitDischargeWeight` | 前次出院句 | 出院日在出生前或本次入院後時提示核對；體重只表示前次出院，不當成本次體重。 |
 | `S.readmitFeeding`、`S.readmitBaseline`、`readmitHomeNote` | 返家後基準狀態 | 用來交代發病前餵食與已知基準；不重複本次病程。 |
 | `S.readmitProblems`、`readmitOnsetDOL`、`readmitComplaint`、`readmitCourse` | 本次症狀與病程 | 問題類型控制黃疸或一般症狀細節的顯示；症狀開始日齡晚於入院日齡時提示核對。 |
-| `readmitJaundiceDOL`、`S.readmitJaundiceSigns` | 黃疸細節 | 深色尿／淡色便的肯定與否定各自互斥；只寫明確選取的觀察。 |
+| `readmitJaundiceDOL`、`S.readmitJaundiceSigns` | 黃疸細節 | 深色尿／淡色便的肯定與否定各自互斥；只在黃疸問題啟用時寫明確選取的觀察。取消黃疸保留草稿但不輸出；黃疸日齡不會抑制並存的呼吸等其他問題。 |
 | `readmitIntake`、`readmitUrine`、`readmitActivity`、`readmitSickContact` | 一般病程細節 | 只在相關問題被選取時顯示；空白不補成正常。 |
 | `S.readmitSource`、`readmitSpO2`、`readmitTSB`、`readmitDB`、`readmitEvaluation`、`readmitTreatment` | 門診／急診／預約評估 | 黃疸檢驗只在黃疸問題啟用時採用；隱藏草稿不進病歷。 |
 | `readmitCurrentWeight` | Admission 就醫評估、Acceptance 體重 | **本次體重只輸入一次**。Story E 的 Acceptance 體重欄改成唯讀引用，不再提供第二個可矛盾的輸入。 |
