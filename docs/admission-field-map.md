@@ -20,6 +20,14 @@ initializeAdmissionWorkflow 只搬動既有 DOM 控制項，保留 ID；各事�
 
 workflowNav 合併章節與子階段，手機只固定分頁列與這條導覽。選單支援章節／子階段直達，前後鈕依實際路徑銜接出生、病程與核對。workflowViews／journeyViews 僅存本次頁面的焦點及相對位置，ResizeObserver 量測實際導覽高度避免定位遮擋。填寫中可複製草稿，不因空白欄位鎖住；核對階段才強調複製病歷。
 
+## 可見正常預選與明確確認
+
+PRENATAL_NORMAL 定義八項母體／妊娠病史的「無」、ancReg「規則」及 us「正常」。S.prenatalPending 只管理 UI 預選；真正供 Admission／Acceptance／NI plan 使用的 S.r、S.ancReg、S.us 在確認前維持未記錄，不靠輸出時隱藏已誤存的正常值。
+
+每項所有選項均保留並可點選，預選用勾號、虛線與待核對文字表示。單項點選明確記錄該項；confirmPrenatalDefaults 只提交仍待核對且未被修改的預設，不覆蓋異常、不詳、未記錄。底部與固定導覽的「已核對，下一段」是明確提交動作；章節選單、略過、返回與切分頁僅導覽，不提交。尚未確認的預設只在核對提示列出，不進入病歷。
+
+選擇未產檢會取消尚未確認的超音波正常預選；已有明確超音波結果仍保留。一般產前超音波的正常／異常結果不再推定 level II 已施作。羊穿、NIPT、篩檢、家族史與用藥均不在正常預選內。篩檢批次快捷只補未填的四個核心項目，不能覆蓋既有結果；更正需直接選該項。
+
 ## 共用資料與出生史
 
 | 輸入／狀態 | 輸出或用途 | 邊界 |
@@ -30,7 +38,7 @@ workflowNav 合併章節與子階段，手機只固定分頁列與這條導覽�
 | birthHosp／obFacility、obTransferFrom | 出生地／外院轉出來源 | 外院路徑出生院所移到出生區。E 留白不推定出生於本院。母親入院句不推定在本院待產。 |
 | gender、gaW/D、bw、growth | 開頭、體重分級、背景診斷、Acceptance | 出生體重不當成本次 E 評估體重；既有成長計算規則不改。 |
 | gravida、para、abortion、matAge、ap1/5/10 | 母親背景與 Apgar | 共用一次，不在出生處置或 E 重新輸入。 |
-| 母親風險、家族史、amnio、nipt | 明確陽性／陰性／不詳敘述 | 未填不寫陰性。批次「確認無」保留已有陽性。羊穿已有結果時不額外強調 NIPT 未做。 |
+| 母親風險、家族史、amnio、nipt | 明確陽性／陰性／不詳敘述 | 正常預選未核對前不寫陰性；批次確認保留異常、不詳與手動清空。家族史與羊穿／NIPT 不設正常預選。羊穿已有結果時不額外強調 NIPT 未做。 |
 | habitStatus、smoking/alcohol/drug | 已確認的陽性與陰性習慣史 | 未確認不寫 denied；不詳只涵蓋尚未勾陽性的項目。 |
 | birthBreathing/Tone/HR、birthInitialNote | 出生初始觀察 | 不由 Apgar 推定其他生命徵象。 |
 | birthResusStatus、birthEvents | 實際出生處置及重新評估 | 未記錄、確認無、實際施作分開；處置與重新評估可分別記錄。 |
@@ -87,6 +95,7 @@ screen_onset、care_onset 是草稿結構的非臨床佔位，保持隱藏且不
 
 ## 驗收與界限
 
+- tests/prose/prenatal-defaults.js：預選顯示與事實分離、單項／整段確認、略過與章節跳轉、已填資料保護、無產檢與超音波邊界、篩檢保護與病史跨路徑共享。Chrome 試填另驗證桌面及 320／390 px 的全部選項可見、原地展開、Enter 確認、略過與選取樣式，並留存合成資料截圖。
 - tests/prose/destination.js：住院去處白名單、E 的 NICU 限制、BR 歷史與本次收治區分、切換路徑草稿、舊值防護及 PICU／未選去處的 plan 邊界。實際 Chrome 試填另驗證 320 px 的去處選項、提示、跨分頁病歷與切回草稿。
 - tests/prose/workflow.js：順向排列、唯一 ID、DOL 邊界、各模組輸出、混合症狀、陰性／未知、草稿隔離、支持／體重時點、E 既往急救隔離。
 - 既有 prose／timeline／downstream／plan／pedigree／navigation／clipboard 等測試繼續執行；變更輸出快照須逐項核對，不能只更新快照掩蓋錯誤。

@@ -183,6 +183,14 @@
   .risk-name{font-size:14.5px;font-weight:620}
   .risk-name small{display:block;font-size:12px;font-weight:500;color:var(--ink-3);margin-top:2px}
   .yn{display:flex;gap:5px;flex:0 0 auto;max-width:100%;flex-wrap:wrap}
+  .prenatal-status{display:inline-block;font-size:11px;font-weight:500;line-height:1.6;color:var(--ink-2);margin:5px 0 0;padding:2px 7px;border:1px solid var(--line);border-radius:6px}
+  .prenatal-status[data-pending="true"]{border-style:dashed;color:var(--accent-ink);background:var(--accent-soft)}
+  [data-default-state="pending"] button[aria-pressed="true"]{border-style:dashed}
+  .prenatal-default-info{padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);font-size:13px;line-height:1.7;margin:0 0 18px}
+  .prenatal-default-info p{margin:0 0 6px}
+  .prenatal-default-info p:last-child{margin:0}
+  #prenatalDefaultStatus{font-weight:650}
+  #prenatalSkip{font-size:12px}
   .yn button{min-height:44px;min-width:48px;padding:0 12px;border:1px solid var(--line);background:var(--surface);
     color:var(--ink-2);border-radius:9px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
   .yn button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
@@ -642,10 +650,10 @@
       <input type="date" class="tin" id="edc"></div>
     <div class="field"><span class="lab">產檢地點 <span class="q">（非 MMH 標 OBGYN clinic）</span></span>
       <input class="tin" list="hospList" id="ancPlace" autocomplete="off" placeholder="（未填）"></div>
-    <div class="field"><span class="lab">產檢規律性 <span class="q">（未提及則不寫這句）</span></span>
-      <div class="seg" data-seg="ancReg"><button data-v="na">未提及</button><button data-v="regular">規則</button><button data-v="irregular">不規則</button><button data-v="none">未產檢</button></div></div>
+    <div class="field"><span class="lab">產檢規律性</span>
+      <div class="seg" data-seg="ancReg"><button data-v="regular">規則</button><button data-v="irregular">不規則</button><button data-v="none">未產檢</button><button data-v="unknown">不詳</button><button data-v="na">未記錄</button></div></div>
     <div class="field"><span class="lab">產前超音波</span>
-      <div class="seg" data-seg="us"><button data-v="na">未提及</button><button data-v="normal">正常</button><button data-v="abnormal">異常</button></div>
+      <div class="seg" data-seg="us"><button data-v="normal">正常</button><button data-v="abnormal">異常</button><button data-v="unknown">不詳</button><button data-v="na">未記錄</button></div>
       <input class="tin" id="usFindings" placeholder="異常所見…" hidden style="margin-top:7px"></div>
     <div class="field"><span class="lab">羊膜穿刺 aCGH</span>
       <div class="seg" data-seg="amnio"><button data-v="none">未做</button><button data-v="normal">正常</button><button data-v="abnormal">異常</button></div>
@@ -680,7 +688,8 @@
   <section class="card collap">
     <h2 class="sec-h"><span class="n">3</span>產前篩檢 <span class="csum" data-csum="scr"></span><span class="chev">▾</span></h2>
       <div class="field" style="margin-bottom:4px"><span class="lab">整批設定 <span class="q">（無產檢／急診才驗時省點擊）</span></span>
-        <div class="seg" data-scrall="1"><button data-v="neg">全部陰性</button><button data-v="pend">全部待報</button><button data-v="nd">全部未驗</button></div></div>
+        <div class="seg" data-scrall="1"><button data-v="neg">未填項皆陰性（已核對）</button><button data-v="pend">未填項皆待報</button><button data-v="nd">未填項皆未驗</button></div>
+        <p class="man-h">只填尚未記錄的 HBsAg／梅毒／HIV／GBS；保留已選結果，更正請直接改該項。Rubella、HBeAg 另依實際結果填寫。</p></div>
     <div id="screen"></div>
   </section>
 
@@ -1651,11 +1660,13 @@
                 ["syphilis","Syphilis (VDRL)","syphilis"],
                 ["rubella","Rubella IgG","rubella IgG"],["hiv","HIV","HIV infection"],
                 ["gbs","GBS","group B streptococcus (GBS)"]];
+  // 只在 UI 預選；未經明確確認，S 中的臨床值仍是未記錄。檢驗、用藥與家族史不在預設範圍。
+  const PRENATAL_NORMAL={...Object.fromEntries(RISKS.filter(r=>r.k!=="steroid").map(r=>[r.k,r.type==="choice3"?"neg":"no"])),ancReg:"regular",us:"normal"};
   // planOn[k]: undefined=依規則自動, true/false=醫師手動覆寫
   const S={gender:"",dest:"",destNotice:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,r:{},   // 住院去處 NBC/NICU/PICU；E 僅 NBC/PICU，不預設。BR 是健康新生兒照護。性別/生產方式亦不預設。
            scr:{hbsag:"na",hbeag:"na",syphilis:"na",rubella:"neg",hiv:"na",gbs:"na"},   // 核心四項+HBeAg 預設未表態(neg 預設=把沒填寫成事實);rubella 的 neg 本義即未提及
            resus:"none",resp:"",acceptanceResp:"",acceptanceWeightMode:"admission",surfactant:false,birthEvents:[],courseEvents:[],nextEventId:1,
-           routeDrafts:{},continuitySignatures:{},lastRemoved:null,birthNegConfirmed:false,
+           routeDrafts:{},continuitySignatures:{},lastRemoved:null,birthNegConfirmed:false,prenatalPending:Object.fromEntries(Object.keys(PRENATAL_NORMAL).map(k=>[k,true])),
            amnio:"na",nipt:"na",mgso4:"none",toco:"none",iap:"none",us:"na",ancReg:"na",
            fd:false,doic:false,msaf:false,msafGrade:"",
            // pathway 不預設：預選「直接入院」＝零點擊就斷言路徑（2026-09-19 住院醫師混亂盤點）
@@ -1877,8 +1888,8 @@
       b.setAttribute("aria-pressed",S.proc[k]?"true":"false"); render(); return;}
     const po=b.closest("[data-po]"); if(po){const k=po.dataset.po; S.procOpt[k]=b.dataset.v;
       po.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===b.dataset.v?"true":"false")); render(); return;}
-    const sa=b.closest("[data-scrall]"); if(sa){const v=b.dataset.v;   // 整批設定,不動 HBeAg(只在 HBsAg+ 顯示)
-      SCREEN.forEach(([k])=>{if(k==="hbeag"||k==="rubella")return; selectScreen(k,v);});   // HBeAg 條件顯示、Rubella 語意不同,批次不動
+    const sa=b.closest("[data-scrall]"); if(sa){const v=b.dataset.v;
+      SCREEN.forEach(([k])=>{if(k==="hbeag"||k==="rubella"||S.scr[k]!=="na")return; selectScreen(k,v);});   // 批次只補未填，不能洗掉陽性／待報／未驗；Rubella 與 HBeAg 另填。
       render(); return;}
     const po2=b.closest("[data-planon]"); if(po2){const k=b.dataset.v;
       S.planOn[k]=b.getAttribute("aria-pressed")!=="true";   // 以目前生效值為準翻轉，翻轉後即成手動
@@ -1965,6 +1976,7 @@
   const SEG_CLEARABLE=new Set(["gender","delivery","dest","pathway","obRespType","obO2Dev","obM1Type","obM1Dev","resp","acceptanceResp","readmitPrior","readmitFeeding","readmitSource"]);
   function segPick(seg,b,key,cb){
     if(b.disabled||key==="dest"&&!allowedDestinations().includes(b.dataset.v))return;
+    if(Object.hasOwn(PRENATAL_NORMAL,key))S.prenatalPending[key]=false;
     if(key==="dest")S.destNotice="";
     if(key&&SEG_CLEARABLE.has(key)&&b.getAttribute("aria-pressed")==="true"){
       if(key==="pathway")switchPathway("");
@@ -1975,6 +1987,7 @@
     if(key==="pathway")switchPathway(b.dataset.v);
     seg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));
     b.setAttribute("aria-pressed","true"); if(key)S[key]=b.dataset.v;
+    if(key==="ancReg"&&S.ancReg==="none"&&S.prenatalPending.us&&S.us==="na")S.prenatalPending.us=false;   // 未產檢時，不用正常預設推定做過超音波。
     if(key==="dol")S.dolAuto=false;   // 日期自動值可手動覆寫；按「改回依日期自動計算」才恢復
     if(key==="growth")S.growthAuto=false;   // 手動改 → 關自動（顯示「↻回自動」）
     if(key==="planAbx")S.planAbxAuto=false;  // 手動選抗生素 → 關自動
@@ -1982,6 +1995,7 @@
   }
   function r3pick(r3,b){
     const k=r3.dataset.r3; r3.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));
+    S.prenatalPending[k]=false;
     b.setAttribute("aria-pressed","true"); S.r[k].on=!["neg","na","unknown"].includes(b.dataset.v); S.r[k].val=b.dataset.v; S.r[k].reviewed=!["na","unknown"].includes(b.dataset.v);S.r[k].status=b.dataset.v;
     const item=r3.closest(".risk-item"); item.classList.toggle("active",S.r[k].on);
     const def=RISKS.find(r=>r.k===k), child=item.querySelector(".child");
@@ -1990,6 +2004,7 @@
   }
   function rynPick(ryn,b){
     const k=ryn.dataset.ryn, yes=b.dataset.v==="yes";
+    S.prenatalPending[k]=false;
     ryn.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));
     b.setAttribute("aria-pressed","true"); S.r[k].on=yes; S.r[k].reviewed=!["na","unknown"].includes(b.dataset.v);S.r[k].status=b.dataset.v;
     const item=ryn.closest(".risk-item"); item.classList.toggle("active",yes);
@@ -2003,6 +2018,37 @@
     else{re.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));
       b.setAttribute("aria-pressed","true"); S.r[k].extra=[v];}
     render();
+  }
+
+  function pendingPrenatalDefaults(){
+    return Object.keys(PRENATAL_NORMAL).filter(k=>S.prenatalPending[k]&&(S.r[k]
+      ?!S.r[k].on&&!S.r[k].reviewed&&[undefined,"na"].includes(S.r[k].status)
+      :S[k]==="na"));
+  }
+  function confirmPrenatalDefaults(){
+    for(const k of pendingPrenatalDefaults()){
+      if(S.r[k]){S.r[k].on=false;S.r[k].reviewed=true;S.r[k].status=PRENATAL_NORMAL[k];if(k==="pre")S.r[k].val="neg";}
+      else S[k]=PRENATAL_NORMAL[k];
+      S.prenatalPending[k]=false;
+    }
+  }
+  function renderPrenatalDefaults(){
+    const pending=pendingPrenatalDefaults();
+    for(const k of Object.keys(PRENATAL_NORMAL)){
+      const control=document.querySelector(`[data-ryn="${k}"],[data-r3="${k}"],[data-seg="${k}"]`),badge=document.getElementById(`prenatalStatus-${k}`);
+      if(!control||!badge)continue;
+      const draft=pending.includes(k),actual=S.r[k]?S.r[k].status||"na":S[k],value=draft?PRENATAL_NORMAL[k]:actual;
+      control.dataset.defaultState=draft?"pending":"recorded";
+      control.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===value)));
+      const label=control.querySelector('[aria-pressed="true"]')?.textContent||"未記錄";
+      badge.dataset.pending=String(draft);badge.textContent=draft?"預設，待核對（未寫入）":value==="na"?"未記錄，不套用預設":`已選：${label}`;
+    }
+    const status=document.getElementById('prenatalDefaultStatus');
+    if(status)status.textContent=pending.length?`${pending.length} 項正常預設待核對，目前尚未寫入病歷。`:'本段沒有待核對的正常預設；已選異常、不詳與未記錄均保留。';
+    const next=document.getElementById('confirmPrenatalNext'),skip=document.getElementById('prenatalSkip');
+    if(next)next.textContent=pending.length?'已核對正常預設，下一段 →':'下一段：出生資料 →';
+    if(skip)skip.hidden=!pending.length;
+    const noCare=document.getElementById('prenatalNoCareNotice');if(noCare)noCare.hidden=S.ancReg!=="none";
   }
 
   // ── 組裝器（核心：任何組合都接得起來；措辭對齊 index.html 既有聲音）──
@@ -2651,12 +2697,14 @@
     if(di.birth!==null&&di.admission!==null&&di.admission<di.birth)contextIssues.push('入院日期早於出生日期，請核對。');
     const basicMissing=[!S.pathway&&'入院路徑',!admissionDestination()&&'收治單位',!raw('birthDate')&&'出生日期',!raw('gaW')&&'GA',!raw('bw')&&'出生體重',!S.gender&&'性別',!S.delivery&&'生產方式',S.pathway==='readmit'&&!S.readmitSource&&'入院來源',S.pathway==='readmit'&&!S.readmitProblems.length&&!raw('readmitComplaint')&&'主要問題'].filter(Boolean);
     const numericIssues=[...document.querySelectorAll('#admSections input[type="number"]')].filter(el=>el.value&&!el.closest('[hidden]')&&!el.validity.valid).map(el=>`${document.querySelector(`label[for="${el.id}"]`)?.textContent||el.getAttribute('aria-label')||el.id}：數值或單位範圍需核對。`);
-    const all=[...new Set([...birth,...path,...contextIssues,...numericIssues,...(S.destNotice?[S.destNotice]:[])])];
+    const prenatalPending=pendingPrenatalDefaults(),prenatalWarning=prenatalPending.length?`母親病史與產檢有 ${prenatalPending.length} 項正常預設尚未核對，這些預設未寫入病歷。`:"";
+    if(prenatalWarning)pending.push(prenatalWarning);
+    const all=[...new Set([...birth,...path,...contextIssues,...numericIssues,...(S.destNotice?[S.destNotice]:[]),...(prenatalWarning?[prenatalWarning]:[])])];
     const contextReview=document.getElementById('contextReview');if(contextReview)contextReview.textContent=contextIssues.join('\n');
     document.querySelectorAll('.readmit-local-review').forEach(el=>el.textContent=[...path.filter(item=>!item.startsWith('先前進食描述與每餐奶量')),...numericIssues].join('\n'));
     const conflicts=all.filter(item=>!pending.includes(item)),uniquePending=[...new Set(pending)];
     const optional=[!raw('birthTime')&&'出生時間',!raw('gravida')&&'母親 G',!raw('para')&&'母親 P',!raw('matAge')&&'母親年齡',(!raw('ap1')||!raw('ap5'))&&'1／5 分鐘 Apgar',!raw('birthBreathing')&&'出生呼吸觀察',!raw('birthResusStatus')&&'出生急救紀錄',!S.resp&&'入院時呼吸支持'].filter(Boolean);
-    const unreviewed=RISKS.filter(r=>r.k!=='steroid'&&!S.r[r.k].reviewed&&!S.r[r.k].on&&S.r[r.k].status!=='unknown').length;
+    const unreviewed=RISKS.filter(r=>r.k!=='steroid'&&!S.r[r.k].reviewed&&!S.r[r.k].on&&S.r[r.k].status!=='unknown'&&!prenatalPending.includes(r.k)).length;
     if(unreviewed)optional.push(`母親病史：${unreviewed} 項未記錄`);
     const screens=['hbsag','syphilis','hiv','gbs'].filter(k=>S.scr[k]==='na');if(screens.length)optional.push(`產前篩檢：${screens.length} 項未記錄`);
     if(S.pathway==='readmit'){
@@ -2761,6 +2809,7 @@
   }
   function moveWorkflow(delta){
     if(workflowActive==='pathwayCard'&&S.pathway){moveJourney(delta);return;}
+    if(delta>0&&workflowActive==='prenatalCard'){confirmPrenatalDefaults();render();}
     const index=workflowStages.findIndex(s=>s[0].id===workflowActive),next=workflowStages[index+delta];
     if(next)navigateWorkflow(next[0].id);
   }
@@ -2778,8 +2827,9 @@
     const back=document.getElementById('flowBack'),next=document.getElementById('flowNext');back.disabled=index===0;
     back.setAttribute('aria-label',inJourney&&step>0?`上一段：${stops[step-1].lab}`:`上一段：${workflowStages[index-1]?.[1]||'已到開頭'}`);
     const review=index===workflowStages.length-1;
-    next.hidden=review;next.textContent=inJourney&&step===stops.length-1?'前往核對 →':'下一段 →';
-    next.setAttribute('aria-label',inJourney&&step<stops.length-1?`下一段：${stops[step+1].lab}`:`下一段：${workflowStages[index+1]?.[1]||'核對'}`);
+    const prenatalConfirmation=workflowActive==='prenatalCard'&&pendingPrenatalDefaults().length>0;
+    next.hidden=review;next.textContent=prenatalConfirmation?'已核對，下一段 →':inJourney&&step===stops.length-1?'前往核對 →':'下一段 →';
+    next.setAttribute('aria-label',prenatalConfirmation?'已核對畫面中的母親病史與產檢正常預設，下一段：出生資料':inJourney&&step<stops.length-1?`下一段：${stops[step+1].lab}`:`下一段：${workflowStages[index+1]?.[1]||'核對'}`);
     nav.querySelectorAll('[data-flow-target]').forEach(b=>b.setAttribute('aria-current',b.dataset.flowTarget===workflowActive?'step':'false'));
     const sub=document.getElementById('flowSubsteps'),markup=stops.map((st,i)=>`<button type="button" data-flow-stop="${st.id}" aria-current="${inJourney&&st.id===S.journeyStep?'step':'false'}">${i+1}/${stops.length} ${st.lab}</button>`).join('');
     if(sub.innerHTML!==markup)sub.innerHTML=markup;
@@ -2865,6 +2915,7 @@
 
   function render(){
     renderDestination();
+    renderPrenatalDefaults();
     syncDolUI();
     renderAdmissionWorkflow();
     // 入院時呼吸支持有兩組按鈕（Admission 最後一站＋Acceptance A 區）共用 S.resp；
@@ -3212,12 +3263,13 @@
     const anc=inV("ancPlace"), isMMH=HOME_CAMPUSES.some(c=>c.value===anc);
     const usFind=clause("usFindings");
     // 產檢規律性與超音波各自可「未提及」；能合則合成一句，皆未提及則整句不出
-    const ancPart = S.ancReg==="na" ? (anc?`Prenatal care was documented at ${sl(anc+(isMMH?"":" OBGYN clinic"))}`:"")
+    const ancPart = S.ancReg==="unknown" ? `The frequency of prenatal care${anc?` at ${sl(anc+(isMMH?"":" OBGYN clinic"))}`:""} was unavailable`
+      : S.ancReg==="na" ? (anc?`Prenatal care was documented at ${sl(anc+(isMMH?"":" OBGYN clinic"))}`:"")
       : S.ancReg==="none"
         ? `During pregnancy, she had ${sl("not received prenatal care",true)}`
         : `During pregnancy, she received ${sl(S.ancReg==="irregular"?"irregular":"regular", S.ancReg==="irregular")} prenatal care at ${anc?sl(anc+(isMMH?"":" OBGYN clinic")):ph("____")}`;
     const usTxt = S.us==="abnormal" ? (usFind?`showed ${sl(usFind,true)}`:`showed ${sl("abnormal findings",true)}`) : `showed ${sl("normal findings")}`;
-    const usPart = S.us==="na" ? "" : `prenatal ultrasound and level II ultrasound ${usTxt}`;
+    const usPart = S.us==="na" ? "" : S.us==="unknown" ? "prenatal ultrasound findings were unavailable" : `prenatal ultrasound ${usTxt}`;   // 一般超音波結果不證明做過 level II。
     if(ancPart&&usPart)P1.push(`${ancPart}, and ${usPart}.`);
     else if(ancPart)P1.push(`${ancPart}.`);
     else if(usPart)P1.push(`${usPart.charAt(0).toUpperCase()+usPart.slice(1)}.`);
@@ -4521,12 +4573,27 @@ ${opLine}`);
     accSeg.insertAdjacentHTML('beforebegin','<p class="inherited-summary" id="admissionRespSummary"></p><button type="button" id="useAdmissionResp">已確認接手時與入院時相同</button>');
     byId('accWeightField').insertAdjacentHTML('beforebegin','<div id="acceptanceWeightModeWrap" hidden><span class="lab">接手時體重來源</span><div class="seg" data-seg="acceptanceWeightMode"><button data-v="admission">沿用入院評估（未重測）</button><button data-v="measured">有重新測量</button></div></div>');
     byId('accWeightFromAdmission').querySelector('.lab').textContent='入院評估體重（唯讀引用；不當成重新測量）';
-    // 不把「未填」當作未做／陰性。全部確認無的捷徑只作用於未勾陽性的項目。
+    // 不把「未填」當作未做／陰性。正常預選與實際值分離，保留各項按鈕和原處展開細節。
     for(const key of ["amnio","nipt"]){const seg=document.querySelector(`[data-seg="${key}"]`);seg.insertAdjacentHTML('afterbegin','<button data-v="na">未填</button><button data-v="unknown">不詳</button>');seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v==='na')));}
     for(const par of document.querySelectorAll('[data-par]')){par.insertAdjacentHTML('afterbegin','<button data-v="na">未填</button><button data-v="unknown">不詳</button>');par.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v==='na')));}
     const thy=document.querySelector('[data-seg="thyType"]');thy.insertAdjacentHTML('afterbegin','<button data-v="">類型未記錄</button>');thy.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v==='')));
-    document.querySelectorAll('[data-ryn],[data-r3]').forEach(seg=>{seg.querySelector('[data-v="na"]').insertAdjacentHTML('afterend','<button data-v="unknown">不詳</button>');seg.querySelector('[data-v="na"]').textContent='未填';seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v==='na')));const key=seg.dataset.ryn||seg.dataset.r3;S.r[key].reviewed=false;S.r[key].status='na';if(seg.dataset.r3)S.r[key].val='na';});
-    byId("risks").insertAdjacentHTML('beforebegin','<div class="seg"><button type="button" id="confirmMaternalNegatives">已確認未勾陽性的母親病史均無</button></div>');
+    document.querySelectorAll('[data-ryn],[data-r3]').forEach(seg=>{
+      seg.querySelector('[data-v="na"]').insertAdjacentHTML('afterend','<button data-v="unknown">不詳</button>');seg.querySelector('[data-v="na"]').textContent='未記錄';
+      const key=seg.dataset.ryn||seg.dataset.r3;
+      const no=seg.querySelector('[data-v="no"]');if(no)no.textContent='無';const yes=seg.querySelector('[data-v="yes"]');if(yes)yes.textContent='有';
+      const order=seg.dataset.r3?['neg','highrisk','confirmed','unknown','na']:['no','yes','unknown','na'];
+      order.forEach(value=>seg.appendChild(seg.querySelector(`[data-v="${value}"]`)));
+      seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v==='na')));
+      S.r[key].reviewed=false;S.r[key].status='na';if(seg.dataset.r3)S.r[key].val='na';
+    });
+    maternal.querySelector('.sec-h').insertAdjacentHTML('afterend','<div class="prenatal-default-info"><p id="prenatalDefaultStatus" role="status"></p><p>勾號表示目前選項；虛線與「預設，待核對」表示還未寫入病歷。只需修改例外，異常細節在原處展開。</p><p>核對後按「已核對正常預設，下一段」。篩檢、羊穿／NIPT、家族史與用藥不在正常預設範圍。</p></div>');
+    for(const key of Object.keys(PRENATAL_NORMAL)){
+      const control=document.querySelector(`[data-ryn="${key}"],[data-r3="${key}"],[data-seg="${key}"]`),label=control.closest('.risk-item')?.querySelector('.risk-name')||control.closest('.field').querySelector('.lab');
+      label.id=`prenatalLabel-${key}`;control.setAttribute('role','group');control.setAttribute('aria-labelledby',label.id);control.setAttribute('aria-describedby',`prenatalStatus-${key}`);
+      const badge=document.createElement('span');badge.id=`prenatalStatus-${key}`;badge.className='prenatal-status';
+      if(control.closest('.risk-item'))label.appendChild(badge);else control.before(badge);
+    }
+    document.querySelector('[data-seg="us"]').closest('.field').insertAdjacentHTML('beforeend','<p class="man-h" id="prenatalNoCareNotice" hidden>已選未產檢，不會預選超音波正常；如有實際超音波報告，可另行選擇結果。</p>');
     document.querySelector('[data-habit="drug"]').parentElement.insertAdjacentHTML('afterend','<label class="lab" for="habitStatus">未勾選的母親習慣</label><select class="tin" id="habitStatus"><option value="">尚未確認</option><option value="negative">已確認皆無</option><option value="unknown">不詳</option></select>');
     review.querySelector('.sec-h').insertAdjacentHTML('afterend','<div class="workflow-review" id="workflowReview"><p id="reviewSummary" role="status"></p><section class="review-group" id="reviewMissing"><h3>關鍵資料未填</h3><ul id="reviewMissingList"></ul><div id="reviewPending" hidden><p>已帶入／已記錄，但仍待確認：</p><ul id="reviewPendingList"></ul></div></section><section class="review-group" id="reviewConflicts"><h3>前後不一致／格式需核對</h3><ul id="reviewConflictList"></ul></section><details class="review-group" id="reviewOptional"><summary id="reviewOptionalSummary">其他選填未記錄</summary><p class="review-help">僅供通讀時參考，不要求全部補齊；未填不代表正常、陰性或未做。以下為重點選填項目，不是所有空白欄位。</p><ul id="reviewOptionalList"></ul></details></div>');
     const nav=document.createElement('nav');nav.id='workflowNav';nav.className='flow-nav';nav.setAttribute('aria-label','目前位置與下一段');
@@ -4536,6 +4603,8 @@ ${opLine}`);
       const host=i===1?medication:stages[i][0];
       host.insertAdjacentHTML('beforeend',`<div class="stage-actions"${host===pathway?' id="pathwayFallbackActions"':''}>${i>0?`<button type="button" class="secondary" data-flow-target="${stages[i-1][0].id}">← 上一段</button>`:''}${i<stages.length-1?`<button type="button" class="primary" data-flow-target="${stages[i+1][0].id}">下一段：${stages[i+1][1]} →</button>`:''}</div>`);
     }
+    const prenatalNext=medication.querySelector('.stage-actions .primary');prenatalNext.id='confirmPrenatalNext';prenatalNext.dataset.confirmPrenatal='true';
+    prenatalNext.before(Object.assign(document.createElement('button'),{id:'prenatalSkip',type:'button',className:'secondary',textContent:'略過待核對，下一段'}));byId('prenatalSkip').dataset.flowTarget='birthHistoryCard';
     const measureNavigation=()=>{
       const tabHeight=document.querySelector('.tabs').getBoundingClientRect().height,navHeight=nav.getBoundingClientRect().height;
       if(tabHeight&&navHeight){document.documentElement.style.setProperty('--flow-top',`${tabHeight+14}px`);document.documentElement.style.setProperty('--workflow-offset',`${tabHeight+navHeight+24}px`);}
@@ -4549,9 +4618,9 @@ ${opLine}`);
     byId('restorePreviousIntake').addEventListener('click',()=>{if(!raw('readmitIntake')){byId('readmitIntake').value=clearedReadmitIntake;clearedReadmitIntake='';render();byId('readmitIntake').focus({preventScroll:true});}});
     byId("entryDirect").addEventListener('click',()=>{switchPathway('direct');setTog('pwStandby',false);setTog('pwConsult',false);render();});
     byId("clearBirthTeam").addEventListener('click',()=>{setTog('pwStandby',false);setTog('pwConsult',false);render();});
-    byId("confirmMaternalNegatives").addEventListener('click',()=>{RISKS.forEach(r=>{if(S.r[r.k].on||r.k==='steroid')return;S.r[r.k].reviewed=true;S.r[r.k].status='no';if(r.type==='choice3')S.r[r.k].val='neg';document.querySelectorAll(`[data-ryn="${r.k}"] button,[data-r3="${r.k}"] button`).forEach(b=>b.setAttribute('aria-pressed',String(['no','neg'].includes(b.dataset.v))));});render();});
     byId("useAdmissionResp").addEventListener('click',()=>{if(S.resp){S.acceptanceResp=S.resp;render();}});
     document.addEventListener('click',e=>{
+      if(e.target.closest('[data-confirm-prenatal]')){confirmPrenatalDefaults();render();}
       const jump=e.target.closest('[data-flow-target]');if(jump)navigateWorkflow(jump.dataset.flowTarget);
       const stop=e.target.closest('[data-flow-stop]');if(stop)selectJourneyStep(stop.dataset.flowStop,{focus:true});
       if(!nav.contains(e.target))byId('flowMenu').open=false;

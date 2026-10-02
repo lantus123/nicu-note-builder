@@ -67,16 +67,17 @@ test('HBeAg becomes available with positive HBsAg and retains its recorded value
   assert.match(note(),/HBeAg\) result was pending/);
 }));
 
-test('bulk screening updates only core screening fields and synchronizes both controls',()=>withPage(({d,pick,state,note})=>{
-  pick('hbsag','pos');pick('hbeag','pos');pick('rubella','nd');
-  for(const value of ['neg','pend','nd']){
+test('bulk screening fills only undocumented core fields and preserves existing results',()=>{
+  for(const value of ['neg','pend','nd'])withPage(({d,pick,state,note})=>{
+    pick('hbsag','pos');pick('hbeag','pos');pick('rubella','nd');pick('gbs','pend');
     d.querySelector(`[data-scrall] [data-v="${value}"]`).click();
-    for(const key of ['hbsag','syphilis','hiv','gbs'])state(key,value);
+    for(const key of ['syphilis','hiv'])state(key,value);
+    state('hbsag','pos');state('gbs','pend');
     state('hbeag','pos');state('rubella','nd');
     assert.match(note(),/Maternal rubella IgG was nonreactive/);
-  }
-  pick('hbsag','pos');state('hbeag','pos');assert.match(note(),/HBeAg\) testing was also positive/);
-}));
+    assert.match(note(),/HBeAg\) testing was also positive/);
+  });
+});
 
 test('Rubella keeps its distinct IgG semantics and an unmentioned value stays neutral',()=>withPage(({row,pick,select,note})=>{
   const el=row('rubella');
