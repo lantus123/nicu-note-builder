@@ -35,8 +35,9 @@ async function main(){
   const shot=async name=>{const r=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync('/private/tmp/'+name,Buffer.from(r.data,'base64'));};
   const at=async s=>{await ev(`document.querySelector(${JSON.stringify(s)}).scrollIntoView({block:'start',behavior:'instant'})`);await pause(120);};
   try{
-    await send('Page.enable');await send('Runtime.enable');await resize(1440,1000);
+    await send('Page.enable');await send('Runtime.enable');
     let ready=false;for(let i=0;i<100;i++){ready=await ev(`!!document.querySelector('#admissionContext')&&!!document.querySelector('#note')?.textContent`);if(ready)break;await pause(100);}assert.ok(ready);
+    await resize(1440,1000); // A remote page may not have a documentElement when the target first opens.
     const entryTop=await ev(`Math.round(document.querySelector('#entryRoutes').getBoundingClientRect().top+scrollY)`);assert.ok(entryTop<1000);
     const today=await ev(`(()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());})()`);
     assert.equal(await ev(`document.querySelector('#admissionDate').value`),today);
