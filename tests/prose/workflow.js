@@ -23,7 +23,7 @@ function page(run){
 }
 test('entry precedes chart; all IDs are unique and no duplicate jaundice onset exists',({d,get})=>{
   assert.equal(get('#admSections > .card').id,'admissionContext');
-  assert.deepEqual([...d.querySelectorAll('#admSections > .card')].map(e=>e.id||e.querySelector('h2').textContent.trim()),['admissionContext','prenatalCard','1產前篩檢 未填 4 項▾','1產程用藥','birthHistoryCard','pathwayCard','finalReviewCard']);
+  assert.deepEqual([...d.querySelectorAll('#admSections > .card')].map(e=>e.id||e.querySelector('h2').textContent.trim()),['admissionContext','prenatalCard','2產前篩檢 未填 4 項▾','2產程用藥','birthHistoryCard','pathwayCard','finalReviewCard']);
   const ids=[...d.querySelectorAll('[id]')].map(e=>e.id);assert.equal(ids.length,new Set(ids).size);
   assert.equal(d.querySelector('#readmitJaundiceDOL'),null);
   for(const id of ['birthDate','admissionDate','readmitComplaint'])assert.ok(get('#admissionContext').contains(get('#'+id)));
@@ -170,6 +170,76 @@ test('route switching preserves module drafts and does not contaminate other rou
   story('D');assert.doesNotMatch(note(),/38.7|viral illness/);story('E');assert.equal(get('#rm_fever_temperature').value,'38.7');assert.match(note(),/38.7/);assert.match(note(),/viral illness/);
   click('[data-stop-toggle="evaluation"]');assert.ok(get('#readmitEvaluationBody').contains(get('#admissionStatusBody')));
   story('A');assert.equal(get('[data-story="A"]').getAttribute('aria-checked'),'true');click('[data-stop-toggle="adm"]');assert.ok(get('#journeyWorkspace').contains(get('#admissionStatusBody')));
+});
+test('feeding quantities replace the duplicate intake question with a read-only summary',({story,problem,click,input,get,note})=>{
+  story('E');problem('poor-feeding');click('[data-stop-toggle="illness"]');input('rm_feeding_usual','90');input('rm_feeding_current','45');
+  assert.equal(get('#readmitIntakeField').hidden,true);
+  assert.equal(get('[data-set-field="readmitIntake"]').parentElement.hidden,true);
+  assert.match(get('#readmitFeedingSummary').textContent,/90 → 45.*減少/);
+  assert.equal(get('#readmitFeedingSummary').querySelector('input'),null);
+  input('readmitFeedingNote','The infant required frequent pauses during feeds.');
+  assert.match(note(),/decreased from 90 to 45 mL per feed/);assert.match(note(),/required frequent pauses/);
+});
+test('partial, zero and equal feeding quantities are represented without invented direction',({story,problem,input,get,note})=>{
+  story('E');problem('poor-feeding');input('rm_feeding_usual','90');assert.match(get('#readmitFeedingSummary').textContent,/資料未齊，不推定增減/);
+  input('rm_feeding_current','0');assert.match(get('#readmitFeedingSummary').textContent,/90 → 0.*減少/);assert.match(note(),/decreased from 90 to 0/);
+  input('rm_feeding_current','90');assert.match(get('#readmitFeedingSummary').textContent,/相同/);assert.match(note(),/was unchanged at 90/);
+});
+test('contradictory old intake is retained and flagged; removal is explicit and reversible',({story,problem,click,input,get,note})=>{
+  story('E');problem('respiratory');click('[data-set-field="readmitIntake"][data-v="remained at the usual level"]');problem('poor-feeding');input('rm_feeding_usual','90');input('rm_feeding_current','45');
+  assert.equal(get('#readmitIntake').value,'remained at the usual level');
+  assert.equal(get('#readmitIntakeReview').dataset.conflict,'true');assert.match(get('#reviewConflictList').textContent,/進食描述/);
+  click('#clearPreviousIntake');assert.equal(get('#readmitIntake').value,'');assert.doesNotMatch(get('#reviewConflictList').textContent,/進食描述/);assert.doesNotMatch(note(),/Oral intake remained/);
+  click('#restorePreviousIntake');assert.equal(get('#readmitIntake').value,'remained at the usual level');assert.equal(get('#readmitIntakeReview').dataset.conflict,'true');
+});
+test('matching legacy intake is deduplicated in both notes without deleting the input',({story,problem,input,get,note,tab})=>{
+  story('E');problem('poor-feeding');input('readmitIntake','decreased');input('rm_feeding_usual','90');input('rm_feeding_current','45');
+  for(const mode of ['adm','acc']){tab(mode);assert.match(note(),/decreased from 90 to 45/);assert.doesNotMatch(note(),/Oral intake decreased/);}
+  assert.equal(get('#readmitIntake').value,'decreased');assert.match(get('#readmitIntakeReview').textContent,/合併為一次/);
+});
+test('feeding supplement drafts stay isolated; earlier baseline and current decline are not conflicts',({story,problem,input,seg,click,get,note})=>{
+  story('E');problem('poor-feeding');click('[data-msel="readmitBaseline"] [data-v="feeding well"]');input('rm_feeding_usual','90');input('rm_feeding_current','45');input('readmitFeedingNote','The infant tired during feeds.');
+  assert.doesNotMatch(get('#reviewConflictList').textContent,/進食描述/);assert.match(note(),/After discharge.*continued to feed well/);
+  problem('poor-feeding');problem('respiratory');assert.doesNotMatch(note(),/tired during feeds|90 to 45/);problem('poor-feeding');assert.match(note(),/tired during feeds/);
+  story('D');assert.doesNotMatch(note(),/tired during feeds/);story('E');assert.match(note(),/tired during feeds/);
+});
+test('review separates missing keys, unconfirmed actions, conflicts and neutral optional items',({seed,story,problem,input,click,get})=>{
+  assert.match(get('#reviewMissingList').textContent,/出生日期/);assert.equal(get('#reviewConflicts').dataset.issues,'false');assert.equal(get('#reviewOptional').hasAttribute('data-issues'),false);
+  seed();story('E');problem('respiratory');input('rm_respiratory_onset','25');
+  assert.match(get('#reviewConflictList').textContent,/起始 DOL/);assert.doesNotMatch(get('#reviewMissingList').textContent,/起始 DOL/);
+  assert.doesNotMatch(get('#reviewOptionalList').textContent,/黃疸|bilirubin/);
+  input('birthResusStatus','performed');assert.match(get('#reviewPendingList').textContent,/實際處置/);
+  assert.doesNotMatch(get('#reviewConflictList').textContent,/實際處置/);
+  get('#reviewOptional').open=true;input('rm_respiratory_onset','17');assert.equal(get('#reviewOptional').open,true,'Input must not close optional review');
+});
+test('combined navigation identifies the exact E substage and copy only becomes primary at review',({story,click,get,note})=>{
+  assert.equal(get('#flowMenu > summary').getAttribute('aria-labelledby'),'flowChapter flowDetail','Assistive technology receives the current chapter and substage');
+  assert.equal(get('#copy').disabled,false);assert.equal(get('#copy').dataset.primary,'false');assert.equal(get('#copy').textContent,'複製草稿');
+  story('E');click('#birthHistoryCard [data-flow-target="pathwayCard"]');assert.match(get('#flowChapter').textContent,/本次病程/);assert.match(get('#flowDetail').textContent,/出院與返家基準.*1\/3/);
+  click('#flowNext');assert.match(get('#flowDetail').textContent,/症狀與變化.*2\/3/);
+  const before=note();click('#flowNext');assert.match(get('#flowDetail').textContent,/評估與收治.*3\/3/);click('#flowNext');
+  assert.equal(get('#copy').dataset.primary,'true');assert.equal(get('#copy').textContent,'複製病歷');assert.equal(get('#flowNext').hidden,true);assert.equal(note(),before);
+  click('#flowBack');assert.equal(get('#copy').dataset.primary,'false');assert.match(get('#flowDetail').textContent,/3\/3/);
+});
+test('first and last substage controls connect to the adjacent chart chapters',({story,click,get})=>{
+  story('E');click('[data-stop-toggle="prior"]');click('#journeyPrev');assert.equal(get('#flowChapter').textContent,'出生資料');
+  click('[data-stop-toggle="evaluation"]');assert.equal(get('#journeyNext').disabled,false);click('#journeyNext');assert.equal(get('#flowChapter').textContent,'核對病歷');
+});
+test('navigation menu closes on selection and Escape; navigation never edits clinical facts',({W,story,click,get,input,note})=>{
+  story('E');input('readmitCourse','The symptoms persisted.');const before=note();get('#flowMenu').open=true;
+  click('[data-flow-stop="illness"]');assert.equal(get('#flowMenu').open,false);assert.equal(note(),before);
+  get('#flowMenu').open=true;get('#flowMenu').dispatchEvent(new W.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(get('#flowMenu').open,false);assert.equal(note(),before);
+});
+test('confirmed support reuse is a read-only mode summary, not an unanswered second question',({story,seg,input,get,note,click})=>{
+  story('D');input('birthFinalSupport','cpap');input('obM1Relation','continued');
+  assert.match(get('#obM1RelationSummary').textContent,/產房結束時.*CPAP/);assert.equal(get('#obM1RelationDetails').open,false);
+  assert.equal(get('#outsideSupportControls').parentElement.id,'obM1RelationDetails');
+  input('obRespRelation','continued');assert.match(get('#obRespRelationSummary').textContent,/外院後續照護.*CPAP/);assert.equal(get('#obRespRelationDetails').open,false);
+  const before=note();get('#obRespRelationDetails').open=true;assert.equal(note(),before);
+  input('obPEEP','6');get('#obRespRelationDetails').open=false;input('obAdmissionStatus','The infant remained tachypneic.');
+  assert.equal(get('#obRespRelationDetails').open,false);assert.match(get('#obRespRelationDetails > summary').textContent,/原值保留/);assert.match(note(),/6 cmH2O/);
+  input('birthFinalSupport','room');assert.equal(get('#obRespRelationSummary').hidden,true);assert.equal(get('#pathwaySupportControls').parentElement.closest('details'),null);
+  assert.match(get('#reviewConflictList').textContent,/持續同前/);assert.equal(get('#obPEEP').value,'6');
 });
 test('all module clinical fields have a definition and output tests',({d})=>{
   const inputs=[...d.querySelectorAll('#readmitModules input:not([type="hidden"]),#readmitModules select')];

@@ -12,18 +12,26 @@ async function main(){
   const send=(method,params={})=>new Promise((resolve,reject)=>{const id=++seq,timer=setTimeout(()=>reject(Error(method)),20000);pending.set(id,{resolve,reject,timer});ws.send(JSON.stringify({id,method,params}));});
   const ev=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);return r.result.value;};
   const pause=ms=>new Promise(r=>setTimeout(r,ms));
+  const resize=async(width,height,mobile=false)=>{
+    await send('Emulation.setDeviceMetricsOverride',{width,height,screenWidth:width,screenHeight:height,deviceScaleFactor:1,mobile});
+    await send('Emulation.setPageScaleFactor',{pageScaleFactor:1});await pause(160);
+    const dimensions=await ev(`({width:innerWidth,clientWidth:document.documentElement.clientWidth,visualWidth:visualViewport.width,scale:visualViewport.scale})`);
+    assert.equal(dimensions.clientWidth,width,'CSS viewport must match requested width: '+JSON.stringify(dimensions));
+  };
   let clicks=0,entries=0;
   const position=async selector=>{
-    await ev(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Missing '+${JSON.stringify(selector)});e.scrollIntoView({block:'center',inline:'center',behavior:'instant'});})()`);await pause(100);
+    await ev(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Missing '+${JSON.stringify(selector)});const r=e.getBoundingClientRect(),hit=e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));if(!hit)e.scrollIntoView({block:'center',inline:'center',behavior:'instant'});})()`);await pause(100);
     return ev(`(()=>{const e=document.querySelector(${JSON.stringify(selector)}),r=e.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2;return {x,y,w:r.width,h:r.height,hit:e.contains(document.elementFromPoint(x,y))};})()`);
   };
   const click=async s=>{const r=await position(s);assert.ok(r.w&&r.h&&r.hit,'Control hidden or covered: '+s);await send('Input.dispatchMouseEvent',{type:'mousePressed',x:r.x,y:r.y,button:'left',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:r.x,y:r.y,button:'left',clickCount:1});clicks++;await pause(70);};
   const input=async(id,value)=>{const r=await position('#'+id);assert.ok(r.w&&r.h&&r.hit,'Input hidden or covered: '+id);await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.focus({preventScroll:true});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event(e.tagName==='SELECT'||e.type==='date'?'change':'input',{bubbles:true}));})()`);entries++;};
+  const typeText=async(id,value)=>{await click('#'+id);await ev(`document.getElementById(${JSON.stringify(id)}).select()`);await send('Input.insertText',{text:value});assert.equal(await ev(`document.getElementById(${JSON.stringify(id)}).value`),value);entries++;};
+  const chapter=async id=>{await click('#flowMenu > summary');await click(`#flowMenu [data-flow-target="${id}"]`);};
   const note=()=>ev(`document.querySelector('#note').textContent`);
   const shot=async name=>{const r=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync('/private/tmp/'+name,Buffer.from(r.data,'base64'));};
   const at=async s=>{await ev(`document.querySelector(${JSON.stringify(s)}).scrollIntoView({block:'start',behavior:'instant'})`);await pause(120);};
   try{
-    await send('Page.enable');await send('Runtime.enable');await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+    await send('Page.enable');await send('Runtime.enable');await resize(1440,1000);
     let ready=false;for(let i=0;i<100;i++){ready=await ev(`!!document.querySelector('#admissionContext')&&!!document.querySelector('#note')?.textContent`);if(ready)break;await pause(100);}assert.ok(ready);
     const entryTop=await ev(`Math.round(document.querySelector('#entryRoutes').getBoundingClientRect().top+scrollY)`);assert.ok(entryTop<1000);
     const today=await ev(`(()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());})()`);
@@ -41,6 +49,7 @@ async function main(){
     await click('#admissionDateDetails > summary');await input('admissionDate','2026-10-02');await input('admissionTime','14:37');await click('#admissionDateDetails > summary');
     assert.match(await ev(`document.querySelector('#admissionDateSummary').textContent`),/2026-10-02.*14:37/);
     assert.match(await note(),/day of life 18/);
+    assert.equal(await ev(`document.querySelector('#copy').dataset.primary`),'false');
     await at('#admissionContext');await shot('nicu-forward-entry-desktop.png');
     await click('#admissionContext [data-flow-target="prenatalCard"]');await input('gravida','2');await input('para','2');await input('matAge','32');
     await click('#confirmMaternalNegatives');await click('[data-scrall] [data-v="neg"]');
@@ -50,24 +59,49 @@ async function main(){
     await click('[data-seg="readmitPrior"] [data-v="uneventful"]');await input('readmitDischargeDate','2026-09-17');await input('readmitDischargeWeight','3080');await click('[data-seg="readmitFeeding"] [data-v="breast milk"]');
     await click('[data-msel="readmitBaseline"] [data-v="feeding well"]');await click('[data-msel="readmitBaseline"] [data-v="active"]');
     await click('#journeyNext');await input('readmitOnsetDOL','17');await input('readmitCourseType','new');await click('[data-rm-chip="rm_respiratory_symptoms"][data-v="tachypnea"]');await click('[data-rm-chip="rm_respiratory_symptoms"][data-v="cough"]');
-    await input('rm_feeding_usual','90');await input('rm_feeding_current','45');await input('rm_feeding_frequency','every 3 hours');await click('[data-set-field="readmitUrine"][data-v="remained adequate"]');await input('readmitSickContact','An older sibling had URI symptoms.');
+    await input('rm_feeding_usual','90');await input('rm_feeding_current','45');await input('rm_feeding_frequency','every 3 hours');await click('[data-set-field="readmitUrine"][data-v="remained adequate"]');await typeText('readmitSickContact','An older sibling had URI symptoms.');
+    assert.equal(await ev(`document.querySelector('#readmitIntake').checkVisibility()`),false);
+    assert.match(await ev(`document.querySelector('#readmitFeedingSummary').textContent`),/90 → 45.*減少/);
     await at('#journeyWorkspace');await shot('nicu-forward-E-desktop.png');
     await click('#journeyNext');assert.equal(await ev(`!!document.querySelector('#readmitTSB').getClientRects().length`),false);
     await input('readmitCurrentWeight','3450');await input('readmitSpO2','96');await input('readmitEvaluation','Mild subcostal retractions were noted.');await click('#admissionStatusBody [data-seg="resp"] [data-v="room air"]');
-    await click('#pathwayCard [data-flow-target="finalReviewCard"]');await input('tentDx','respiratory distress with poor feeding');
+    await click('#journeyNext');await typeText('tentDx','respiratory distress with poor feeding');
+    assert.equal(await ev(`document.querySelector('#copy').dataset.primary`),'true');
+    await at('#finalReviewCard');await shot('nicu-forward-review-desktop.png');
     const text=await note(),forwardClicks=clicks,forwardEntries=entries;assert.match(text,/Example Birth Clinic/);assert.match(text,/receiving breast milk/);assert.match(text,/90 to 45 mL/);assert.match(text,/14:37/);assert.doesNotMatch(text,/bilirubin|notable for an older sibling had/);
     fs.writeFileSync('/private/tmp/nicu-forward-synthetic-note.txt',text);
     await click('[data-tab="acc"]');await click('#useAdmissionResp');await click('[data-seg="acceptanceResp"] [data-v="NC"]');await click('[data-tab="adm"]');assert.equal(await note(),text);
-    await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await pause(200);await at('#admissionContext');await shot('nicu-forward-entry-mobile.png');
+    await resize(390,844,true);await at('#admissionContext');await shot('nicu-forward-entry-mobile.png');
     assert.ok(await ev(`document.documentElement.scrollWidth<=innerWidth+1`),'Mobile overflow');
     assert.ok(await ev(`[...document.querySelectorAll('#entryRoutes .d, #entryRoutes .p, #entryRoutes .k')].every(e=>e.getClientRects().length&&getComputedStyle(e).display!=='none')`),'Mobile scenario descriptions must be visible');
     assert.equal(await ev(`document.querySelector('#admissionDateDetails').open`),false);
     await click('[data-stop-toggle="illness"]');await at('#journeyWorkspace');await shot('nicu-forward-E-mobile.png');
-    const rectangles=await ev(`(()=>{const t=document.querySelector('.tabs').getBoundingClientRect(),n=document.querySelector('.flow-nav').getBoundingClientRect(),p=document.querySelector('#journeyProgress').getBoundingClientRect();return {tabBottom:t.bottom,navTop:n.top,navBottom:n.bottom,progressTop:p.top};})()`);
-    assert.ok(rectangles.navTop>=rectangles.tabBottom-1,'Tabs cover the workflow navigation');assert.ok(rectangles.progressTop>=rectangles.navBottom-1,'Navigation covers current stage');
+    const rectangles=await ev(`(()=>{const t=document.querySelector('.tabs').getBoundingClientRect(),n=document.querySelector('.flow-nav').getBoundingClientRect();return {tabBottom:t.bottom,navTop:n.top,navBottom:n.bottom,thirdTierVisible:document.querySelector('#journeyProgress').checkVisibility()};})()`);
+    assert.ok(rectangles.navTop>=rectangles.tabBottom-1,'Tabs cover the workflow navigation');assert.equal(rectangles.thirdTierVisible,false,'Mobile has only two fixed tiers');assert.ok(rectangles.navBottom<150,'Fixed navigation leaves enough room for the form');
+    assert.ok(await ev(`document.querySelector('#journeyWorkspace').getBoundingClientRect().top>=document.querySelector('#workflowNav').getBoundingClientRect().bottom+6`),'Workspace heading must not be covered');
+    assert.match(await ev(`document.querySelector('#flowDetail').textContent`),/症狀與變化.*2\/3/);
+    await at('#readmitGeneral');await shot('nicu-forward-feeding-mobile.png');
+    // Native keyboard text entry and switching stages must keep focus/value and relative scroll.
+    await typeText('readmitFeedingNote','The infant required frequent pauses during feeds.');
+    const beforeBack=await ev(`-document.querySelector('#journeyWorkspace').getBoundingClientRect().top`);
+    await click('#flowNext');await click('#flowBack');
+    const afterBack=await ev(`-document.querySelector('#journeyWorkspace').getBoundingClientRect().top`);
+    assert.ok(Math.abs(beforeBack-afterBack)<3,'Returning to a stage should restore its relative viewport');
+    assert.equal(await ev(`document.activeElement.id`),'readmitFeedingNote');
+    assert.equal(await ev(`document.querySelector('#readmitFeedingNote').value`),'The infant required frequent pauses during feeds.');
+    await input('readmitFeedingNote','');
+    for(const width of [320,360,390]){
+      await resize(width,844,true);await at('#journeyWorkspace');
+      assert.ok(await ev(`document.documentElement.scrollWidth<=innerWidth+1`),'Overflow at '+width);
+      await click('#flowMenu > summary');assert.ok((await position('#flowMenu [data-flow-target="birthHistoryCard"]')).hit,'Chapter menu must be tappable at '+width);
+      await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape'});assert.equal(await ev(`document.querySelector('#flowMenu').open`),false);
+      await shot('nicu-forward-E-mobile-'+width+'.png');
+    }
+    await chapter('finalReviewCard');await shot('nicu-forward-review-mobile.png');assert.equal(await ev(`document.querySelector('#copy').dataset.primary`),'true');
+    await chapter('pathwayCard');
     await click('#journeyPrev');assert.equal(await ev(`document.querySelector('#readmitDischargeWeight').value`),'3080');await click('#journeyNext');assert.equal(await ev(`document.querySelector('#rm_feeding_current').value`),'45');
     // Existing routes must still expose every stage after the birth controls move.
-    await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+    await resize(1440,1000);
     const routeStages={};
     for(const [story,expected] of [['A',2],['B',2],['C',3],['D',5]]){
       if(story==='A')await click('#entryDirect');
@@ -78,8 +112,51 @@ async function main(){
       routeStages[story]=stops.length;
     }
     await click('[data-story="E"]');assert.equal(await note(),text,'Returning to E must restore its complete narrative');
+    // Preserve a prior qualitative statement, explicitly resolve it, and undo the resolution.
+    await click('[data-stop-toggle="illness"]');await input('rm_feeding_usual','90');await input('rm_feeding_current','45');
+    await click('[data-msel="readmitProblems"] [data-v="poor-feeding"]');
+    await click('[data-set-field="readmitIntake"][data-v="remained at the usual level"]');
+    await click('[data-msel="readmitProblems"] [data-v="poor-feeding"]');
+    assert.equal(await ev(`document.querySelector('#readmitIntakeReview').dataset.conflict`),'true');
+    await at('#readmitGeneral');await shot('nicu-forward-intake-conflict.png');
+    await click('#clearPreviousIntake');assert.equal(await ev(`document.querySelector('#readmitIntake').value`),'');
+    await click('#restorePreviousIntake');assert.equal(await ev(`document.querySelector('#readmitIntake').value`),'remained at the usual level');
+    await click('#clearPreviousIntake');assert.equal(await note(),text);
+    // Short viewport: expanded preview and its controls still remain usable.
+    await resize(390,540,true);await click('#dockToggle');assert.equal(await ev(`document.querySelector('#previewBody').hidden`),false);
+    await click('#previewReading');await click('#dockToggle');await at('#readmitGeneral');await shot('nicu-forward-short-mobile.png');
+    assert.ok((await position('#flowNext')).hit);assert.ok((await position('#copy')).hit);
+    // Fresh direct and outborn admissions: do not rely on values from the E case.
+    await resize(1366,768);await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'light'}]});
+    const fresh=async()=>{await send('Page.reload',{ignoreCache:true});await pause(250);for(let i=0;i<100;i++){if(await ev(`!!document.querySelector('#workflowNav')&&document.readyState==='complete'`))return;await pause(100);}throw Error('Reload did not initialize');};
+    const background=async(kind)=>{
+      await click(kind==='A'?'#entryDirect':'[data-story="D"]');await click('[data-seg="dest"] [data-v="NICU"]');await input('birthDate',today);
+      await click('#flowNext');await input('gravida','2');await input('para','2');await input('matAge','30');await click('#confirmMaternalNegatives');await click('[data-scrall] [data-v="neg"]');
+      await click('.stage-actions [data-flow-target="birthHistoryCard"]');await click('[data-seg="gender"] [data-v="male"]');await input('gaW',kind==='A'?'35':'37');await input('bw',kind==='A'?'2300':'2800');await click('[data-seg="delivery"] [data-v="nsd"]');await input('ap1','8');await input('ap5','9');
+    };
+    await fresh();await background('A');await click('[data-story="A"]');await click('[data-msel="pwSbR"] [data-v="preterm labor"]');
+    await input('birthBreathing','labored');await input('birthResusStatus','performed');await click('[data-add-birth="ppv"]');
+    const eventId=await ev(`document.querySelector('#birthEvents [data-event-id]').dataset.eventId`);
+    await input('event-'+eventId+'-minutes','2');await input('event-'+eventId+'-fiO2','25');await input('event-'+eventId+'-pip','20');await input('event-'+eventId+'-peep','5');await input('birthFinalSupport','cpap');
+    const birthScroll=await ev(`-document.querySelector('#birthHistoryCard').getBoundingClientRect().top`);
+    await click('#flowNext');await click('#flowBack');assert.ok(Math.abs(await ev(`-document.querySelector('#birthHistoryCard').getBoundingClientRect().top`)-birthScroll)<3,'Chapter back restores position');
+    await click('#flowNext');await input('obRespRelation','continued');await click('#journeyNext');await click('#admissionStatusBody [data-seg="resp"] [data-v="NCPAP"]');await click('#journeyNext');
+    const directNote=await note();assert.match(directNote,/35 weeks/);assert.match(directNote,/preterm labor/);assert.match(directNote,/2 minutes/);assert.match(directNote,/25%/);assert.match(directNote,/NCPAP/);assert.doesNotMatch(directNote,/discharged home|An older sibling/);
+    await at('#finalReviewCard');await shot('nicu-forward-direct-review-light.png');await click('#copy');assert.match(await ev(`document.querySelector('#copyStatus').textContent`),/^已複製/,'Real Chrome clipboard action');
+    await fresh();await background('D');await input('obFacility','Example Transfer Hospital');await input('birthBreathing','crying');await input('birthResusStatus','none');
+    await click('#flowNext');await input('obM1Relation','new');await click('[data-seg="obM1Type"] [data-v="o2"]');await click('[data-seg="obM1Dev"] [data-v="hood"]');await input('obM1Flow','2');
+    await click('#journeyNext');await click('[data-fill="obReason"] [data-v="respiratory distress"]');
+    await click('#journeyNext');await typeText('obArrival','The infant was tachypneic with subcostal retractions.');
+    await click('#journeyNext');await input('obRespRelation','continued');
+    assert.equal(await ev(`document.querySelector('[data-seg="obRespType"]').checkVisibility()`),false,'Do not ask for the inherited mode again');
+    assert.equal(await ev(`document.querySelector('#obRespRelationSummary').checkVisibility()`),true);
+    assert.equal(await ev(`document.querySelector('#obRespRelationDetails').open`),false);
+    await at('#journeyWorkspace');await shot('nicu-forward-outborn-desktop-light.png');
+    await resize(390,844,true);await at('#journeyWorkspace');await shot('nicu-forward-outborn-mobile-light.png');
+    await click('#journeyNext');await click('#admissionStatusBody [data-seg="resp"] [data-v="NC"]');await typeText('obAdmissionStatus','Mild tachypnea persisted.');await click('#journeyNext');
+    const outbornNote=await note();assert.match(outbornNote,/Example Transfer Hospital/);assert.match(outbornNote,/oxygen hood/);assert.match(outbornNote,/subcostal retractions/);assert.match(outbornNote,/Mild tachypnea persisted/i);assert.match(outbornNote,/NC/);assert.doesNotMatch(outbornNote,/discharged home|An older sibling|bilirubin/);
     assert.deepEqual(errors,[]);
-    console.log(JSON.stringify({ok:true,url,entryTop,forwardClicks,forwardEntries,forcedBackwardSteps:0,EStages:3,routeStages,DOL:18,desktop:'1440×1000',mobile:'390×844',rectangles,screenshots:'/private/tmp/nicu-forward-*.png',syntheticNote:'/private/tmp/nicu-forward-synthetic-note.txt'},null,2));
+    console.log(JSON.stringify({ok:true,url,entryTop,forwardClicks,forwardEntries,forcedBackwardSteps:0,EStages:3,routeStages,freshAdmissions:['direct A','outborn D'],DOL:18,desktop:['1440×1000','1366×768'],mobile:['320×844','360×844','390×844','390×540'],themes:['dark','light'],nativeKeyboard:true,clipboard:true,rectangles,screenshots:'/private/tmp/nicu-forward-*.png',syntheticNote:'/private/tmp/nicu-forward-synthetic-note.txt'},null,2));
   }finally{await send('Page.close').catch(()=>{});ws.close();for(const p of pending.values())clearTimeout(p.timer);}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

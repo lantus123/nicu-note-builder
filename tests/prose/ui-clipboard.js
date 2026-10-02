@@ -30,13 +30,14 @@ async function check({collapsed,fail=false}){
     note.innerHTML='<span>Synthetic first line.</span><div>Synthetic second line.</div>';
     if(collapsed){W.innerWidth=390;W.dispatchEvent(new W.Event('resize'));}
     assert.equal(body.hidden,collapsed);
-    const markup=note.innerHTML,children=d.body.children.length;
+    const markup=note.innerHTML,children=d.body.children.length,buttonLabel=d.getElementById('copy').textContent;
+    assert.match(buttonLabel,/^複製(草稿|病歷)$/);
     d.getElementById('copy').click();
     await new Promise(resolve=>setImmediate(resolve));
     assert.equal(note.innerHTML,markup,'Copy never rewrites the source note');
     assert.equal(d.body.children.length,children,'Temporary reader is removed');
     assert.equal(note.hasAttribute('contenteditable'),false,'The preview stays read-only');
-    assert.equal(d.getElementById('copy').textContent,'複製','Button width stays stable');
+    assert.equal(d.getElementById('copy').textContent,buttonLabel,'Copy feedback does not change the action label');
     assert.equal(d.getElementById('copyStatus').hidden,false);
     assert.equal(d.getElementById('copyStatus').getAttribute('role'),'status');
     if(fail)assert.match(d.getElementById('copyStatus').textContent,/未能複製/);
