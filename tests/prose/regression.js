@@ -110,7 +110,7 @@ test('partially parsed laboratory data retains the unparsed observation',()=>{
 });
 
 test('explicit current room air overrides previous invasive support',()=>{
-  const {acceptance}=notes([seg('obRespType','ett'),tab('acc'),seg('resp','room air')]);
+  const {acceptance}=notes([seg('obRespType','ett'),tab('acc'),seg('acceptanceResp','room air')]);
   const brief=section(acceptance,'Brief history');
   assert.match(brief,/\broom air\b/i);
   assert.doesNotMatch(brief,/(?:currently|at (?:the time of )?acceptance)[^.\n]*mechanical ventilation/i);
@@ -488,13 +488,13 @@ test('procedures distinguish completed steps from prospective follow-up and exch
 // ── 2026-09-19 拍板：入院去處可選、產房／刀房依生產方式、pathway 不預設、seg 可取消 ──
 test('destination is a placeholder until chosen, then names the chosen unit in both notes',()=>{
   const none=notes([]);
-  includes(none.admission,'admitted to ____ for further evaluation');
+  assert.match(none.admission,/admitted to ____(?: on [^.]+)? for further evaluation/);
   assert.doesNotMatch(none.admission,/our NICU|our NBC|baby room/);
   const nbc=notes([seg('dest','NBC')]);
-  includes(nbc.admission,'admitted to our NBC for further evaluation and management');
+  assert.match(nbc.admission,/admitted to our NBC(?: on [^.]+)? for further evaluation and management/);
   includes(nbc.acceptance,'admitted to our NBC');
   assert.doesNotMatch(nbc.admission,/our NICU/);
-  includes(notes([seg('dest','BR')]).admission,'admitted to our baby room for further evaluation');
+  assert.match(notes([seg('dest','BR')]).admission,/admitted to our baby room(?: on [^.]+)? for further evaluation/);
   includes(notes([seg('dest','NICU')]).admission,'admitted to our NICU');
 });
 test('admission-status sentence follows the chosen destination and is not duplicated in acceptance',()=>{

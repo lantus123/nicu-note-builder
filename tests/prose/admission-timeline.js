@@ -239,33 +239,33 @@ test('DOIC of zero minutes is a recorded value, not an empty field',({toggle,inp
 });
 
 test('completed journey stages keep a read-only summary and reopen on demand',({input,get,click})=>{
-  input('birthBreathing','apnea');click('[data-stop-toggle="drEnd"]');input('birthFinalNote','Synthetic bridge observation');
-  const stop=get('li[data-stop="drEnd"]');
+  input('birthBreathing','apnea');click('[data-stop-toggle="adm"]');input('obAdmissionStatus','Synthetic admission observation');
+  const stop=get('li[data-stop="adm"]');
   assert.ok(!stop.classList.contains('closed'),'the explicitly selected stage stays active');
-  click('[data-stop-toggle="birth"]');
+  click('[data-stop-toggle="route"]');
   const sum=stop.querySelector('.sum');
   assert.ok(stop.classList.contains('closed'),'selecting another stage closes it into a summary');
   assert.ok(!sum.isContentEditable,'The carried summary must not create another editable record');
-  assert.match(sum.textContent,/Synthetic bridge observation/);
-  click('[data-stop-toggle="drEnd"]');
+  assert.match(sum.textContent,/Synthetic admission observation/);
+  click('[data-stop-toggle="adm"]');
   assert.ok(!stop.classList.contains('closed'),'Reopening a stage must reveal its fields in the fixed workspace');
   assert.equal(stop.querySelector('.sum').textContent,'正在填寫');
-  const birth=get('li[data-stop="birth"]');
-  assert.match(birth.querySelector('.sum').textContent||'',/Apnea/,'The birth stop summary reuses the recorded observation');
+  assert.ok(get('#birthHistoryCard').contains(get('#birthBreathing')),'Birth history is independently accessible');
+  assert.equal(get('#birthBreathing').value,'apnea');
 });
 
 test('editing never changes stage; only explicit navigation moves forward or backward',({get,input,click})=>{
-  const birth=get('li[data-stop="birth"]');
+  const birth=get('li[data-stop="route"]');
   assert.ok(!birth.classList.contains('closed'),'the first empty stop starts open');
-  const dr=get('li[data-stop="dr"]');
-  input('birthBreathing','crying');
+  const dr=get('li[data-stop="adm"]');
+  input('obCourse','The infant continued to breathe spontaneously.');
   assert.ok(!birth.classList.contains('closed'),'entering data must not collapse the stop being edited');
   assert.ok(dr.classList.contains('closed'),'while a stop is being edited, the next stop must not auto-open');
   input('birthTone','good');
   assert.ok(!birth.classList.contains('closed'),'further edits keep it open');
   click('#journeyNext');
   assert.ok(birth.classList.contains('closed'),'the next button moves away from the current stage');
-  assert.match(birth.querySelector('.sum').textContent,/有哭聲/);
+  assert.match(birth.querySelector('.sum').textContent,/continued to breathe/);
   assert.ok(!dr.classList.contains('closed'),'the next stage opens explicitly');
   click('#journeyPrev');
   assert.ok(!birth.classList.contains('closed'),'the previous button returns to the exact prior stage');
@@ -294,18 +294,18 @@ test('Admission and Acceptance narrate the delivery room in the same order: obse
   before(acc,/positive-pressure ventilation \(PPV\) was initiated/i,/On reassessment at 10 minutes of age/);
 });
 test('the journey stepper keeps exactly one explicit stage active',({get,input,click})=>{
-  const birth=get('li[data-stop="birth"]'),dr=get('li[data-stop="dr"]');
-  input('birthBreathing','crying');
+  const birth=get('li[data-stop="route"]'),dr=get('li[data-stop="adm"]');
+  input('obCourse','The infant was observed before admission.');
   assert.ok(!birth.classList.contains('closed'));assert.ok(dr.classList.contains('closed'));
-  click('[data-stop-toggle="dr"]');
+  click('[data-stop-toggle="adm"]');
   assert.ok(!dr.classList.contains('closed'),'opening the selected stage');
   assert.ok(birth.classList.contains('closed'),'the previous stop collapses');
-  assert.match(birth.querySelector('.sum').textContent,/有哭聲/);
+  assert.match(birth.querySelector('.sum').textContent,/observed before admission/);
   input('birthResusStatus','none');
   assert.ok(!dr.classList.contains('closed'));assert.ok(birth.classList.contains('closed'));
   const openCount=[...get('#journey').querySelectorAll('li')].filter(li=>!li.hidden&&!li.classList.contains('closed')).length;
   assert.equal(openCount,1,'only the explicitly selected stage is active');
-  assert.equal(get('#journeyStage').textContent.includes('產房處置'),true,'the sticky progress label names the active stage');
+  assert.equal(get('#journeyStage').textContent.includes('入院'),true,'the sticky progress label names the active stage');
 });
 test('the admission stop is labelled 入院 until a destination is chosen',({get,click})=>{
   click('[data-seg="dest"] [data-v="NICU"]');assert.equal(get('li[data-stop="adm"] .t').textContent,'入 NICU');

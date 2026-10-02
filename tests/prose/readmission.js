@@ -19,7 +19,7 @@ function withPage(check){
   const input=(id,value)=>{const el=get(`#${id}`);el.value=value;el.dispatchEvent(new W.Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}));};
   const seg=(key,value)=>click(`[data-seg="${key}"] [data-v="${value}"]`);
   const msel=(key,value)=>click(`[data-msel="${key}"] [data-v="${value}"]`);
-  const story=key=>click(`#pathwayCard [data-story="${key}"]`);
+  const story=key=>click(`[data-story="${key}"]`);
   const tab=name=>click(`[data-tab="${name}"]`);
   const note=()=>get('#note').textContent.trim();
   try{
@@ -88,7 +88,7 @@ test('story E creates a chronological outpatient readmission narrative without t
   input('birthDate','2026-08-13');story('E');seg('readmitPrior','uneventful');
   input('readmitDischargeDate','2026-08-15');input('readmitDischargeWeight','3000');seg('readmitFeeding','breast milk');
   msel('readmitBaseline','feeding well');msel('readmitBaseline','active');
-  msel('readmitProblems','prolonged-jaundice');input('readmitJaundiceDOL','3');
+  msel('readmitProblems','prolonged-jaundice');input('rm_jaundice_onset','3');
   msel('readmitJaundiceSigns','no dark urine');msel('readmitJaundiceSigns','no pale stools');
   input('readmitCourse','The jaundice persisted after discharge.');seg('readmitSource','clinic');
   input('readmitCurrentWeight','3260');input('readmitTSB','15.2');input('readmitDB','0.6');
@@ -96,10 +96,10 @@ test('story E creates a chronological outpatient readmission narrative without t
   assert.match(text,/now on day of life 18/);
   assert.match(text,/initial postnatal course was uneventful/);
   assert.match(text,/discharged home on day of life 3 at a weight of 3000 g/);
-  assert.match(text,/Jaundice was first noted on day of life 3/);
+  assert.match(text,/Jaundice was noted on day of life 3/);
   assert.match(text,/brought to our outpatient clinic/);
   assert.match(text,/total bilirubin level of 15\.2 mg\/dL and a direct bilirubin level of 0\.6 mg\/dL/);
-  assert.match(text,/admitted to our NBC.*prolonged neonatal jaundice/);
+  assert.match(text,/admitted to our NBC.*persistent jaundice/);
   assert.doesNotMatch(text,/transport team|transferred from|referring hospital/i);
   assert.equal((text.match(/discharged home/g)||[]).length,1,'discharge is narrated once');
   assert.match(get('#consistencySummary').textContent,/不會寫入外接團隊或轉送資料/);
@@ -108,12 +108,12 @@ test('story E creates a chronological outpatient readmission narrative without t
   assert.equal(get('#accWeightFromAdmission').hidden,false,'Acceptance should show the Admission weight source');
 });
 
-test('story E uses five explicit and visibly isolated stages with problem-specific fields only',({W,story,click,msel,get})=>{
+test('story E uses three explicit stages with shared context and problem-specific fields',({W,story,click,msel,get})=>{
   story('E');
   const visible=[...get('#journey').querySelectorAll('li')].filter(li=>W.getComputedStyle(li).display!=='none').map(li=>li.dataset.stop);
-  assert.deepEqual(visible,['prior','home','illness','evaluation','adm']);
-  assert.match(get('#journeyCounter').textContent,/第 1／5/);
-  click('#journeyNext');assert.match(get('#journeyCounter').textContent,/第 2／5/);
+  assert.deepEqual(visible,['prior','illness','evaluation']);
+  assert.match(get('#journeyCounter').textContent,/第 1／3/);
+  click('#journeyNext');assert.match(get('#journeyCounter').textContent,/第 2／3/);
   click('[data-stop-toggle="illness"]');assert.equal(get('#readmitJaundice').hidden,true);
   msel('readmitProblems','jaundice');assert.equal(get('#readmitJaundice').hidden,false);
   assert.equal(get('#readmitGeneral').hidden,true);
@@ -134,7 +134,7 @@ test('respiratory admission does not display or request bilirubin tests',({W,sto
 
 test('switching jaundice to respiratory suppresses hidden drafts in both notes and stage summaries',({W,story,click,msel,input,get,tab,note})=>{
   story('E');click('[data-stop-toggle="illness"]');msel('readmitProblems','jaundice');
-  input('readmitJaundiceDOL','3');msel('readmitJaundiceSigns','no dark urine');
+  input('rm_jaundice_onset','3');msel('readmitJaundiceSigns','no dark urine');
   click('#journeyNext');input('readmitTSB','15.2');input('readmitDB','0.6');
   assert.notEqual(W.getComputedStyle(get('#readmitBiliWrap')).display,'none');
   assert.match(note(),/total bilirubin level of 15\.2/);
@@ -145,12 +145,12 @@ test('switching jaundice to respiratory suppresses hidden drafts in both notes a
     tab(mode);assert.match(note(),/respiratory symptoms/);
     assert.doesNotMatch(note(),/bilirubin|dark urine|Jaundice was first noted/i);
   }
-  tab('adm');click('[data-stop-toggle="adm"]');
+  tab('adm');click('[data-stop-toggle="prior"]');
   assert.doesNotMatch(get('[data-stop="evaluation"] .sum').textContent,/TB |DB /);
   click('[data-stop-toggle="illness"]');msel('readmitProblems','jaundice');click('#journeyNext');
   assert.notEqual(W.getComputedStyle(get('#readmitBiliWrap')).display,'none');
   assert.equal(get('#readmitTSB').value,'15.2');
-  assert.match(note(),/Jaundice was first noted on day of life 3/);
+  assert.match(note(),/Jaundice was noted on day of life 3/);
   assert.match(note(),/respiratory symptoms/,'a jaundice-onset date must not suppress concurrent respiratory symptoms');
   assert.match(note(),/total bilirubin level of 15\.2/);
 });

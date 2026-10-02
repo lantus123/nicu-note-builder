@@ -1,150 +1,84 @@
-# Admission 出生事件與入院路徑欄位對照
+# Admission 順向填寫與欄位輸出對照（2026-10-02）
 
-本文件只涵蓋這次第 5、6 區的時間線改版，以及這些資料與 Admission、Acceptance、NI plan 的連接；不是全專案歷史欄位均已完成稽核的聲明。所有紀錄須由使用者核對後再貼回 HIS。
+此對照涵蓋本次 Admission 工作流程、八組 E 模組與受影響的 Acceptance／NI plan／Procedure 連動。不是對所有歷史功能或任意自由文字的醫療正確性背書。所有病歷仍須由醫師通讀後貼回 HIS。
 
-## 2026-10-02 呈現層：故事卡與固定工作區步驟列
+## 填寫順序與資料歸屬
 
-第 5、6 區合併為 `#pathwayCard`「本次入院經過」。`applyStory(k)` 依 `STORY` 表設定路徑；A–D 沿用出生後直接入院、先經嬰兒室或外院轉送，E 為已離開出生照護後再由門診／急診／預約住院。`deriveStory()` 由目前路徑與團隊介入狀態反推故事字母，供故事卡高亮與摘要使用。
+0. 本次入院設定：路徑、E 的來源與問題、收治單位、出生／入院日期時間、DOL。
+1. 產前：母親 G/P/A、病史、產檢、篩檢、產程用藥，保留 chart 順序。
+2. 出生：性別、GA、出生體重、實際出生院所、生產方式、Apgar、團隊介入、觀察、處置、處置後狀況。E 也能直接填寫。
+3. 入院病程：直接入院兩階段；嬰兒室三階段；外院轉入五階段；E 三階段（出院與返家基準 → 本次病程 → 評估與收治）。
+4. 核對：日期與欄位衝突、基本資料缺漏、暫定診斷、母病歷號、家庭樹。
 
-`renderJourney()` 依路徑建立可見站點；`S.journeyStep` 只在使用者按步驟、上一段或下一段時改變。各站內容移入固定的 `#journeyWorkspace`，輸入欄位、顯示條件改變及預覽更新都不會自動收合或跳到下一站。切換故事時，各路徑草稿由 `S.routeDrafts` 分開保存，並把工作區帶到該故事第一站。
+情境選擇不捲動到頁面下方。直接入院的 A/B 在出生段選 standby／出生後會診；未選不推定團隊介入。出生事件不再藏在入院 stepper。前後不同時間的實際處置不視為重複事件。
 
-## 敘事與資料歸屬
+initializeAdmissionWorkflow 只搬動既有 DOM 控制項，保留 ID；各事實只有一份可編輯來源。renderAdmissionWorkflow 管理來源摘要、條件欄位與時點引用。renderJourney 保留固定工作區，輸入不自動換段；切換階段保留當次開頁資料及可恢復的焦點／相對位置。
 
-填寫區塊順序仍配合手寫 chart。產出的 Admission 是完整敘述，依「出生觀察 → Apgar → （直接入院的會診句）→ 實際處置 → 再評估 → 後續路徑 → 入院」串接，不改成 HPI／Assessment 分段模板；Acceptance 的 Brief history 用同一個順序（`birthObservation()`／`birthCourse()` 兩段由呼叫端夾 Apgar）。
+## 共用資料與出生史
 
-- 同一次處置只輸入一次；後續站點的產房摘要是唯讀引用，不是第二份紀錄。
-- 相同處置在不同時間再次發生時，另建事件，不用文字去重刪掉真正的再次處置。
-- 產房最後狀態、外院後續狀態、我方抵達外院、轉送期間、入院及 Acceptance 接手時，是不同時點。
-- 事件依使用者排列順序輸出；時間不一致時提示核對，不默默重排或補出時間。
-
-## 第 5 區：出生觀察與實際處置
-
-| 欄位／狀態 | 寫入位置 | 條件與用途 |
+| 輸入／狀態 | 輸出或用途 | 邊界 |
 | --- | --- | --- |
-| `birthBreathing`、`birthTone`、`birthHR` | Admission 出生初始觀察；Acceptance Brief history | 只寫已選／已填的觀察，不從 Apgar 反推呼吸、肌張力或心率。 |
-| `birthInitialNote` | 初始觀察後的補充句 | 保留英文原意，不擅自改寫成因果或改善結論。 |
-| `birthResusStatus` | 出生急救敘述的有效狀態 | 空白＝未記錄；`none`＝已確認無需急救；`performed`＝已確認有施作。處置事件只有 `performed` 時輸出；再評估不屬於急救處置，在空白或 `none` 時仍保留輸出。 |
-| `S.birthEvents[]` | 初始觀察之後、最終評估之前 | 獨立處置與中途評估按排列順序輸出；詳見事件欄位表。 |
-| `birthFinalBreathing`、`birthFinalTone`、`birthFinalHR` | 產房結束時的評估 | 不把新數值直接寫成「恢復」「改善」；仍需保留實際記錄的前後狀態。 |
-| `birthFinalMin` | 產房最後評估的生後時間 | 單位為分鐘；未填時不補出時刻。只有時間、沒有評估內容時交代曾在該時點評估、所見未指定，不補出正常觀察。 |
-| `birthFinalSupport` | 產房最後支持狀態；後續路徑支持銜接的來源 | 模式需明選；不以最後一個處置事件推定它仍持續。 |
-| `birthFinalNote` | 產房最後評估後的補充句 | 不覆蓋初始觀察或後續入院狀況。 |
-| `S.fd`、`S.doic`、`S.msaf` | 出生事件敘述；相關既有診斷標籤 | 勾選才表示事件曾發生；取消勾選本身不表示陰性。 |
-| `doicMin` | DOIC 出生事件與相關診斷標籤 | 僅在 `S.doic` 啟用時採用，沿用同一個分鐘欄位。 |
-| `S.msafGrade` | MSAF 出生事件的稠度 | 僅在 `S.msaf` 啟用時採用；未選不補稠度。 |
-| `S.birthNegConfirmed` | 已確認未發生的出生事件敘述 | 只涵蓋 FD／DOIC／MSAF，不包含 PROM 或其他病史。陽性選項不被這個確認否定。 |
-| 第 1 區 `ap1`、`ap5`、`ap10` | 獨立 Apgar 總結 | 沿用原欄位，不在急救事件中重填，不代表等評分後才開始處置。 |
+| birthDate、admissionDate | Admission 日期、DOL；Acceptance DOL/PMA | 日曆日期差 + 1，出生當天 DOL 1。日期未齊／先後不成立不退回舊 DOL。手動覆寫另行警示。 |
+| birthTime、admissionTime | 分別寫出生與入院句；入院時間為 24 小時制 | 不以入院時間計算日曆 DOL；同日入院早於出生提示。 |
+| homeHosp、rocYear | 院區與日期顯示設定 | 非病人資料；僅這些偏好等既有設定可儲存於瀏覽器。 |
+| birthHosp／obFacility、obTransferFrom | 出生地／外院轉出來源 | 外院路徑出生院所移到出生區。E 留白不推定出生於本院。母親入院句不推定在本院待產。 |
+| gender、gaW/D、bw、growth | 開頭、體重分級、背景診斷、Acceptance | 出生體重不當成本次 E 評估體重；既有成長計算規則不改。 |
+| gravida、para、abortion、matAge、ap1/5/10 | 母親背景與 Apgar | 共用一次，不在出生處置或 E 重新輸入。 |
+| 母親風險、家族史、amnio、nipt | 明確陽性／陰性／不詳敘述 | 未填不寫陰性。批次「確認無」保留已有陽性。羊穿已有結果時不額外強調 NIPT 未做。 |
+| habitStatus、smoking/alcohol/drug | 已確認的陽性與陰性習慣史 | 未確認不寫 denied；不詳只涵蓋尚未勾陽性的項目。 |
+| birthBreathing/Tone/HR、birthInitialNote | 出生初始觀察 | 不由 Apgar 推定其他生命徵象。 |
+| birthResusStatus、birthEvents | 實際出生處置及重新評估 | 未記錄、確認無、實際施作分開；處置與重新評估可分別記錄。 |
+| birthFinalBreathing/Tone/HR/Support/Min/Note | 出生處置後狀況 | 不推定改善、穩定或持續支持。 |
+| fd、doic、doicMin、msaf、msafGrade、birthNegConfirmed | 出生事件與已確認陰性 | DOIC 分鐘只填一次；空白或取消選取不等於沒有發生。 |
+| csReason、admReason、產前篩檢、iapDrug/Since 等 | 原有產前與產程敘述 | 沿用既有已填資料與條件，不改檢查／治療 protocol。 |
 
-## 共用事件欄位
+## E 共用病程
 
-事件資料存於 `S.birthEvents[]` 或目前路徑的 `S.courseEvents[]`；動態控制項使用 `event-{id}-{key}` 與 `data-event-field="{key}"`。
-
-| 事件 key | 適用事件 | 輸出方式 |
+| 輸入／狀態 | 輸出或用途 | 邊界 |
 | --- | --- | --- |
-| `id` | 全部 | UI 操作與欄位識別，不寫進病歷。 |
-| `kind` | 全部 | `ppv`、`intubation`、`compressions`、`epinephrine`、`assessment`；後續事件另有 `o2`、`cpap`。每個項目只表示本身，不包含其他處置。 |
-| `minutes` | 全部 | 已填時寫生後幾分鐘；未填時使用不含精確時間的敘述。 |
-| `location` | 後續路徑事件 | 英文實際地點；未填不把它自動當成產房、外院或 NICU。 |
-| `fiO2` | PPV、插管、CPAP、O₂ | 只列輸入值及 `%`。**例外（2026-09-20）**：產房急救 PPV 新增時依 `NRP` 表預設帶入 FiO₂／PIP／PEEP（依 GA），事件帶 `nrp:true` 標示直到醫師改過任一值；`timelineReview` 提醒「尚未核對」。插管與 course 範圍不帶預設。 |
-| `pip`、`peep`、`rr` | 適用的呼吸支持事件 | PIP／PEEP 使用 cmH₂O；CPAP 的 `peep` 寫成 pressure；`rr` 僅在插管事件提供。 |
-| `flow`、`device` | 適用的呼吸支持事件 | 氧氣流量以 L/min；裝置依實際英文記錄。 |
-| `duration` | 胸外按壓 | 已填時列按壓持續分鐘數。 |
-| `drugDose`、`drugRoute` | Epinephrine | 原樣呈現實際劑量與單位、給藥途徑；不自動計算，不代填途徑或濃度。 |
-| `breathing`、`tone`、`hr`、`support` | 再評估 | 只寫實際觀察；不自行加上治療有效或無效的判斷。 |
-| `note` | 全部 | 該事件的英文完整補充句；不當成全局病史去推論其他事件。 |
+| readmitSource、readmitProblems、readmitComplaint | 來源、選用模組、其他主訴 | 全部放最上層。其他文字是新增問題，不覆蓋已選問題。Jaundice／prolonged jaundice 共用模組且互斥。 |
+| readmitPrior/Unit/Course | 前次照護與治療 | 前次病程是既往史。支持 received／remained 等簡短片語補主詞；不任意改寫其他自由文字。 |
+| readmitDischargeDate/Weight、readmitFeeding | 出院句、出院時餵食方式 | 有日期可算出院 DOL；奶種整合至同一出院句，避免漏寫。 |
+| readmitBaseline、readmitHomeNote | 返家後基準狀況 | 合併在前次出院同一填寫階段，只寫確認的資料。 |
+| readmitOnsetDOL、readmitCourseType | 共用症狀起始時間與性質 | 不預設新發病。純照護／異常篩檢不顯示症狀起始欄。 |
+| rm_*_onset | 個別問題起始時間 | 預設沿用共用時間；不同才在展開區另填。超出出生至入院範圍即警示。取代舊 readmitJaundiceDOL。 |
+| readmitCourse | 病程補充 | 已選事實不必重述；畫面位於專屬模組及共用狀況之後。 |
+| readmitIntake/Urine/Activity | 進食變化、尿量、活動力 | 共用一組，可用已確認快捷選項或英文片語，不默認正常。 |
+| readmitSickContact | 接觸史完整句 | 不再接到 notable for 後造成子句錯接；快捷陰性需醫師明確點選。 |
+| readmitCurrentWeight、readmitSpO2 | 本次評估數值 | 有填才寫。出院至評估體重差顯示在介面，不自動判定脫水。 |
+| readmitTSB、readmitDB | 已有 total/direct bilirubin 結果 | 僅黃疸模組有效；未填不強迫檢查，隱藏草稿不輸出。 |
+| readmitEvaluation、readmitTreatment | 本次實際評估、已做處置 | 不從入院問題自動建立檢查或治療紀錄。 |
+| resp、obAdmissionStatus | 入院時支持與狀況 | E 合併在「評估與收治」階段；不同於接手時狀態。 |
+| tentDx | 正式診斷清單及入院結語 | 手填優先且只有一個來源，避免另列同義症狀。選問題只提供症狀級預設，不把 URI 自動確診呼吸窘迫。 |
 
-## 本次入院經過：路徑與團隊介入
+## 八組專屬模組
 
-| 欄位／狀態 | 寫入位置 | 條件與用途 |
+RM_MODULES 是欄位定義；rmFields 登記路徑草稿；readmitModuleNarrative 依有效模組寫入 Admission 與 Acceptance。未選模組的值保留在本次開頁，不能進入敘述。不同模組同一時間出現的症狀合成一句；出院前已發生的症狀寫在出院之前。
+
+| 模組 | 欄位（rm_ 前綴） | 輸出 |
 | --- | --- | --- |
-| `S.pathway` | 後續路徑的場域與入院結語 | `direct`、`nursery`、`outborn`、`readmit` 四者擇一；**無預設**。未選時摘要顯示「尚未選路徑」、路徑專屬欄位隱藏、結語不寫路徑。再點一次已選項目可取消。 |
-| `S.dest`（第 1 區） | Admission 結語、`On admission to …` 句、Acceptance 入院句 | `NICU`／`NBC`／`BR` 擇一，整份 note 一次選；未選寫成 `____`。英文 `our NICU`／`our NBC`／`our baby room`（Ryan 2026-09-20 確認 BR＝baby room）。 |
-| `S.delivery` → `deliveryPlace()` | standby 句、產房再評估句、Acceptance surfactant 句、直接入院的會診句 | `cs` 寫 operating room、其餘寫 delivery room；不另設地點欄位。 |
-| `S.pwConsult`、`pwConsultH`、`pwConsultReason` → `consultSentence()` | 直接入院：出生觀察與 Apgar 之後、產房處置之前（故事 B 先叫兒科到產房再處置）；嬰兒室／外接：後續路徑段 | 會診小時數換算後晚於第一個處置分鐘數時，`timelineReview` 提醒核對，不重排。 |
-| `S.outborn` | 外院相關欄位與敘事的顯示條件 | 由 `S.pathway === "outborn"` 衍生，不是第二個獨立路徑。 |
-| `S.pwStandby`、`S.pwSbR`、`pwSbRIn` | 分娩之前的兒科 standby 背景 | 與路徑分開；原因只在 standby 啟用時使用。 |
-| `S.pwConsult`、`pwConsultReason`、`pwConsultH` | 出生後會診經過 | 與路徑及 standby 可並存；生後小時與原因都選填。 |
-| `S.brEval`、`brEvalIn` | 嬰兒室路徑：兒科去看的原因句（`asked to evaluate`，不是會診） | `persist24`＝症狀持續超過 24 小時；`maternal`＝母體風險因子，由 `maternalRiskPhrases()` 從第 2 區帶（`S.r.fever`、`S.r.prom`＋`promH`、`S.scr.gbs==="pos"`），第 2 區沒紀錄則只寫 maternal risk factors 並提醒。 |
-| `S.brWorkup` | 嬰兒室檢查句 | `cbc`／`crp`／`bc`／`glucose`／`cxr`；只寫做了什麼。 |
-| `S.brFindings`、`brCrp`、`brGlu`、`brFindIn` | 檢查結果；有異常時結語改 `therefore` | 異常項與 `normal` 互斥；沒勾結果不寫成正常。 |
-| `S.obSx` | 後續症狀句 | 第 5 區已記錄的同一個初始觀察不用重填；需交代持續、復發或新增症狀才在此記錄。 |
-| `S.pwOnset` | 後續症狀的動詞 | `observed`＝觀察到、起始未明；`developed`＝新出現；`persisted`＝持續；`recurrent`＝再次出現。 |
-| `pwOnsetH`、`pwOnsetUnit` | 症狀的生後時間 | 數值及 `hours`／`minutes` 均確認才寫時間；不把空白單位當成小時。 |
-| `obFacility`、`obTransferFrom` | 外院出生地與轉入來源 | 保留既有院所選擇／繼承規則；外院出生地與轉入來源可以不同。非外院路徑不引用這組草稿。2026-09-24 起改成 input＋共用 `<datalist id="hospList">`（與 `ancPlace`、`birthHosp` 同一份清單）：可打字搜尋短名或全名，清單外的院所自填後原文照寫、不做正規化；留白仍是繼承（`obFacility` 空＝同 `ancPlace`、`obTransferFrom` 空＝同出生院所），placeholder 只是提示、不是值。 |
-| `obReason` | 外接團隊的轉入原因 | 原因不自動等於確診；保留原文的不確定語意。 |
-| `S.obM1Type`、`obM1Relation` | 我方抵達前，外院後續呼吸支持 | 前段來源是 `birthFinalSupport`；不重複記成同一次插管。 |
-| `S.obM1Dev`、`obM1Flow` | 外院 O₂ 支持的適用細節 | 只屬於外院後續支持，不當成轉送或本院設定。 |
-| `obArrival` | 我方抵達外院時的觀察句 | 明確寫為我方到轉出院所，不當成已到本院。 |
-| `S.obRespType`、`obRespRelation` | 直接入院前／嬰兒室／轉送中的支持 | 場域由有效路徑決定；外院路徑的前段來源是外院後續支持，其他路徑是產房最後支持。 |
-| `S.obO2Dev`、`obO2Flow` | 上列支持中的 O₂ 細節 | 僅在 O₂ 模式適用。 |
-| `obFiO2`、`obIP`、`obPEEP`、`obRR` | 上列支持中的呼吸設定 | CPAP 不採用 IP 或 RR；RR 僅在 ETT 模式適用。隱藏而不適用的舊設定不寫進病歷。 |
-| `S.obRespStable` | PPV 時 HR／SpO₂ 穩定的確認句 | 僅明確勾選且當時模式為 PPV 才寫；不擴大成所有生命徵象正常。 |
-| `S.courseEvents[]` | 後續評估與額外／再次處置 | 與前面的基本路徑支持分開；不重填同一次事件。時間、地點選填但需核對排列順序。 |
-| `obCourse` | 後續經過補充 | 保留完整英文內容；不從自由文字自動建立結構化處置或自行裁決矛盾。 |
-| `S.resp`（入院站「入院時呼吸支持」，`[data-seg="resp"]`） | Admission 的 `On admission to …` 句、NI plan 的呼吸／OG／A-line 規則、Acceptance「At acceptance…」句 | **與 Acceptance A 區是同一個值**，兩處各有一組按鈕、`render()` 每次同步 `aria-pressed`；再點一次清空（在 `SEG_CLEARABLE` 內）。只寫明選的當下支持，不由產房或轉送歷程推定。 |
-| `obAdmissionStatus` | 抵達本院並入院時的觀察句 | 與 `obArrival`、產房結束狀態及 Acceptance 當下狀態分開。與 `S.resp` 同時有值時併成一句（`…the infant was receiving respiratory support with NCPAP; <狀況>.`）。 |
-| 第 7 區 `tentDx` | 入院結語的暫定診斷 | 沿用既有診斷來源／規則，不由轉送前後的連接詞推定新診斷。 |
+| jaundice | jaundice_trend、jaundice_onset；共用尿便選項 | 起始與後續變化；不重複新生兒／持續性黃疸兩套起始時間。 |
+| respiratory | respiratory_symptoms、respiratory_setting、respiratory_onset | 明選鼻塞、流鼻水、咳嗽、呼吸快／費力及出現情境。 |
+| fever | fever_temperature、fever_method、fever_time、fever_onset | 實測 °C、測量方式與日期時間，不從溫度推論病原或確診。 |
+| feeding | feeding_usual、feeding_current、feeding_frequency、feeding_onset | 原本與目前每餐 mL、頻率；數值改變用 increased/decreased/unchanged，不另自動推論脫水。 |
+| apnea | apnea_type、apnea_count、apnea_duration、apnea_setting、apnea_recovery、apnea_onset | 明選觀察、次數、每次約幾秒、發作情境及實際恢復方式。 |
+| gastrointestinal | gastrointestinal_symptoms、gastrointestinal_character、gastrointestinal_count、gastrointestinal_onset | 嘔吐／腹脹／腹瀉／血便；只有選嘔吐才顯示及使用嘔吐物特徵與過去 24 小時次數。 |
+| screen | screen_test、screen_result、screen_date | 採檢項目、結果與日期；用轉介評估句，不寫成 developed an abnormal result。 |
+| care | care_reason、care_needs | 收治理由與實際需求；不用發病句型，不預設疾病診斷。 |
 
-### Story E：出院後再次就醫
+screen_onset、care_onset 是草稿結構的非臨床佔位，保持隱藏且不讀入病歷。其他 onset 欄位僅在醫師明確另填時覆寫共用起始時間。
 
-Story E 仍會引用第 1–4 區既有的產前、分娩、Apgar、出生觀察及處置，因此不需要也不允許在 E 重填出生史。工作區依序為「先前照護 → 返家後基準 → 本次症狀 → 就醫評估 → 入院」，Admission 仍輸出為連續敘述，不轉為條列模板。
+## 跨分頁與時間點
 
-| 欄位／狀態 | 寫入位置 | 單一資料來源與核對規則 |
-| --- | --- | --- |
-| `admissionDate`、`birthDate`、`S.dol` | Admission 開頭、Acceptance DOL／PMA | 「自動計算」預設啟用且始終可選，入院日預設今天，只填出生日期即以日曆日差加 1 計算，故出生當天＝DOL 1；PMA 增加 `DOL - 1` 天。回補病歷依實際入院日計算，「今天入院」會設回今天並恢復自動；手動 DOL 與日期不一致時提示。 |
-| `S.readmitPrior`、`readmitPriorUnit`、`readmitPriorCourse` | 先前出生住院／照護經過 | 只描述實際經過；不從本次主訴反推前次治療。 |
-| `readmitDischargeDate`、`readmitDischargeWeight` | 前次出院句 | 出院日在出生前或本次入院後時提示核對；體重只表示前次出院，不當成本次體重。 |
-| `S.readmitFeeding`、`S.readmitBaseline`、`readmitHomeNote` | 返家後基準狀態 | 用來交代發病前餵食與已知基準；不重複本次病程。 |
-| `S.readmitProblems`、`readmitOnsetDOL`、`readmitComplaint`、`readmitCourse` | 本次症狀與病程 | 問題類型控制黃疸或一般症狀細節的顯示；症狀開始日齡晚於入院日齡時提示核對。 |
-| `readmitJaundiceDOL`、`S.readmitJaundiceSigns` | 黃疸細節 | 深色尿／淡色便的肯定與否定各自互斥；只在黃疸問題啟用時寫明確選取的觀察。取消黃疸保留草稿但不輸出；黃疸日齡不會抑制並存的呼吸等其他問題。 |
-| `readmitIntake`、`readmitUrine`、`readmitActivity`、`readmitSickContact` | 一般病程細節 | 只在相關問題被選取時顯示；空白不補成正常。 |
-| `S.readmitSource`、`readmitSpO2`、`readmitTSB`、`readmitDB`、`readmitEvaluation`、`readmitTreatment` | 門診／急診／預約評估 | 黃疸檢驗只在黃疸問題啟用時採用；隱藏草稿不進病歷。 |
-| `readmitCurrentWeight` | Admission 就醫評估、Acceptance 體重 | **本次體重只輸入一次**。Story E 的 Acceptance 體重欄改成唯讀引用，不再提供第二個可矛盾的輸入。 |
-| `obAdmissionStatus`、`S.resp`、`S.dest` | 入院站、Admission 結語、Acceptance 當下狀態 | 與 A–D 共用單一入院狀態及呼吸支持來源；前次照護或門急診處置不會覆蓋接手當下狀態。 |
+- resp 是入院支持；acceptanceResp 是接手支持。只有點「已確認接手時與入院時相同」才複製當時值；之後各自獨立。NI plan 不從 Acceptance 的未確認歷程倒推入院狀態。
+- E 的 Acceptance 可沿用入院評估體重，會標記來源；「有重新測量」才填 accGrBW。新測量不改 readmitCurrentWeight；也不把出生體重回填成現在體重。
+- E 出生時的急救與插管留在病史，不能自動觸發本次呼吸診斷、現在的呼吸支持或已完成的 Procedure。
+- A–D 原有出生、嬰兒室、外院處置、外接及轉送事件仍保留。不同時間的同類處置不能以字串去重刪除。
+- 切換路徑保存該次開頁的各路徑草稿（包含 E 模組、來源及手填診斷）。不新增病人資訊的 localStorage 或雲端儲存。
 
-## 第 6 區：家庭樹（Pedigree，2026-09-23）
+## 驗收與界限
 
-Admission note 結尾 `Pedigree:` 之後由 `buildPedigree()` 產生純文字樹，內容一律 escape 後包在 `<span class="pedigree">`；只進 Admission。樹只有符號一種樣式（`□ ○ ◇`／`─ │ ┬ ┴ ┼ ┌ ┐`／`→`，實心只用在本人；符號、線與接點一律 2 欄寬，年齡／備註的 ASCII 1 欄），沒有樣式切換。缺的資訊整段省略，不補佔位，樹內不得出現 `__`（複製鈕以 `_{2,}` 統計未填空格）。
-
-| 欄位／狀態 | 寫入位置 | 條件與用途 |
-| --- | --- | --- |
-| `fatherAge` | 家庭樹父親註記（`Father 35y`） | 只有填了才寫年齡；空白時只寫 `Father`，不補佔位也不推估。 |
-| 第 1 區 `matAge`、`gravida`、`para`、`abortion` | 家庭樹母親註記（`Mother 32y G3P2A1`） | 沿用同一組欄位，不在第 6 區重填；缺哪一段就省略哪一段（只有 G 就只寫 `G3`）。 |
-| `S.sibs[]`（`sex`／`age`／`note`／`twin`） | 子代列的手足 | 依陣列順序由左至右＝出生序（最年長在前）。`sex` **不預選**，未選畫 `◇`，再點一次已選的性別可回到未選；`age`／`note` 為英文自由文字，空白就不畫該列；`twin` 與本人合成同一個子代單元並畫分叉。動態控制項為 `sib-{id}-age`／`sib-{id}-note` 與 `data-sib-field`／`data-sibseg`／`data-sibtog`／`data-sib-action`。 |
-| `S.nextSibId` | 子代列識別 | 三個子代清單（手足、父親／母親與其他伴侶的小孩）共用同一個計數器，故 `sib-{id}-age` 全域唯一；只供 UI 操作，不寫進病歷。 |
-| `S.ped.rel`（`[data-seg="pedRel"]`） | 父母之間那段關係線 | `married`（預設，實線 `───`）／`unmarried`（虛線 `╌╌╌`）／`divorced`（靠左那位成人符號右緣兩道斜線 `╱╱─`，右半段維持實線）。 |
-| `S.ped.fatherUnknown`（`[data-tog="fatherUnknown"]`） | 父親符號與註記 | 勾選時符號改未知（`◇`）、註記寫 `Father unknown` 且不寫年齡（`#fatherAge` 一併 disabled）；關係線照畫，家族史病名仍接在註記後面。 |
-| `S.ped.fatherOther`／`S.ped.motherOther`（`rel`／`age`／`note`／`kids[]`） | 半手足那一段：其他伴侶符號、該段關係線與掛在它底下的小孩 | 只要選了關係、填了年齡／備註、或有小孩就畫，都沒動就整段不畫（輸出與單一家庭版逐字元相同）。`rel` **不預選**，未選畫一般線，再點一次已選的可回到未選。伴侶性別固定（父親側畫女、母親側畫男），註記只有填了 `age`／`note` 才寫（`38y, deceased`）。`kids[]` 與 `S.sibs` 同形（`id`／`sex`／`age`／`note`），**沒有 `twin`**；列的控制項多一個 `data-sib-list="sibs｜fatherOther｜motherOther"` 供 `drawSibs()`／`sibClick()`／input 委派分辨清單。伴侶年齡／備註欄位用 `data-ped-field="fatherOther:age"` 寫回狀態。 |
-| 版面 | 成人列與三組子代的欄位 | 成人由左到右＝父親的其他伴侶－父－母－母親的其他伴侶，相鄰中心距離 `D=max(16, hwL+hwM+8, hwM+hwR+8)` 向上取 4 的倍數（接點在中點也要落在偶數欄），`hw` 是該組子代跨距的一半；每段 junction 在兩成人中點，該組子代以 junction 為中心對稱排列。只要有任一組需要橫桿列，三組都畫出橫桿與子代主幹兩列，單元少的組在那兩列畫主幹。 |
-| 第 1 區 `S.gender` | 本人（proband）符號 | 本人自動畫在最後（同胎組內也在最後），年齡固定 `NB`，一律加箭頭；未選性別畫未知符號，不預設男女。 |
-| 第 2 區 `S.parent.thal`／`g6pd`／`thyroid` | 父母註記病名（符號維持空心） | `father`／`mother`／`both` 決定病名接在哪一側註記後（`thalassemia`／`G6PD deficiency`／`thyroid disease`）；實心只用在本人（2026-09-23 Ryan）。 |
-
-## 支持連續性與未記錄的處理
-
-- 空白關係只描述已確認的當時支持，不用 `continued`、`initiated`、`reintubated` 等帶有事件關係的用語。
-- 支持模式與 O₂ 裝置可明選「未記錄」清除先前選擇；不需要重開頁面，也不把未記錄當成 room air。
-- 新增處置與再評估的按鈕始終可用；新增實際處置會自動把急救狀態設為 `performed`，單獨新增再評估不會宣稱曾急救。
-- `continued` 需要使用者明確確認，而且前段有已知模式；來源模式改變或前後模式不同時提示重新核對。
-- 「持續同前」只承接已確認的支持模式，不代表呼吸參數、症狀、心率或穩定程度也相同。
-- `new`、`changed`、`repeat` 分別記錄新開始、調整或停止後再次施作；不能僅因模式相同就判定是同一次事件。
-- `stopped` 只表示前段支持停止，不自行補成呼吸 room air 或病況改善；後續模式／參數草稿保留但不輸出。
-- 時間、數值、藥物細節缺漏時不補造。中文核對提示留在 UI，不混進複製的英文病歷。
-
-## 跨分頁範圍及刻意不採用的資料
-
-| 消費端／UI 狀態 | 範圍與限制 |
-| --- | --- |
-| Admission | 使用 `birthNarrative()` 與 `postnatalNarrative()` 串接已知事實；既有出生摘要、產前內容與診斷清單保留。 |
-| Acceptance Brief history | 引用同一份出生／後續事件資料，避免另一套急救階梯補出未記錄的處置。 |
-| Acceptance 目前支持 `S.resp` | 只表示接手當下；不被產房、轉送或 Hospital course 中較早的模式覆蓋。 |
-| Acceptance Hospital course `S.acc.resp` 等 | 保留既有住院歷程與日期；不把出生事件自動當成新的住院處置紀錄。 |
-| NI plan | 維持既有可手動覆寫的規則。`S.resus` 由有效出生處置衍生粗分類供既有規則參考，不再用粗分類反推下層處置。出生／路徑支持不直接寫成接手當下應持續的模式。 |
-| NI plan 週數／體重門檻（2026-09-24） | ROP、腦部超音波、hsPDA echo、PN、caffeine 與預後分層改讀 `PLAN_GA`（`renderPlan()` 前的單一真相表），不再只看「早產與否」。`gaW` 空白時四條 GA 規則都不觸發（維持以足月組稿），`bw` 空白時 BW 規則不觸發。四條都在「醫囑項目」有對應按鈕可手動覆寫，`↻ 全部回自動` 一併還原。 |
-| NI plan 的日期（2026-09-24） | 讀 `#birthDate`，經 `planDate(生後天數)` 換算，格式走與全站相同的 `fmtDate`，故 `#rocYear`（民國紀年）對 plan 的日期同樣生效。PMA 目標日＝`weeks*7-(gaW*7+gaD)`，可為負（已過）。`#birthDate` 未填時只輸出相對說法，不產生括號日期。 |
-| Procedure | 未將出生事件自動勾成 Procedure；處置筆記、既有計算與用藥規則保持其原本範圍。 |
-| `birthBridge`、`birthReview`、`pathwayReview` | 只供畫面摘要／核對，不是新的臨床欄位，也不直接複製進病歷。 |
-| `S.routeDrafts` | 切換路徑時保留各路徑本次開頁草稿；只有目前有效路徑輸出。重新整理後不保留病人草稿。 |
-| `S.continuitySignatures` | 驗證「持續同前」是否仍對應已確認來源的 UI 狀態，不寫進病歷。 |
-| `S.lastRemoved`、`S.nextEventId` | 移除／復原及事件識別用途，不表示病人資訊或病歷事件順序本身。 |
-
-新增欄位或更動條件時，應同時核對這份對照、產出的 Admission／Acceptance、適用的 NI plan 行為與回歸測試。自由文字仍需臨床使用者確認；一般性的提示不是完整的矛盾判讀器。
+- tests/prose/workflow.js：順向排列、唯一 ID、DOL 邊界、各模組輸出、混合症狀、陰性／未知、草稿隔離、支持／體重時點、E 既往急救隔離。
+- 既有 prose／timeline／downstream／plan／pedigree／navigation／clipboard 等測試繼續執行；變更輸出快照須逐項核對，不能只更新快照掩蓋錯誤。
+- tests/prose/browser-workflow.cjs：獨立 Chrome CDP、1440×1000 和 390×844、實際可見控制項與點擊命中檢查。從入口到核對的混合 E 假病例記錄點擊／輸入數，案例不需返回上段補填；另測返回及跨分頁。
+- 自動化結果與模擬試填不等同真實住院醫師使用者測試，也不表示任意自由文字的所有語意矛盾都能偵測。檢查與劑量規則未在此次改版重新做醫療有效性驗證。

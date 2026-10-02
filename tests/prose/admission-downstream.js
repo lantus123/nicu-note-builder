@@ -36,7 +36,7 @@ function withPage(check){
   const input=(id,value)=>change(get(`#${id}`),value);
   const seg=(key,value)=>click(`[data-seg="${key}"] [data-v="${value}"]`);
   const msel=(key,value)=>click(`[data-msel="${key}"] [data-v="${value}"]`);
-  const story=key=>click(`#pathwayCard .story[data-story="${key}"]`);
+  const story=key=>click(`[data-story="${key}"]`);
   // flag 型風險（fever）只有是／否；choice 型（prom）要再點一次分類鈕，時數另填。
   const riskYes=key=>click(`[data-ryn="${key}"] [data-v="yes"]`);
   const riskChoice=(key,value)=>click(`[data-rc="${key}"] [data-v="${value}"]`);
@@ -77,7 +77,7 @@ test('產房結束時掛著 CPAP 就會進診斷、計畫與 acceptance（沒有
   assert.match(plan,/sepsis work-up/);
   assert.match(plan,/OG decompression/);
   const acceptance=onTab('acc');
-  assert.match(acceptance,/admitted to our NICU with respiratory distress/);
+  assert.match(acceptance,/admitted to our NICU(?: on [^.]+)? with respiratory distress/);
 });
 
 test('嬰兒室驗出的低血糖會變成診斷、Dex 指徵與入院原因（沒勾症狀也算）',page=>{
@@ -105,22 +105,22 @@ test('嬰兒室抽出的 bandemia 會變成疑似敗血症，並讓 plan 只補�
   assert.doesNotMatch(plan,/Obtain a sepsis work-up, including CBC\/DC/);
 });
 
-test('入院時呼吸支持在 Admission 與 Acceptance 是同一個值，並同時進三份輸出',page=>{
+test('入院與接手呼吸支持分開，明確確認同前才帶入',page=>{
   const {get,click,input,note,onTab,d}=page;
   const admResp=v=>click(`[data-stop="adm"] [data-seg="resp"] [data-v="${v}"]`);
-  const accPressed=v=>d.querySelector(`#accForm [data-seg="resp"] [data-v="${v}"]`).getAttribute('aria-pressed');
+  const accPressed=v=>d.querySelector(`#accForm [data-seg="acceptanceResp"] [data-v="${v}"]`).getAttribute('aria-pressed');
   page.story('A');input('birthResusStatus','none');
   admResp('NCPAP');
-  assert.equal(accPressed('NCPAP'),'true','Acceptance A 區必須跟著亮起來');
+  assert.equal(accPressed('NCPAP'),'false','接手時不可由入院狀態自行推定');
   assert.match(note(),/On admission to our NICU, the infant was receiving respiratory support with NCPAP\./);
   assert.match(onTab('plan'),/Provide respiratory support with NCPAP/);
-  assert.match(onTab('acc'),/At acceptance, the infant is receiving respiratory support with NCPAP/);
-  // 再點一次＝清空：三處都不得殘留
+  onTab('acc');click('#useAdmissionResp');assert.match(note(),/At acceptance, the infant is receiving respiratory support with NCPAP/);
+  // 再點一次＝清空入院值；接手時已確認的值仍保留
   onTab('adm');admResp('NCPAP');
-  assert.equal(accPressed('NCPAP'),'false','清空後兩組按鈕都要熄掉');
+  assert.equal(accPressed('NCPAP'),'true','清空入院狀態不能改寫接手狀態');
   assert.doesNotMatch(note(),/NCPAP/);
   assert.doesNotMatch(onTab('plan'),/NCPAP/);
-  assert.doesNotMatch(onTab('acc'),/NCPAP/);
+  assert.match(onTab('acc'),/At acceptance, the infant is receiving respiratory support with NCPAP/);
   // 與入院時狀況併成一句
   onTab('adm');admResp('NCPAP');input('obAdmissionStatus','the infant was pink and active');
   assert.match(note(),/On admission to our NICU, the infant was receiving respiratory support with NCPAP; the infant was pink and active\./);
