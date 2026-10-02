@@ -7,7 +7,7 @@
 | 分頁 | 內容 |
 |------|------|
 | **Admission** | 出生摘要、母體背景、產程與入院經過的敘述式段落；自動 AGA/SGA/LGA（Fenton 2025）＋暫定診斷清單 |
-| **NI plan** | 依週數＋admission 選擇自動組出 Diagnostic／Therapeutic／Prognostic 三段計畫，早產醫囑**依出生週數／體重細分**（ROP、腦超、echo、PN、caffeine、預後分層）並自動換算日期；去處為 BR 時不產生 plan |
+| **NI plan** | NBC／NICU 依週數＋admission 選擇自動組出 Diagnostic／Therapeutic／Prognostic 三段計畫，早產醫囑**依出生週數／體重細分**（ROP、腦超、echo、PN、caffeine、預後分層）並自動換算日期；未選去處或 PICU 專用模板尚未確認時，不產生 plan |
 | **Acceptance** | 沿用出生資料產生敘述式 Brief history；Hospital course 依呼吸及感染問題串接，ABG 貼上自動判酸鹼；目前體重另填 |
 | **Procedure** | 勾選 8 種 procedure（intubation／A-line／LISA／LP／UAC／UVC／chest tube／exchange transfusion），依體重自動帶 ETT size・深度・劑量等 |
 
@@ -49,13 +49,14 @@
 - 支持延續需明確確認；症狀區分新出現、持續或再次發生。未記錄不當成正常、未施作或已改善，FD／DOIC／MSAF 的陰性敘述需額外確認。
 - 切換路徑保留本次開頁草稿，不把其他路徑隱藏資料混入病歷；Acceptance 接手當下支持仍獨立記錄，不被出生／轉送歷史覆蓋。
 - **入院路徑不預設**（2026-09-19）：以前「直接入院」預選，零點擊就會寫出入院路徑；現在未選時路徑摘要顯示「尚未選路徑」，結語只寫「admitted to …」不寫路徑。再點一次已選的路徑可取消。
-- **入院去處在最上方設定選 NICU／NBC／BR**，整份 note 一次選；Admission 結語、入院時狀況句與 Acceptance 都跟著寫 `our NICU`／`our NBC`／`our baby room`，未選時寫成 `____`。
+- **本次住院去處為 NBC／NICU／PICU**（2026-10-02 院內規則），最上方選一次，Admission 結語、入院時狀況句與 Acceptance 共用。BR 是健康新生兒照護，不列為住院去處；C 仍保留「先在 BR 照護、後來因病收入病房」的經過。
+- **E 只允許 NBC／PICU**，已返家的寶寶不收入 NICU。選 E 後 NICU 隱藏且停用；原有不相容去處會明確提示並取消，不自動代選。未選／不相容值只輸出 `____`，不輸出無效的單位。各路徑保存自己的去處草稿；切回時恢復原值並再次驗證，不覆蓋其他路徑的選擇。
 - **產房／刀房由生產方式自動決定**：NSD 寫 delivery room、C/S 寫 operating room，用於 standby 句、產房再評估句、Acceptance 的 surfactant 句；會診句只在明選「直接入院」時才加地點（嬰兒室路徑的會診地點不是產房）。
 - 新欄位的用途、跨分頁範圍與刻意排除的資料見 [Admission 欄位對照](docs/admission-field-map.md)。這份對照涵蓋本次時間線改版，不代表全專案歷史欄位已完成全面稽核。
 
 ## NI plan 讀 admission 的哪些東西（2026-09-23）
 
-- **去處決定配置**：`DEST_PLAN` 是單一真相（程式裡 `DEST_EN` 旁邊）。`BR`（嬰兒室）**不產生 NI plan**——note 清空、plan 設定控制項收起，`#planWarn` 顯示中文提示「改去處請回 Admission 最上方入院設定」（中文只進 UI，不進 note，因為 note 是用 innerText 複製走的）。`NBC` 用**非加護病房配置**：不寫 Giraffe、不寫 Minimize handling、A-line 不因插管自動列入。`NICU`（及未選去處）維持原本的加護配置。**NBC 細項待 Ryan 校正，要改就改 `DEST_PLAN` 那張表。**
+- **去處決定配置**：`allowedDestinations()` 統一路徑限制，`DEST_PLAN` 統一 plan 配置。`NBC` 維持**非加護病房配置**：不寫 Giraffe、不寫 Minimize handling、A-line 不因插管自動列入。`NICU` 維持原加護配置。未選／無效去處不再回退為 NICU；`PICU` 在專用院內模板確認前不產生 NI plan，控制項收起，`#planWarn` 說明原因，Admission／Acceptance 仍可使用。提示只進 UI，不進複製病歷。**此變更不新增 PICU 治療規則或劑量；NBC 細項仍待 Ryan 校正。**
 - **呼吸狀態依時點取用**：NI plan 優先讀 `S.resp`（入院時支持）；A–D 未填時才沿既有入院前／轉送、出生支持來源判斷。E 不使用多日前的出生支持，Acceptance 的呼吸病程也不再倒推 Admission。既有治療門檻與劑量未在此次修改。
 - **嬰兒室抽血結果進 plan**：`brFindings` 出現 bandemia／白血球↑↓／CRP↑ 就算感染風險（自動 empirical 抗生素）；低血糖進 Dex 指徵。`brWorkup` 已抽過的項目不再重開——plan 改寫成「Obtain the remaining sepsis work-up, including …（… were obtained in the baby room）」。
 - **入院與接手支持各自獨立**：`S.resp` 描述入院時；`S.acceptanceResp` 描述接手當時。只有明按「已確認接手時與入院時相同」才複製一次，之後互不覆寫。Admission 的支持與入院狀況仍可合成一句。

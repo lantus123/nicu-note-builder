@@ -179,7 +179,7 @@
   .risk-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
   .risk-name{font-size:14.5px;font-weight:620}
   .risk-name small{display:block;font-size:12px;font-weight:500;color:var(--ink-3);margin-top:2px}
-  .yn{display:flex;gap:5px;flex:0 0 auto}
+  .yn{display:flex;gap:5px;flex:0 0 auto;max-width:100%;flex-wrap:wrap}
   .yn button{min-height:44px;min-width:48px;padding:0 12px;border:1px solid var(--line);background:var(--surface);
     color:var(--ink-2);border-radius:9px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
   .yn button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
@@ -547,10 +547,14 @@
       </div>
     </div>
     <div class="field">
-      <span class="lab">入院去處 <span class="q">（整份 note 一次選；未選則寫成 ____）</span></span>
-      <div class="seg" data-seg="dest">
-        <button data-v="NICU">NICU</button><button data-v="NBC">NBC</button><button data-v="BR">BR 嬰兒室</button>
+      <span class="lab" id="destLabel">本次住院去處 <span class="q">（整份 note 共用；未選則寫成 ____）</span></span>
+      <div class="seg" data-seg="dest" role="group" aria-labelledby="destLabel" aria-describedby="destHelp destNurseryHelp destNotice">
+        <button data-v="NBC">NBC</button><button data-v="NICU">NICU</button><button data-v="PICU">PICU</button>
       </div>
+      <p class="man-h" id="destHelp">請選擇本次實際收治單位，不預設去處。</p>
+      <p class="man-h" id="destNurseryHelp">BR 是健康新生兒照護，不列為住院去處；尚未返家、由 BR 因病轉入才選情境 C。</p>
+      <p class="local-review" id="destNotice" role="status" hidden></p>
+      <p class="man-h" id="destPlanHelp" hidden>PICU 可產生 Admission／Acceptance；專用 NI plan 尚未設定，不會套用 NICU 醫囑。</p>
     </div>
     <div class="field" id="csUncomplWrap" hidden><span class="lab">生產過程 <span class="q">（未勾則不寫，順利與否需自行確認）</span></span>
       <div class="seg" data-tog="csUncompl"><button data-v="1" style="flex:0 1 auto">過程順利</button></div></div>
@@ -1147,7 +1151,7 @@
     <section class="card">
       <h2 class="sec-h">NI 計畫設定 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">其餘依週數＋admission 自動帶</span></h2>
       <div class="iap-warn" id="planWarn" hidden></div>
-      <!-- 去處 BR（嬰兒室）不產生 NI plan：整組設定控制項一起收起，只留 #planWarn 的中文提示 -->
+      <!-- 尚未確認有效去處，或沒有該單位的 plan 配置時，收起控制項；原因只顯示在 #planWarn，不混進病歷。 -->
       <div id="planControls">
       <div class="field"><span class="lab">抗生素處方</span>
         <div class="seg" data-seg="planAbx" style="flex-wrap:wrap">
@@ -1645,7 +1649,7 @@
                 ["rubella","Rubella IgG","rubella IgG"],["hiv","HIV","HIV infection"],
                 ["gbs","GBS","group B streptococcus (GBS)"]];
   // planOn[k]: undefined=依規則自動, true/false=醫師手動覆寫
-  const S={gender:"",dest:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,r:{},   // dest=入院去處 NICU/NBC/BR，整份 note 一次選；不預設（Ryan 2026-09-19：要能選）   // 性別/生產方式不預設：預設值會被寫進 note＝捏造事實
+  const S={gender:"",dest:"",destNotice:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,r:{},   // 住院去處 NBC/NICU/PICU；E 僅 NBC/PICU，不預設。BR 是健康新生兒照護。性別/生產方式亦不預設。
            scr:{hbsag:"na",hbeag:"na",syphilis:"na",rubella:"neg",hiv:"na",gbs:"na"},   // 核心四項+HBeAg 預設未表態(neg 預設=把沒填寫成事實);rubella 的 neg 本義即未提及
            resus:"none",resp:"",acceptanceResp:"",acceptanceWeightMode:"admission",surfactant:false,birthEvents:[],courseEvents:[],nextEventId:1,
            routeDrafts:{},continuitySignatures:{},lastRemoved:null,birthNegConfirmed:false,
@@ -1957,6 +1961,8 @@
   // resp 是入院支持，acceptanceResp 是接手支持；各自可再點一次清空，不互相覆寫。
   const SEG_CLEARABLE=new Set(["gender","delivery","dest","pathway","obRespType","obO2Dev","obM1Type","obM1Dev","resp","acceptanceResp","readmitPrior","readmitFeeding","readmitSource"]);
   function segPick(seg,b,key,cb){
+    if(b.disabled||key==="dest"&&!allowedDestinations().includes(b.dataset.v))return;
+    if(key==="dest")S.destNotice="";
     if(key&&SEG_CLEARABLE.has(key)&&b.getAttribute("aria-pressed")==="true"){
       if(key==="pathway")switchPathway("");
       seg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));
@@ -2149,19 +2155,43 @@
     out.push(...findings);
     return out;
   }
-  // 入院去處（Ryan 2026-09-19：要能選 NICU／NBC／BR）。英文寫法待 Ryan 校正；未選時寫成佔位符，不替使用者決定去處。
-  const DEST_EN={NICU:"our NICU",NBC:"our NBC",BR:"our baby room"};   // Ryan 2026-09-20：BR 就寫 baby room
-  function destPhrase(blank="____"){return S.dest?DEST_EN[S.dest]:blank;}
+  // 2026-10-02 院內收治規則：BR 不是住院；已返家（E）只收 NBC/PICU。
+  // UI、敘事、核對與 plan 均使用同一份白名單；舊值不能繞過路徑限制。
+  const DEST_EN={NBC:"our NBC",NICU:"our NICU",PICU:"our PICU"};
+  const allowedDestinations=(pathway=S.pathway)=>pathway==="readmit"?["NBC","PICU"]:["NBC","NICU","PICU"];
+  const admissionDestination=()=>allowedDestinations().includes(S.dest)?S.dest:"";
+  function destPhrase(blank="____"){return DEST_EN[admissionDestination()]||blank;}
+  function validateDestination(){
+    if(!S.dest||admissionDestination())return;
+    S.destNotice=S.dest==="BR"
+      ?"原選 BR 屬健康新生兒照護，已取消住院去處；若此次需要住院，請選擇實際收治單位。"
+      :S.pathway==="readmit"&&S.dest==="NICU"
+        ?"原選 NICU 不適用情境 E，已取消選取。已返家的寶寶請重新選 NBC 或 PICU；不會自動代選。"
+        :"原住院去處不適用目前情境，已取消選取，請重新確認。";
+    S.dest="";
+  }
+  function renderDestination(){
+    validateDestination();
+    document.querySelectorAll('[data-seg="dest"] button').forEach(b=>{
+      const allowed=allowedDestinations().includes(b.dataset.v);
+      b.hidden=!allowed;b.disabled=!allowed;b.setAttribute("aria-pressed",String(b.dataset.v===admissionDestination()));
+    });
+    document.getElementById("destHelp").textContent=S.pathway==="readmit"
+      ?"情境 E：已返家的寶寶只收 NBC／PICU，不收入 NICU。"
+      :"請選擇本次實際收治單位：NBC／NICU／PICU，不預設去處。";
+    const notice=document.getElementById("destNotice");notice.hidden=!S.destNotice;notice.textContent=S.destNotice;
+    document.getElementById("destPlanHelp").hidden=admissionDestination()!=="PICU";
+  }
   // 產房／刀房依生產方式自動推（Ryan 2026-09-19：可以，但依 VD 或 CS 去選擇）；未選生產方式時維持原本的 delivery room。
   function deliveryPlace(){return S.delivery==="cs"?"the operating room":"the delivery room";}
-  // 去處決定 NI plan 的配置（2026-09-23 Ryan 拍板：BR 不產生 plan、NBC 用非加護病房配置）。
+  // 去處決定 NI plan 的配置。PICU 尚無經確認的院內模板，不推定等同 NICU。
   // ⚠ NBC 細項待 Ryan 校正——這張表是單一真相，要改配置只改這裡，不要在 renderPlan 裡另開判斷。
   const DEST_PLAN={
     NICU:{giraffe:true, minimalHandling:true, alineRule:true},
     NBC:{giraffe:false, minimalHandling:false, alineRule:false},
-    BR:null
+    PICU:null
   };
-  const destPlan=()=>S.dest&&S.dest in DEST_PLAN?DEST_PLAN[S.dest]:DEST_PLAN.NICU;   // 未選去處沿用 NICU 規則（維持現行行為）
+  const destPlan=()=>DEST_PLAN[admissionDestination()]||null;   // 未選或不相容，不回退成 NICU 醫囑。
   // 呼吸相關症狀：原本 renderAdm 的 OB_RESP_SX 與 renderAcc 的 respSx 是兩份同內容清單，合併成這一個常數。
   const RESP_SX=["tachypnea","subcostal retractions","grunting","nasal flaring","cyanosis","desaturation","apnea"];
   // 入院問題清單＝DX chip／入院結語／Acceptance 入院原因／NI plan 的單一真相。
@@ -2474,12 +2504,15 @@
     "readmitPriorUnit","readmitPriorCourse","readmitDischargeDate","readmitDischargeWeight","readmitHomeNote","readmitOnsetDOL","readmitComplaint","readmitCourse","readmitCourseType","readmitIntake","readmitFeedingNote","readmitUrine","readmitActivity","readmitSickContact","readmitCurrentWeight","readmitSpO2","readmitTSB","readmitDB","readmitEvaluation","readmitTreatment","tentDx",...rmFields()];
   function switchPathway(next){
     if(next===S.pathway)return;
-    S.routeDrafts[S.pathway]={state:Object.fromEntries(ROUTE_KEYS.map(k=>[k,JSON.parse(JSON.stringify(S[k]))])),fields:Object.fromEntries(ROUTE_FIELDS.map(id=>[id,V(id)]))};
+    S.routeDrafts[S.pathway]={destination:S.dest,destNotice:S.destNotice,state:Object.fromEntries(ROUTE_KEYS.map(k=>[k,JSON.parse(JSON.stringify(S[k]))])),fields:Object.fromEntries(ROUTE_FIELDS.map(id=>[id,V(id)]))};
     const saved=S.routeDrafts[next],defaults={obRespType:"",obRespStable:false,obSx:[],brEval:[],brWorkup:[],brFindings:[],obO2Dev:"",pwOnset:"observed",obM1Type:"",obM1Dev:"",pwConsult:false,courseEvents:[],continuitySignatures:{},
       readmitPrior:"",readmitFeeding:"",readmitSource:"",readmitBaseline:[],readmitProblems:[],readmitJaundiceSigns:[]};
     ROUTE_KEYS.forEach(k=>S[k]=saved?saved.state[k]:defaults[k]);
     ROUTE_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)el.value=saved?saved.fields[id]||"":"";});
     S.pathway=next;
+    // 初次選路徑保留相容的去處；切回既有路徑還原其選擇，避免 E 的 NBC 覆蓋原本 NICU。
+    S.dest=saved?.destination??S.dest;S.destNotice=saved?.destNotice||"";
+    validateDestination();
     ROUTE_KEYS.forEach(k=>{
       document.querySelectorAll(`[data-seg="${k}"] button`).forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===S[k])));
       document.querySelectorAll(`[data-msel="${k}"] button`).forEach(b=>b.setAttribute("aria-pressed",String(S[k].includes(b.dataset.v))));
@@ -2613,9 +2646,9 @@
     if(raw('admissionTime')&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(raw('admissionTime')))contextIssues.push('入院時間請用 24 小時 HH:MM；未核對的時間不寫入病歷。');
     if(di.birth!==null&&di.admission!==null&&di.admission===di.birth&&/^\d\d:\d\d$/.test(raw('birthTime'))&&raw('admissionTime')&&raw('admissionTime')<raw('birthTime'))contextIssues.push('同一天的入院時間早於出生時間，請核對。');
     if(di.birth!==null&&di.admission!==null&&di.admission<di.birth)contextIssues.push('入院日期早於出生日期，請核對。');
-    const basicMissing=[!S.pathway&&'入院路徑',!S.dest&&'收治單位',!raw('birthDate')&&'出生日期',!raw('gaW')&&'GA',!raw('bw')&&'出生體重',!S.gender&&'性別',!S.delivery&&'生產方式',S.pathway==='readmit'&&!S.readmitSource&&'入院來源',S.pathway==='readmit'&&!S.readmitProblems.length&&!raw('readmitComplaint')&&'主要問題'].filter(Boolean);
+    const basicMissing=[!S.pathway&&'入院路徑',!admissionDestination()&&'收治單位',!raw('birthDate')&&'出生日期',!raw('gaW')&&'GA',!raw('bw')&&'出生體重',!S.gender&&'性別',!S.delivery&&'生產方式',S.pathway==='readmit'&&!S.readmitSource&&'入院來源',S.pathway==='readmit'&&!S.readmitProblems.length&&!raw('readmitComplaint')&&'主要問題'].filter(Boolean);
     const numericIssues=[...document.querySelectorAll('#admSections input[type="number"]')].filter(el=>el.value&&!el.closest('[hidden]')&&!el.validity.valid).map(el=>`${document.querySelector(`label[for="${el.id}"]`)?.textContent||el.getAttribute('aria-label')||el.id}：數值或單位範圍需核對。`);
-    const all=[...new Set([...birth,...path,...contextIssues,...numericIssues])];
+    const all=[...new Set([...birth,...path,...contextIssues,...numericIssues,...(S.destNotice?[S.destNotice]:[])])];
     const contextReview=document.getElementById('contextReview');if(contextReview)contextReview.textContent=contextIssues.join('\n');
     document.querySelectorAll('.readmit-local-review').forEach(el=>el.textContent=[...path.filter(item=>!item.startsWith('先前進食描述與每餐奶量')),...numericIssues].join('\n'));
     const conflicts=all.filter(item=>!pending.includes(item)),uniquePending=[...new Set(pending)];
@@ -2754,7 +2787,7 @@
     updateCollapsedDockHeight();
   }
   function journeyDefinitions(){
-    const place=S.delivery==="cs"?"刀房":"產房",ob=S.pathway==="outborn",nu=S.pathway==="nursery",re=S.pathway==="readmit",dest=S.dest||"";
+    const place=S.delivery==="cs"?"刀房":"產房",ob=S.pathway==="outborn",nu=S.pathway==="nursery",re=S.pathway==="readmit",dest=admissionDestination();
     return [
       {id:"standby",show:!!S.pwStandby&&!ob&&!re,order:10,lab:"產前 standby",plain:`兒科為什麼在${place}待命。產房發生的事在下面的站填，這裡不重複。`},
       {id:"birth",show:!re,order:20,lab:ob?"外院出生（依外院病摘）":"出生當下",plain:ob?"外院病摘有寫才填；不知道就整站空著，note 不會替外院補。":"寶寶剛出來時你看到什麼。只記實際觀察，沒記錄不會被寫成正常；Apgar 沿用第 1 區。"},
@@ -2770,7 +2803,7 @@
       {id:"home",show:re,order:20,lab:"返家後狀況",plain:"記錄返家後原本的基準狀況與直到本次生病前的經過；不確定的內容留空。",opt:true},
       {id:"illness",show:re,order:30,lab:"本次病程",plain:"先選主要問題，只會展開相關欄位；用時間順序寫變化，不必重複出生背景。"},
       {id:"evaluation",show:re,order:40,lab:"門診／急診評估",plain:"記錄本次從哪裡收入、實際檢查結果與入院前處置。"},
-      {id:"adm",show:!!S.pathway,order:90,lab:dest?`入 ${dest}`:"入院",plain:dest?`到 ${dest} 時的狀況（選填，英文）。`:"入院時的狀況（選填，英文）。去處請在最上方入院設定選 NICU／NBC／BR。",opt:true},
+      {id:"adm",show:!!S.pathway,order:90,lab:dest?`入 ${dest}`:"入院",plain:dest?`到 ${dest} 時的狀況（選填，英文）。`:`入院時的狀況（選填，英文）。去處請在最上方入院設定選 ${allowedDestinations().join("／")}。`,opt:true},
     ].map(st=>["standby","birth","consult","dr","drEnd","home"].includes(st.id)?{...st,show:false}:st.id==="prior"?{...st,lab:"出院與返家基準",plain:"產前與出生史已在上方共用區記錄；這裡只補前次出院與返家後狀況。"}:st.id==="illness"?{...st,lab:"症狀與變化",plain:"沿用最上層已選問題與共用時間；只補相關症狀及變化，不必重述出生背景。"}:st.id==="evaluation"?{...st,lab:"評估與收治"}:st.id==="adm"?{...st,show:!!S.pathway&&!re}:st);
   }
   function returnMountedJourneyBody(){
@@ -2828,6 +2861,7 @@
   }
 
   function render(){
+    renderDestination();
     syncDolUI();
     renderAdmissionWorkflow();
     // 入院時呼吸支持有兩組按鈕（Admission 最後一站＋Acceptance A 區）共用 S.resp；
@@ -3845,16 +3879,18 @@ ${opLine}`);
     const SGA=S.growth==="SGA", LGA=S.growth==="LGA", IDM=S.r.gdm.on;
     const lvl={none:0,ppv:1,intubation:2,cpr:3}[S.resus]||0;
     const planControls=document.getElementById("planControls");
-    // 去處 BR（嬰兒室）：不產生 NI plan。中文提示只能放 #planWarn——note 是用 innerText 複製走的，會被貼進 HIS。
-    if(S.dest==="BR"){
+    // 未確認去處或尚無該單位模板時，不以 NICU 配置代填；中文說明不進 note。
+    const cfg=destPlan();
+    if(!cfg){
       const pw=document.getElementById("planWarn");
-      if(pw){pw.hidden=false; pw.textContent="⚠ 入院去處為 BR（嬰兒室）：不產生 NI plan；改去處請回 Admission 最上方入院設定。";}
+      if(pw){pw.hidden=false; pw.textContent=admissionDestination()==="PICU"
+        ?"PICU 專用 NI plan 尚未設定，不會套用 NICU 醫囑。Admission／Acceptance 可正常使用；PICU 計畫請依院內規範另行撰寫。"
+        :`請先回 Admission 最上方確認住院去處（${allowedDestinations().join("／")}），再產生適用的 NI plan；未選去處不預設 NICU。`;}
       if(planControls)planControls.hidden=true;
       writeNote("","text");
       return;
     }
     if(planControls)planControls.hidden=false;
-    const cfg=destPlan();   // NICU／NBC 的配置差異一律讀 DEST_PLAN
     // 既往支持只供既有自動計畫規則參考，不等同於已確認的接手時支持。
     const pathwayMode=pathwaySupportMode();
     const pathwayResp=({room:"room air",o2:({hood:"oxygen via an oxygen hood",cannula:"oxygen via a nasal cannula",mask:"oxygen via a face mask"})[S.obO2Dev]||"supplemental oxygen",
@@ -4394,7 +4430,7 @@ ${opLine}`);
     context.innerHTML=`<h2 class="sec-h"><span class="n">1</span>本次入院設定</h2><p class="man-h">先選情境，再依 chart 往下填。預設今天入院；填出生日期即可自動計算日齡。</p><div class="entry-routes" id="entryRoutes" role="radiogroup" aria-label="本次入院情境"><button type="button" id="entryDirect" role="radio" aria-checked="false"><span class="k">A/B</span><span class="t">出生後直接入院</span><span class="d">出生後即入院，未先至嬰兒室。A＝產前 standby；B＝出生後會診，於出生區選擇。</span><span class="p">出生觀察／處置 → 直接入院</span></button></div><div class="entry-fields" id="entryFields"></div><details id="entryPreferences"><summary>本院區與日期顯示偏好</summary></details><div id="entryReadmit" hidden></div><p class="local-review" id="contextReview" role="status"></p>`;
     form.prepend(context);
     const storyLabels={A:"產前 standby",B:"出生後會診",C:"嬰兒室轉入",D:"外院轉入／外接",E:"返家後再次就醫"};
-    const storyDescriptions={A:"兒科在寶寶出生前已到產房／刀房待命。",B:"寶寶出生後，才請兒科到產房／刀房評估。",C:"出生後先在嬰兒室觀察，再因症狀或評估結果收入 NICU／NBC。",D:"外院照護後跨院轉入，填寫外院處置、外接與轉送經過。",E:"出生後已返家，這次由本院門診、急診或預約方式住院；不論出生院所都適用。"};
+    const storyDescriptions={A:"兒科在寶寶出生前已到產房／刀房待命。",B:"寶寶出生後，才請兒科到產房／刀房評估。",C:"出生後先在 BR 嬰兒室照護，再因症狀或評估結果收入 NBC／NICU／PICU。",D:"外院照護後跨院轉入，填寫外院處置、外接與轉送經過。",E:"出生後已返家，這次由本院門診、急診或預約收入 NBC／PICU；不論出生院所都適用。"};
     const storyPaths={C:"出生 → 嬰兒室觀察／評估 → 入院",D:"外院照護 → 外接／轉送 → 入院",E:"出院與返家基準 → 本次病程 → 評估與收治"};
     const team=document.createElement("div");team.id="birthTeamChoices";team.className="seg";team.setAttribute('role','radiogroup');team.setAttribute('aria-label','團隊介入時間');
     team.innerHTML='<button type="button" id="clearBirthTeam">未記錄介入時間</button>';
@@ -4605,6 +4641,13 @@ ${opLine}`);
   let copyFeedbackTimer=null;
   document.getElementById("copy").addEventListener("click",async()=>{
     const txt=noteTextForCopy(), status=document.getElementById("copyStatus"); let ok=false;
+    if(!txt.trim()){
+      status.textContent=S.mode==="plan"?"目前沒有可複製的 NI plan，請查看計畫區的去處／模板提示。":"目前沒有可複製的病歷。";
+      status.hidden=false;updateCollapsedDockHeight();
+      if(copyFeedbackTimer!==null)clearTimeout(copyFeedbackTimer);
+      copyFeedbackTimer=setTimeout(()=>{status.hidden=true;updateCollapsedDockHeight();},5000);
+      return;   // 沒有內容時，不以空字串覆蓋剪貼簿。
+    }
     try{await navigator.clipboard.writeText(txt); ok=true;}catch(e){}
     if(!ok){const ta=document.createElement("textarea"), focused=document.activeElement;
       try{ta.value=txt; ta.style.position="fixed"; ta.style.top="0"; ta.style.opacity="0";

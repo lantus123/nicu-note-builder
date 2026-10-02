@@ -127,13 +127,13 @@ test('入院與接手呼吸支持分開，明確確認同前才帶入',page=>{
   assert.equal(get('#planWarn').textContent.includes('BR'),false);
 });
 
-test('去處決定 plan：BR 不產生、NBC 用非加護配置、NICU 維持加護配置',page=>{
+test('去處決定 plan：PICU 不套用未確認模板、NBC 用非加護配置、NICU 維持加護配置',page=>{
   const {input,seg,note,onTab,planWarn,get}=page;
   input('gaW','30');input('bw','1300');
-  seg('dest','BR');
-  assert.equal(onTab('plan'),'','去處 BR 不得產生任何 NI plan 內容');
-  assert.match(planWarn(),/BR/);
-  assert.equal(get('#planControls').hidden,true,'BR 時 plan 設定控制項必須收起');
+  seg('dest','PICU');
+  assert.equal(onTab('plan'),'','PICU 尚無確認模板，不得沿用 NICU 醫囑');
+  assert.match(planWarn(),/PICU.*尚未設定/);
+  assert.equal(get('#planControls').hidden,true,'PICU 尚無模板時 plan 設定控制項必須收起');
   seg('dest','NBC');
   const nbc=note();
   assert.equal(get('#planControls').hidden,false);

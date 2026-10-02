@@ -17,13 +17,17 @@ async function main(){
     await send('Emulation.setPageScaleFactor',{pageScaleFactor:1});await pause(160);
     const dimensions=await ev(`({width:innerWidth,clientWidth:document.documentElement.clientWidth,visualWidth:visualViewport.width,scale:visualViewport.scale})`);
     assert.equal(dimensions.clientWidth,width,'CSS viewport must match requested width: '+JSON.stringify(dimensions));
+    assert.equal(dimensions.width,width,'No offscreen field may expand the mobile layout viewport: '+JSON.stringify(dimensions));
+    assert.ok(Math.abs(dimensions.visualWidth-width)<1,'Visual viewport must match the screenshot width: '+JSON.stringify(dimensions));
   };
   let clicks=0,entries=0;
   const position=async selector=>{
-    await ev(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Missing '+${JSON.stringify(selector)});const r=e.getBoundingClientRect(),hit=e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));if(!hit)e.scrollIntoView({block:'center',inline:'center',behavior:'instant'});})()`);await pause(100);
-    return ev(`(()=>{const e=document.querySelector(${JSON.stringify(selector)}),r=e.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2;return {x,y,w:r.width,h:r.height,hit:e.contains(document.elementFromPoint(x,y))};})()`);
+    await ev(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Missing '+${JSON.stringify(selector)});const r=e.getBoundingClientRect(),hit=e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));if(!hit)e.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});})()`);await pause(100);
+    return ev(`(()=>{const e=document.querySelector(${JSON.stringify(selector)}),r=e.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2;return {x,y,inputX:x-visualViewport.offsetLeft,inputY:y-visualViewport.offsetTop,w:r.width,h:r.height,hit:e.contains(document.elementFromPoint(x,y))};})()`);
   };
-  const click=async s=>{const r=await position(s);assert.ok(r.w&&r.h&&r.hit,'Control hidden or covered: '+s);await send('Input.dispatchMouseEvent',{type:'mousePressed',x:r.x,y:r.y,button:'left',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:r.x,y:r.y,button:'left',clickCount:1});clicks++;await pause(70);};
+  // CDP pointer coordinates use the visual viewport; DOM rects use the layout viewport.
+  // Mobile scrollIntoView can move the visual viewport even when scale is 1.
+  const click=async s=>{const r=await position(s);assert.ok(r.w&&r.h&&r.hit,'Control hidden or covered: '+s);await send('Input.dispatchMouseEvent',{type:'mousePressed',x:r.inputX,y:r.inputY,button:'left',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:r.inputX,y:r.inputY,button:'left',clickCount:1});clicks++;await pause(70);};
   const input=async(id,value)=>{const r=await position('#'+id);assert.ok(r.w&&r.h&&r.hit,'Input hidden or covered: '+id);await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.focus({preventScroll:true});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event(e.tagName==='SELECT'||e.type==='date'?'change':'input',{bubbles:true}));})()`);entries++;};
   const typeText=async(id,value)=>{await click('#'+id);await ev(`document.getElementById(${JSON.stringify(id)}).select()`);await send('Input.insertText',{text:value});assert.equal(await ev(`document.getElementById(${JSON.stringify(id)}).value`),value);entries++;};
   const chapter=async id=>{await click('#flowMenu > summary');await click(`#flowMenu [data-flow-target="${id}"]`);};
@@ -72,7 +76,7 @@ async function main(){
     fs.writeFileSync('/private/tmp/nicu-forward-synthetic-note.txt',text);
     await click('[data-tab="acc"]');await click('#useAdmissionResp');await click('[data-seg="acceptanceResp"] [data-v="NC"]');await click('[data-tab="adm"]');assert.equal(await note(),text);
     await resize(390,844,true);await at('#admissionContext');await shot('nicu-forward-entry-mobile.png');
-    assert.ok(await ev(`document.documentElement.scrollWidth<=innerWidth+1`),'Mobile overflow');
+    assert.ok(await ev(`document.documentElement.scrollWidth<=document.documentElement.clientWidth+1`),'Mobile overflow');
     assert.ok(await ev(`[...document.querySelectorAll('#entryRoutes .d, #entryRoutes .p, #entryRoutes .k')].every(e=>e.getClientRects().length&&getComputedStyle(e).display!=='none')`),'Mobile scenario descriptions must be visible');
     assert.equal(await ev(`document.querySelector('#admissionDateDetails').open`),false);
     await click('[data-stop-toggle="illness"]');await at('#journeyWorkspace');await shot('nicu-forward-E-mobile.png');
@@ -92,7 +96,7 @@ async function main(){
     await input('readmitFeedingNote','');
     for(const width of [320,360,390]){
       await resize(width,844,true);await at('#journeyWorkspace');
-      assert.ok(await ev(`document.documentElement.scrollWidth<=innerWidth+1`),'Overflow at '+width);
+      assert.ok(await ev(`document.documentElement.scrollWidth<=document.documentElement.clientWidth+1`),'Overflow at '+width);
       await click('#flowMenu > summary');assert.ok((await position('#flowMenu [data-flow-target="birthHistoryCard"]')).hit,'Chapter menu must be tappable at '+width);
       await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape'});assert.equal(await ev(`document.querySelector('#flowMenu').open`),false);
       await shot('nicu-forward-E-mobile-'+width+'.png');
@@ -155,8 +159,37 @@ async function main(){
     await resize(390,844,true);await at('#journeyWorkspace');await shot('nicu-forward-outborn-mobile-light.png');
     await click('#journeyNext');await click('#admissionStatusBody [data-seg="resp"] [data-v="NC"]');await typeText('obAdmissionStatus','Mild tachypnea persisted.');await click('#journeyNext');
     const outbornNote=await note();assert.match(outbornNote,/Example Transfer Hospital/);assert.match(outbornNote,/oxygen hood/);assert.match(outbornNote,/subcostal retractions/);assert.match(outbornNote,/Mild tachypnea persisted/i);assert.match(outbornNote,/NC/);assert.doesNotMatch(outbornNote,/discharged home|An older sibling|bilirubin/);
+    // Institutional destination rules: real pointer interactions on a narrow mobile viewport.
+    await fresh();await resize(320,844,true);
+    await click('#entryDirect');await click('[data-seg="dest"] [data-v="NICU"]');await click('[data-story="E"]');
+    const destinationOptions=await ev(`[...document.querySelectorAll('[data-seg="dest"] button')].filter(b=>b.checkVisibility()).map(b=>b.dataset.v)`);
+    assert.deepEqual(destinationOptions,['NBC','PICU'],JSON.stringify(await ev(`({stories:[...document.querySelectorAll('#entryRoutes button')].map(b=>[b.id||b.dataset.story,b.getAttribute('aria-checked')]),dest:[...document.querySelectorAll('[data-seg="dest"] button')].map(b=>({v:b.dataset.v,hidden:b.hidden,disabled:b.disabled,display:getComputedStyle(b).display})),help:document.querySelector('#destHelp').textContent})`)));
+    assert.equal(await ev(`document.querySelector('[data-seg="dest"] [data-v="NICU"]').disabled`),true);
+    assert.equal(await ev(`document.querySelector('[data-seg="dest"] [aria-pressed="true"]')`),null,'Changing to E must not choose a replacement unit');
+    assert.match(await ev(`document.querySelector('#destNotice').textContent`),/原選 NICU.*重新選 NBC 或 PICU/);
+    assert.match(await note(),/admitted to ____/);
+    await position('[data-seg="dest"] [data-v="PICU"]');await shot('nicu-destination-E-cleared-mobile.png');
+    await click('[data-seg="dest"] [data-v="PICU"]');
+    assert.equal(await ev(`document.querySelector('#destNotice').checkVisibility()`),false);
+    assert.match(await note(),/admitted to our PICU/);
+    await position('[data-seg="dest"] [data-v="PICU"]');await shot('nicu-destination-E-PICU-mobile.png');
+    assert.ok(await ev(`document.documentElement.scrollWidth<=document.documentElement.clientWidth+1`),'Destination help must fit 320px');
+    await click('[data-tab="acc"]');assert.match(await note(),/admitted to our PICU/);assert.doesNotMatch(await note(),/admitted to our NICU/);
+    await click('[data-tab="plan"]');assert.equal(await note(),'');assert.equal(await ev(`document.querySelector('#planControls').checkVisibility()`),false);
+    assert.match(await ev(`document.querySelector('#planWarn').textContent`),/PICU.*尚未設定/);
+    await click('#copy');assert.match(await ev(`document.querySelector('#copyStatus').textContent`),/沒有可複製的 NI plan/);
+    await shot('nicu-destination-PICU-plan-mobile.png');
+    await click('[data-tab="adm"]');await click('#entryDirect');
+    assert.equal(await ev(`document.querySelector('[data-seg="dest"] [aria-pressed="true"]').dataset.v`),'NICU');
+    await click('[data-story="E"]');
+    assert.equal(await ev(`document.querySelector('[data-seg="dest"] [aria-pressed="true"]').dataset.v`),'PICU');
+    await click('[data-seg="dest"] [data-v="NBC"]');assert.match(await note(),/admitted to our NBC/);
+    await click('[data-tab="plan"]');assert.ok(await note());assert.doesNotMatch(await note(),/Giraffe|Minimize handling/);
+    await click('[data-tab="adm"]');await resize(1440,1000);await click('[data-story="C"]');await click('[data-seg="dest"] [data-v="PICU"]');
+    assert.match(await note(),/initially cared for in the baby room/);assert.match(await note(),/admitted to our PICU/);assert.doesNotMatch(await note(),/admitted to our baby room/);
+    await at('#admissionContext');await shot('nicu-destination-C-desktop.png');
     assert.deepEqual(errors,[]);
-    console.log(JSON.stringify({ok:true,url,entryTop,forwardClicks,forwardEntries,forcedBackwardSteps:0,EStages:3,routeStages,freshAdmissions:['direct A','outborn D'],DOL:18,desktop:['1440×1000','1366×768'],mobile:['320×844','360×844','390×844','390×540'],themes:['dark','light'],nativeKeyboard:true,clipboard:true,rectangles,screenshots:'/private/tmp/nicu-forward-*.png',syntheticNote:'/private/tmp/nicu-forward-synthetic-note.txt'},null,2));
+    console.log(JSON.stringify({ok:true,url,entryTop,forwardClicks,forwardEntries,forcedBackwardSteps:0,EStages:3,routeStages,freshAdmissions:['direct A','outborn D'],destinations:{E:destinationOptions,C:'BR history to PICU',routeDraftsRestored:true,unsupportedPICUPlanBlocked:true},DOL:18,desktop:['1440×1000','1366×768'],mobile:['320×844','360×844','390×844','390×540'],themes:['dark','light'],nativeKeyboard:true,clipboard:true,rectangles,screenshots:['/private/tmp/nicu-forward-*.png','/private/tmp/nicu-destination-*.png'],syntheticNote:'/private/tmp/nicu-forward-synthetic-note.txt'},null,2));
   }finally{await send('Page.close').catch(()=>{});ws.close();for(const p of pending.values())clearTimeout(p.timer);}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

@@ -36,6 +36,7 @@ test('entry precedes prenatal and birth chart order, followed by journey and rev
 }));
 
 test('pointer tab changes restore each form scroll, focus, and preview scroll',()=>withPage(({W,d,tab})=>{
+  d.querySelector('[data-seg="dest"] [data-v="NICU"]').click(); // A supported destination is required for plan controls.
   const weight=d.getElementById('bw'),preview=d.querySelector('.dock-body');
   weight.focus();W.scrollTo(0,740);preview.scrollTop=210;
   tab('plan');

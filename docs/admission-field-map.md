@@ -12,6 +12,10 @@
 
 情境選擇不捲動到頁面下方。直接入院的 A/B 在出生段選 standby／出生後會診；未選不推定團隊介入。出生事件不再藏在入院 stepper。前後不同時間的實際處置不視為重複事件。
 
+住院去處只列 NBC／NICU／PICU；BR 為健康新生兒照護，不是住院去處。C 保留尚未返家、由 BR 因病轉入病房的經過；E 已返家，只能選 NBC／PICU，不能選 NICU。情境與去處不相容時明確提示、取消去處但不代選；切回舊路徑會恢復該路徑的去處草稿並再次驗證。Admission／Acceptance、階段標題與最終核對共用同一白名單，未選或無效值只輸出佔位符。
+
+PICU 專用 NI plan 尚未建立，顯示說明但不自動套用 NICU 醫囑；未確認去處亦不預設 NICU。此限制不影響 PICU 的 Admission／Acceptance，也不新增 PICU 治療規則、門檻或劑量。
+
 initializeAdmissionWorkflow 只搬動既有 DOM 控制項，保留 ID；各事實只有一份可編輯來源。renderAdmissionWorkflow 管理來源摘要、條件欄位與時點引用。renderJourney 保留固定工作區，輸入不自動換段；切換階段保留當次開頁資料及可恢復的焦點／相對位置。
 
 workflowNav 合併章節與子階段，手機只固定分頁列與這條導覽。選單支援章節／子階段直達，前後鈕依實際路徑銜接出生、病程與核對。workflowViews／journeyViews 僅存本次頁面的焦點及相對位置，ResizeObserver 量測實際導覽高度避免定位遮擋。填寫中可複製草稿，不因空白欄位鎖住；核對階段才強調複製病歷。
@@ -83,6 +87,7 @@ screen_onset、care_onset 是草稿結構的非臨床佔位，保持隱藏且不
 
 ## 驗收與界限
 
+- tests/prose/destination.js：住院去處白名單、E 的 NICU 限制、BR 歷史與本次收治區分、切換路徑草稿、舊值防護及 PICU／未選去處的 plan 邊界。實際 Chrome 試填另驗證 320 px 的去處選項、提示、跨分頁病歷與切回草稿。
 - tests/prose/workflow.js：順向排列、唯一 ID、DOL 邊界、各模組輸出、混合症狀、陰性／未知、草稿隔離、支持／體重時點、E 既往急救隔離。
 - 既有 prose／timeline／downstream／plan／pedigree／navigation／clipboard 等測試繼續執行；變更輸出快照須逐項核對，不能只更新快照掩蓋錯誤。
 - tests/prose/browser-workflow.cjs：獨立 Chrome CDP，1440／1366 px 桌面、320／360／390 px 手機尺寸、短視窗及亮／暗主題；檢查 CSS viewport、遮擋、點擊命中、原生文字輸入與複製。混合 E 假病例從入口走到核對，另重新開頁填直接入院 A 及外院轉入 D；檢查返回相對位置、跨分頁、舊進食描述衝突與復原。截圖需由驗收者目視，不只看程式斷言。

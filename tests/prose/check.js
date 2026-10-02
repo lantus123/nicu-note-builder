@@ -21,7 +21,10 @@ for(const [name,r] of Object.entries(out)){
   if(r.error){fails.push(`${name}: render 例外 ${r.error}`);continue;}
   if(r._misses.length)fails.push(`${name}: 選擇器缺失(靜默 no-op)→ ${r._misses.join('; ')}`);
   if(r._errors.length)fails.push(`${name}: page error → ${r._errors.join('; ')}`);
-  for(const sec of ['admission','plan','acceptance'])
+  // Sparse case deliberately leaves the destination unknown: no fallback NICU orders.
+  const noPlan=name==='14_稀疏欄位_佔位符測試';
+  if(noPlan&&r.plan!=='')fails.push(`${name}/plan: 未選去處卻產生醫囑`);
+  for(const sec of noPlan?['admission','acceptance']:['admission','plan','acceptance'])
     if(!r[sec]||!r[sec].trim())fails.push(`${name}/${sec}: 空輸出`);
   const joined=(r.admission||'')+'\n'+(r.acceptance||'')+'\n'+(r.plan||'');
   for(const w of FORBIDDEN)if(joined.includes(w))fails.push(`${name}: 禁詞「${w}」`);

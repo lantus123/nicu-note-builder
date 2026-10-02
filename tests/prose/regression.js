@@ -154,14 +154,14 @@ test('acceptance retains birth timing and detailed perinatal events',()=>{
 });
 
 test('CSF remains selected independently of the sepsis work-up group',()=>{
-  const {plan}=notes([tab('plan'),{click:'[data-planon] [data-v="csf"]'}]);
+  const {plan}=notes([seg('dest','NICU'),tab('plan'),{click:'[data-planon] [data-v="csf"]'}]);
   assert.match(plan,/\bCSF\b/);
   assert.doesNotMatch(plan,/Sepsis work-up/i,'CSF selection must not silently add the whole work-up');
 });
 
 for(const mode of ['o2','cpap','ppv','ett']){
   test(`admission ${mode} history informs existing plan rules without asserting current support`,()=>{
-    const {plan}=notes([seg('obRespType',mode)]);
+    const {plan}=notes([seg('dest','NICU'),seg('obRespType',mode)]);
     assert.doesNotMatch(plan,/Provide respiratory support with/i,
       'Historical support must not become a confirmed current respiratory instruction');
     assert.match(plan,/OG decompression/i);
@@ -170,7 +170,7 @@ for(const mode of ['o2','cpap','ppv','ett']){
 }
 
 test('explicit current support is retained in the NI plan independently of earlier support',()=>{
-  const {plan}=notes([seg('obRespType','ett'),tab('acc'),seg('resp','NCPAP')]);
+  const {plan}=notes([seg('dest','NICU'),seg('obRespType','ett'),tab('acc'),seg('resp','NCPAP')]);
   assert.match(plan,/Provide respiratory support with NCPAP/i);
   assert.doesNotMatch(plan,/Provide respiratory support with[^\n]*ETT/i);
 });
@@ -251,7 +251,7 @@ test('undocumented day of life does not become day zero or a current birth weigh
 });
 
 test('current room air is not replaced by older ETT in the treatment plan',()=>{
-  const {plan}=notes([seg('obRespType','ett'),tab('acc'),seg('resp','room air')]);
+  const {plan}=notes([seg('dest','NICU'),seg('obRespType','ett'),tab('acc'),seg('resp','room air')]);
   assert.doesNotMatch(plan,/respiratory support with|OG decompression|arterial line/i);
 });
 
@@ -268,7 +268,7 @@ test('course keeps related findings together without inventing treatment respons
 
 test('a new route excludes another route draft from the plan and restoring it restores its rules',()=>{
   // pathway 不再預設 direct（2026-09-19）：草稿是綁路徑的，這條測的是「切走再切回」，所以先明選 direct
-  const prior=[seg('pathway','direct'),seg('obRespType','ett')];
+  const prior=[seg('dest','NICU'),seg('pathway','direct'),seg('obRespType','ett')];
   const {plan}=notes([...prior,seg('pathway','nursery')]);
   assert.doesNotMatch(plan,/respiratory support with|OG decompression|arterial line/i);
   const restored=notes([...prior,seg('pathway','nursery'),seg('pathway','direct')]).plan;
@@ -413,15 +413,15 @@ test('vaginal delivery is expressed without duplicated delivery nouns',()=>{
 });
 
 test('plan keeps family counseling as a selected completed event',()=>{
-  const initial=notes([tab('plan')]).plan;
+  const initial=notes([seg('dest','NICU'),tab('plan')]).plan;
   assert.doesNotMatch(initial,/was explained to the family/);
-  const explained=notes([tab('plan'),toggle('planExplained')]).plan;
+  const explained=notes([seg('dest','NICU'),tab('plan'),toggle('planExplained')]).plan;
   includes(explained,'The plan was explained to the family.');
   assert.doesNotMatch(explained,/On (?:incubator|open warmer|EKG)|Explained to family fully/);
 });
 
 test('plan wording does not prescribe repeating a documented procedure or surfactant dose',()=>{
-  const {plan,acceptance}=notes([tab('acc'),{click:'[data-hct="aline"] button'},
+  const {plan,acceptance}=notes([seg('dest','NICU'),tab('acc'),{click:'[data-hct="aline"] button'},
     {click:'[data-hct="surf"] button'}]);
   assert.match(plan,/An arterial line was placed/);
   assert.match(plan,/Surfactant therapy: Survanta \(4 mL\/kg\)/);
@@ -490,11 +490,15 @@ test('destination is a placeholder until chosen, then names the chosen unit in b
   const none=notes([]);
   assert.match(none.admission,/admitted to ____(?: on [^.]+)? for further evaluation/);
   assert.doesNotMatch(none.admission,/our NICU|our NBC|baby room/);
+  assert.equal(none.plan,'','Unselected destination must not default to NICU orders');
   const nbc=notes([seg('dest','NBC')]);
   assert.match(nbc.admission,/admitted to our NBC(?: on [^.]+)? for further evaluation and management/);
   includes(nbc.acceptance,'admitted to our NBC');
   assert.doesNotMatch(nbc.admission,/our NICU/);
-  assert.match(notes([seg('dest','BR')]).admission,/admitted to our baby room(?: on [^.]+)? for further evaluation/);
+  const picu=notes([seg('dest','PICU')]);
+  assert.match(picu.admission,/admitted to our PICU(?: on [^.]+)? for further evaluation/);
+  includes(picu.acceptance,'admitted to our PICU');
+  assert.equal(picu.plan,'','PICU must not silently inherit NICU orders');
   includes(notes([seg('dest','NICU')]).admission,'admitted to our NICU');
 });
 test('admission-status sentence follows the chosen destination and is not duplicated in acceptance',()=>{
