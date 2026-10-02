@@ -18,7 +18,7 @@ initializeAdmissionWorkflow 只搬動既有 DOM 控制項，保留 ID；各事�
 
 | 輸入／狀態 | 輸出或用途 | 邊界 |
 | --- | --- | --- |
-| birthDate、admissionDate | Admission 日期、DOL；Acceptance DOL/PMA | 日曆日期差 + 1，出生當天 DOL 1。日期未齊／先後不成立不退回舊 DOL。手動覆寫另行警示。 |
+| birthDate、admissionDate | Admission 日期、DOL；Acceptance DOL/PMA | 入院日預設填寫當天、平常免填；回補時才展開修改，收合後仍顯示實際採用日期。日曆日期差 + 1，出生當天 DOL 1。日期未齊／先後不成立不退回舊 DOL。手動覆寫另行警示。 |
 | birthTime、admissionTime | 分別寫出生與入院句；入院時間為 24 小時制 | 不以入院時間計算日曆 DOL；同日入院早於出生提示。 |
 | homeHosp、rocYear | 院區與日期顯示設定 | 非病人資料；僅這些偏好等既有設定可儲存於瀏覽器。 |
 | birthHosp／obFacility、obTransferFrom | 出生地／外院轉出來源 | 外院路徑出生院所移到出生區。E 留白不推定出生於本院。母親入院句不推定在本院待產。 |

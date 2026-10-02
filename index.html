@@ -417,11 +417,21 @@
   }
   /* 順向填寫：入口先分流，共用背景獨立於入院路徑。 */
   #admissionContext .entry-routes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:18px}
-  #admissionContext .story,#entryDirect{border:1px solid var(--line);border-radius:10px;min-height:55px;padding:12px;background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
-  #admissionContext .story[aria-checked="true"],#entryDirect[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
-  #admissionContext .story .k,#admissionContext .story .d,#admissionContext .story .p{display:none}
-  #birthTeamChoices .k,#birthTeamChoices .d,#birthTeamChoices .p{display:none}
-  #admissionContext .story .t{font-size:14px;font-weight:650}
+  #admissionContext .story,#entryDirect{display:grid;grid-template-columns:38px minmax(0,1fr);gap:6px 10px;align-items:start;border:1px solid var(--line);border-radius:10px;min-height:55px;padding:12px;background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+  #entryRoutes [aria-checked="true"]{background:var(--accent-soft);border-color:var(--accent)}
+  #entryRoutes .k{grid-row:1/4;display:grid;place-items:center;min-height:34px;border-radius:7px;background:var(--surface-2);color:var(--accent-ink);font-size:12px;font-weight:700}
+  #entryRoutes .t,#entryRoutes .d,#entryRoutes .p{display:block;grid-column:2;white-space:normal}
+  #entryRoutes .t{font-size:14px;font-weight:650}
+  #entryRoutes .d{font-size:13px;line-height:1.55;color:var(--ink-2)}
+  #entryRoutes .p{font-size:11px;line-height:1.5;color:var(--ink-3)}
+  #birthTeamChoices .k{margin-right:6px;font-weight:700}
+  #birthTeamChoices .d{display:block;margin-top:6px;font-size:12px;line-height:1.5;font-weight:400;color:var(--ink-2)}
+  #birthTeamChoices .p{display:none}
+  #birthTeamChoices [aria-checked="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+  #admissionDateSummary{margin:0 0 8px;font-size:13px;line-height:1.6;color:var(--ink-2)}
+  #admissionDateDetails>summary{cursor:pointer;font-size:13px;color:var(--ink-2);padding:6px 0}
+  #admissionDateDetails>.row2{margin-top:10px}
+  @media(max-width:559px){#admissionContext .entry-routes{grid-template-columns:minmax(0,1fr)}}
   #admissionContext .entry-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:0 16px}
   #admissionContext .entry-fields>.field{margin-bottom:16px}
   #entryReadmit{border-top:1px solid var(--line);padding-top:18px}
@@ -535,13 +545,17 @@
         <div class="field" style="margin:0"><input class="tin" type="date" id="birthDate"></div>
         <div class="field" style="margin:0"><input class="tin" type="text" id="birthTime" inputmode="numeric" placeholder="時:分（如 14:30）" maxlength="5"></div>
       </div></div>
-    <div class="field">
-      <span class="lab">本次入院日期時間 <span class="q">（預設今天；回補病歷時請改成實際入院日）</span></span>
+    <div class="field" id="admissionDateField">
+      <span class="lab">入院日 <span class="q">（自動帶入今天，免填）</span></span>
+      <p id="admissionDateSummary" role="status"></p>
+      <details id="admissionDateDetails">
+      <summary>回補病歷／補入院時間（選填）</summary>
       <div class="row2">
-        <div class="field" style="margin:0"><input class="tin" type="date" id="admissionDate"></div>
-        <div class="field" style="margin:0"><input class="tin" type="text" id="admissionTime" inputmode="numeric" placeholder="時:分（選填）" maxlength="5"></div>
+        <div class="field" style="margin:0"><label class="lab" for="admissionDate">實際入院日期</label><input class="tin" type="date" id="admissionDate"></div>
+        <div class="field" style="margin:0"><label class="lab" for="admissionTime">入院時間（選填）</label><input class="tin" type="text" id="admissionTime" inputmode="numeric" placeholder="時:分（選填）" maxlength="5"></div>
       </div>
-      <button type="button" id="admissionToday" style="margin-top:7px">今天入院 · 自動計算日齡</button>
+      <button type="button" id="admissionToday" style="margin-top:7px">恢復今天入院 · 自動計算日齡</button>
+      </details>
     </div>
     <div class="field"><span class="lab">入院時日齡 <span class="q">（出生當天＝DOL 1；依入院日計算，預設今天）</span></span>
       <div class="seg" aria-label="日齡計算方式">
@@ -4251,17 +4265,22 @@ ${opLine}`);
     const [birth,maternal,screening,medication,pathway,review]=cards;
     birth.id="birthHistoryCard";maternal.id="prenatalCard";review.id="finalReviewCard";
     const context=document.createElement("section");context.className="card";context.id="admissionContext";
-    context.innerHTML=`<h2 class="sec-h"><span class="n">0</span>本次入院設定</h2><p class="man-h">先選路徑，再依 chart 往下填。此處填過的資料只會沿用，不會再問一次。</p><div class="entry-routes" id="entryRoutes"><button type="button" id="entryDirect" aria-pressed="false">出生後直接入院</button></div><div class="entry-fields" id="entryFields"></div><details id="entryPreferences"><summary>本院區與日期顯示偏好</summary></details><div id="entryReadmit" hidden></div><p class="local-review" id="contextReview" role="status"></p>`;
+    context.innerHTML=`<h2 class="sec-h"><span class="n">0</span>本次入院設定</h2><p class="man-h">先選情境，再依 chart 往下填。預設今天入院；填出生日期即可自動計算日齡。</p><div class="entry-routes" id="entryRoutes" role="radiogroup" aria-label="本次入院情境"><button type="button" id="entryDirect" role="radio" aria-checked="false"><span class="k">A/B</span><span class="t">出生後直接入院</span><span class="d">出生後即入院，未先至嬰兒室。A＝產前 standby；B＝出生後會診，於出生區選擇。</span><span class="p">出生觀察／處置 → 直接入院</span></button></div><div class="entry-fields" id="entryFields"></div><details id="entryPreferences"><summary>本院區與日期顯示偏好</summary></details><div id="entryReadmit" hidden></div><p class="local-review" id="contextReview" role="status"></p>`;
     form.prepend(context);
     const storyLabels={A:"產前 standby",B:"出生後會診",C:"嬰兒室轉入",D:"外院轉入／外接",E:"返家後再次就醫"};
+    const storyDescriptions={A:"兒科在寶寶出生前已到產房／刀房待命。",B:"寶寶出生後，才請兒科到產房／刀房評估。",C:"出生後先在嬰兒室觀察，再因症狀或評估結果收入 NICU／NBC。",D:"外院照護後跨院轉入，填寫外院處置、外接與轉送經過。",E:"出生後已返家，這次由本院門診、急診或預約方式住院；不論出生院所都適用。"};
+    const storyPaths={C:"出生 → 嬰兒室觀察／評估 → 入院",D:"外院照護 → 外接／轉送 → 入院",E:"出院與返家基準 → 本次病程 → 評估與收治"};
     const team=document.createElement("div");team.id="birthTeamChoices";team.className="seg";team.setAttribute('role','radiogroup');team.setAttribute('aria-label','團隊介入時間');
     team.innerHTML='<button type="button" id="clearBirthTeam">未記錄介入時間</button>';
     for(const button of document.querySelectorAll("[data-story]")){
       button.querySelector(".t").textContent=storyLabels[button.dataset.story];
+      button.querySelector(".d").textContent=storyDescriptions[button.dataset.story];
+      if(storyPaths[button.dataset.story])button.querySelector(".p").textContent=storyPaths[button.dataset.story];
       if(["A","B"].includes(button.dataset.story)){button.classList.remove("story");team.appendChild(button);}
       else byId("entryRoutes").appendChild(button);
     }
-    pathway.querySelector(".stories").remove();byId("storyHelp").remove();
+    pathway.querySelector(".stories").remove();
+    const storyHelp=byId('storyHelp');storyHelp.textContent='怎麼選？已返家後由本院門診／急診收入選 E；外院照護後跨院轉入選 D。直接入院的 A／B 在出生區區分，不必回頭重選路徑。';byId('entryRoutes').after(storyHelp);
     pathway.querySelector(".journey-lede").textContent="沿時間順序記錄本次病程。已填背景直接沿用；輸入不會自動跳段。";
     const moveField=(selector,target)=>{const node=document.querySelector(selector);if(node)target.appendChild(node.closest(".field"));};
     moveField('[data-seg="dest"]',byId("entryFields"));
@@ -4269,7 +4288,7 @@ ${opLine}`);
     const bd=byId("birthDate").closest(".field"),bt=byId("birthTime").closest(".field");
     bd.insertAdjacentHTML("afterbegin",'<label class="lab" for="birthDate">出生日期</label>');
     bt.insertAdjacentHTML("afterbegin",'<label class="lab" for="birthTime">出生時間（選填）</label>');byId("entryFields").appendChild(bt);
-    const ad=byId("admissionDate").closest(".row2").parentElement;byId("entryFields").appendChild(ad);
+    byId("entryFields").appendChild(byId("admissionDateField"));
     moveField('#dolStatus',byId("entryFields"));moveField('#homeHosp',byId("entryPreferences"));moveField('#rocYear',byId("entryPreferences"));
     birth.querySelectorAll('.field').forEach(el=>{if(!el.querySelector('input,button,select,textarea')&&el.textContent.includes('出生日期時間'))el.remove();});
     moveField('[data-seg="readmitSource"]',byId("entryReadmit"));
@@ -4355,7 +4374,9 @@ ${opLine}`);
   }
   function renderAdmissionWorkflow(){
     const el=id=>document.getElementById(id);if(!el('admissionContext'))return;
-    const re=S.pathway==='readmit';el('entryReadmit').hidden=!re;el('entryDirect').setAttribute('aria-pressed',String(S.pathway==='direct'));
+    const re=S.pathway==='readmit';el('entryReadmit').hidden=!re;el('entryDirect').setAttribute('aria-checked',String(S.pathway==='direct'));
+    const admissionDate=raw('admissionDate'),admissionTime=raw('admissionTime');
+    el('admissionDateSummary').textContent=(admissionDate?(admissionDate===localToday()?`今天入院（${admissionDate}），已自動帶入。`:`使用回補入院日：${admissionDate}。`):'入院日期未設定，請展開選擇或恢復今天。')+(admissionTime?` 入院時間：${admissionTime}。`:'');
     el('acceptanceWeightModeWrap').hidden=!re;
     document.querySelectorAll('[data-seg="acceptanceWeightMode"] button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===S.acceptanceWeightMode)));
     document.querySelectorAll('[data-set-field]').forEach(b=>b.setAttribute('aria-pressed',String(el(b.dataset.setField).value===b.dataset.v)));

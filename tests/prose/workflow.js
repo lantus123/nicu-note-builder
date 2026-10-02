@@ -28,6 +28,27 @@ test('entry precedes chart; all IDs are unique and no duplicate jaundice onset e
   assert.equal(d.querySelector('#readmitJaundiceDOL'),null);
   for(const id of ['birthDate','admissionDate','readmitComplaint'])assert.ok(get('#admissionContext').contains(get('#'+id)));
 });
+test('entry scenario cards retain visible codes, explanations and timelines',({W,d,get})=>{
+  assert.equal(get('#entryRoutes').getAttribute('role'),'radiogroup');
+  assert.equal(d.querySelectorAll('#entryRoutes > button').length,4);
+  for(const card of d.querySelectorAll('#entryRoutes > button')){
+    assert.equal(card.getAttribute('role'),'radio');
+    for(const selector of ['.k','.t','.d','.p']){
+      const part=card.querySelector(selector);assert.ok(part?.textContent.trim());
+      assert.notEqual(W.getComputedStyle(part).display,'none',`${card.id||card.dataset.story} ${selector} must remain visible`);
+    }
+  }
+  assert.match(get('[data-story="E"] .d').textContent,/已返家.*門診.*急診/);
+  assert.match(get('[data-story="D"] .d').textContent,/跨院轉入/);
+  assert.ok(get('#admissionContext').contains(get('#storyHelp')));
+});
+test('birth team descriptions remain visible and entry selection stays synchronized',({W,get,click,story})=>{
+  click('#entryDirect');assert.equal(get('#entryDirect').getAttribute('aria-checked'),'true');
+  for(const k of ['A','B'])assert.notEqual(W.getComputedStyle(get(`[data-story="${k}"] .d`)).display,'none');
+  story('A');assert.equal(get('#entryDirect').getAttribute('aria-checked'),'true');
+  story('E');assert.equal(get('#entryDirect').getAttribute('aria-checked'),'false');
+  assert.equal(get('[data-story="E"]').getAttribute('aria-checked'),'true');
+});
 test('unknown data does not become DOL 1, a negative history, or unperformed prenatal tests',({note,seg,click,input})=>{
   assert.match(note(),/day of life __/);assert.doesNotMatch(note(),/parents denied|mother denied|Neither amniocentesis|No gestational diabetes/);
   seg('amnio','unknown');assert.match(note(),/Information on amniocentesis was unavailable/);

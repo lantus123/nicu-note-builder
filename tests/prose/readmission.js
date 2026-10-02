@@ -44,6 +44,9 @@ test('automatic mode is visible and filling only the birth date calculates throu
   assert.equal(get('#dolAutoReset').getAttribute('aria-pressed'),'true');
   assert.notEqual(W.getComputedStyle(get('#dolAutoReset')).display,'none');
   assert.equal(get('#admissionDate').value,'2026-08-30');
+  assert.equal(get('#admissionDateDetails').open,false,'routine admissions do not ask for an admission date');
+  assert.match(get('#admissionDateSummary').textContent,/今天入院.*2026-08-30.*已自動帶入/);
+  assert.equal(get('#admissionTime').value,'','an admission time must not be inferred');
   assert.equal(W.getComputedStyle(get('#dolManualWrap')).display,'none');
   input('birthDate','2026-08-13');
   assert.match(get('#dolStatus').textContent,/DOL 18.*今天 2026-08-30/);
@@ -54,14 +57,19 @@ test('automatic mode is visible and filling only the birth date calculates throu
 });
 
 test('backdated admission uses that date and the today action restores automatic calculation',({input,get,click,seg,tab,note})=>{
+  click('#admissionDateDetails > summary');assert.equal(get('#admissionDateDetails').open,true);
   input('birthDate','2026-08-13');input('admissionDate','2026-08-25');
+  assert.match(get('#admissionDateSummary').textContent,/回補入院日：2026-08-25/);
+  click('#admissionDateDetails > summary');assert.equal(get('#admissionDateDetails').open,false);
+  assert.equal(get('#admissionDate').value,'2026-08-25','closing advanced settings must not reset the actual date');
   assert.match(get('#dolStatus').textContent,/DOL 13.*入院日 2026-08-25/);
   click('#dolManual');
   assert.equal(get('#dolManualWrap').hidden,false);
   seg('dol','2');
   assert.equal(get('#dolAutoReset').getAttribute('aria-pressed'),'false');
-  click('#admissionToday');
+  click('#admissionDateDetails > summary');click('#admissionToday');
   assert.equal(get('#admissionDate').value,'2026-08-30');
+  assert.match(get('#admissionDateSummary').textContent,/今天入院.*已自動帶入/);
   assert.equal(get('#dolAutoReset').getAttribute('aria-pressed'),'true');
   assert.equal(get('#dolManualWrap').hidden,true);
   assert.match(note(),/now on day of life 18/);
