@@ -11,6 +11,30 @@ const test=(name,run)=>tests.push([name,()=>{
  const add=(stage,kind)=>{phase('course:'+({outside:'obCare',arrival:'obArrive',transport:'route'}[stage]));click(stage==='transport'?`[data-add-course="${kind}"]`:`[data-event-phase="${stage}"][data-add-stage-event="${kind}"]`);return W.guidanceTest.S.courseEvents.at(-1).id;};
  try{run({W,d,get,click,input,story,seg,phase,choose,note,facts,add});assert.deepEqual(errors,[],'Page exceptions');}finally{W.close();}
 }]);
+test('single selections and the D route survive a second click; clear is explicit',({story,seg,click,get,note,facts})=>{
+ story('D');seg('dest','NICU');seg('gender','male');const text=note(),state=facts();story('D');seg('dest','NICU');seg('gender','male');assert.equal(note(),text);assert.equal(facts(),state);
+ click('[data-clear-seg="gender"]');assert.doesNotMatch(note(),/\bmale\b/);assert.doesNotMatch(note(),/undefined/);assert.equal(get('[data-clear-seg="gender"]').disabled,true);assert.equal(get('[data-story="D"]').getAttribute('aria-checked'),'true');
+});
+test('single and multiple selections have distinct markers; add-event controls are actions',({story,get,click})=>{
+ story('D');assert.equal(get('[data-seg="gender"] [data-v="male"]').dataset.choiceKind,'single');const sx=get('[data-msel="obSx"] [data-v="tachypnea"]');assert.equal(sx.dataset.choiceKind,'multi');sx.click();assert.equal(sx.getAttribute('aria-pressed'),'true');sx.click();assert.equal(sx.getAttribute('aria-pressed'),'false');assert.equal(get('[data-add-course="cpap"]').dataset.choiceKind,undefined);
+});
+test('arrow navigation moves single-choice focus without selecting a clinical fact',({story,get,W,d,note})=>{
+ story('D');const first=get('[data-seg="gender"] [data-v="male"]'),text=note();first.focus();first.dispatchEvent(new W.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));assert.equal(d.activeElement,get('[data-seg="gender"] [data-v="female"]'));assert.equal(note(),text);
+});
+test('transport observation-only recording is secondary and never means continuation',({story,input,get,click,seg,note,phase})=>{
+ story('D');input('birthFinalSupport','cpap');click('#obM1Relation-choice-continued');phase('course:route');const observed=get('#obRespRelation-choice-observed');assert.ok(get('#obRespRelationHelp').contains(observed));assert.equal(get('#obRespRelationChoices').contains(observed),false);assert.doesNotMatch(get('#obRespRelationGuide').textContent,/只知道當時/);click('#obRespRelationHelp > summary');observed.click();seg('obRespType','o2');assert.match(note(),/receiving supplemental oxygen during transport/);assert.doesNotMatch(note(),/oxygen was continued during transport/);
+});
+test('unknown predecessor does not require going back to record current transport support',({story,phase,get,seg,note})=>{
+ story('D');phase('course:route');assert.equal(get('#pathwaySupportControls').hidden,false);seg('obRespType','cpap');assert.match(note(),/receiving CPAP during transport/);assert.doesNotMatch(note(),/CPAP was continued|CPAP was initiated/);
+});
+test('stage preview highlights exact recorded sentences without rewriting or auto-scrolling',({story,phase,input,get,note,click,d})=>{
+ story('D');phase('course:obArrive');input('obArrival','The infant was tachypneic.');const text=note(),body=get('#previewBody');body.scrollTop=150;phase('course:route');assert.equal(note(),text);assert.equal(body.scrollTop,150);assert.equal(get('#previewStage').disabled,true);
+ phase('course:obArrive');assert.match(get('.note-scope[data-active="true"]').textContent,/On our team's arrival.*tachypneic/);assert.match(get('#previewStage').textContent,/我方抵達外院/);const formTop=d.documentElement.scrollTop;click('#previewStage');assert.equal(d.documentElement.scrollTop,formTop);assert.equal(note(),text);
+});
+test('transport symptom labels and narrative agree on timing and follow the on-site record',({story,phase,input,get,note,click})=>{
+ story('D');phase('course:obArrive');input('obArrival','The infant had mild retractions.');phase('course:route');click('[data-msel="obSx"] [data-v="tachypnea"]');input('obCourse','Transport monitoring was continued.');assert.match(get('#pwSxWrap > .lab').textContent,/轉送途中/);
+ for(const tab of ['adm','acc']){click(`[data-tab="${tab}"]`);const text=note();assert.match(text,/During transport, tachypnea was noted/);assert.doesNotMatch(text,/Before transfer, tachypnea/);assert.ok(text.indexOf("On our team's arrival")<text.indexOf('During transport, tachypnea'));assert.equal(text.split('Transport monitoring was continued.').length,2);}
+});
 test('five chart chapters and unique fields remain, relation controls have visual alternatives',({d,get,story})=>{
  story('D');const ids=[...d.querySelectorAll('[id]')].map(e=>e.id);assert.equal(ids.length,new Set(ids).size);
  assert.equal(d.querySelectorAll('#flowMenu [data-flow-target]').length,5);
@@ -21,7 +45,7 @@ test('guidance stays concise while retaining the actual stage and entered observ
  story('D');input('birthBreathing','labored');input('birthHR','120');const text=note(),state=facts();
  phase('birth:dr');const birth=get('#context-birth-dr');assert.match(birth.querySelector('.phase-inherit').textContent,/呼吸費力.*120/);assert.equal(birth.querySelectorAll('p:not(.phase-inherit)').length,0);
  phase('course:obCare');const care=get('#journeyContext');assert.match(care.textContent,/外院團隊.*我方抵達前.*出生處置後/);assert.equal(care.querySelectorAll('p').length,0);
- phase('course:obArrive');assert.equal(get('#journeyContext').querySelectorAll('p:not(.phase-inherit)').length,1);assert.match(get('#journeyContext').textContent,/未外接到場可略過/);
+ phase('course:obArrive');assert.equal(get('#journeyContext').querySelectorAll('p:not(.phase-inherit)').length,1);assert.match(get('#journeyContext').textContent,/非我方外接可略過/);
  assert.doesNotMatch(birth.textContent,/不必重填|唯讀摘要/);assert.equal(note(),text);assert.equal(facts(),state);
 });
 test('support explanations are opt-in, not repeated on each choice or outside parameter details',({story,input,choose,get,click,note,facts})=>{
@@ -47,7 +71,7 @@ test('recorded events remain outside the add-event disclosure in every transfer 
 });
 test('phase highlighting keeps menu controls stable, including focus and scroll',({story,phase,get,click,W,d,note})=>{
  story('D');phase('birth:birth');const selector='#flowSubsteps [data-phase-target="course:adm"]',button=get(selector);phase('birth:dr');assert.equal(get(selector),button);
- click('#flowMenu > summary');button.focus();const menu=get('#flowSubsteps').parentElement;menu.scrollTop=125;const text=note();W.guidanceTest.render();assert.equal(get(selector),button);assert.equal(d.activeElement,button);assert.equal(menu.scrollTop,125);assert.equal(note(),text);
+ click('#phaseMenu > summary');button.focus();const menu=get('#flowSubsteps');menu.scrollTop=125;const text=note();W.guidanceTest.render();assert.equal(get(selector),button);assert.equal(d.activeElement,button);assert.equal(menu.scrollTop,125);assert.equal(note(),text);
 });
 test('birth rail follows the actual delivery setting and does not modify any clinical facts',({story,seg,phase,note,facts,get})=>{
  story('A');seg('delivery','cs');const text=note(),state=facts();

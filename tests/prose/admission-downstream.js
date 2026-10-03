@@ -115,8 +115,8 @@ test('入院與接手呼吸支持分開，明確確認同前才帶入',page=>{
   assert.match(note(),/On admission to our NICU, the infant was receiving respiratory support with NCPAP\./);
   assert.match(onTab('plan'),/Provide respiratory support with NCPAP/);
   onTab('acc');click('#useAdmissionResp');assert.match(note(),/At acceptance, the infant is receiving respiratory support with NCPAP/);
-  // 再點一次＝清空入院值；接手時已確認的值仍保留
-  onTab('adm');admResp('NCPAP');
+  // 清除是明確獨立操作；接手時已確認的值仍保留。
+  onTab('adm');admResp('NCPAP');click('[data-clear-seg="resp"]');
   assert.equal(accPressed('NCPAP'),'true','清空入院狀態不能改寫接手狀態');
   assert.doesNotMatch(note(),/NCPAP/);
   assert.doesNotMatch(onTab('plan'),/NCPAP/);

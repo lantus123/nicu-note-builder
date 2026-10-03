@@ -12,14 +12,18 @@ async function main(){
  const send=(method,params={})=>new Promise((resolve,reject)=>{const next=++id,timer=setTimeout(()=>reject(Error('Timeout: '+method)),20000);pending.set(next,{resolve,reject,timer});socket.send(JSON.stringify({id:next,method,params}));});
  const ev=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);return r.result.value;};
  const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+ const trace=[];
+ const navState=()=>ev(`({chapter:document.getElementById('flowChapter')?.textContent,phase:document.getElementById('flowDetail')?.textContent,focus:document.activeElement.id,top:document.getElementById('journeyWorkspace')?.getBoundingClientRect().top,offset:document.documentElement.style.getPropertyValue('--workflow-offset')})`);
  const click=async selector=>{
+  const before=await navState();
   await ev(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Missing '+${JSON.stringify(selector)});const r=e.getBoundingClientRect();if(!e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)))e.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});})()`);await pause(80);
   const p=await ev(`(()=>{const e=document.querySelector(${JSON.stringify(selector)}),r=e.getBoundingClientRect();return {x:r.x+r.width/2-visualViewport.offsetLeft,y:r.y+r.height/2-visualViewport.offsetTop,hit:e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)),rect:{top:r.top,bottom:r.bottom}};})()`);assert.ok(p.hit,'Control hidden or covered: '+selector+' '+JSON.stringify(p));
   await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:p.x,y:p.y});await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:p.x,y:p.y});await pause(100);
+  trace.push({selector,before,after:await navState()});
  };
  const input=async(id,value)=>{const selector='#'+id;await click(selector);await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event(e.tagName==='SELECT'||e.type==='date'?'change':'input',{bubbles:true}));})()`);await pause(80);};
  const type=async(id,value)=>{await click('#'+id);await ev(`document.getElementById(${JSON.stringify(id)}).select()`);await send('Input.insertText',{text:value});await pause(100);assert.equal(await ev('document.activeElement.id'),id,'Typing must retain focus');};
- const phase=async key=>{if(await ev('innerWidth>=800'))await click(`#clinicalRail [data-phase-target="${key}"]`);else{await click('#flowMenu > summary');await click(`#flowSubsteps [data-phase-target="${key}"]`);}};
+ const phase=async key=>{if(await ev(`!!document.querySelector('#clinicalRail [data-phase-target="${key}"]')?.checkVisibility()`))await click(`#clinicalRail [data-phase-target="${key}"]`);else{await click('#phaseMenu > summary');await click(`#flowSubsteps [data-phase-target="${key}"]`);}};
  const chapter=async key=>{await click('#flowMenu > summary');await click(`#flowMenu [data-flow-target="${key}"]`);};
  const note=()=>ev("document.getElementById('note').textContent");
  const resize=async(width,height)=>{await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<800,screenWidth:width,screenHeight:height});await send('Emulation.setPageScaleFactor',{pageScaleFactor:1});await pause(160);assert.equal(await ev('innerWidth'),width);assert.ok(await ev('document.documentElement.scrollWidth<=innerWidth+1'),'Horizontal overflow at '+width);};
@@ -71,7 +75,7 @@ async function main(){
   await resize(390,900);await phase('birth:dr');assert.match(await ev("document.getElementById('flowDetail').textContent"),/刀房/);await phase('course:evaluation');assert.match(await ev("document.getElementById('journeyContext').textContent"),/NBC/);await align('#journeyWorkspace');await flatLayout();await shot('nicu-guidance-readmit-mobile.png');
   await chapter('admissionContext');await click('#entryDirect');await chapter('birthHistoryCard');await click('[data-story="B"]');await phase('birth:birth');await ev("document.getElementById('flowNext').focus({preventScroll:true})");await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter'});await pause(100);assert.match(await ev("document.getElementById('flowDetail').textContent"),/出生後會診/);
   assert.deepEqual(errors,[]);console.log(JSON.stringify({ok:true,viewportWidths:[1440,390,320],scenarios:['birth','D','C','E','B'],nativeTyping:true,keyboard:true,reviewJump:true,noNRPConfirmationFromNavigation:true,returnRestoresPosition:true,flatLayout:{checks:layoutChecks.length,maxEventFrames:Math.max(...layoutChecks.map(c=>c.maxEventFrames)),nestedDisclosures:0,eventsVisibleWhenPickerClosed:true},screenshots},null,2));
- }catch(error){await shot('nicu-guidance-failure.png').catch(()=>{});throw error;}
+ }catch(error){console.error(JSON.stringify(trace.slice(-12),null,2));await shot('nicu-guidance-failure.png').catch(()=>{});throw error;}
  finally{await send('Page.close').catch(()=>{});socket.close();for(const p of pending.values())clearTimeout(p.timer);}
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

@@ -4,7 +4,7 @@
   "description": "20 情境 headless 文體驗收：golden master + 佔位符紀律不變量",
   "scripts": {
     "test": "node check.js && node regression.js && node prenatal-narrative.js && node admission-timeline.js && node admission-downstream.js && node readmission.js && node workflow.js && node plan-ga.js && node pedigree.js && node ui-screening.js && node ui-navigation.js && node ui-preview.js && node ui-clipboard.js && node ui-campus.js && node destination.js && node prenatal-defaults.js && node review-navigation.js && node clinical-guidance.js",
-    "test:browser": "node browser-workflow.cjs && node browser-guidance.cjs",
+    "test:browser": "node browser-workflow.cjs && node browser-guidance.cjs && node browser-clarity.cjs",
     "update": "node check.js --update"
   },
   "dependencies": {

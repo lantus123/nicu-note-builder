@@ -12,7 +12,7 @@ async function withPage(check,{width=1200,matchMedia=true}={}){
       Object.defineProperty(W,'innerWidth',{value:width,writable:true,configurable:true});
       W.scrollTo=()=>{};
       if(matchMedia)W.matchMedia=query=>({
-        media:query,get matches(){return W.innerWidth<800;},
+        media:query,get matches(){return W.innerWidth<1180;},
         addEventListener(){},removeEventListener(){}
       });
       W.addEventListener('error',e=>errors.push(String(e.error?.message||e.message)));
@@ -44,12 +44,11 @@ const seed=({click,input})=>{
   input('gaW','34');input('gaD','0');input('bw','2487');
 };
 
-test('desktop preview starts visible in review mode with normal-size settings',()=>withPage(({d,note})=>{
-  // 2026-09-20 Ryan：醫師編輯時應顯示校閱模式 ⇒ 預設校閱（data-reading=false），閱讀模式手動切。
+test('desktop preview starts visible in calm reading mode with normal-size settings',()=>withPage(({d,note})=>{
   const dock=d.querySelector('.dock'),toggle=d.getElementById('dockToggle');
-  assert.equal(dock.dataset.reading,'false');assert.equal(dock.dataset.font,'normal');
-  assert.equal(d.getElementById('previewReading').getAttribute('aria-pressed'),'false');
-  assert.equal(d.getElementById('previewReading').textContent,'校閱模式');
+  assert.equal(dock.dataset.reading,'true');assert.equal(dock.dataset.font,'normal');
+  assert.equal(d.getElementById('previewReading').getAttribute('aria-pressed'),'true');
+  assert.equal(d.getElementById('previewReading').textContent,'閱讀模式');
   assert.equal(d.getElementById('previewFont').value,'normal');
   assert.equal(toggle.hidden,true);assert.equal(toggle.getAttribute('aria-expanded'),'true');
   assert.equal(toggle.getAttribute('aria-controls'),'previewBody');
@@ -59,13 +58,13 @@ test('desktop preview starts visible in review mode with normal-size settings',(
   assert.ok(note.textContent.trim());assert.equal(note.querySelectorAll('.note-change').length,0);
 }));
 
-test('switching to reading mode and back only changes the labels, not the note',()=>withPage(({d,note})=>{
+test('switching to review mode and back only changes the labels, not the note',()=>withPage(({d,note})=>{
   const dock=d.querySelector('.dock'),btn=d.getElementById('previewReading'),text=note.textContent;
   btn.click();
-  assert.equal(dock.dataset.reading,'true');assert.equal(btn.textContent,'閱讀模式');
-  assert.equal(btn.getAttribute('aria-pressed'),'true');
-  btn.click();
   assert.equal(dock.dataset.reading,'false');assert.equal(btn.textContent,'校閱模式');
+  assert.equal(btn.getAttribute('aria-pressed'),'false');
+  btn.click();
+  assert.equal(dock.dataset.reading,'true');assert.equal(btn.textContent,'閱讀模式');
   assert.equal(note.textContent,text);
 }));
 
@@ -101,20 +100,21 @@ for(const mode of ['adm','plan','acc','proc'])test(`${mode} reading and font set
     click(`[data-tab="${mode}"]`);
     if(mode==='proc')click('[data-proctog] [data-v="intub"]');
     const text=note.textContent,markup=note.innerHTML;
-    click('#previewReading');   // 預設校閱（2026-09-20），第一次點切到閱讀
-    assert.equal(d.querySelector('.dock').dataset.reading,'true');
-    assert.equal(d.getElementById('previewReading').getAttribute('aria-pressed'),'true');
+    click('#previewReading');
+    assert.equal(d.querySelector('.dock').dataset.reading,'false');
+    assert.equal(d.getElementById('previewReading').getAttribute('aria-pressed'),'false');
     for(const size of ['large','small','normal']){
       input('previewFont',size);assert.equal(d.querySelector('.dock').dataset.font,size);
       assert.equal(note.textContent,text);assert.equal(note.innerHTML,markup);
     }
     click('#previewReading');
-    assert.equal(d.querySelector('.dock').dataset.reading,'false');
+    assert.equal(d.querySelector('.dock').dataset.reading,'true');
     assert.equal(note.textContent,text);assert.equal(note.innerHTML,markup);
   }));
 
 test('only changed values are highlighted and the highlight expires without rewriting text',()=>withPage(async page=>{
   const {d,note,input}=page;seed(page);
+  d.getElementById('previewReading').click();
   input('bw','2488');
   const marks=[...note.querySelectorAll('.note-change')].map(el=>el.textContent);
   assert.ok(marks.length>0,'A changed birth weight should receive a quiet update marker');
@@ -144,6 +144,7 @@ for(const [label,before,after] of [
   ['shared high surrogate','😀','😁'],
   ['shared low surrogate',String.fromCodePoint(0x20000),String.fromCodePoint(0x20400)]
 ])test(`change markers preserve complete Unicode codepoints (${label})`,()=>withPage(({W,d,note,click,input})=>{
+  click('#previewReading');
   click('[data-tog="pwStandby"] button');
   input('obCourse',`Synthetic ${before} observation`);
   input('obCourse',`Synthetic ${after} observation`);
@@ -165,7 +166,7 @@ test('the preview keeps following the form even after the reader interacts with 
   note.dispatchEvent(new W.Event('input',{bubbles:true}));
   input('bw','2599');
   assert.match(note.textContent,/2599/,'A form change must reach the preview immediately');
-  click('#previewReading');
+  click('#previewReading');click('#previewReading');
   assert.equal(d.querySelector('.dock').dataset.reading,'true');
   note.dispatchEvent(new W.FocusEvent('focusin',{bubbles:true}));
   assert.equal(d.querySelector('.dock').dataset.reading,'true','Touching the preview no longer forces review mode');
@@ -195,6 +196,7 @@ test('escaped free text remains literal across display modes and later updates',
 
 test('text-mode procedure updates preserve literal operator input',()=>withPage(page=>{
   const {note,click,input}=page;seed(page);
+  click('#previewReading');
   click('[data-tab="proc"]');click('[data-proctog] [data-v="intub"]');
   input('procOperator','<b>Synthetic Operator A</b>');
   assert.ok(note.textContent.includes('<b>Synthetic Operator A</b>'));

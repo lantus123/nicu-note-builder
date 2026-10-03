@@ -309,7 +309,7 @@ test('the journey stepper keeps exactly one explicit stage active',({get,input,c
 });
 test('the admission stop is labelled 入院 until a destination is chosen',({get,click})=>{
   click('[data-seg="dest"] [data-v="NICU"]');assert.equal(get('li[data-stop="adm"] .t').textContent,'入 NICU');
-  click('[data-seg="dest"] [data-v="NICU"]');assert.equal(get('li[data-stop="adm"] .t').textContent,'入院');
+  click('[data-clear-seg="dest"]');assert.equal(get('li[data-stop="adm"] .t').textContent,'入院');
 });
 
 test('confirmed continuing PPV is a continuation, not another administration',({add,input,seg,note})=>{
@@ -380,15 +380,16 @@ test('hidden standby and consultation reasons are retained without leaking into 
   assert.match(note(),/synthetic standby marker/);assert.match(note(),/synthetic consultation marker/);
 });
 
-test('outside care, transport-team arrival and hospital admission retain separate stages',({seg,input,note})=>{
-  seg('pathway','outborn');input('obCourse','Synthetic referring-hospital course');
+test('outside care, transport-team arrival, transport and hospital admission retain separate stages',({seg,input,note})=>{
+  seg('pathway','outborn');input('obCourse','Synthetic transport observation');
   seg('obM1Type','cpap');input('obM1Relation','new');
   input('obArrival','Synthetic assessment at referring hospital');
   seg('obRespType','ett');input('obRespRelation','changed');
   input('obAdmissionStatus','Synthetic assessment on hospital admission');
   const text=note();
-  before(text,/Synthetic referring-hospital course/,/Synthetic assessment at referring hospital/);
-  before(text,/Synthetic assessment at referring hospital/,/Synthetic assessment on hospital admission/);
+  before(text,/CPAP was initiated at the referring hospital/,/Synthetic assessment at referring hospital/);
+  before(text,/Synthetic assessment at referring hospital/,/Synthetic transport observation/);
+  before(text,/Synthetic transport observation/,/Synthetic assessment on hospital admission/);
   assert.match(text,/CPAP|continuous positive airway pressure/i);
   assert.match(text,/transport|transfer/i);
   assert.doesNotMatch(text,/On (?:NICU|hospital) arrival,? Synthetic assessment at referring hospital/i);

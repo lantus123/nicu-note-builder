@@ -26,7 +26,7 @@ const test=(name,check)=>tests.push([name,()=>{
 }]);
 
 test('inpatient choices exclude BR and start unselected',({get,d,selected,note})=>{
-  assert.deepEqual([...d.querySelectorAll('[data-seg="dest"] button')].map(b=>b.dataset.v),['NBC','NICU','PICU']);
+  assert.deepEqual([...d.querySelectorAll('[data-seg="dest"] button[data-v]')].map(b=>b.dataset.v),['NBC','NICU','PICU']);
   assert.equal(selected(),'');
   assert.match(get('#destNurseryHelp').textContent,/BR.*健康.*不列為住院去處/);
   assert.match(note(),/admitted to ____/);
@@ -99,8 +99,8 @@ test('unresolved destination notice survives leaving and returning to E',({story
   assert.match(get('#destNotice').textContent,/NICU.*不適用情境 E/);
 });
 
-test('deselecting PICU leaves a placeholder and no fallback NICU plan',({story,seg,note,selected,get})=>{
-  story('E');seg('dest','PICU');seg('dest','PICU');
+test('explicitly clearing PICU leaves a placeholder and no fallback NICU plan',({story,seg,note,selected,get})=>{
+  story('E');seg('dest','PICU');seg('dest','PICU');assert.equal(selected(),'PICU');get('[data-clear-seg="dest"]').click();
   assert.equal(selected(),'');assert.match(note(),/admitted to ____/);assert.equal(note('plan'),'');
   assert.equal(get('#destPlanHelp').hidden,true);
 });

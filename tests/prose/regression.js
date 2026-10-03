@@ -521,19 +521,18 @@ test('consult location is added only for an explicit direct pathway',()=>{
   const unset=notes([seg('dest','NICU'),seg('delivery','cs'),toggle('pwConsult')]);
   assert.doesNotMatch(unset.admission,/consulted in the (operating|delivery) room/,'no pathway chosen ⇒ no asserted place');
 });
-test('pathway has no default and can be un-picked by clicking the same button again',()=>{
+test('pathway has no default and reselecting the same route preserves it',()=>{
   const blank=notes([seg('dest','NICU')]).admission;
   assert.doesNotMatch(blank,/initially cared for in the baby room|referring hospital/);
   const nursery=notes([seg('dest','NICU'),seg('pathway','nursery')]).admission;
   includes(nursery,'initially cared for in the baby room');
   const unpicked=notes([seg('dest','NICU'),seg('pathway','nursery'),seg('pathway','nursery')]).admission;
-  assert.doesNotMatch(unpicked,/initially cared for in the baby room/,'second click on the same pathway must clear it');
-  assert.equal(unpicked,blank,'un-picked pathway must render exactly like never picked');
+  assert.equal(unpicked,nursery,'Repeated selection must not remove the clinical route');
 });
-test('clearable segments can be un-picked; segments with semantic defaults cannot',()=>{
-  const chosen=notes([seg('dest','NBC'),seg('dest','NBC')]).admission;
+test('empty-legal segments have explicit clear actions; reselecting is stable',()=>{
+  const chosen=notes([seg('dest','NBC'),{click:'[data-clear-seg="dest"]'}]).admission;
   includes(chosen,'admitted to ____');
-  const female=notes([seg('gender','female')]).admission, cleared=notes([seg('gender','female'),seg('gender','female')]).admission;
+  const female=notes([seg('gender','female'),seg('gender','female')]).admission, cleared=notes([seg('gender','female'),{click:'[data-clear-seg="gender"]'}]).admission;
   includes(female,'female'); assert.doesNotMatch(cleared,/\bfemale\b/);
   const dolTwice=notes([seg('dol','1'),seg('dol','1')]).acceptance;
   includes(dolTwice,'DOL 1');   // 出生當天 = DOL 1；有語意預設，再點不可清空

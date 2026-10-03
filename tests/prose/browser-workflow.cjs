@@ -27,7 +27,7 @@ async function main(){
   };
   // CDP pointer coordinates use the visual viewport; DOM rects use the layout viewport.
   // Mobile scrollIntoView can move the visual viewport even when scale is 1.
-  const click=async s=>{const stop=s.match(/^\[data-stop-toggle="([^"]+)"\]$/);if(stop){await click('#flowMenu > summary');await click(`#flowSubsteps [data-phase-target="course:${stop[1]}"]`);return;}const r=await position(s);assert.ok(r.w&&r.h&&r.hit,'Control hidden or covered: '+s);await send('Input.dispatchMouseEvent',{type:'mousePressed',x:r.inputX,y:r.inputY,button:'left',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:r.inputX,y:r.inputY,button:'left',clickCount:1});clicks++;await pause(70);};
+  const click=async s=>{const stop=s.match(/^\[data-stop-toggle="([^"]+)"\]$/);if(stop){await click('#phaseMenu > summary');await click(`#flowSubsteps [data-phase-target="course:${stop[1]}"]`);return;}const r=await position(s);assert.ok(r.w&&r.h&&r.hit,'Control hidden or covered: '+s);await send('Input.dispatchMouseEvent',{type:'mousePressed',x:r.inputX,y:r.inputY,button:'left',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:r.inputX,y:r.inputY,button:'left',clickCount:1});clicks++;await pause(70);};
   const input=async(id,value)=>{if(['obM1Relation','obRespRelation'].includes(id)){await click(`#${id}-choice-${value||'clear'}`);entries++;return;}const r=await position('#'+id);assert.ok(r.w&&r.h&&r.hit,'Input hidden or covered: '+id);await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.focus({preventScroll:true});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event(e.tagName==='SELECT'||e.type==='date'?'change':'input',{bubbles:true}));})()`);entries++;};
   const typeText=async(id,value)=>{await click('#'+id);await ev(`document.getElementById(${JSON.stringify(id)}).select()`);await send('Input.insertText',{text:value});assert.equal(await ev(`document.getElementById(${JSON.stringify(id)}).value`),value);entries++;};
   const chapter=async id=>{await click('#flowMenu > summary');await click(`#flowMenu [data-flow-target="${id}"]`);};
@@ -163,7 +163,7 @@ async function main(){
     // Institutional destination rules: real pointer interactions on a narrow mobile viewport.
     await fresh();await resize(320,844,true);
     await click('#entryDirect');await click('[data-seg="dest"] [data-v="NICU"]');await click('[data-story="E"]');
-    const destinationOptions=await ev(`[...document.querySelectorAll('[data-seg="dest"] button')].filter(b=>b.checkVisibility()).map(b=>b.dataset.v)`);
+    const destinationOptions=await ev(`[...document.querySelectorAll('[data-seg="dest"] button[data-v]')].filter(b=>b.checkVisibility()).map(b=>b.dataset.v)`);
     assert.deepEqual(destinationOptions,['NBC','PICU'],JSON.stringify(await ev(`({stories:[...document.querySelectorAll('#entryRoutes button')].map(b=>[b.id||b.dataset.story,b.getAttribute('aria-checked')]),dest:[...document.querySelectorAll('[data-seg="dest"] button')].map(b=>({v:b.dataset.v,hidden:b.hidden,disabled:b.disabled,display:getComputedStyle(b).display})),help:document.querySelector('#destHelp').textContent})`)));
     assert.equal(await ev(`document.querySelector('[data-seg="dest"] [data-v="NICU"]').disabled`),true);
     assert.equal(await ev(`document.querySelector('[data-seg="dest"] [aria-pressed="true"]')`),null,'Changing to E must not choose a replacement unit');

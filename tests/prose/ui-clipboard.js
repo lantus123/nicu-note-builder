@@ -10,6 +10,7 @@ async function check({collapsed,fail=false,emptyPlan=false}){
   const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'https://nicu-clipboard.test/',
     beforeParse(W){
       W.scrollTo=()=>{};
+      W.innerWidth=1440;
       W.addEventListener('error',e=>errors.push(String(e.error?.message||e.message)));
       // jsdom does not implement layout. Model the browser's visible/hidden
       // innerText distinction; verify the offscreen reader's actual DOM state.

@@ -216,7 +216,7 @@ test('review separates missing keys, unconfirmed actions, conflicts and neutral 
   get('#reviewOptional').open=true;input('rm_respiratory_onset','17');assert.equal(get('#reviewOptional').open,true,'Input must not close optional review');
 });
 test('combined navigation identifies the exact E substage and copy only becomes primary at review',({story,click,get,note})=>{
-  assert.equal(get('#flowMenu > summary').getAttribute('aria-labelledby'),'flowChapter flowDetail','Assistive technology receives the current chapter and substage');
+  assert.equal(get('#flowMenu > summary').getAttribute('aria-label'),'切換病歷章節','Chapter switching is separate from the current clinical stage');
   assert.equal(get('#copy').disabled,false);assert.equal(get('#copy').dataset.primary,'false');assert.equal(get('#copy').textContent,'複製草稿');
   story('E');click('#birthHistoryCard [data-flow-target="pathwayCard"]');assert.match(get('#flowChapter').textContent,/本次病程/);assert.match(get('#flowDetail').textContent,/出院與返家基準.*1\/3/);
   click('#flowNext');assert.match(get('#flowDetail').textContent,/症狀與變化.*2\/3/);
