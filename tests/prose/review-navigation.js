@@ -138,8 +138,8 @@ test('C missing findings mounts the nursery evaluation without claiming normal r
 
 test('D origin and unconfirmed continued support mount the correct stage',({get,story,input,stage,jump})=>{
   story('D');input('obTransferFrom',get('#homeHosp').value);input('obM1Relation','continued');stage('adm');
-  jump('#obTransferFrom');assert.match(get('#flowDetail').textContent,/外院處置/);
-  jump('#obM1Relation');assert.match(get('#flowDetail').textContent,/外院處置/);
+  jump('#obTransferFrom');assert.match(get('#flowDetail').textContent,/外院照護/);
+  jump('#obM1RelationChoices');assert.match(get('#flowDetail').textContent,/外院照護/);
 });
 
 test('legacy missing screening opens the collapsed screening card without marking a result',({W,get,click,jump})=>{

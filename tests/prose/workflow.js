@@ -230,19 +230,19 @@ test('first and last substage controls connect to the adjacent chart chapters',(
 });
 test('navigation menu closes on selection and Escape; navigation never edits clinical facts',({W,story,click,get,input,note})=>{
   story('E');input('readmitCourse','The symptoms persisted.');const before=note();get('#flowMenu').open=true;
-  click('[data-flow-stop="illness"]');assert.equal(get('#flowMenu').open,false);assert.equal(note(),before);
+  click('#flowSubsteps [data-phase-target="course:illness"]');assert.equal(get('#flowMenu').open,false);assert.equal(note(),before);
   get('#flowMenu').open=true;get('#flowMenu').dispatchEvent(new W.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(get('#flowMenu').open,false);assert.equal(note(),before);
 });
 test('confirmed support reuse is a read-only mode summary, not an unanswered second question',({story,seg,input,get,note,click})=>{
   story('D');input('birthFinalSupport','cpap');input('obM1Relation','continued');
-  assert.match(get('#obM1RelationSummary').textContent,/產房結束時.*CPAP/);assert.equal(get('#obM1RelationDetails').open,false);
+  assert.match(get('#obM1RelationSummary').textContent,/CPAP.*離開外院出生場所前/);assert.equal(get('#obM1RelationDetails').open,false);
   assert.equal(get('#outsideSupportControls').parentElement.id,'obM1RelationDetails');
-  input('obRespRelation','continued');assert.match(get('#obRespRelationSummary').textContent,/外院後續照護.*CPAP/);assert.equal(get('#obRespRelationDetails').open,false);
+  input('obRespRelation','continued');assert.match(get('#obRespRelationSummary').textContent,/CPAP.*外院照護時/);assert.equal(get('#obRespRelationDetails').open,false);
   const before=note();get('#obRespRelationDetails').open=true;assert.equal(note(),before);
   input('obPEEP','6');get('#obRespRelationDetails').open=false;input('obAdmissionStatus','The infant remained tachypneic.');
   assert.equal(get('#obRespRelationDetails').open,false);assert.match(get('#obRespRelationDetails > summary').textContent,/原值保留/);assert.match(note(),/6 cmH2O/);
   input('birthFinalSupport','room');assert.equal(get('#obRespRelationSummary').hidden,true);assert.equal(get('#pathwaySupportControls').parentElement.closest('details'),null);
-  assert.match(get('#reviewConflictList').textContent,/持續同前/);assert.equal(get('#obPEEP').value,'6');
+  assert.match(get('#reviewConflictList').textContent,/重新確認是否仍持續使用/);assert.equal(get('#obPEEP').value,'6');
 });
 test('all module clinical fields have a definition and output tests',({d})=>{
   const inputs=[...d.querySelectorAll('#readmitModules input:not([type="hidden"]),#readmitModules select')];

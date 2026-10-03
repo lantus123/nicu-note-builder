@@ -461,7 +461,8 @@ test('resetting later support to unrecorded suppresses its settings without subs
   seg('obRespType','ppv');input('obFiO2','43');
   assert.match(note(),/43/);assert.match(note(),ppv);
   seg('obRespType','');
-  assert.equal(get('[data-seg="obRespType"] [data-v=""]').getAttribute('aria-pressed'),'true');
+  assert.equal(get('[data-seg="obRespType"] [data-v=""]').getAttribute('aria-pressed'),'false','Clearing a mode is an action, not a selected clinical finding');
+  assert.equal(get('[data-seg="obRespType"] [data-v=""]').hidden,true);
   assert.doesNotMatch(note(),/43|positive[- ]pressure ventilation|\bPPV\b|room air/i);
   seg('obRespType','ppv');assert.equal(get('#obFiO2').value,'43');assert.match(note(),/43/);
 });
@@ -470,7 +471,8 @@ test('resetting referring-hospital support does not leak its retained device or 
   seg('pathway','outborn');seg('obM1Type','o2');seg('obM1Dev','hood');input('obM1Flow','7.5');
   assert.match(note(),/oxygen hood/i);assert.match(note(),/7\.5/);
   seg('obM1Type','');
-  assert.equal(get('[data-seg="obM1Type"] [data-v=""]').getAttribute('aria-pressed'),'true');
+  assert.equal(get('[data-seg="obM1Type"] [data-v=""]').getAttribute('aria-pressed'),'false','No selected finding after clearing');
+  assert.equal(get('[data-seg="obM1Type"] [data-v=""]').hidden,true);
   assert.doesNotMatch(note(),/oxygen hood|supplemental oxygen|7\.5|room air/i);
   seg('obM1Type','o2');assert.equal(get('#obM1Flow').value,'7.5');assert.match(note(),/7\.5/);
 });

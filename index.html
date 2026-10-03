@@ -104,12 +104,12 @@
   :is(#birthCard,#pathwayCard) .clinical-grid .num input{flex:1 1 64px;max-width:100%}
   :is(#birthCard,#pathwayCard) .event-add{margin:10px 0 14px}
   :is(#birthCard,#pathwayCard) .event-add button{flex:0 1 auto}
-  :is(#birthCard,#pathwayCard) .clinical-event{border:1px solid var(--line);border-radius:11px;padding:14px;margin-top:12px;background:var(--surface-2);min-width:0;overflow-wrap:anywhere}
-  :is(#birthCard,#pathwayCard) .event-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin-bottom:12px;min-width:0}
+  :is(#birthCard,#pathwayCard) .clinical-event{border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:12px;background:var(--surface);min-width:0;overflow-wrap:anywhere}
+  :is(#birthCard,#birthHistoryCard,#pathwayCard) .event-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin-bottom:12px;min-width:0}
   :is(#birthCard,#pathwayCard) .event-head h3,:is(#birthCard,#pathwayCard) .event-head h4{font-size:14px;line-height:1.5;margin:0;min-width:0}
-  :is(#birthCard,#pathwayCard) .event-number{display:inline-grid;place-items:center;min-width:24px;min-height:24px;padding:0 5px;margin-right:6px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink);font-size:12px;font-weight:700}
-  :is(#birthCard,#pathwayCard) .event-tools{display:flex;flex-wrap:wrap;gap:6px;max-width:100%;margin-left:auto}
-  :is(#birthCard,#pathwayCard) .event-tools button,:is(#birthCard,#pathwayCard) .continuity-card button{min-width:44px;min-height:44px;max-width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-2);font:inherit;font-size:13px;cursor:pointer;overflow-wrap:anywhere}
+  :is(#birthCard,#birthHistoryCard,#pathwayCard) .event-number{display:inline-grid;place-items:center;min-width:24px;min-height:24px;padding:0 5px;margin-right:6px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink);font-size:12px;font-weight:700}
+  :is(#birthCard,#birthHistoryCard,#pathwayCard) .event-tools{display:flex;flex-wrap:wrap;gap:6px;max-width:100%;margin-left:auto}
+  :is(#birthCard,#birthHistoryCard,#pathwayCard) .event-tools button,:is(#birthCard,#pathwayCard) .continuity-card button{min-width:44px;min-height:44px;max-width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-2);font:inherit;font-size:13px;cursor:pointer;overflow-wrap:anywhere}
   :is(#birthCard,#pathwayCard) .event-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr));gap:12px;min-width:0}
   :is(#birthCard,#pathwayCard) .event-fields>*{min-width:0;margin-bottom:0}
   :is(#birthCard,#pathwayCard) .event-fields input,:is(#birthCard,#pathwayCard) .event-fields select,:is(#birthCard,#pathwayCard) .event-fields textarea{max-width:100%}
@@ -122,10 +122,10 @@
   #pathwayCard .support-relation{margin-top:12px}
   #pathwayCard #obIPfield,#pathwayCard #obRRfield{display:inline-flex;align-items:center;gap:7px;max-width:100%;flex-wrap:wrap}
   #pathwayCard #obIPfield[hidden],#pathwayCard #obRRfield[hidden]{display:none}
-  #pathwayCard .optional-events{border:1px solid var(--line);border-radius:10px;padding:0 12px;margin:18px 0}
+  #pathwayCard .optional-events{border:0;border-top:1px solid var(--line);border-radius:0;padding:4px 0 0;margin:18px 0 8px}
   #pathwayCard .optional-events>summary{min-height:44px;padding:11px 0;cursor:pointer;font-size:14px;font-weight:650;line-height:1.5}
-  #pathwayCard .optional-events[open]{padding-bottom:12px}
-  @media(max-width:420px){:is(#birthCard,#pathwayCard) .clinical-event{padding:11px}:is(#birthCard,#pathwayCard) .event-tools{margin-left:0}#pathwayCard .continuity-card{padding:11px}}
+  #pathwayCard .optional-events[open]{padding-bottom:0}
+  @media(max-width:420px){:is(#birthCard,#pathwayCard) .clinical-event{padding:11px}:is(#birthCard,#birthHistoryCard,#pathwayCard) .event-tools{margin-left:0}#pathwayCard .continuity-card{padding:11px}}
   /* 自動判定徽章 */
   .autobox{display:flex;align-items:center;gap:11px;padding:12px;border-radius:9px;flex-wrap:wrap;
     background:var(--accent-soft);border:1px solid transparent}
@@ -331,9 +331,9 @@
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
   /* NRP 預設帶入的設定值：虛線框＋淡字，改過才變成一般輸入 */
-  :is(#birthCard,#pathwayCard) .clinical-event input.nrp-default{border-style:dashed;color:var(--ink-3)}
-  :is(#birthCard,#pathwayCard) .clinical-event .nrp-hint{margin:8px 0 0;color:var(--accent-ink)}
-  :is(#birthCard,#pathwayCard) .clinical-event .nrp-accept{margin-left:6px;min-height:30px;padding:3px 10px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-soft);color:var(--accent-ink);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+  :is(#birthCard,#birthHistoryCard,#pathwayCard) .clinical-event input.nrp-default{border-style:dashed;color:var(--ink-3)}
+  :is(#birthCard,#birthHistoryCard,#pathwayCard) .clinical-event .nrp-hint{margin:8px 0 0;color:var(--accent-ink)}
+  :is(#birthCard,#birthHistoryCard,#pathwayCard) .clinical-event .nrp-accept{margin-left:6px;min-height:44px;padding:8px 10px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-soft);color:var(--accent-ink);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
   /* ── 出生到入院：故事卡 → 直線時間線 → 一站一卡（2026-09-20）── */
   #pathwayCard .journey-lede{margin:0 0 14px;font-size:13.5px;color:var(--ink-2);max-width:62ch}
   #pathwayCard .stories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -398,7 +398,7 @@
   #pathwayCard .tl.stepper .hd .sum{grid-column:2;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11.5px}
   #pathwayCard .tl.stepper .hd .caret{display:none}
   #pathwayCard .tl.stepper li>.body{display:none!important}
-  #pathwayCard .journey-workspace{min-height:220px;margin-top:10px;padding:16px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);scroll-margin-top:84px}
+  #pathwayCard .journey-workspace{min-height:220px;margin-top:10px;padding:0;border:0;border-radius:0;background:transparent;scroll-margin-top:84px}
   #pathwayCard .journey-workspace:empty{display:none}
   #pathwayCard .journey-workspace>.body{display:block;min-width:0}
   #pathwayCard .journey-workspace .stop-plain{margin-top:0}
@@ -406,7 +406,7 @@
   #pathwayCard .journey-nav button{min-height:44px;padding:9px 14px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font:inherit;font-weight:650;cursor:pointer}
   #pathwayCard .journey-nav button.primary{margin-left:auto;border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
   #pathwayCard .journey-nav button:disabled{opacity:.42;cursor:not-allowed}
-  #pathwayCard .problem-details{margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+  #pathwayCard .problem-details{margin-top:20px;padding:0;border:0;border-radius:0;background:transparent}
   #pathwayCard .problem-details[hidden]{display:none}
   #dolStatus{margin-top:8px;padding:9px 11px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);font-size:13px;line-height:1.5}
   #dolStatus.warn{background:var(--risk-soft);color:var(--risk)}
@@ -418,7 +418,7 @@
     #pathwayCard .journey-progress span{text-align:left}
     #pathwayCard .tl.stepper{display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:4px}
     #pathwayCard .tl.stepper li{flex:0 0 154px;scroll-snap-align:start}
-    #pathwayCard .journey-workspace{padding:13px;min-height:260px}
+    #pathwayCard .journey-workspace{min-height:220px}
     #pathwayCard .journey-nav button{flex:1 1 0;padding:8px}
   }
   /* 順向填寫：入口先分流，共用背景獨立於入院路徑。 */
@@ -464,7 +464,7 @@
   .birth-stage{border-top:1px solid var(--line);padding-top:18px;margin-top:18px}
   .birth-stage h3,.readmit-module h3{font-size:15px;margin:0 0 12px}
   #birthHistoryCard .clinical-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,165px),1fr));gap:14px}
-  #birthHistoryCard .clinical-event{border:1px solid var(--line);border-radius:10px;background:var(--surface-2);padding:14px;margin-top:12px}
+  #birthHistoryCard .clinical-event{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px;margin-top:12px}
   #birthHistoryCard .event-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px}
   #birthHistoryCard .event-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
   .readmit-module{border-top:1px solid var(--line);padding:18px 0 0;margin-top:18px}
@@ -473,6 +473,7 @@
   .local-review{white-space:pre-line;color:var(--risk);font-size:13px;line-height:1.7}
   .local-review:empty{display:none}
   .inherited-summary{font-size:13px;background:var(--surface-2);padding:10px 12px;border:1px dashed var(--line);border-radius:8px;white-space:pre-line;color:var(--ink-2);overflow-wrap:anywhere}
+  #admSections .inherited-summary{background:transparent;padding:0;border:0;border-radius:0;line-height:1.6}
   .stage-actions{display:flex;justify-content:space-between;gap:8px;margin-top:18px}
   .stage-actions button,#useAdmissionResp{min-height:44px;border:1px solid var(--line);border-radius:8px;background:var(--accent-soft);color:var(--accent-ink);padding:8px 14px;font:inherit;cursor:pointer}
   .stage-actions button.primary{margin-left:auto;background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:650}
@@ -485,7 +486,7 @@
   #readmitIntakeReview[data-conflict="true"]{padding:10px;border:1px solid var(--risk-line);border-radius:8px;background:var(--risk-soft);color:var(--risk)}
   #readmitIntakeTools{margin-top:8px}
   #readmitFeedingSummary{margin-bottom:12px}
-  .support-extra{margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:0 10px}
+  .support-extra{margin-top:10px;border:0;border-radius:0;padding:0}
   .support-extra>summary{min-height:44px;padding:10px 0;cursor:pointer;font-size:13px;line-height:1.5;color:var(--ink-2)}
   .support-extra[open]{padding-bottom:12px}
   .workflow-review{font-size:13px;line-height:1.7;color:var(--ink-2);margin:0 0 20px}
@@ -511,6 +512,40 @@
   #pathwayCard .tl.stepper li.has .hd::before{content:"•"}
   @media(max-width:799px){#journeyProgress{display:none!important}}
   @media(max-width:420px){.readmit-module .seg button{font-size:13px}.flow-nav{gap:3px;padding:5px}.flow-nav button{padding-inline:8px;font-size:12px}#flowChapter{font-size:12px}#flowDetail{font-size:11.5px}}
+  /* 病程定位共用原導覽，不增加手機固定列；以下摘要只讀既有資料。 */
+  .phase-rail{display:flex;gap:5px;flex:1 0 100%;min-width:0;max-width:100%;overflow-x:auto;border-top:1px solid var(--line);padding-top:6px;scrollbar-width:thin}
+  .phase-rail button{flex:1 0 92px;min-width:0;max-width:160px;border-color:transparent;background:transparent;text-align:center;font-size:12px;padding:6px;line-height:1.5}
+  .phase-rail button+button:before{content:'›';float:left;color:var(--ink-3)}
+  .phase-rail button[aria-current=step]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+  .phase-rail small{display:block;font-size:10px;color:var(--ink-3);font-weight:400}
+  #pathwayCard #journey,#pathwayCard #journeyProgress{display:none!important}
+  .phase-context{border:0;border-radius:0;background:transparent;padding:0;margin:0 0 24px;overflow-wrap:anywhere}
+  .phase-context .phase-kicker{font-size:12px;color:var(--accent-ink);margin-bottom:5px}
+  .phase-context h3{font-size:19px;margin:0 0 7px;line-height:1.5;color:var(--ink)}
+  .phase-context p{font-size:13px;line-height:1.7;margin:4px 0;color:var(--ink-2)}
+  .phase-context .phase-inherit{margin-top:8px;white-space:pre-line}
+  .birth-stage[data-current=true]{border-top-color:var(--accent)}
+  #entryPathSummary{font-size:13px;color:var(--accent-ink);line-height:1.7;border-left:3px solid var(--accent);padding-left:12px;margin:15px 0}
+  .support-guide{margin-bottom:12px}
+  .support-before{margin:0 0 12px;padding:0;border:0;background:transparent;font-size:13px;line-height:1.6;color:var(--ink-2);overflow-wrap:anywhere}
+  .support-before strong{color:var(--ink);font-size:14px;margin-left:6px}
+  .support-question{font-size:15px;line-height:1.6;margin:0 0 8px;color:var(--ink);font-weight:650}
+  .support-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .support-choices button{border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:10px;text-align:left;color:var(--ink);min-height:44px;font:inherit;font-size:13px;cursor:pointer;overflow-wrap:anywhere}
+  .support-choices button[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
+  .support-choices button:focus-visible,.phase-rail button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .support-choices button:disabled{opacity:.5;cursor:default}
+  .support-choices button.support-aux{min-height:44px;padding:7px 9px;background:transparent;font-size:12px;border-color:transparent;color:var(--ink-2)}
+  #obM1Wrap>.lab,#ladderALab{display:none}
+  .support-help{font-size:12px;line-height:1.6;margin-top:8px;color:var(--ink-2)}
+  .support-help>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px}
+  .support-help>summary::before{content:'▸'}
+  .support-help[open]>summary::before{content:'▾'}
+  .support-help p{margin:4px 0}
+  .event-phase-label{font-size:12px;color:var(--accent-ink);margin:5px 0 10px}
+  #courseEvents:empty,#obCareEvents:empty,#obArriveEvents:empty{display:none}
+  #journeyWorkspace>.body>.stop-plain,.birth-stage>.body>.stop-plain,#admissionStatusBody>.stop-plain,#readmitSelectedSummary{display:none}
+  @media(max-width:799px){.phase-rail{display:none}.phase-context h3{font-size:17px}.phase-context p{font-size:12px}.support-question{font-size:14px}}
 </style>
 
 <div class="wrap">
@@ -852,7 +887,7 @@
         <div class="seg" data-seg="obM1Dev" style="margin-bottom:7px"><button type="button" data-v="">未記錄</button><button type="button" data-v="hood">Hood</button><button type="button" data-v="cannula">Nasal cannula</button><button type="button" data-v="mask">Mask</button></div>
         <div class="num"><label class="u" for="obM1Flow">流量</label><input type="number" id="obM1Flow" placeholder="未記錄" min="0" step="0.5" style="max-width:90px"><span class="u">L/min</span></div>
       </div>
-      <div class="support-relation"><label class="lab" for="obM1Relation">外院後續支持與產房結束時的關係</label><select class="tin" id="obM1Relation"><option value="">未記錄</option><option value="continued">確認持續同前</option><option value="new">新開始</option><option value="changed">已調整支持</option><option value="repeat">停止後再次施作</option></select></div>
+      <div class="support-relation"><label class="lab" for="obM1Relation">外院這段期間的呼吸照護</label><select class="tin" id="obM1Relation"><option value="">只記當時使用方式</option><option value="continued">仍持續使用</option><option value="new">開始使用</option><option value="changed">換了方式／調整設定</option><option value="repeat">停過，後來又開始</option><option value="stopped">已停止前項支持</option></select></div>
     </div>
             </div>
       </li>
@@ -900,11 +935,11 @@
         <button type="button" data-on data-v="jaundice" style="flex:0 1 auto">Jaundice</button>
         <button type="button" data-on data-v="fever" style="flex:0 1 auto">Fever</button>
       </div></div>
-    <div class="field" id="pwOnsetWrap" hidden><span class="lab">症狀與前段的關係</span>
+    <div class="field" id="pwOnsetWrap" hidden><span class="lab">這時的症狀是新出現、一直有，還是又出現？</span>
       <div class="seg" data-seg="pwOnset"><button type="button" data-v="observed">有觀察到，起始未明</button><button type="button" data-v="developed">新出現</button><button type="button" data-v="persisted">持續存在</button><button type="button" data-v="recurrent">再次出現</button></div>
       <div class="num" id="pwOnsetHWrap" style="margin-top:8px"><label class="u" for="pwOnsetH">生後時間（選填）</label><input type="number" id="pwOnsetH" placeholder="未記錄" min="0" step="0.1" style="max-width:90px"><label class="scr-legend" for="pwOnsetUnit">生後時間單位</label><select class="tin" id="pwOnsetUnit" style="flex:0 1 135px;max-width:100%"><option value="">未記錄</option><option value="hours">小時</option><option value="minutes">分鐘</option></select></div></div>
     <div class="field" id="pwLadderWrap" hidden><span class="lab" id="ladderALab">呼吸處置</span>
-      <div class="field"><label class="lab" for="obRespRelation">與前一階段呼吸支持的關係</label><select class="tin" id="obRespRelation"><option value="">未記錄</option><option value="continued">確認持續同前</option><option value="new">新開始</option><option value="changed">已調整支持</option><option value="repeat">停止後再次施作</option><option value="stopped">已停止前段支持</option></select></div>
+      <div class="field"><label class="lab" for="obRespRelation">這段期間的呼吸照護</label><select class="tin" id="obRespRelation"><option value="">只記當時使用方式</option><option value="continued">仍持續使用</option><option value="new">開始使用</option><option value="changed">換了方式／調整設定</option><option value="repeat">停過，後來又開始</option><option value="stopped">已停止前項支持</option></select></div>
       <div id="pathwaySupportControls">
       <div class="seg" data-seg="obRespType"><button type="button" data-v="">未記錄</button><button type="button" data-v="room">Room air</button><button type="button" data-v="o2">O₂</button><button type="button" data-v="cpap">CPAP</button><button type="button" data-v="ppv">Neopuff PPV</button><button type="button" data-v="ett">ETT</button></div>
       <div id="obO2Wrap" hidden style="margin-top:8px">
@@ -924,8 +959,8 @@
       <summary>新增後續事件或再次處置 <span class="q">（選填）</span></summary>
       <p class="man-h">需要補充多次變化時，依發生順序新增並註明時點與地點。已在上方記錄的同一次支持不必再新增。</p>
       <div class="seg event-add" aria-label="新增後續處置或評估"><button type="button" data-add-course="assessment">＋ 評估</button><button type="button" data-add-course="o2">＋ O₂</button><button type="button" data-add-course="cpap">＋ CPAP</button><button type="button" data-add-course="ppv">＋ PPV</button><button type="button" data-add-course="intubation">＋ 插管</button><button type="button" data-add-course="compressions">＋ 胸外按壓</button><button type="button" data-add-course="epinephrine">＋ Epinephrine</button></div>
-      <div id="courseEvents"></div>
     </details>
+    <div id="courseEvents"></div>
     <div class="field" id="pwCourseWrap" hidden><label class="lab" for="obCourse">過程補充 <span class="q">（選填，英文；保留完整內容）</span></label>
       <textarea class="tarea" id="obCourse" rows="2" placeholder="例：initially cared for in the baby room; the transport team was contacted…"></textarea></div>
             </div>
@@ -1968,7 +2003,7 @@
   });
   document.addEventListener("change",e=>{
     updateEventField(e.target);
-    if(["obM1Relation","obRespRelation"].includes(e.target.id))S.continuitySignatures[e.target.id]=sourceMode(e.target.id);
+    if(["obM1Relation","obRespRelation"].includes(e.target.id))S.continuitySignatures[e.target.id]=sourceStamp(e.target.id);
     if(e.target.matches('.scr-choice input[type="radio"], .scr-select')){
       const k=e.target.closest(".scr-row").dataset.scr, v=e.target.value;
       if(selectScreen(k,v)){render(); if(k==="gbs"&&["pos","pend","nd"].includes(v))pulseIap();}
@@ -2165,7 +2200,8 @@
   };
   function eventNarrative(e,scope){
     const age=e.minutes!==undefined&&e.minutes!==""?`At ${e.minutes} ${unitLabel(e.minutes,"minute")} of age`:"";
-    const place=e.location?`${/^(?:the )?(?:baby room|nursery|delivery room|NICU|ward|operating room)$/i.test(e.location)?"In":"At"} ${e.location}`:"";
+    const phasePlace=scope==='course'&&S.outborn?{outside:"At the referring hospital before our team's arrival",arrival:"At the referring hospital after our team's arrival",transport:"During transport"}[e.phase]:'';
+    const place=phasePlace?phasePlace+(e.location?` (${e.location})`:''):e.location?`${/^(?:the )?(?:baby room|nursery|delivery room|NICU|ward|operating room)$/i.test(e.location)?"In":"At"} ${e.location}`:"";
     const lead=place+(age?`${place?" ":""}${place?age[0].toLowerCase()+age.slice(1):age}`:"");
     if(e.kind==="assessment"){
       if(!e.breathing&&!e.tone&&!e.hr&&!e.support)return [lead?`${lead}, a reassessment was recorded.`:"A reassessment was recorded.",sentence(e.note||"")].filter(Boolean);
@@ -2270,8 +2306,8 @@
   // 我方施作的插管：產房事件、後續事件、或轉送途中新插管（外院已插的不算我方 procedure）。供 Procedure「Intubation」自動勾選。
   function ourIntubation(){
     if(S.pathway==="readmit")return false; // E 的出生插管屬既往史，不自動建立本次 Procedure。
-    return activeBirthEvents().some(e=>e.kind==="intubation")
-      ||S.courseEvents.some(e=>e.kind==="intubation")
+    return (!S.outborn&&activeBirthEvents().some(e=>e.kind==="intubation"))
+      ||S.courseEvents.some(e=>e.kind==="intubation"&&e.phase!=='outside')
       ||(S.outborn&&S.obRespType==="ett"&&["new","repeat"].includes(raw("obRespRelation")));
   }
   // 暫定診斷：醫師打了就用醫師的，否則依嚴重度依序挑一個；全無問題時回空字串（不替使用者捏一個診斷）。
@@ -2293,18 +2329,23 @@
     const reasons=[...S.pwSbR,raw("pwSbRIn").replace(/[.。]+$/,"")].filter(Boolean);
     return `${reasons.length?`Because of ${joinAnd(reasons)}, the` :"The"} pediatric team was called to stand by in ${deliveryPlace()} for the delivery.`;
   }
+  function lastSupportAt(phase){return S.outborn?S.courseEvents.filter(e=>e.phase===phase&&(['o2','cpap','ppv','intubation'].includes(e.kind)||e.kind==='assessment'&&e.support)).at(-1):null;}
+  function lastArrivalSupport(){return lastSupportAt('arrival');}
+  function lastPreTransportSupport(){return lastArrivalSupport()||lastSupportAt('outside');}
   function sourceMode(field){
-    return field==="obM1Relation"||!S.outborn?raw("birthFinalSupport"):resolvedSupport("obM1Relation",S.obM1Type).mode;
+    if(field==='obM1Relation'||!S.outborn)return raw('birthFinalSupport');
+    const e=lastPreTransportSupport();return e?(e.kind==='assessment'?e.support:e.kind==='intubation'?'ett':e.kind):resolvedSupport('obM1Relation',S.obM1Type).mode;
   }
+  function sourceStamp(field){const e=field==='obRespRelation'&&lastPreTransportSupport();return sourceMode(field)+(e?':'+e.phase+':'+e.id:'');}
   function resolvedSupport(field,selected){
     const relation=raw(field), source=sourceMode(field), stamp=S.continuitySignatures[field];
-    const confirmed=relation==="continued"&&!!source&&stamp===source&&(!selected||selected===source);
+    const confirmed=relation==="continued"&&!!source&&stamp===sourceStamp(field)&&(!selected||selected===source);
     return {mode:relation==="stopped"?"":selected||(confirmed?source:""),relation,source,confirmed};
   }
   function pathwaySupportMode(){return resolvedSupport("obRespRelation",S.obRespType).mode;}
   function supportSentence(field,selected,context,settings={}){
     const {mode,relation,source,confirmed}=resolvedSupport(field,selected);
-    if(relation==="stopped")return source&&source!=="room"&&S.continuitySignatures[field]===source?`${sentence(SUPPORT[source]).replace(/\.$/,"")} was discontinued ${context}.`:"";
+    if(relation==="stopped")return source&&source!=="room"&&S.continuitySignatures[field]===sourceStamp(field)?`${sentence(SUPPORT[source]).replace(/\.$/,"")} was discontinued ${context}.`:"";
     if(!mode)return "";
     if(mode==="room")return `The infant ${confirmed?"continued breathing":"was breathing"} room air ${context}.`;
     let action;
@@ -2524,10 +2565,12 @@
       const outside=supportSentence("obM1Relation",S.obM1Type,"at the referring hospital",{
         device:({hood:"an oxygen hood",cannula:"a nasal cannula",mask:"a face mask"})[S.obM1Dev],flow:resolvedSupport("obM1Relation",S.obM1Type).mode==="o2"?raw("obM1Flow"):""});
       if(outside)out.push(outside);
+      S.courseEvents.filter(e=>e.phase==='outside').forEach(e=>out.push(...eventNarrative(e,'course')));
       const reason=raw("obReason").replace(/[.。]+$/,"");
       out.push(`Our neonatal transport team was consulted for transfer${reason?` because of ${reason}`:""}.`);
       const arrival=raw("obArrival");
       if(arrival)out.push(finish(`On our team's arrival at the referring hospital, ${arrival.replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase())}`));
+      S.courseEvents.filter(e=>e.phase==='arrival').forEach(e=>out.push(...eventNarrative(e,'course')));
     }
     const mode=pathwaySupportMode(),support=supportSentence("obRespRelation",S.obRespType,
       S.outborn?"during transport":S.pathway==="nursery"?"in the baby room":"before admission",{
@@ -2536,7 +2579,7 @@
         pip:["ppv","ett"].includes(mode)?raw("obIP"):"",peep:["cpap","ppv","ett"].includes(mode)?raw("obPEEP"):"",rr:mode==="ett"?raw("obRR"):""});
     if(support)out.push(support);
     if(mode==="ppv"&&S.obRespStable)out.push("Heart rate and oxygen saturation remained stable during positive-pressure ventilation.");
-    S.courseEvents.forEach(e=>out.push(...eventNarrative(e,"course")));
+    S.courseEvents.filter(e=>!S.outborn||!['outside','arrival'].includes(e.phase)).forEach(e=>out.push(...eventNarrative(e,"course")));
     if(S.outborn)out.push(`Subsequently, the infant was transferred from ${transferSource||"____"} to our hospital${closeAdmission?` and admitted to ${destPhrase()}${admissionWhen()} for further evaluation and management`:""}${closeAdmission&&diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
     else if(closeAdmission)out.push(`${brAbnormal?"The infant was therefore admitted":"Subsequently, the infant was admitted"} to ${destPhrase()}${admissionWhen()} for further evaluation and management${diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
     // 入院時呼吸支持＋入院時狀況合併成一句。closeAdmission===false（Acceptance 呼叫）時不寫呼吸支持：
@@ -2561,6 +2604,7 @@
     ROUTE_KEYS.forEach(k=>S[k]=saved?saved.state[k]:defaults[k]);
     ROUTE_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)el.value=saved?saved.fields[id]||"":"";});
     S.pathway=next;
+    S.outborn=next==='outborn';
     // 初次選路徑保留相容的去處；切回既有路徑還原其選擇，避免 E 的 NBC 覆蓋原本 NICU。
     S.dest=saved?.destination??S.dest;S.destNotice=saved?.destNotice||"";
     validateDestination();
@@ -2574,11 +2618,13 @@
   function drawEvents(scope){
     const host=document.getElementById(scope+"Events");if(!host)return;
     const events=S[scope+"Events"];
+    if(scope==='course')for(const id of ['obCareEvents','obArriveEvents']){const el=document.getElementById(id);if(el)el.innerHTML='';}
     const number=(e,key,label,unit="",max="")=>`<label class="field" for="event-${e.id}-${key}"><span class="lab">${label}${unit?` · ${unit}`:""}</span><input class="tin" type="number" min="0" step="any" ${max?`max="${max}"`:""} id="event-${e.id}-${key}" data-event-field="${key}" value="${htmlEscape(e[key]||"")}" placeholder="未記錄"></label>`;
     const textField=(e,key,label)=>`<label class="field" for="event-${e.id}-${key}"><span class="lab">${label}</span><input class="tin" id="event-${e.id}-${key}" data-event-field="${key}" value="${htmlEscape(e[key]||"")}" placeholder="未記錄"></label>`;
-    const select=(e,key,label,options)=>`<label class="field" for="event-${e.id}-${key}"><span class="lab">${label}</span><select class="tin" id="event-${e.id}-${key}" data-event-field="${key}"><option value="">未記錄</option>${Object.entries(options).map(([v,t])=>`<option value="${v}" ${e[key]===v?"selected":""}>${t}</option>`).join("")}</select></label>`;
+    const select=(e,key,label,options)=>`<label class="field" for="event-${e.id}-${key}"><span class="lab">${label}</span><select class="tin" id="event-${e.id}-${key}" data-event-field="${key}"><option value="">${key==='phase'?'未指定階段（保留原紀錄）':'未記錄'}</option>${Object.entries(options).map(([v,t])=>`<option value="${v}" ${e[key]===v?"selected":""}>${t}</option>`).join("")}</select></label>`;
     host.innerHTML=events.map((e,i)=>{
       let fields=number(e,"minutes","生後時間","分鐘");
+      if(scope==='course'&&S.outborn)fields+=select(e,'phase','事件發生階段（新增時帶入，可修改）',{outside:'外院團隊／我方到場前',arrival:'我方抵達外院後／尚未轉送',transport:'轉送途中'});
       if(scope==="course")fields+=textField(e,"location","事件地點（選填，英文）");
       if(e.kind==="assessment")fields+=select(e,"breathing","呼吸",{crying:"哭聲",spontaneous:"自主呼吸",apnea:"Apnea",gasping:"Gasping",labored:"呼吸費力",ineffective:"呼吸無效"})+select(e,"tone","肌張力",{good:"良好",poor:"差",flaccid:"鬆軟"})+number(e,"hr","心率","beats/min")+select(e,"support","當時支持",SUPPORT);
       if(["ppv","intubation","cpap","o2"].includes(e.kind))fields+=number(e,"fiO2","FiO₂","%","100");
@@ -2590,24 +2636,31 @@
       if(e.kind==="compressions")fields+=number(e,"duration","按壓持續時間","分鐘");
       if(e.kind==="epinephrine")fields+=textField(e,"drugDose","實際劑量與單位（不自動計算）")+textField(e,"drugRoute","實際給藥途徑");
       fields+=textField(e,"note","此事件補充（完整英文句，選填）");
-      return `<div class="clinical-event" data-event-id="${e.id}" data-event-scope="${scope}" data-event-kind="${e.kind}"><div class="event-head"><strong><span class="event-number">${i+1}</span> ${EVENT_NAMES[e.kind]}</strong><div class="event-tools"><button type="button" data-event-action="up" aria-label="上移第 ${i+1} 個事件" ${i===0?"disabled":""}>↑</button><button type="button" data-event-action="down" aria-label="下移第 ${i+1} 個事件" ${i===events.length-1?"disabled":""}>↓</button><button type="button" data-event-action="remove" aria-label="移除第 ${i+1} 個事件">移除</button></div></div><div class="event-fields">${fields}</div></div>`;
+      const peers=scope==='course'&&S.outborn?events.filter(x=>(x.phase||'')===(e.phase||'')):events,position=peers.indexOf(e);
+      const phaseLabel=scope==='course'&&S.outborn?`<p class="event-phase-label">${htmlEscape({outside:'外院團隊 · 我方到場前',arrival:'我方在外院現場 · 尚未轉送',transport:'轉送途中'}[e.phase]||'此筆事件尚未指定階段；原資料保留，不自動重新分類。')}</p>`:'';
+      return `<div class="clinical-event" data-event-id="${e.id}" data-event-scope="${scope}" data-event-kind="${e.kind}"><div class="event-head"><strong><span class="event-number">${i+1}</span> ${EVENT_NAMES[e.kind]}</strong><div class="event-tools"><button type="button" data-event-action="up" aria-label="上移第 ${i+1} 個事件" ${position===0?"disabled":""}>↑</button><button type="button" data-event-action="down" aria-label="下移第 ${i+1} 個事件" ${position===peers.length-1?"disabled":""}>↓</button><button type="button" data-event-action="remove" aria-label="移除第 ${i+1} 個事件">移除</button></div></div>${phaseLabel}<div class="event-fields">${fields}</div></div>`;
     }).join("");
     events.filter(e=>e.nrp).forEach(e=>{
       const card=host.querySelector(`[data-event-id="${e.id}"]`); if(!card)return;
       card.querySelectorAll('[data-event-field="fiO2"],[data-event-field="pip"],[data-event-field="peep"]').forEach(inp=>inp.classList.add("nrp-default"));
       card.insertAdjacentHTML("beforeend",`<p class="man-h nrp-hint">已帶入 ${NRP.edition} 初始設定（PIP ${e.pip}／PEEP ${e.peep} cmH₂O、FiO₂ ${e.fiO2}%，依 GA；通氣率 ${NRP.ventilation.rate} 不寫入）。請依實際核對；改任一值即視為實際紀錄。 <button type="button" class="nrp-accept" data-nrp-accept="${e.id}">值正確，採用</button></p>`);
     });
-    if(S.lastRemoved?.scope===scope&&(scope==="birth"||S.lastRemoved.pathway===S.pathway))host.insertAdjacentHTML("beforeend",`<div class="seg event-add"><button type="button" data-undo-event="${scope}">復原剛移除的事件</button></div>`);
+    if(scope==='course'&&S.outborn)for(const e of events){const destination={outside:'obCareEvents',arrival:'obArriveEvents'}[e.phase];if(destination)document.getElementById(destination)?.appendChild(host.querySelector(`[data-event-id="${e.id}"]`));}
+    if(S.lastRemoved?.scope===scope&&(scope==="birth"||S.lastRemoved.pathway===S.pathway)){
+      const destination=scope==='course'&&S.outborn?document.getElementById({outside:'obCareEvents',arrival:'obArriveEvents'}[S.lastRemoved.event.phase]):null;
+      (destination||host).insertAdjacentHTML("beforeend",`<div class="seg event-add"><button type="button" data-undo-event="${scope}">復原剛移除的事件</button></div>`);
+    }
   }
   function eventClick(b){
-    const scope=b.dataset.addBirth?"birth":b.dataset.addCourse?"course":"",kind=b.dataset.addBirth||b.dataset.addCourse;
+    const scope=b.dataset.addBirth?"birth":b.dataset.addCourse||b.dataset.addStageEvent?"course":"",kind=b.dataset.addBirth||b.dataset.addCourse||b.dataset.addStageEvent;
     if(scope&&EVENT_NAMES[kind]){
       const event={id:S.nextEventId++,kind};S[scope+"Events"].push(event);
+      if(scope==='course'&&S.outborn)event.phase=b.dataset.eventPhase||'transport';
       if(scope==="birth"&&kind==="ppv"){   // 產房急救 PPV 帶 NRP 第 9 版初始設定（依 GA），標示為預設直到醫師改過任一值
         const ga=V("gaW"); Object.assign(event,{fiO2:String(NRP.ventilation.fio2(ga)),pip:String(NRP.ventilation.pip(ga)),peep:String(NRP.ventilation.peep),nrp:true});
       }
       if(scope==="birth"&&kind!=="assessment")document.getElementById("birthResusStatus").value="performed";
-      drawEvents(scope);const details=document.getElementById(scope+"Events").closest("details");if(details)details.open=true;
+      drawEvents(scope);const details=document.getElementById(`event-${event.id}-minutes`)?.closest("details");if(details)details.open=true;
       render();document.getElementById(`event-${event.id}-minutes`)?.focus();return true;
     }
     if(b.dataset.nrpAccept){   // 住院醫師確認 NRP 預設就是實際值：拿掉「尚未核對」，值不變
@@ -2620,8 +2673,9 @@
     if(b.dataset.eventAction){
       const card=b.closest("[data-event-id]"),scope=card.dataset.eventScope,events=S[scope+"Events"],index=events.findIndex(e=>String(e.id)===card.dataset.eventId),action=b.dataset.eventAction;
       if(action==="remove")S.lastRemoved={scope,pathway:S.pathway,index,event:events.splice(index,1)[0]};
-      else{const to=index+(action==="up"?-1:1);if(to>=0&&to<events.length)[events[index],events[to]]=[events[to],events[index]];}
-      const focusId=action==="remove"?events[Math.min(index,events.length-1)]?.id:Number(card.dataset.eventId);
+      else{const peers=scope==='course'&&S.outborn?events.filter(e=>(e.phase||'')===(events[index].phase||'')):events,to=events.indexOf(peers[peers.indexOf(events[index])+(action==='up'?-1:1)]);if(to>=0)[events[index],events[to]]=[events[to],events[index]];}
+      const phase=action==='remove'?S.lastRemoved.event.phase:events[index]?.phase,peers=scope==='course'&&S.outborn?events.filter(e=>(e.phase||'')===(phase||'')):events;
+      const focusId=action==="remove"?peers.at(-1)?.id:Number(card.dataset.eventId);
       drawEvents(scope);render();
       (focusId?document.getElementById(`event-${focusId}-minutes`):document.querySelector(`[data-undo-event="${scope}"]`))?.focus();return true;
     }
@@ -2635,7 +2689,11 @@
   function updateEventField(el){
     if(!el.dataset.eventField)return;
     const card=el.closest("[data-event-id]"),e=S[card.dataset.eventScope+"Events"].find(x=>String(x.id)===card.dataset.eventId);
-    if(e){e[el.dataset.eventField]=el.value; if(e.nrp&&["fiO2","pip","peep"].includes(el.dataset.eventField)){e.nrp=false; drawEvents(card.dataset.eventScope); document.getElementById(el.id)?.focus();}}
+    if(e){e[el.dataset.eventField]=el.value;
+      if(el.dataset.eventField==='phase'){
+        drawEvents('course');render();navigateClinicalPhase('course:'+({outside:'obCare',arrival:'obArrive'}[e.phase]||'route'));const next=document.getElementById(el.id);openSectionFor(next);next?.focus({preventScroll:true});next?.scrollIntoView?.({block:'center',behavior:'instant'});return;
+      }
+      if(e.nrp&&["fiO2","pip","peep"].includes(el.dataset.eventField)){e.nrp=false; drawEvents(card.dataset.eventScope); document.getElementById(el.id)?.focus();}}
   }
   // 檢核文字與欄位位置一起登記，避免用訊息內容反推欄位；同一訊息可連到多筆事件。
   const reviewTargets=new Map(),reviewLinkIds=new Map();
@@ -2656,8 +2714,8 @@
     const cards=[...document.querySelectorAll('#admSections > .card')],host=cards.find(c=>c.contains(el));
     const stage=workflowStages.filter(([card])=>cards.indexOf(card)<=cards.indexOf(host)).at(-1)||workflowStages[0];
     const step=el?.closest('#journey [data-stop]')?.dataset.stop||(document.getElementById('journeyWorkspace')?.contains(el)?mountedJourneyStop:'');
-    const definition=journeyDefinitions().find(s=>s.id===step);
-    return {chapter:stage?.[0].id,step,location:`第 ${workflowStages.indexOf(stage)+1} 區・${stage?.[1]||'入院設定'}${definition?'／'+definition.lab:''}`};
+    const phase=phaseForElement(el),definition=clinicalPhases().find(s=>s.key===phase);
+    return {chapter:stage?.[0].id,step,phase,location:`第 ${workflowStages.indexOf(stage)+1} 區・${stage?.[1]||'入院設定'}${definition?'／'+definition.lab:''}`};
   }
   function reviewMarkup(message,prefix){
     const targets=reviewTargets.get(message)||[];if(!targets.length)return htmlEscape(message);
@@ -2697,6 +2755,7 @@
     const section=target.closest('.section-content');if(section?.hidden){const toggle=document.getElementById(section.getAttribute('aria-labelledby'));if(toggle)toggleSection(toggle);}
     for(let p=target.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;
     navigateWorkflow(context.chapter,{restore:false,fromReview:true});
+    if(context.phase?.startsWith('birth:'))birthPhase=context.phase.slice(6);
     if(context.step&&selector!=='#entryRoutes')selectJourneyStep(context.step,{fromReview:true});
     target=document.querySelector(selector);
     if(!target||target.closest('[hidden]')){unavailableReviewTarget();return;}
@@ -2725,10 +2784,20 @@
     ["obM1Relation","obRespRelation"].forEach(field=>{
       if(field==="obM1Relation"&&!S.outborn)return;
       const r=resolvedSupport(field,field==="obM1Relation"?S.obM1Type:S.obRespType);
-      if(r.relation==="continued"&&!r.confirmed)path.push(reviewIssue(`${field==="obM1Relation"?"外院後續":"後續"}支持的前段資料未確認、已改變或模式不同，請重新核對「持續同前」。`,'#'+field));
-      if(r.relation==="stopped"&&(!r.source||r.source==="room"||S.continuitySignatures[field]!==r.source))path.push(reviewIssue("前段呼吸支持未記錄或已改變，請重新確認停止了哪項支持。",'#'+field));
+      if(r.relation==="continued"&&!r.confirmed)path.push(reviewIssue(`${field==="obM1Relation"?"外院":"本段"}先前對照的呼吸支持已改變、未填或與這段不同；請重新確認是否仍持續使用。`,'#'+field+'Choices','這段的呼吸照護選擇'));
+      if(r.relation==="stopped"&&(!r.source||r.source==="room"||S.continuitySignatures[field]!==sourceStamp(field)))path.push(reviewIssue("先前對照的呼吸支持已改變或未填；請重新確認停止了哪項支持。",'#'+field+'Choices','這段停止的呼吸支持'));
     });
     if(birthHasAction())for(const field of ['birthInitialNote','birthFinalNote','obCourse'])if(/\bno resuscitation\b/i.test(raw(field)))path.push(reviewIssue("自由文字提及 no resuscitation，但已有急救事件，請確認是否為不同時點。",'#'+field));
+    if(S.outborn){
+      let previous=-1;
+      const ordered=['outside','arrival','transport',''].flatMap(phase=>S.courseEvents.filter(e=>(e.phase||'')===phase));
+      for(const e of ordered){
+        if(!e.phase)awaitPath('這筆既有後續事件尚未指定發生階段；原紀錄保留，請核對是在外院現場或轉送途中。',`#event-${e.id}-phase`);
+        if(e.minutes!==undefined&&e.minutes!==''){if(Number(e.minutes)<previous)path.push(reviewIssue('外院／轉送事件的生後時間與階段順序不一致，請核對時點或事件階段。',`#event-${e.id}-minutes`));previous=Number(e.minutes);}
+        if(e.kind==='epinephrine')for(const k of ['drugDose','drugRoute'])if(!e[k])awaitPath('已記錄後續 epinephrine；請補上實際劑量與途徑，不會自動計算。',`#event-${e.id}-${k}`);
+        if(e.phase==='arrival'&&/during (?:transport|transfer)|ambulance/i.test(e.location||''))path.push(reviewIssue('這筆事件標為我方在外院現場，但地點文字提到轉送途中；請核對。',`#event-${e.id}-phase`));
+      }
+    }
     if(S.pathway==="direct"&&S.pwConsult&&raw("pwConsultH")){
       const mins=active.filter(e=>e.minutes!==undefined&&e.minutes!=="").map(e=>Number(e.minutes));
       if(mins.length&&Number(raw("pwConsultH"))*60>Math.min(...mins))path.push(reviewIssue("會診時間晚於第一個產房處置：note 依故事 B 把會診寫在處置之前；若處置是在會診前由產科／護理執行，請在事件補充註明，或改用「調整細節」關掉會診。",'#pwConsultH'));
@@ -2869,12 +2938,106 @@
   const journeyViews={};
   let workflowStages=[],workflowActive='admissionContext';
   const workflowViews={};
+  let birthPhase='info';
+  const supportChoiceDrafts=new Map();
+  const supportName=mode=>({room:'Room air（未用氧氣）',o2:'氧氣',cpap:'CPAP',ppv:'PPV',ett:'氣管內管呼吸支持'}[mode]||'這個時點尚無資料');
+  function birthPhaseDefinitions(){
+    const place=S.delivery==='cs'?'刀房':S.delivery?'產房':'出生場所',prefix=S.pathway==='outborn'?'外院':'',history=S.pathway==='readmit';
+    return [
+      ['info','出生基本資料',true],['standby',`${place}待命`,!!S.pwStandby&&!history],
+      ['birth','出生當下',true],['consult','出生後會診',!!S.pwConsult&&!history],
+      ['dr',`${prefix}${place}處置`,true],['drEnd',`離開${place}前`,true]
+    ].filter(([, ,show])=>show).map(([id,lab])=>({key:'birth:'+id,id,lab,chapter:'birthHistoryCard',target:id==='info'?'birthHistoryCard':'birthStage-'+id}));
+  }
+  function clinicalPhases(){return [...birthPhaseDefinitions(),...journeyDefinitions().filter(s=>s.show).sort((a,b)=>a.order-b.order).map(s=>({...s,key:'course:'+s.id,chapter:'pathwayCard'}))];}
+  function phaseForElement(el){
+    const birth=el?.closest('.birth-stage');if(birth)return 'birth:'+birth.id.replace('birthStage-','');
+    if(document.getElementById('birthHistoryCard')?.contains(el))return 'birth:info';
+    const step=el?.closest('#journey [data-stop]')?.dataset.stop||(document.getElementById('journeyWorkspace')?.contains(el)?mountedJourneyStop:'');
+    return step?'course:'+step:'';
+  }
+  function openSectionFor(el){
+    const section=el?.closest('.section-content');if(section?.hidden){const toggle=document.getElementById(section.getAttribute('aria-labelledby'));if(toggle)toggleSection(toggle);}
+    for(let p=el?.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;
+  }
+  function navigateClinicalPhase(key,{fromReview=false}={}){
+    const phase=clinicalPhases().find(p=>p.key===key);if(!phase)return;
+    if(phase.chapter==='pathwayCard'){
+      openSectionFor(document.querySelector('#pathwayCard .section-content')?.firstElementChild);
+      if(workflowActive!=='pathwayCard')navigateWorkflow('pathwayCard',{restore:false,fromReview});
+      selectJourneyStep(phase.id,{fromReview});return;
+    }
+    if(!fromReview)clearReviewLocation();
+    if(workflowActive==='pathwayCard')rememberJourneyView();
+    birthPhase=phase.id;workflowActive='birthHistoryCard';document.getElementById('flowMenu').open=false;
+    const target=document.getElementById(phase.target);openSectionFor(target);const heading=target.querySelector('h3,.sec-h')||target;
+    heading.setAttribute('tabindex','-1');heading.focus({preventScroll:true});syncWorkflowNavigation(false);
+    window.scrollTo({top:Math.max(0,target.getBoundingClientRect().top+window.scrollY-workflowOffset()),behavior:'instant'});
+  }
+  function stageContext(id){
+    const dest=admissionDestination()||'收治病房',place=S.delivery==='cs'?'刀房':S.delivery?'產房':'出生場所',ob=S.pathway==='outborn',re=S.pathway==='readmit';
+    const source=ob||re?'依出生紀錄':'出生現場紀錄';
+    const birth={
+      info:[re?'出生背景':'出生基本資料',source,''],
+      standby:[`為何到${place}待命？`,'出生前 · 兒科團隊',''],
+      birth:['出生當下，寶寶狀況如何？',source,''],
+      consult:['出生後為何請兒科會診？',`${place} · 出生後`,''],
+      dr:[`在${ob?'外院':''}${place}做了哪些處置？`,source,''],
+      drEnd:[`離開${ob?'外院':''}${place}前，寶寶狀況如何？`,source,'']
+    };
+    if(id.startsWith('birth:')){const key=id.slice(6),v=birth[key];return {title:v[0],where:v[1],prompt:v[2],prior:key==='dr'?journeySummary('birth'):key==='drEnd'?activeBirthEvents().map(e=>EVENT_NAMES[e.kind]).join(' → '):'',priorLabel:key==='dr'?'出生觀察摘要':'出生處置摘要'};}
+    const values={
+      obCare:['出生處置後，外院如何照護？','外院團隊 · 我方抵達前',''],
+      obConsult:['外院為何聯繫我方？','外院 → 本院',''],
+      obArrive:['我方抵達外院時，寶寶狀況如何？','外院 · 我方評估與處置','未外接到場可略過。'],
+      route:ob?['轉送途中有何變化或處置？','外院 → 本院','']:S.pathway==='nursery'?['寶寶在 BR 時，有何變化或處置？','BR · 尚未收入病房','']:['入院前有何變化或處置？','離開出生場所 → 病房','無額外紀錄可跳下一段。'],
+      brEval:['兒科在 BR 的評估與檢查','BR · 尚未入院',''],
+      prior:['出院返家時的照護與原本狀況','前次出院 → 返家',''],
+      illness:['這次為什麼再次就醫？','返家後 → 本次就醫',''],
+      evaluation:[`本次評估與入 ${dest} 時的狀況`,{clinic:'本次由門診收入',emergency:'本次由急診收入',scheduled:'本次為預約住院'}[S.readmitSource]||'門診／急診／預約住院',''],
+      adm:[`抵達 ${dest} 時，寶寶狀況如何？`,'本次入院','']
+    };
+    const v=values[id]||['本次病程','',''],stops=journeyDefinitions().filter(s=>s.show).sort((a,b)=>a.order-b.order),index=stops.findIndex(s=>s.id===id),prev=stops[index-1];
+    const prior=id==='obCare'?'':id==='illness'?S.readmitProblems.map(p=>READMIT_PROBLEM_LABEL[p]).join('、'):prev?journeySummary(prev.id):journeySummary('drEnd');
+    return {title:v[0],where:v[1],prompt:v[2],prior,priorLabel:id==='illness'?'已選問題':prev?prev.lab+'摘要':'離開出生場所前摘要'};
+  }
+  function fillStageContext(el,key){
+    if(!el)return;const c=stageContext(key);
+    const markup=`<div class="phase-kicker">${htmlEscape(c.where)}</div><h3>${htmlEscape(c.title)}</h3>${c.prompt?`<p>${htmlEscape(c.prompt)}</p>`:''}${c.prior?`<p class="phase-inherit"><strong>${htmlEscape(c.priorLabel)}：</strong>${htmlEscape(c.prior)}</p>`:''}`;
+    if(el.innerHTML!==markup)el.innerHTML=markup;
+  }
+  function syncClinicalNavigation(fromScroll=false){
+    const phases=clinicalPhases(),inBirth=workflowActive==='birthHistoryCard',inCourse=workflowActive==='pathwayCard',rail=document.getElementById('clinicalRail');if(!rail)return;
+    if(fromScroll&&inBirth){birthPhase='info';for(const p of birthPhaseDefinitions().slice(1))if(document.getElementById(p.target)?.getBoundingClientRect().top<=workflowOffset()+32)birthPhase=p.id;}
+    if(!birthPhaseDefinitions().some(p=>p.id===birthPhase))birthPhase='info';
+    const key=inBirth?'birth:'+birthPhase:inCourse?'course:'+S.journeyStep:'',active=phases.find(p=>p.key===key);
+    const shown=inBirth?[...birthPhaseDefinitions(),...phases.filter(p=>p.chapter==='pathwayCard').slice(0,1)]:[{...birthPhaseDefinitions()[0],lab:S.pathway==='readmit'?'出生背景':'出生經過'},...phases.filter(p=>p.chapter==='pathwayCard')];
+    rail.hidden=!(inBirth||inCourse)||!S.pathway;
+    const markup=shown.map(p=>`<button type="button" data-phase-target="${p.key}" aria-current="${p.key===key?'step':'false'}"><span>${htmlEscape(p.lab)}</span><small>${p.key===key?'正在填寫':p.chapter==='birthHistoryCard'?'出生區':'病程區'}</small></button>`).join('');
+    if(rail.innerHTML!==markup){const focus=rail.contains(document.activeElement)?document.activeElement.dataset.phaseTarget:'';rail.innerHTML=markup;if(focus)rail.querySelector(`[data-phase-target="${focus}"]`)?.focus({preventScroll:true});}
+    const sub=document.getElementById('flowSubsteps'),signature=JSON.stringify(phases.map(p=>[p.key,p.lab]));
+    if(sub.dataset.phaseSignature!==signature){
+      const menu=sub.parentElement,scroll=menu.scrollTop,focused=sub.contains(document.activeElement)?document.activeElement.dataset.phaseTarget:'';
+      sub.innerHTML=phases.map(p=>`<button type="button" data-phase-target="${p.key}" aria-current="${p.key===key?'step':'false'}">${p.chapter==='birthHistoryCard'?'出生':'病程'} · ${htmlEscape(p.lab)}</button>`).join('');
+      sub.dataset.phaseSignature=signature;menu.scrollTop=scroll;
+      if(focused)sub.querySelector(`[data-phase-target="${focused}"]`)?.focus({preventScroll:true});
+    }else sub.querySelectorAll('[data-phase-target]').forEach(b=>b.setAttribute('aria-current',b.dataset.phaseTarget===key?'step':'false'));
+    if(inBirth&&active){const births=birthPhaseDefinitions(),index=phases.findIndex(p=>p.key===key);document.getElementById('flowDetail').textContent=`${active.lab}（${births.findIndex(p=>p.key===key)+1}/${births.length}）`;document.getElementById('flowBack').setAttribute('aria-label','上一段：'+(phases[index-1]?.lab||'產前資料'));const n=phases[index+1];if(n){document.getElementById('flowNext').textContent='下一段 →';document.getElementById('flowNext').setAttribute('aria-label','下一段：'+n.lab);}}
+    document.querySelectorAll('.birth-stage').forEach(el=>el.dataset.current=String(inBirth&&el.id==='birthStage-'+birthPhase));
+    for(const p of birthPhaseDefinitions()){
+      if(p.id!=='info'){const heading=document.getElementById(p.target)?.querySelector('h3');if(heading)heading.textContent=p.lab;}
+      fillStageContext(document.getElementById('context-'+p.key.replace(':','-')),p.key);
+    }
+    if(S.journeyStep)fillStageContext(document.getElementById('journeyContext'),S.journeyStep);
+    const summary=document.getElementById('entryPathSummary');if(summary){summary.hidden=!S.pathway;summary.textContent=S.pathway?`接下來：產前資料 → ${S.pathway==='readmit'?'出生背景':'出生經過'} → ${journeyDefinitions().filter(s=>s.show).sort((a,b)=>a.order-b.order).map(s=>s.lab).join(' → ')} → 核對病歷`:'';}
+  }
   const workflowOffset=()=>parseFloat(document.documentElement.style.getPropertyValue('--workflow-offset'))||140;
   const workflowKey=id=>id==='pathwayCard'?`${id}:${S.pathway}`:id;
   function rememberJourneyView(){
     const ws=document.getElementById('journeyWorkspace');if(!ws||ws.hidden||!S.journeyStep)return;
     const key=`${S.pathway}:${S.journeyStep}`;
-    journeyViews[key]={...journeyViews[key],offset:Math.max(0,workflowOffset()-ws.getBoundingClientRect().top)};
+    // 保留標題下方的空間；負位移也是真實位置，截成 0 會在返回時向上跳。
+    journeyViews[key]={...journeyViews[key],offset:workflowOffset()-ws.getBoundingClientRect().top};
   }
   function navigateWorkflow(id,{restore=true,fromReview=false}={}){
     if(!fromReview)clearReviewLocation();
@@ -2892,6 +3055,7 @@
   }
   function moveWorkflow(delta){
     if(workflowActive==='pathwayCard'&&S.pathway){moveJourney(delta);return;}
+    if(workflowActive==='birthHistoryCard'&&S.pathway){const phases=clinicalPhases(),index=phases.findIndex(p=>p.key==='birth:'+birthPhase),next=phases[index+delta];if(next){navigateClinicalPhase(next.key);return;}}
     const index=workflowStages.findIndex(s=>s[0].id===workflowActive),next=workflowStages[index+delta];
     if(next)navigateWorkflow(next[0].id);
   }
@@ -2912,12 +3076,11 @@
     next.hidden=review;next.textContent=inJourney&&step===stops.length-1?'前往核對 →':'下一段 →';
     next.setAttribute('aria-label',inJourney&&step<stops.length-1?`下一段：${stops[step+1].lab}`:`下一段：${workflowStages[index+1]?.[1]||'核對'}`);
     nav.querySelectorAll('[data-flow-target]').forEach(b=>b.setAttribute('aria-current',b.dataset.flowTarget===workflowActive?'step':'false'));
-    const sub=document.getElementById('flowSubsteps'),markup=stops.map((st,i)=>`<button type="button" data-flow-stop="${st.id}" aria-current="${inJourney&&st.id===S.journeyStep?'step':'false'}">${i+1}/${stops.length} ${st.lab}</button>`).join('');
-    if(sub.innerHTML!==markup)sub.innerHTML=markup;
-    sub.hidden=!S.pathway;
+    document.getElementById('flowSubsteps').hidden=!S.pathway;
     const copy=document.getElementById('copy'),primary=S.mode!=='adm'||review;
     copy.dataset.primary=String(primary);copy.textContent=primary?'複製病歷':'複製草稿';
     copy.setAttribute('aria-label',primary?'複製病歷，貼入 HIS 前請核對':'複製目前草稿，可在資料未齊時使用');
+    syncClinicalNavigation(fromScroll);
     updateCollapsedDockHeight();
   }
   function journeyDefinitions(){
@@ -2928,10 +3091,10 @@
       {id:"consult",show:!!S.pwConsult&&!ob&&!re,order:nu?60:30,lab:nu?"會診":"出生後會診",plain:nu?"嬰兒室為了什麼叫兒科、大約生後幾小時。":`出生後在${place}為了什麼叫兒科。（產前就在場的話請改選故事 A）`},
       {id:"dr",show:!re,order:ob?22:40,lab:ob?"外院產房處置（依病摘）":`${place}處置`,plain:`${ob?"外院":""}${place}有沒有急救。每按一次「＋」就是實際做了一次；沒有急救就明確選「已確認無需急救」。`},
       {id:"drEnd",show:!re,order:ob?24:50,lab:ob?"外院產房結束時":`${place}結束時`,plain:`離開${place}時寶寶掛什麼、什麼狀態。`},
-      {id:"obCare",show:ob,order:30,lab:"外院處置",plain:"外院在我們到之前做了什麼、掛什麼（依外院紀錄）。"},
-      {id:"obConsult",show:ob,order:35,lab:"外院會診我方",plain:"外院為什麼會診我方（轉入原因）。"},
+      {id:"obCare",show:ob,order:30,lab:"外院照護",plain:"我方抵達之前，外院團隊做了什麼（依外院紀錄）。"},
+      {id:"obConsult",show:ob,order:35,lab:"外院聯繫我方",plain:"外院為什麼聯繫我方（轉入原因）。"},
       {id:"obArrive",show:ob,order:40,lab:"我方抵達外院",plain:"我們的團隊到外院時看到什麼（不是到本院時）。",opt:true},
-      {id:"route",show:!re,order:ob?50:nu?55:60,lab:ob?"轉送":nu?"嬰兒室":"入院前處置",plain:ob?"先選與前段支持的關係；確認同前會沿用模式，裝置與參數有紀錄才補。":nu?"在嬰兒室出現了什麼、掛了什麼、大約生後幾小時。兒科評估與抽血在下一站填。":"從產房到入院之間有沒有前處理；沒有就整站留空。",opt:!nu},
+      {id:"route",show:!re,order:ob?50:nu?55:60,lab:ob?"轉送途中":nu?"嬰兒室":"入院前處置",plain:ob?"前段支持會顯示供對照；只補這段期間的實際情況，參數不會自動複製。":nu?"在嬰兒室出現了什麼、掛了什麼、大約生後幾小時。兒科評估與抽血在下一站填。":"從產房到入院之間有沒有前處理；沒有就整站留空。",opt:!nu},
       {id:"brEval",show:nu,order:57,lab:"兒科評估・抽血",plain:"兒科為什麼去看、在嬰兒室抽了什麼、結果如何。沒填結果不會被寫成正常。"},
       {id:"prior",show:re,order:10,lab:"前次出院",plain:"只補出生後到前次出院的經過；產前、Apgar 與急救沿用前面，不在這裡重填。"},
       {id:"home",show:re,order:20,lab:"返家後狀況",plain:"記錄返家後原本的基準狀況與直到本次生病前的經過；不確定的內容留空。",opt:true},
@@ -2952,7 +3115,7 @@
     if(!visible.some(x=>x.id===id))return;
     const ws=document.getElementById('journeyWorkspace');if(workflowActive==='pathwayCard')rememberJourneyView();
     document.getElementById('flowMenu').open=false;
-    S.journeyStep=id;render();
+    S.journeyStep=id;workflowActive='pathwayCard';render();
     const saved=journeyViews[`${S.pathway}:${id}`],field=saved&&document.getElementById(saved.field);
     if(field&&!field.closest('[hidden]'))field.focus({preventScroll:true});
     else{ws.setAttribute('tabindex','-1');ws.focus({preventScroll:true});}
@@ -2984,7 +3147,7 @@
       const hd=li.querySelector(".hd");hd.setAttribute("aria-expanded",String(isCur));hd.dataset.stepNumber=String(visible.findIndex(x=>x.id===st.id)+1);
       const plain=li.querySelector(".stop-plain");if(plain)plain.textContent=st.plain;
     });
-    if(mountedJourneyStop!==S.journeyStep){returnMountedJourneyBody();const li=ol.querySelector(`li[data-stop="${S.journeyStep}"]`),body=li?.querySelector(":scope > .body");if(body){ws.prepend(body);mountedJourneyStop=S.journeyStep;}}
+    if(mountedJourneyStop!==S.journeyStep){returnMountedJourneyBody();const li=ol.querySelector(`li[data-stop="${S.journeyStep}"]`),body=li?.querySelector(":scope > .body");if(body){ws.appendChild(body);mountedJourneyStop=S.journeyStep;}}
     const active=visible.find(x=>x.id===S.journeyStep),idx=visible.indexOf(active);
     const stage=document.getElementById("journeyStage"),counter=document.getElementById("journeyCounter");
     if(stage)stage.textContent=`情境 ${story}・${active?.lab||"本次入院"}`;if(counter)counter.textContent=`第 ${idx+1}／${visible.length} 階段`;
@@ -4616,6 +4779,16 @@ ${opLine}`);
     }
     byId("birthReview").classList.add("local-review");birth.appendChild(byId("birthReview"));
     const ob=byId("obFacility").closest(".field");ob.id="outsideBirthFacility";byId("birthHospWrap").after(ob);
+    context.querySelector('#entryRoutes').insertAdjacentHTML('afterend','<p id="entryPathSummary" hidden></p>');
+    birth.querySelector('.sec-h').insertAdjacentHTML('afterend','<div class="phase-context" id="context-birth-info"></div>');
+    for(const stop of ['standby','birth','consult','dr','drEnd']){
+      const section=byId('birthStage-'+stop);section.querySelector('h3').insertAdjacentHTML('afterend',`<div class="phase-context" id="context-birth-${stop}"></div>`);
+    }
+    byId('journeyWorkspace').insertAdjacentHTML('afterbegin','<div class="phase-context" id="journeyContext"></div>');
+    for(const [stop,phase] of [['obCare','outside'],['obArrive','arrival']]){
+      const body=document.querySelector(`[data-stop="${stop}"] > .body`);
+      body.insertAdjacentHTML('beforeend',`<details class="optional-events"><summary>${phase==='outside'?'新增外院處置':'新增我方現場處置'}（選填）</summary><p class="man-h">同一次處置只記一次；可重複新增不同事件。</p><div class="seg event-add" aria-label="新增${phase==='outside'?'外院':'我方現場'}事件">${Object.entries(EVENT_NAMES).map(([kind,label])=>`<button type="button" data-add-stage-event="${kind}" data-event-phase="${phase}">＋ ${label}</button>`).join('')}</div></details><div id="${stop}Events"></div>`);
+    }
     const home=document.querySelector('[data-stop="home"] .body');
     home.querySelector('.stop-plain').textContent="返家後原本狀況（選填；只勾已確認）。";
     document.querySelector('[data-stop="prior"] .body').appendChild(home);
@@ -4653,7 +4826,9 @@ ${opLine}`);
     outside.appendChild(outsideControls);
     outsideControls.appendChild(outside.querySelector('[data-seg="obM1Type"]'));outsideControls.appendChild(byId('obM1O2Wrap'));
     for(const [field,control] of [['obM1Relation',outsideControls],['obRespRelation',byId('pathwaySupportControls')]]){
-      control.insertAdjacentHTML('beforebegin',`<p class="inherited-summary" id="${field}Summary" hidden></p><details class="support-extra" id="${field}Details" hidden><summary>本階段另記的裝置／參數（選填，不自動沿用）</summary></details>`);
+      control.insertAdjacentHTML('beforebegin',`<details class="support-extra" id="${field}Details" hidden><summary>裝置／參數（選填）</summary><p class="inherited-summary" id="${field}Summary" hidden></p></details>`);
+      const native=byId(field),holder=native.parentElement;holder.hidden=true;
+      holder.insertAdjacentHTML('beforebegin',`<div class="support-guide" id="${field}Guide"><div class="support-before" id="${field}Before"></div><div><p class="support-question" id="${field}Question"></p><div class="support-choices" id="${field}Choices" role="group" aria-labelledby="${field}Question" tabindex="-1"></div><details class="support-help" id="${field}Help"><summary>選項說明</summary><p>持續使用：只沿用支持方式，裝置／參數另填。</p><p>已停止：不代表已改為 Room air。</p><p>只知道當時方式：不推定開始時間。不詳可留空。</p></details></div></div>`);
     }
     const accSeg=document.querySelector('#accForm [data-seg="resp"]');accSeg.dataset.seg="acceptanceResp";
     const accCard=accSeg.closest('.card');accCard.querySelector('.man-h').textContent="接手當時是獨立時點，不會改寫入院紀錄。確認未變時可按「與入院時相同」。";
@@ -4686,7 +4861,7 @@ ${opLine}`);
     review.querySelector('.sec-h').insertAdjacentHTML('afterend','<div class="workflow-review" id="workflowReview"><p id="reviewSummary" role="status"></p><section class="review-group" id="reviewMissing"><h3>關鍵資料未填</h3><ul id="reviewMissingList"></ul><div id="reviewPending" hidden><p>已帶入／已記錄，但仍待確認：</p><ul id="reviewPendingList"></ul></div></section><section class="review-group" id="reviewConflicts"><h3>前後不一致／格式需核對</h3><ul id="reviewConflictList"></ul></section><details class="review-group" id="reviewOptional"><summary id="reviewOptionalSummary">其他選填未記錄</summary><p class="review-help">僅供通讀時參考，不要求全部補齊；未填不代表正常、陰性或未做。以下為重點選填項目，不是所有空白欄位。</p><ul id="reviewOptionalList"></ul></details></div>');
     const nav=document.createElement('nav');nav.id='workflowNav';nav.className='flow-nav';nav.setAttribute('aria-label','目前位置與下一段');
     const stages=workflowStages=[[context,'入院設定'],[maternal,'產前資料'],[birth,'出生資料'],[pathway,'本次病程'],[review,'核對病歷']];
-    nav.innerHTML=`<button type="button" id="flowBack" aria-label="上一段" disabled>←</button><details id="flowMenu"><summary aria-labelledby="flowChapter flowDetail"><span id="flowChapter">入院設定</span><span id="flowDetail">第 1/5 段 · 點此切換</span></summary><div class="flow-menu-items">${stages.map(([card,label],i)=>`<button type="button" data-flow-target="${card.id}">${i+1}. ${label}</button>${card===pathway?'<div class="flow-substeps" id="flowSubsteps"></div>':''}`).join('')}</div></details><button type="button" id="flowNext">下一段 →</button><div id="reviewJumpBar" class="review-jump-bar" hidden><span id="reviewJumpStatus" role="status"></span><button type="button" id="returnToReview">返回核對</button></div>`;form.prepend(nav);
+    nav.innerHTML=`<button type="button" id="flowBack" aria-label="上一段" disabled>←</button><details id="flowMenu"><summary aria-labelledby="flowChapter flowDetail"><span id="flowChapter">入院設定</span><span id="flowDetail">第 1/5 段 · 點此切換</span></summary><div class="flow-menu-items">${stages.map(([card,label],i)=>`<button type="button" data-flow-target="${card.id}">${i+1}. ${label}</button>`).join('')}<div class="flow-substeps" id="flowSubsteps"></div></div></details><button type="button" id="flowNext">下一段 →</button><div class="phase-rail" id="clinicalRail" aria-label="病程階段，不是急救處置流程" hidden></div><div id="reviewJumpBar" class="review-jump-bar" hidden><span id="reviewJumpStatus" role="status"></span><button type="button" id="returnToReview">返回核對</button></div>`;form.prepend(nav);
     for(let i=0;i<stages.length;i++){
       const host=i===1?medication:stages[i][0];
       host.insertAdjacentHTML('beforeend',`<div class="stage-actions"${host===pathway?' id="pathwayFallbackActions"':''}>${i>0?`<button type="button" class="secondary" data-flow-target="${stages[i-1][0].id}">← 上一段</button>`:''}${i<stages.length-1?`<button type="button" class="primary" data-flow-target="${stages[i+1][0].id}">下一段：${stages[i+1][1]} →</button>`:''}</div>`);
@@ -4707,6 +4882,8 @@ ${opLine}`);
     byId("clearBirthTeam").addEventListener('click',()=>{setTog('pwStandby',false);setTog('pwConsult',false);render();});
     byId("useAdmissionResp").addEventListener('click',()=>{if(S.resp){S.acceptanceResp=S.resp;render();}});
     document.addEventListener('click',e=>{
+      const phase=e.target.closest('[data-phase-target]');if(phase)navigateClinicalPhase(phase.dataset.phaseTarget);
+      const support=e.target.closest('[data-support-choice]');if(support)chooseSupport(support.dataset.supportField,support.dataset.supportChoice);
       const jump=e.target.closest('[data-flow-target]');if(jump)navigateWorkflow(jump.dataset.flowTarget);
       const stop=e.target.closest('[data-flow-stop]');if(stop)selectJourneyStep(stop.dataset.flowStop,{focus:true});
       if(!nav.contains(e.target))byId('flowMenu').open=false;
@@ -4714,7 +4891,9 @@ ${opLine}`);
       const set=e.target.closest('[data-set-field]');if(set){const field=byId(set.dataset.setField);field.value=field.value===set.dataset.v?'':set.dataset.v;render();}
     });
     document.addEventListener('focusin',e=>{
-      if(!form.contains(e.target)||!e.target.id||!e.target.matches('input,select,textarea,button')||e.target.closest('.stage-actions,.flow-nav,#journeyNav,#journey'))return;
+      if(!form.contains(e.target)||e.target.closest('.stage-actions,.flow-nav,#journeyNav,#journey'))return;
+      const phase=phaseForElement(e.target);if(phase.startsWith('birth:')){birthPhase=phase.slice(6);workflowActive='birthHistoryCard';syncWorkflowNavigation(false);}else if(phase){workflowActive='pathwayCard';syncWorkflowNavigation(false);}
+      if(!e.target.id||!e.target.matches('input,select,textarea,button'))return;
       const card=stages.find(([c],i)=>c.contains(e.target)||i===1&&(screening.contains(e.target)||medication.contains(e.target)))?.[0];
       if(card)workflowViews[workflowKey(card.id)]={...workflowViews[workflowKey(card.id)],field:e.target.id};
       if(byId('journeyWorkspace').contains(e.target)){const key=`${S.pathway}:${S.journeyStep}`;journeyViews[key]={...journeyViews[key],field:e.target.id};}
@@ -4738,6 +4917,7 @@ ${opLine}`);
     document.querySelectorAll('[data-seg="acceptanceResp"] button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===S.acceptanceResp)));
     el('admissionRespSummary').textContent=`入院時紀錄：${S.resp||'未記錄'}（不會自動當成接手時現況）`;el('useAdmissionResp').disabled=!S.resp;
     const status=el('admissionStatusBody'),evaluation=el('readmitEvaluationBody');
+    status.querySelector('.stop-plain').textContent=admissionDestination()?`到 ${admissionDestination()} 時的狀況（選填，英文）。`:'入院時的狀況（選填，英文）。';
     if(re&&status.parentElement!==evaluation)evaluation.appendChild(status);
     else if(!re&&status.parentElement===evaluation)document.querySelector('[data-stop="adm"]').appendChild(status);
     const active=activeReadmitModules(),activeKeys=active.map(m=>m.key);
@@ -4766,6 +4946,38 @@ ${opLine}`);
     el('readmitWeightChange').textContent=weight>0&&discharge>0?`與前次出院 ${discharge} g 比較：${weight-discharge>=0?'+':''}${weight-discharge} g（${((weight-discharge)/discharge*100).toFixed(1)}%）。僅描述數值，不自動判定脫水。`:'體重有不同時點：出生、前次出院與本次評估分開記錄。';
     S.habitReviewed=raw('habitStatus')==='negative';
   }
+  function supportSourceLabel(field){
+    if(field==='obM1Relation'||!S.outborn)return `離開${S.pathway==='outborn'?'外院':''}${S.delivery==='cs'?'刀房':S.delivery?'產房':'出生場所'}前`;
+    return lastArrivalSupport()?'我方在外院最後記錄的支持':lastSupportAt('outside')?'外院團隊最後記錄的支持':'外院照護時';
+  }
+  function supportConfig(field){return field==='obM1Relation'?{key:'obM1Type',device:'obM1Dev',fields:['obM1Flow']}:{key:'obRespType',device:'obO2Dev',fields:['obO2Flow','obFiO2','obIP','obPEEP','obRR']};}
+  function chooseSupport(field,choice){
+    const cfg=supportConfig(field),select=document.getElementById(field),old=raw(field),key=`${S.pathway}:${field}:`,value=['clear','observed'].includes(choice)?'':choice;
+    const draftKey=(relation,source)=>key+relation+(['continued','stopped'].includes(relation)?':'+(source||''):'');
+    supportChoiceDrafts.set(draftKey(old,S.continuitySignatures[field]),{mode:S[cfg.key],device:S[cfg.device],stable:field==='obRespRelation'&&S.obRespStable,values:Object.fromEntries(cfg.fields.map(id=>[id,raw(id)]))});
+    const saved=choice==='clear'?null:supportChoiceDrafts.get(draftKey(value,sourceStamp(field)));
+    supportChoiceDrafts.set(key+'active',choice);
+    S[cfg.key]=value==='continued'?'':saved?.mode||'';S[cfg.device]=saved?.device||'';
+    if(field==='obRespRelation'){S.obRespStable=!!saved?.stable;document.querySelectorAll('[data-tog="obRespStable"] button').forEach(b=>b.setAttribute('aria-pressed',String(S.obRespStable)));}
+    cfg.fields.forEach(id=>document.getElementById(id).value=saved?.values[id]||'');
+    select.value=value;S.continuitySignatures[field]=sourceStamp(field);
+    for(const name of [cfg.key,cfg.device])document.querySelectorAll(`[data-seg="${name}"] button`).forEach(b=>b.setAttribute('aria-pressed',String(!!S[name]&&b.dataset.v===S[name])));
+    render();document.getElementById(`${field}-choice-${choice}`)?.focus({preventScroll:true});
+  }
+  function renderSupportGuide(field){
+    const cfg=supportConfig(field),r=resolvedSupport(field,S[cfg.key]),before=document.getElementById(field+'Before'),choices=document.getElementById(field+'Choices');if(!before)return;
+    before.innerHTML=`${htmlEscape(supportSourceLabel(field))}：<strong>${htmlEscape(supportName(r.source))}</strong>`;
+    document.getElementById(field+'Question').textContent=field==='obM1Relation'?'我方到場前，外院怎麼協助寶寶呼吸？':S.outborn?'轉送途中，呼吸支持有什麼變化？':S.pathway==='nursery'?'在 BR 這段期間，呼吸支持有什麼變化？':'入院前這段期間，呼吸支持有什麼變化？';
+    const entries=[];
+    if(r.source||r.relation==='continued')entries.push(['continued',r.source==='room'?'仍未用氧氣／呼吸支持':r.source?'仍持續用 '+supportName(r.source):'先前選擇持續使用，待核對',!r.source]);
+    if(r.source&&r.source!=='room')entries.push(['changed','換了方式／調整設定'],['stopped','已停止 '+supportName(r.source)]);
+    else entries.push(['new','開始呼吸支持']);
+    entries.push(['repeat','停過，後來又開始'],['observed','只知道當時的方式']);
+    if(r.relation&&!entries.some(([v])=>v===r.relation))entries.push([r.relation,document.getElementById(field).selectedOptions[0]?.textContent||'原選擇']);
+    const observed=!r.relation&&(!!S[cfg.key]||supportChoiceDrafts.get(`${S.pathway}:${field}:active`)==='observed');
+    const markup=entries.map(([value,label,disabled])=>`<button type="button" id="${field}-choice-${value}" class="${value==='observed'?'support-aux':''}" data-support-field="${field}" data-support-choice="${value}" aria-pressed="${value==='observed'?observed:r.relation===value}" ${disabled?'disabled':''}>${htmlEscape(label)}</button>`).join('')+`<button type="button" class="support-aux" id="${field}-choice-clear" data-support-field="${field}" data-support-choice="clear" ${!r.relation&&!S[cfg.key]&&!observed?'hidden':''}>清除此段選擇</button>`;
+    if(choices.innerHTML!==markup){const focused=choices.contains(document.activeElement)?document.activeElement.id:'';choices.innerHTML=markup;if(focused)document.getElementById(focused)?.focus({preventScroll:true});}
+  }
   function renderSupportReuse(){
     for(const [field,controlId,selected,fields,device] of [
       ['obM1Relation','outsideSupportControls',S.obM1Type,['obM1Flow'],S.obM1Dev],
@@ -4773,12 +4985,14 @@ ${opLine}`);
     ]){
       const control=document.getElementById(controlId),details=document.getElementById(field+'Details'),summary=document.getElementById(field+'Summary');if(!details)return;
       const r=resolvedSupport(field,selected),hasSettings=!!device||fields.some(id=>raw(id));
+      renderSupportGuide(field);control.hidden=r.relation==='stopped'||!!r.source&&!r.relation&&!selected&&supportChoiceDrafts.get(`${S.pathway}:${field}:active`)!=='observed';
+      const reset=control.querySelector('[data-v=""]');if(reset){reset.textContent='清除方式';reset.hidden=!selected;reset.setAttribute('aria-pressed','false');}
       control.querySelector(`[data-seg="${field==='obM1Relation'?'obM1Type':'obRespType'}"]`).hidden=r.confirmed;
       summary.hidden=!r.confirmed;details.hidden=!r.confirmed;
       if(r.confirmed){
-        const source=field==='obM1Relation'||!S.outborn?'產房結束時':'外院後續照護';
-        summary.textContent=`已確認沿用${source}的呼吸模式（唯讀）：${{room:'Room air',o2:'O₂',cpap:'CPAP',ppv:'PPV',ett:'ETT'}[r.mode]}。\n裝置／參數不自動沿用；模式若改變，請選「已調整支持」。`;
-        details.querySelector('summary').textContent=hasSettings?'已有本階段裝置／參數 · 展開核對（原值保留）':'本階段另記的裝置／參數（選填，不自動沿用）';
+        const source=supportSourceLabel(field);
+        summary.textContent=`已確認：${supportName(r.mode)}（同${source}）。裝置／參數另填。`;
+        details.querySelector('summary').textContent=hasSettings?'裝置／參數已填（原值保留）':'裝置／參數（選填）';
         if(control.parentElement!==details){details.open=hasSettings||control.contains(document.activeElement);details.appendChild(control);}
       }else if(control.parentElement===details)details.after(control);
     }

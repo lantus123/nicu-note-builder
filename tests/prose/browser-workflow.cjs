@@ -27,8 +27,8 @@ async function main(){
   };
   // CDP pointer coordinates use the visual viewport; DOM rects use the layout viewport.
   // Mobile scrollIntoView can move the visual viewport even when scale is 1.
-  const click=async s=>{const r=await position(s);assert.ok(r.w&&r.h&&r.hit,'Control hidden or covered: '+s);await send('Input.dispatchMouseEvent',{type:'mousePressed',x:r.inputX,y:r.inputY,button:'left',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:r.inputX,y:r.inputY,button:'left',clickCount:1});clicks++;await pause(70);};
-  const input=async(id,value)=>{const r=await position('#'+id);assert.ok(r.w&&r.h&&r.hit,'Input hidden or covered: '+id);await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.focus({preventScroll:true});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event(e.tagName==='SELECT'||e.type==='date'?'change':'input',{bubbles:true}));})()`);entries++;};
+  const click=async s=>{const stop=s.match(/^\[data-stop-toggle="([^"]+)"\]$/);if(stop){await click('#flowMenu > summary');await click(`#flowSubsteps [data-phase-target="course:${stop[1]}"]`);return;}const r=await position(s);assert.ok(r.w&&r.h&&r.hit,'Control hidden or covered: '+s);await send('Input.dispatchMouseEvent',{type:'mousePressed',x:r.inputX,y:r.inputY,button:'left',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:r.inputX,y:r.inputY,button:'left',clickCount:1});clicks++;await pause(70);};
+  const input=async(id,value)=>{if(['obM1Relation','obRespRelation'].includes(id)){await click(`#${id}-choice-${value||'clear'}`);entries++;return;}const r=await position('#'+id);assert.ok(r.w&&r.h&&r.hit,'Input hidden or covered: '+id);await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.focus({preventScroll:true});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event(e.tagName==='SELECT'||e.type==='date'?'change':'input',{bubbles:true}));})()`);entries++;};
   const typeText=async(id,value)=>{await click('#'+id);await ev(`document.getElementById(${JSON.stringify(id)}).select()`);await send('Input.insertText',{text:value});assert.equal(await ev(`document.getElementById(${JSON.stringify(id)}).value`),value);entries++;};
   const chapter=async id=>{await click('#flowMenu > summary');await click(`#flowMenu [data-flow-target="${id}"]`);};
   const note=()=>ev(`document.querySelector('#note').textContent`);
@@ -148,13 +148,14 @@ async function main(){
     const directNote=await note();assert.match(directNote,/35 weeks/);assert.match(directNote,/preterm labor/);assert.match(directNote,/2 minutes/);assert.match(directNote,/25%/);assert.match(directNote,/NCPAP/);assert.doesNotMatch(directNote,/discharged home|An older sibling/);
     await at('#finalReviewCard');await shot('nicu-forward-direct-review-light.png');await click('#copy');assert.match(await ev(`document.querySelector('#copyStatus').textContent`),/^已複製/,'Real Chrome clipboard action');
     await fresh();await background('D');await input('obFacility','Example Transfer Hospital');await input('birthBreathing','crying');await input('birthResusStatus','none');
-    await click('#flowNext');await input('obM1Relation','new');await click('[data-seg="obM1Type"] [data-v="o2"]');await click('[data-seg="obM1Dev"] [data-v="hood"]');await input('obM1Flow','2');
+    await click('#birthHistoryCard [data-flow-target="pathwayCard"]');await input('obM1Relation','new');await click('[data-seg="obM1Type"] [data-v="o2"]');await click('[data-seg="obM1Dev"] [data-v="hood"]');await input('obM1Flow','2');
     await click('#journeyNext');await click('[data-fill="obReason"] [data-v="respiratory distress"]');
     await click('#journeyNext');await typeText('obArrival','The infant was tachypneic with subcostal retractions.');
     await click('#journeyNext');await input('obRespRelation','continued');
     assert.equal(await ev(`document.querySelector('[data-seg="obRespType"]').checkVisibility()`),false,'Do not ask for the inherited mode again');
-    assert.equal(await ev(`document.querySelector('#obRespRelationSummary').checkVisibility()`),true);
+    assert.equal(await ev(`document.querySelector('#obRespRelationSummary').checkVisibility()`),false,'Do not repeat the selected mode outside optional parameter details');
     assert.equal(await ev(`document.querySelector('#obRespRelationDetails').open`),false);
+    const beforeDetails=await note();await click('#obRespRelationDetails > summary');assert.equal(await ev(`document.querySelector('#obRespRelationSummary').checkVisibility()`),true);assert.equal(await note(),beforeDetails);await click('#obRespRelationDetails > summary');
     await at('#journeyWorkspace');await shot('nicu-forward-outborn-desktop-light.png');
     await resize(390,844,true);await at('#journeyWorkspace');await shot('nicu-forward-outborn-mobile-light.png');
     await click('#journeyNext');await click('#admissionStatusBody [data-seg="resp"] [data-v="NC"]');await typeText('obAdmissionStatus','Mild tachypnea persisted.');await click('#journeyNext');
