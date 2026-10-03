@@ -236,8 +236,69 @@ async function main(){
     await pause(80);
     assert.match(await note(),/gestational diabetes mellitus.*was unavailable/);assert.doesNotMatch(await note(),/No gestational diabetes/);
     assert.match(await note(),/regular prenatal care/);assert.match(await note(),/prenatal ultrasound showed normal findings/);
+    // Review hints must locate the exact field, even in parked E stages and closed details.
+    // Real pointer/keyboard activation, actual viewport geometry and unchanged note are checked.
+    await fresh();await resize(1440,1000);await click('[data-story="E"]');await click('[data-seg="dest"] [data-v="NBC"]');
+    await click('[data-seg="readmitSource"] [data-v="clinic"]');await click('[data-msel="readmitProblems"] [data-v="respiratory"]');
+    await input('birthDate','2026-09-15');await click('#admissionDateDetails > summary');await input('admissionDate','2026-10-02');await click('#admissionDateDetails > summary');
+    await chapter('birthHistoryCard');await input('gaW','99');await input('birthResusStatus','performed');
+    await chapter('pathwayCard');await click('#journeyNext');
+    const onsetDetails='details:has(#rm_respiratory_onset) > summary';
+    await click(onsetDetails);await input('rm_respiratory_onset','25');await click(onsetDetails);await click('#journeyNext');await click('#journeyNext');
+    const reviewLink=id=>`#workflowReview [data-review-target="${id}"]`;
+    const reviewRects=[];
+    const checkLocated=async(id,chapterName)=>{
+      await pause(120);
+      assert.equal(await ev('document.activeElement.id'),id);
+      assert.equal(await ev(`document.querySelector('#flowChapter').textContent`),chapterName);
+      const bounds=await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)}),r=e.getBoundingClientRect(),n=document.querySelector('#workflowNav').getBoundingClientRect(),dock=document.querySelector('.dock').getBoundingClientRect();return {width:innerWidth,top:r.top,bottom:r.bottom,labelTop:(e.labels?.[0]||e.closest('.field')||e).getBoundingClientRect().top,navBottom:n.bottom,dockTop:dock.top,highlight:e.classList.contains('review-target-flash'),visible:e.checkVisibility(),overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+1};})()`);
+      assert.ok(bounds.visible&&bounds.highlight,'Field must be visible and highlighted: '+JSON.stringify(bounds));
+      assert.ok(bounds.top>=bounds.navBottom+8,'Navigation must not cover the field: '+JSON.stringify(bounds));
+      assert.ok(bounds.labelTop>=bounds.navBottom+8,'The field label must also remain visible: '+JSON.stringify(bounds));
+      const viewportHeight=await ev('innerHeight');
+      assert.ok(bounds.bottom<Math.min(viewportHeight,bounds.width<1000?bounds.dockTop:viewportHeight),'Field must be above the mobile preview dock: '+JSON.stringify(bounds));
+      assert.equal(bounds.overflow,false);reviewRects.push(bounds);
+    };
+    for(const width of [1440,390,320]){
+      await resize(width,width===1440?1000:844,width!==1440);
+      await position(reviewLink('#rm_respiratory_onset'));await shot('nicu-review-list-'+width+'.png');
+      const before=await note();
+      if(width===390){
+        await ev(`document.querySelector(${JSON.stringify(reviewLink('#rm_respiratory_onset'))}).focus({preventScroll:true})`);
+        await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'});
+        await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+      }else await click(reviewLink('#rm_respiratory_onset'));
+      await checkLocated('rm_respiratory_onset','本次病程');
+      assert.match(await ev(`document.querySelector('#flowDetail').textContent`),/症狀與變化.*2\/3/);
+      assert.equal(await ev(`document.querySelector('#rm_respiratory_onset').closest('details').open`),true);
+      assert.equal(await note(),before,'Jump must not change clinical content');
+      await shot('nicu-review-target-'+width+'.png');
+      if(width!==320){await click(onsetDetails);await click('#flowNext');await click('#flowNext');}
+    }
+    await input('rm_respiratory_onset','17');await click('#returnToReview');
+    assert.equal(await ev(`!!document.querySelector(${JSON.stringify(reviewLink('#rm_respiratory_onset'))})`),false,'Corrected warning disappears');
+    assert.equal(await ev(`document.querySelector('#flowChapter').textContent`),'核對病歷');
+    assert.equal(await ev(`document.querySelector('#reviewJumpBar').hidden`),true);
+    await click(reviewLink('#gaW'));await checkLocated('gaW','出生資料');await input('gaW','39');await click('#returnToReview');
+    assert.equal(await ev(`!!document.querySelector('#reviewConflictList [data-review-target="#gaW"]')`),false);
+    // Space on the missing-action hint focuses its group; it must never press +PPV.
+    const addHint=reviewLink('#birthActionsWrap .event-add');await position(addHint);
+    await ev(`document.querySelector(${JSON.stringify(addHint)}).focus({preventScroll:true})`);
+    await send('Input.dispatchKeyEvent',{type:'keyDown',key:' ',code:'Space',windowsVirtualKeyCode:32,text:' '});
+    await send('Input.dispatchKeyEvent',{type:'keyUp',key:' ',code:'Space',windowsVirtualKeyCode:32});await pause(120);
+    assert.equal(await ev(`document.activeElement===document.querySelector('#birthActionsWrap .event-add')`),true);
+    assert.equal(await ev(`document.querySelectorAll('#birthEvents .clinical-event').length`),0);
+    await click('[data-add-birth="epinephrine"]');await click('[data-add-birth="epinephrine"]');
+    const repeatedIds=await ev(`[...document.querySelectorAll('#birthEvents .clinical-event')].map(e=>e.dataset.eventId)`);
+    await chapter('finalReviewCard');await click(reviewLink('#event-'+repeatedIds[1]+'-drugRoute'));
+    await checkLocated('event-'+repeatedIds[1]+'-drugRoute','出生資料');await shot('nicu-review-repeated-event-mobile.png');
+    assert.equal(await ev(`document.activeElement.closest('.clinical-event').dataset.eventId`),repeatedIds[1]);
+    // Closed date details are also opened by the hint, while the entered value remains unchanged.
+    await chapter('admissionContext');await click('#admissionDateDetails > summary');await input('admissionDate','2026-09-14');await click('#admissionDateDetails > summary');
+    await chapter('finalReviewCard');await click(reviewLink('#admissionDate'));await checkLocated('admissionDate','入院設定');
+    assert.equal(await ev(`document.querySelector('#admissionDateDetails').open`),true);await shot('nicu-review-date-mobile.png');
     assert.deepEqual(errors,[]);
-    console.log(JSON.stringify({ok:true,url,entryTop,forwardClicks,forwardEntries,forcedBackwardSteps:0,EStages:3,routeStages,freshAdmissions:['direct A','outborn D'],destinations:{E:destinationOptions,C:'BR history to PICU',routeDraftsRestored:true,unsupportedPICUPlanBlocked:true},prenatalPresets:{visible:10,immediatelyInNote:true,defaultHabitsNegative:true,defaultScreeningNegative:true,rubellaReactive:true,exceptionsPreserved:true,inPlaceDetails:true,keyboardNavigation:true,noConfirmationGate:true},DOL:18,desktop:['1440×1000','1366×768'],mobile:['320×844','360×844','390×844','390×540'],themes:['dark','light'],nativeKeyboard:true,clipboard:true,rectangles,screenshots:['/private/tmp/nicu-forward-*.png','/private/tmp/nicu-destination-*.png','/private/tmp/nicu-prenatal-*.png'],syntheticNote:'/private/tmp/nicu-forward-synthetic-note.txt'},null,2));
+    console.log(JSON.stringify({ok:true,url,entryTop,forwardClicks,forwardEntries,forcedBackwardSteps:0,EStages:3,routeStages,freshAdmissions:['direct A','outborn D'],destinations:{E:destinationOptions,C:'BR history to PICU',routeDraftsRestored:true,unsupportedPICUPlanBlocked:true},prenatalPresets:{visible:10,immediatelyInNote:true,defaultHabitsNegative:true,defaultScreeningNegative:true,rubellaReactive:true,exceptionsPreserved:true,inPlaceDetails:true,keyboardNavigation:true,noConfirmationGate:true},reviewNavigation:{exactFields:true,parkedStages:true,closedDetails:true,returnToReview:true,EnterAndSpace:true,noAutomaticTreatments:true,repeatedEventIds:true,reviewRects},DOL:18,desktop:['1440×1000','1366×768'],mobile:['320×844','360×844','390×844','390×540'],themes:['dark','light'],nativeKeyboard:true,clipboard:true,rectangles,screenshots:['/private/tmp/nicu-forward-*.png','/private/tmp/nicu-destination-*.png','/private/tmp/nicu-prenatal-*.png','/private/tmp/nicu-review-*.png'],syntheticNote:'/private/tmp/nicu-forward-synthetic-note.txt'},null,2));
   }finally{await send('Page.close').catch(()=>{});ws.close();for(const p of pending.values())clearTimeout(p.timer);}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

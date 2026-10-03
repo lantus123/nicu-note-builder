@@ -443,7 +443,7 @@
   #entryReadmit{border-top:1px solid var(--line);padding-top:18px}
   #entryReadmit [data-msel="readmitProblems"]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
   #entryReadmit [data-msel="readmitProblems"] button{min-width:0;font-size:13px}
-  .flow-nav{position:sticky;top:var(--flow-top,68px);z-index:12;display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+  .flow-nav{position:sticky;top:var(--flow-top,68px);z-index:12;display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
   .flow-nav button{border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink-2);font:inherit;font-size:13px;min-height:44px;padding:8px 11px;cursor:pointer}
   #flowBack{flex:0 0 44px;padding:8px}
   #flowNext{flex:0 0 auto;white-space:nowrap;background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
@@ -498,6 +498,16 @@
   #reviewOptional>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:var(--ink-2);font-weight:650}
   #reviewOptional .review-help{font-size:12px;color:var(--ink-3);margin-bottom:8px}
   #reviewSummary{font-weight:650;margin:0 0 10px}
+  .review-item{display:block;margin:4px 0;white-space:normal}
+  .review-link,.review-alt{display:block;width:100%;min-height:44px;padding:8px 10px;text-align:left;font:inherit;line-height:1.6;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:7px;cursor:pointer;overflow-wrap:anywhere}
+  .review-link small{display:block;font-size:12px;color:var(--accent-ink);margin-top:3px}
+  .review-alt{width:auto;max-width:100%;margin-top:5px;font-size:12px;color:var(--accent-ink)}
+  .review-link:hover,.review-alt:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .review-link:focus-visible,.review-alt:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .review-target-flash{outline:3px solid var(--accent)!important;outline-offset:4px;scroll-margin-top:var(--workflow-offset,140px)}
+  .review-jump-bar{flex:1 0 100%;min-width:0;display:flex;align-items:center;gap:8px;border-top:1px solid var(--line);padding-top:5px}
+  #reviewJumpStatus{flex:1;min-width:0;font-size:12px;line-height:1.5;color:var(--accent-ink);overflow-wrap:anywhere}
+  #returnToReview{flex:0 0 auto;font-size:12px}
   #pathwayCard .tl.stepper li.has .hd::before{content:"•"}
   @media(max-width:799px){#journeyProgress{display:none!important}}
   @media(max-width:420px){.readmit-module .seg button{font-size:13px}.flow-nav{gap:3px;padding:5px}.flow-nav button{padding-inline:8px;font-size:12px}#flowChapter{font-size:12px}#flowDetail{font-size:11.5px}}
@@ -1844,6 +1854,8 @@
 
   // ── 事件 ──
   document.addEventListener("click",e=>{
+    const reviewLink=e.target.closest('[data-review-target]');if(reviewLink){goToReviewTarget(reviewLink.dataset.reviewTarget,reviewLink.dataset.reviewLabel);return;}
+    if(e.target.closest('#returnToReview')){clearReviewLocation();navigateWorkflow('finalReviewCard');return;}
     // 已勾選的 radio 再按一次不會發出 change，但仍是明確單項選擇，整批設定需保留。
     if(e.target.matches('.scr-choice input[type="radio"]')){const k=e.target.closest('.scr-row').dataset.scr;if(e.target.value===S.scr[k]){S.scrEdited[k]=true;syncScreen(k);}}
     const ch=e.target.closest(".section-toggle"); if(ch){toggleSection(ch);return;}
@@ -1860,6 +1872,7 @@
     if(pedClick(b))return;   // 家庭樹父母關係／父親不詳／其他伴侶關係（寫 S.ped，必須早於通用 data-seg／data-tog）
     const tab=b.closest("[data-tab]"); if(tab){
       if(tab.dataset.tab===S.mode)return;
+      clearReviewLocation();
       rememberTabView(S.mode);
       S.mode=tab.dataset.tab;
       tabButtons.forEach(x=>{
@@ -2540,6 +2553,7 @@
   const ROUTE_FIELDS=["obFacility","obTransferFrom","obReason","obM1Flow","obArrival","obO2Flow","obFiO2","obIP","obPEEP","obRR","obCourse","pwOnsetH","pwOnsetUnit","pwConsultReason","pwConsultH","obAdmissionStatus","obRespRelation","obM1Relation","brEvalIn","brCrp","brGlu","brFindIn",
     "readmitPriorUnit","readmitPriorCourse","readmitDischargeDate","readmitDischargeWeight","readmitHomeNote","readmitOnsetDOL","readmitComplaint","readmitCourse","readmitCourseType","readmitIntake","readmitFeedingNote","readmitUrine","readmitActivity","readmitSickContact","readmitCurrentWeight","readmitSpO2","readmitTSB","readmitDB","readmitEvaluation","readmitTreatment","tentDx",...rmFields()];
   function switchPathway(next){
+    clearReviewLocation();
     if(next===S.pathway)return;
     S.routeDrafts[S.pathway]={destination:S.dest,destNotice:S.destNotice,state:Object.fromEntries(ROUTE_KEYS.map(k=>[k,JSON.parse(JSON.stringify(S[k]))])),fields:Object.fromEntries(ROUTE_FIELDS.map(id=>[id,V(id)]))};
     const saved=S.routeDrafts[next],defaults={obRespType:"",obRespStable:false,obSx:[],brEval:[],brWorkup:[],brFindings:[],obO2Dev:"",pwOnset:"observed",obM1Type:"",obM1Dev:"",pwConsult:false,courseEvents:[],continuitySignatures:{},
@@ -2623,87 +2637,168 @@
     const card=el.closest("[data-event-id]"),e=S[card.dataset.eventScope+"Events"].find(x=>String(x.id)===card.dataset.eventId);
     if(e){e[el.dataset.eventField]=el.value; if(e.nrp&&["fiO2","pip","peep"].includes(el.dataset.eventField)){e.nrp=false; drawEvents(card.dataset.eventScope); document.getElementById(el.id)?.focus();}}
   }
+  // 檢核文字與欄位位置一起登記，避免用訊息內容反推欄位；同一訊息可連到多筆事件。
+  const reviewTargets=new Map(),reviewLinkIds=new Map();
+  function reviewFieldLabel(el){
+    if(!el)return '對應欄位';
+    const names={gaW:'妊娠週數 GA（週）',gaD:'妊娠週數 GA（天）',bw:'出生體重（g）',ap1:'Apgar（1 分鐘）',ap5:'Apgar（5 分鐘）',ap10:'Apgar（10 分鐘）',dolOther:'手動入院日齡 DOL'};
+    const label=names[el.id]||document.querySelector(`label[for="${el.id}"]`)?.querySelector('.lab')?.textContent||document.querySelector(`label[for="${el.id}"]`)?.textContent||el.closest('.field')?.querySelector('.lab')?.textContent||el.getAttribute('aria-label')||el.id||'對應欄位';
+    const event=el.closest('.clinical-event'),module=el.closest('[data-rm-module]');
+    const context=event?`第 ${event.querySelector('.event-number').textContent} 筆 ${EVENT_NAMES[event.dataset.eventKind]}／`:module?`${module.querySelector('h3').textContent}／`:'';
+    return context+label.replace(/\s+/g,' ').trim();
+  }
+  function reviewIssue(message,selector,label){
+    const targets=reviewTargets.get(message)||[];
+    if(selector&&!targets.some(t=>t.selector===selector))targets.push({selector,label:label||reviewFieldLabel(document.querySelector(selector))});
+    reviewTargets.set(message,targets);return message;
+  }
+  function reviewContext(el){
+    const cards=[...document.querySelectorAll('#admSections > .card')],host=cards.find(c=>c.contains(el));
+    const stage=workflowStages.filter(([card])=>cards.indexOf(card)<=cards.indexOf(host)).at(-1)||workflowStages[0];
+    const step=el?.closest('#journey [data-stop]')?.dataset.stop||(document.getElementById('journeyWorkspace')?.contains(el)?mountedJourneyStop:'');
+    const definition=journeyDefinitions().find(s=>s.id===step);
+    return {chapter:stage?.[0].id,step,location:`第 ${workflowStages.indexOf(stage)+1} 區・${stage?.[1]||'入院設定'}${definition?'／'+definition.lab:''}`};
+  }
+  function reviewMarkup(message,prefix){
+    const targets=reviewTargets.get(message)||[];if(!targets.length)return htmlEscape(message);
+    return targets.map((t,i)=>{
+      const location=reviewContext(document.querySelector(t.selector)).location,label=`${location}／${t.label}`;
+      const key=message+'\n'+t.selector;if(!reviewLinkIds.has(key))reviewLinkIds.set(key,reviewLinkIds.size+1);
+      return `<button type="button" id="${prefix}-${reviewLinkIds.get(key)}" class="${i?'review-alt':'review-link'}" data-review-target="${htmlEscape(t.selector)}" data-review-label="${htmlEscape(label)}" aria-label="${htmlEscape(message+'；前往修改：'+label)}">${i?'前往：'+htmlEscape(t.label):`<span>${htmlEscape(message)}</span><small>${htmlEscape(label)} · 前往修改 →</small>`}</button>`;
+    }).join('');
+  }
+  function fillReview(id,items,empty='',list=false){
+    const el=document.getElementById(id);if(!el)return;
+    const values=[...new Set(items)],tag=list?'li':'span';
+    const markup=values.length?values.map(message=>`<${tag} class="review-item">${reviewMarkup(message,`review-${id}`)}</${tag}>`).join(''):list?`<li>${htmlEscape(empty)}</li>`:htmlEscape(empty);
+    if(el.innerHTML!==markup){const focused=el.contains(document.activeElement)?document.activeElement.id:'';el.innerHTML=markup;if(focused)document.getElementById(focused)?.focus({preventScroll:true});}
+  }
+  let reviewHighlight=null,reviewHighlightTimer=null,reviewJumpSerial=0;
+  function clearReviewLocation(){
+    reviewJumpSerial++;if(reviewHighlightTimer!==null)clearTimeout(reviewHighlightTimer);
+    reviewHighlight?.classList.remove('review-target-flash');reviewHighlight=null;
+    const bar=document.getElementById('reviewJumpBar');if(bar){bar.hidden=true;const nav=document.getElementById('workflowNav');document.documentElement.style.setProperty('--workflow-offset',`${document.querySelector('.tabs').getBoundingClientRect().height+nav.getBoundingClientRect().height+24}px`);}
+  }
+  function unavailableReviewTarget(){
+    navigateWorkflow('finalReviewCard');
+    document.getElementById('reviewJumpStatus').textContent='此欄位已隨資料變更而隱藏或移除，請依目前的檢核提示選擇。';
+    document.getElementById('reviewJumpBar').hidden=false;
+  }
+  function goToReviewTarget(selector,label){
+    clearReviewLocation();
+    if(S.mode!=='adm')document.querySelector('.tabs [data-tab="adm"]').click();
+    const serial=reviewJumpSerial;
+    let target=document.querySelector(selector),context=target&&reviewContext(target);
+    if(!target){unavailableReviewTarget();return;}
+    // 未選情境／已切到其他路徑時，不能靠跳轉自動改 clinical choices。
+    if(context.step&&!journeyDefinitions().some(s=>s.id===context.step&&s.show)){
+      target=document.getElementById('entryRoutes');selector='#entryRoutes';context=reviewContext(target);label='請先確認入院情境，再前往原欄位。';
+    }
+    const section=target.closest('.section-content');if(section?.hidden){const toggle=document.getElementById(section.getAttribute('aria-labelledby'));if(toggle)toggleSection(toggle);}
+    for(let p=target.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;
+    navigateWorkflow(context.chapter,{restore:false,fromReview:true});
+    if(context.step&&selector!=='#entryRoutes')selectJourneyStep(context.step,{fromReview:true});
+    target=document.querySelector(selector);
+    if(!target||target.closest('[hidden]')){unavailableReviewTarget();return;}
+    document.getElementById('reviewJumpStatus').textContent=`已定位：${label}`;document.getElementById('reviewJumpBar').hidden=false;
+    if(!target.matches('input:not([type="hidden"]),select,textarea,button,a[href]'))target.setAttribute('tabindex','-1');
+    target.focus({preventScroll:true});target.classList.add('review-target-flash');reviewHighlight=target;
+    const place=()=>{if(serial!==reviewJumpSerial||!target.isConnected)return;const offset=document.querySelector('.tabs').getBoundingClientRect().height+document.getElementById('workflowNav').getBoundingClientRect().height+24,anchor=target.labels?.[0]||target.closest('.field')||target;document.documentElement.style.setProperty('--workflow-offset',`${offset}px`);window.scrollTo({top:Math.max(0,window.scrollY+anchor.getBoundingClientRect().top-offset),left:0,behavior:'instant'});syncWorkflowNavigation(false);};
+    place();requestAnimationFrame(place);
+    reviewHighlightTimer=setTimeout(()=>{target.classList.remove('review-target-flash');},4000);
+  }
   function timelineReview(){
+    reviewTargets.clear();
     const birth=[],path=[],pending=[],active=activeBirthEvents(),final=readAssessment("birthFinal");
-    const awaitBirth=message=>{birth.push(message);pending.push(message);},awaitPath=message=>{path.push(message);pending.push(message);};
+    const awaitBirth=(message,selector,label)=>{birth.push(reviewIssue(message,selector,label));pending.push(message);},awaitPath=(message,selector,label)=>{path.push(reviewIssue(message,selector,label));pending.push(message);};
     let last=-1;
-    active.forEach(e=>{if(e.minutes!==undefined&&e.minutes!==""){const n=Number(e.minutes);if(n<last)birth.push("事件時間與排列順序不同，請核對或移動事件。");last=n;}
-      if(e.kind==="epinephrine"&&(!e.drugDose||!e.drugRoute))awaitBirth("已記錄 epinephrine；劑量／途徑尚未填齊，不會自動補入。");
-      if(["ppv","intubation","cpap"].includes(e.kind)&&!e.fiO2&&!e.pip&&!e.peep)awaitBirth("已記錄呼吸處置；設定尚未填寫，不會使用預設值。");
-      if(e.kind==="ppv"&&e.nrp)awaitBirth(`PPV 設定目前是 ${NRP.edition} 預設帶入、尚未核對：請確認 PIP／PEEP／FiO₂ 與實際相符（改任一值即視為已核對）。`);});
-    if(raw("birthFinalMin")&&last>Number(raw("birthFinalMin")))birth.push("最後評估時間早於前面的事件，請核對。");
-    if(raw("birthResusStatus")==="performed"&&!birthHasAction())awaitBirth("已選有急救，請補上實際處置。");
-    if(raw("birthResusStatus")!=="performed"&&S.birthEvents.some(e=>e.kind!=="assessment"))awaitBirth("先前處置已保留，目前不寫入；選回「有急救」可恢復。觀察紀錄仍保留於敘述。");
-    if(raw("birthResusStatus")==="none"&&["apnea","gasping","ineffective"].includes(raw("birthBreathing")))birth.push("出生呼吸紀錄與「無需急救」並存，請確認記錄的時點與內容。");
-    if(raw("pwOnsetH")&&!raw("pwOnsetUnit"))awaitPath("症狀時間缺少單位，確認前不會寫成小時或分鐘。");
-    if(S.outborn&&raw("obTransferFrom")===(raw("homeHosp")||"TPEMMH"))path.push("轉入來源與收治院區相同，請核對是否為院內轉送或院所選擇。");
+    active.forEach(e=>{if(e.minutes!==undefined&&e.minutes!==""){const n=Number(e.minutes);if(n<last)birth.push(reviewIssue("事件時間與排列順序不同，請核對或移動事件。",`#event-${e.id}-minutes`));last=n;}
+      if(e.kind==="epinephrine")for(const key of ['drugDose','drugRoute'])if(!e[key])awaitBirth("已記錄 epinephrine；劑量／途徑尚未填齊，不會自動補入。",`#event-${e.id}-${key}`);
+      if(["ppv","intubation","cpap"].includes(e.kind)&&!e.fiO2&&!e.pip&&!e.peep)awaitBirth("已記錄呼吸處置；設定尚未填寫，不會使用預設值。",`#event-${e.id}-fiO2`);
+      if(e.kind==="ppv"&&e.nrp)awaitBirth(`PPV 設定目前是 ${NRP.edition} 預設帶入、尚未核對：請確認 PIP／PEEP／FiO₂ 與實際相符（改任一值即視為已核對）。`,`#event-${e.id}-pip`);});
+    if(raw("birthFinalMin")&&last>Number(raw("birthFinalMin")))birth.push(reviewIssue("最後評估時間早於前面的事件，請核對。",'#birthFinalMin'));
+    if(raw("birthResusStatus")==="performed"&&!birthHasAction())awaitBirth("已選有急救，請補上實際處置。",'#birthActionsWrap .event-add','新增實際出生處置');
+    if(raw("birthResusStatus")!=="performed"&&S.birthEvents.some(e=>e.kind!=="assessment"))awaitBirth("先前處置已保留，目前不寫入；選回「有急救」可恢復。觀察紀錄仍保留於敘述。",'#birthResusStatus');
+    if(raw("birthResusStatus")==="none"&&["apnea","gasping","ineffective"].includes(raw("birthBreathing")))birth.push(reviewIssue("出生呼吸紀錄與「無需急救」並存，請確認記錄的時點與內容。",'#birthResusStatus'));
+    if(raw("pwOnsetH")&&!raw("pwOnsetUnit"))awaitPath("症狀時間缺少單位，確認前不會寫成小時或分鐘。",'#pwOnsetUnit');
+    if(S.outborn&&raw("obTransferFrom")===(raw("homeHosp")||"TPEMMH"))path.push(reviewIssue("轉入來源與收治院區相同，請核對是否為院內轉送或院所選擇。",'#obTransferFrom'));
     ["obM1Relation","obRespRelation"].forEach(field=>{
       if(field==="obM1Relation"&&!S.outborn)return;
       const r=resolvedSupport(field,field==="obM1Relation"?S.obM1Type:S.obRespType);
-      if(r.relation==="continued"&&!r.confirmed)path.push(`${field==="obM1Relation"?"外院後續":"後續"}支持的前段資料未確認、已改變或模式不同，請重新核對「持續同前」。`);
-      if(r.relation==="stopped"&&(!r.source||r.source==="room"||S.continuitySignatures[field]!==r.source))path.push("前段呼吸支持未記錄或已改變，請重新確認停止了哪項支持。");
+      if(r.relation==="continued"&&!r.confirmed)path.push(reviewIssue(`${field==="obM1Relation"?"外院後續":"後續"}支持的前段資料未確認、已改變或模式不同，請重新核對「持續同前」。`,'#'+field));
+      if(r.relation==="stopped"&&(!r.source||r.source==="room"||S.continuitySignatures[field]!==r.source))path.push(reviewIssue("前段呼吸支持未記錄或已改變，請重新確認停止了哪項支持。",'#'+field));
     });
-    if(/\bno resuscitation\b/i.test([raw("birthInitialNote"),raw("birthFinalNote"),raw("obCourse")].join(" "))&&birthHasAction())path.push("自由文字提及 no resuscitation，但已有急救事件，請確認是否為不同時點。");
+    if(birthHasAction())for(const field of ['birthInitialNote','birthFinalNote','obCourse'])if(/\bno resuscitation\b/i.test(raw(field)))path.push(reviewIssue("自由文字提及 no resuscitation，但已有急救事件，請確認是否為不同時點。",'#'+field));
     if(S.pathway==="direct"&&S.pwConsult&&raw("pwConsultH")){
       const mins=active.filter(e=>e.minutes!==undefined&&e.minutes!=="").map(e=>Number(e.minutes));
-      if(mins.length&&Number(raw("pwConsultH"))*60>Math.min(...mins))path.push("會診時間晚於第一個產房處置：note 依故事 B 把會診寫在處置之前；若處置是在會診前由產科／護理執行，請在事件補充註明，或改用「調整細節」關掉會診。");
+      if(mins.length&&Number(raw("pwConsultH"))*60>Math.min(...mins))path.push(reviewIssue("會診時間晚於第一個產房處置：note 依故事 B 把會診寫在處置之前；若處置是在會診前由產科／護理執行，請在事件補充註明，或改用「調整細節」關掉會診。",'#pwConsultH'));
     }
     if(S.pathway==="nursery"){
-      if(S.brEval.includes("maternal")&&!maternalRiskPhrases().length)path.push("勾了「母體風險因子」，但產前區沒有發燒、PROM 或 GBS 陽性的紀錄；note 只會寫 maternal risk factors，請核對來源或修改原因。");
-      if(S.brWorkup.length&&!S.brFindings.length)awaitPath("嬰兒室檢查已勾但結果未填：note 只寫做了檢查，不會寫成正常；無異常請勾「結果無異常（確認）」。");
+      if(S.brEval.includes("maternal")&&!maternalRiskPhrases().length)path.push(reviewIssue("勾了「母體風險因子」，但產前區沒有發燒、PROM 或 GBS 陽性的紀錄；note 只會寫 maternal risk factors，請核對來源或修改原因。",'[data-msel="brEval"]','嬰兒室評估原因'));
+      if(S.brWorkup.length&&!S.brFindings.length)awaitPath("嬰兒室檢查已勾但結果未填：note 只寫做了檢查，不會寫成正常；無異常請勾「結果無異常（確認）」。",'[data-msel="brFindings"]','嬰兒室檢查結果');
     }
     const di=dolInfo(),checks=[];
-    if(di.birth!==null&&di.admission!==null&&di.admission<di.birth)path.push("入院日期早於出生日期，請核對。");
-    if(di.conflict&&!S.dolAuto)path.push(`手動 DOL ${di.manual??"__"} 與日期推算 DOL ${di.calculated} 不一致。`);
+    if(di.birth!==null&&di.admission!==null&&di.admission<di.birth)path.push(reviewIssue("入院日期早於出生日期，請核對。",'#admissionDate'));
+    if(di.conflict&&!S.dolAuto)path.push(reviewIssue(`手動 DOL ${di.manual??"__"} 與日期推算 DOL ${di.calculated} 不一致。`,S.dol==='x'?'#dolOther':'[data-seg="dol"]','手動入院日齡 DOL'));
     if(di.calculated!==null&&!di.conflict)checks.push(`✓ 出生日期、入院日期與 DOL ${di.value} 一致`);
     else if(di.calculated===null)checks.push("! 出生或入院日期未填齊，DOL 無法由日期核對");
     if(S.pathway==="readmit"){
       const discharge=isoDay(raw("readmitDischargeDate"));
-      if(discharge!==null&&di.birth!==null&&discharge<di.birth)path.push("前次出院日期早於出生日期，請核對。");
-      if(discharge!==null&&di.admission!==null&&discharge>di.admission)path.push("前次出院日期晚於本次入院日期，請核對。");
-      if(raw("readmitOnsetDOL")&&di.value!==null&&Number(raw("readmitOnsetDOL"))>di.value)path.push("症狀開始 DOL 晚於本次入院 DOL，請核對。");
+      if(discharge!==null&&di.birth!==null&&discharge<di.birth)path.push(reviewIssue("前次出院日期早於出生日期，請核對。",'#readmitDischargeDate'));
+      if(discharge!==null&&di.admission!==null&&discharge>di.admission)path.push(reviewIssue("前次出院日期晚於本次入院日期，請核對。",'#readmitDischargeDate'));
+      if(raw("readmitOnsetDOL")&&di.value!==null&&Number(raw("readmitOnsetDOL"))>di.value)path.push(reviewIssue("症狀開始 DOL 晚於本次入院 DOL，請核對。",'#readmitOnsetDOL'));
       for(const m of activeReadmitModules()){
         const onset=rmValue(m.key,'onset');
-        if(onset&&(!Number.isInteger(Number(onset))||Number(onset)<1||di.value!==null&&Number(onset)>di.value))path.push(`${m.title}的起始 DOL 不在出生至本次入院範圍內，請核對。`);
+        if(onset&&(!Number.isInteger(Number(onset))||Number(onset)<1||di.value!==null&&Number(onset)>di.value))path.push(reviewIssue(`${m.title}的起始 DOL 不在出生至本次入院範圍內，請核對。`,'#'+rmId(m.key,'onset')));
       }
-      if(raw('readmitOnsetDOL')&&(!Number.isInteger(Number(raw('readmitOnsetDOL')))||Number(raw('readmitOnsetDOL'))<1))path.push('症狀開始 DOL 必須是至少 1 的整數。');
+      if(raw('readmitOnsetDOL')&&(!Number.isInteger(Number(raw('readmitOnsetDOL')))||Number(raw('readmitOnsetDOL'))<1))path.push(reviewIssue('症狀開始 DOL 必須是至少 1 的整數。','#readmitOnsetDOL'));
       const testDay=isoDay(rmValue('screen','date'));
-      if(S.readmitProblems.includes('abnormal-screen')&&testDay!==null&&((di.birth!==null&&testDay<di.birth)||(di.admission!==null&&testDay>di.admission)))path.push('採檢日期不在出生至本次入院範圍內，請核對。');
+      if(S.readmitProblems.includes('abnormal-screen')&&testDay!==null&&((di.birth!==null&&testDay<di.birth)||(di.admission!==null&&testDay>di.admission)))path.push(reviewIssue('採檢日期不在出生至本次入院範圍內，請核對。','#'+rmId('screen','date')));
       const feverTime=rmValue('fever','time'),feverDay=isoDay(feverTime.slice(0,10));
-      if(S.readmitProblems.includes('fever')&&feverDay!==null&&((di.birth!==null&&feverDay<di.birth)||(di.admission!==null&&feverDay>di.admission)||(feverDay===di.admission&&raw('admissionTime')&&feverTime.slice(11)>raw('admissionTime'))||(feverDay===di.birth&&raw('birthTime')&&feverTime.slice(11)<raw('birthTime'))))path.push('體溫測量時間不在出生至本次入院範圍內，請核對是否屬於入院後病程。');
-      if(raw('tentDx')&&/jaundice|hyperbilirubin/i.test(raw('tentDx'))&&!readmitDetails().jaundice)path.push('手填暫定診斷包含黃疸，但本次問題未選黃疸；請確認是否為共存問題。');
-      if(S.readmitJaundiceSigns.includes("no dark urine")&&S.readmitJaundiceSigns.includes("dark urine"))path.push("尿色同時記錄為無深色尿與深色尿，請保留正確項目。");
-      if(S.readmitJaundiceSigns.includes("no pale stools")&&S.readmitJaundiceSigns.includes("pale stools"))path.push("糞便顏色同時記錄為無淡色便與淡色便，請保留正確項目。");
-      if(feedingIntakeState().conflict)path.push('先前進食描述與每餐奶量的增減相反，請核對數值或修正／移除先前描述；兩份資料均保留。');
+      if(S.readmitProblems.includes('fever')&&feverDay!==null&&((di.birth!==null&&feverDay<di.birth)||(di.admission!==null&&feverDay>di.admission)||(feverDay===di.admission&&raw('admissionTime')&&feverTime.slice(11)>raw('admissionTime'))||(feverDay===di.birth&&raw('birthTime')&&feverTime.slice(11)<raw('birthTime'))))path.push(reviewIssue('體溫測量時間不在出生至本次入院範圍內，請核對是否屬於入院後病程。','#'+rmId('fever','time')));
+      if(raw('tentDx')&&/jaundice|hyperbilirubin/i.test(raw('tentDx'))&&!readmitDetails().jaundice)path.push(reviewIssue('手填暫定診斷包含黃疸，但本次問題未選黃疸；請確認是否為共存問題。','#tentDx'));
+      if(S.readmitJaundiceSigns.includes("no dark urine")&&S.readmitJaundiceSigns.includes("dark urine"))path.push(reviewIssue("尿色同時記錄為無深色尿與深色尿，請保留正確項目。",'[data-msel="readmitJaundiceSigns"]','尿色／糞便顏色'));
+      if(S.readmitJaundiceSigns.includes("no pale stools")&&S.readmitJaundiceSigns.includes("pale stools"))path.push(reviewIssue("糞便顏色同時記錄為無淡色便與淡色便，請保留正確項目。",'[data-msel="readmitJaundiceSigns"]','尿色／糞便顏色'));
+      if(feedingIntakeState().conflict)path.push(reviewIssue('先前進食描述與每餐奶量的增減相反，請核對數值或修正／移除先前描述；兩份資料均保留。','#readmitIntake','先前進食描述'));
       checks.push(`✓ 情境 E 使用門診／急診病程，不會寫入外接團隊或轉送資料`);
       if(S.readmitSource)checks.push(`✓ 本次入院來源：${{clinic:"門診",emergency:"急診",scheduled:"預約住院"}[S.readmitSource]}`);else checks.push("! 本次入院來源尚未填寫");
     }else if(S.pathway)checks.push(`✓ 目前只輸出情境 ${deriveStory()} 的入院路徑資料`);
     const c=document.getElementById("consistencySummary");if(c)c.textContent=checks.join("\n");
     const contextIssues=[];
-    if(raw('admissionTime')&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(raw('admissionTime')))contextIssues.push('入院時間請用 24 小時 HH:MM；未核對的時間不寫入病歷。');
-    if(di.birth!==null&&di.admission!==null&&di.admission===di.birth&&/^\d\d:\d\d$/.test(raw('birthTime'))&&raw('admissionTime')&&raw('admissionTime')<raw('birthTime'))contextIssues.push('同一天的入院時間早於出生時間，請核對。');
-    if(di.birth!==null&&di.admission!==null&&di.admission<di.birth)contextIssues.push('入院日期早於出生日期，請核對。');
-    const basicMissing=[!S.pathway&&'入院路徑',!admissionDestination()&&'收治單位',!raw('birthDate')&&'出生日期',!raw('gaW')&&'GA',!raw('bw')&&'出生體重',!S.gender&&'性別',!S.delivery&&'生產方式',S.pathway==='readmit'&&!S.readmitSource&&'入院來源',S.pathway==='readmit'&&!S.readmitProblems.length&&!raw('readmitComplaint')&&'主要問題'].filter(Boolean);
-    const numericIssues=[...document.querySelectorAll('#admSections input[type="number"]')].filter(el=>el.value&&!el.closest('[hidden]')&&!el.validity.valid).map(el=>`${document.querySelector(`label[for="${el.id}"]`)?.textContent||el.getAttribute('aria-label')||el.id}：數值或單位範圍需核對。`);
-    const all=[...new Set([...birth,...path,...contextIssues,...numericIssues,...(S.destNotice?[S.destNotice]:[])])];
-    const contextReview=document.getElementById('contextReview');if(contextReview)contextReview.textContent=contextIssues.join('\n');
-    document.querySelectorAll('.readmit-local-review').forEach(el=>el.textContent=[...path.filter(item=>!item.startsWith('先前進食描述與每餐奶量')),...numericIssues].join('\n'));
+    if(raw('admissionTime')&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(raw('admissionTime')))contextIssues.push(reviewIssue('入院時間請用 24 小時 HH:MM；未核對的時間不寫入病歷。','#admissionTime'));
+    if(di.birth!==null&&di.admission!==null&&di.admission===di.birth&&/^\d\d:\d\d$/.test(raw('birthTime'))&&raw('admissionTime')&&raw('admissionTime')<raw('birthTime'))contextIssues.push(reviewIssue('同一天的入院時間早於出生時間，請核對。','#admissionTime'));
+    if(di.birth!==null&&di.admission!==null&&di.admission<di.birth)contextIssues.push(reviewIssue('入院日期早於出生日期，請核對。','#admissionDate'));
+    const basicMissing=[
+      [!S.pathway,'入院路徑','#entryRoutes','入院情境'],[!admissionDestination(),'收治單位','[data-seg="dest"]','收治單位'],
+      [!raw('birthDate'),'出生日期','#birthDate'],[!raw('gaW'),'GA','#gaW'],[!raw('bw'),'出生體重','#bw'],
+      [!S.gender,'性別','[data-seg="gender"]','性別'],[!S.delivery,'生產方式','[data-seg="delivery"]','生產方式'],
+      [S.pathway==='readmit'&&!S.readmitSource,'入院來源','[data-seg="readmitSource"]','本次入院來源'],
+      [S.pathway==='readmit'&&!S.readmitProblems.length&&!raw('readmitComplaint'),'主要問題','[data-msel="readmitProblems"]','本次主要問題']
+    ].filter(([missing])=>missing).map(([,message,selector,label])=>reviewIssue(message,selector,label));
+    const numericIssues=[...document.querySelectorAll('#admSections input[type="number"]')].filter(el=>el.value&&!el.closest('[hidden]')&&!el.validity.valid).map(el=>reviewIssue(`${reviewFieldLabel(el)}：數值或單位範圍需核對。`,'#'+el.id));
+    const all=[...new Set([...birth,...path,...contextIssues,...numericIssues,...(S.destNotice?[reviewIssue(S.destNotice,'[data-seg="dest"]','收治單位')]:[])])];
+    fillReview('contextReview',contextIssues);
+    document.querySelectorAll('.readmit-local-review').forEach(el=>fillReview(el.id,[...path.filter(item=>!item.startsWith('先前進食描述與每餐奶量')),...numericIssues]));
     const conflicts=all.filter(item=>!pending.includes(item)),uniquePending=[...new Set(pending)];
-    const optional=[!raw('birthTime')&&'出生時間',!raw('gravida')&&'母親 G',!raw('para')&&'母親 P',!raw('matAge')&&'母親年齡',(!raw('ap1')||!raw('ap5'))&&'1／5 分鐘 Apgar',!raw('birthBreathing')&&'出生呼吸觀察',!raw('birthResusStatus')&&'出生急救紀錄',!S.resp&&'入院時呼吸支持'].filter(Boolean);
-    const unreviewed=RISKS.filter(r=>r.k!=='steroid'&&!S.r[r.k].reviewed&&!S.r[r.k].on&&S.r[r.k].status!=='unknown').length;
-    if(unreviewed)optional.push(`母親病史：${unreviewed} 項未記錄`);
-    const screens=['hbsag','syphilis','hiv','gbs'].filter(k=>S.scr[k]==='na');if(screens.length)optional.push(`產前篩檢：${screens.length} 項未記錄`);
+    const optional=[
+      [!raw('birthTime'),'出生時間','#birthTime'],[!raw('gravida'),'母親 G','#gravida'],[!raw('para'),'母親 P','#para'],[!raw('matAge'),'母親年齡','#matAge'],
+      [!raw('ap1'),'1／5 分鐘 Apgar','#ap1'],[!raw('ap5'),'1／5 分鐘 Apgar','#ap5'],
+      [!raw('birthBreathing'),'出生呼吸觀察','#birthBreathing'],[!raw('birthResusStatus'),'出生急救紀錄','#birthResusStatus'],
+      [!S.resp,'入院時呼吸支持',S.pathway?'[data-seg="resp"]':'#entryRoutes',S.pathway?'入院時呼吸支持':'請先選擇入院情境']
+    ].filter(([missing])=>missing).map(([,message,selector,label])=>reviewIssue(message,selector,label)).filter((message,i,a)=>a.indexOf(message)===i);
+    const unreviewed=RISKS.filter(r=>r.k!=='steroid'&&!S.r[r.k].reviewed&&!S.r[r.k].on&&S.r[r.k].status!=='unknown');
+    if(unreviewed.length){const message=`母親病史：${unreviewed.length} 項未記錄`;unreviewed.forEach(r=>reviewIssue(message,`[data-ryn="${r.k}"],[data-r3="${r.k}"]`,r.name));optional.push(message);}
+    const screens=['hbsag','syphilis','hiv','gbs'].filter(k=>S.scr[k]==='na');if(screens.length){const message=`產前篩檢：${screens.length} 項未記錄`;screens.forEach(k=>reviewIssue(message,`.scr-row[data-scr="${k}"]`,SCREEN.find(s=>s[0]===k)[1]));optional.push(message);}
     if(S.pathway==='readmit'){
-      if(!raw('readmitDischargeDate'))optional.push('前次出院日期');
-      if(!raw('readmitCurrentWeight'))optional.push('本次評估體重');
-      if(activeReadmitModules().some(m=>!['care','screen'].includes(m.key))&&!raw('readmitOnsetDOL')&&activeReadmitModules().some(m=>!['care','screen'].includes(m.key)&&!rmValue(m.key,'onset')))optional.push('症狀起始日齡');
-      if(readmitDetails().jaundice&&!raw('readmitTSB')&&!raw('readmitDB'))optional.push('黃疸檢驗數值（有檢驗才填）');
+      if(!raw('readmitDischargeDate'))optional.push(reviewIssue('前次出院日期','#readmitDischargeDate'));
+      if(!raw('readmitCurrentWeight'))optional.push(reviewIssue('本次評估體重','#readmitCurrentWeight'));
+      if(activeReadmitModules().some(m=>!['care','screen'].includes(m.key))&&!raw('readmitOnsetDOL')&&activeReadmitModules().some(m=>!['care','screen'].includes(m.key)&&!rmValue(m.key,'onset')))optional.push(reviewIssue('症狀起始日齡','#readmitOnsetDOL'));
+      if(readmitDetails().jaundice&&!raw('readmitTSB')&&!raw('readmitDB'))optional.push(reviewIssue('黃疸檢驗數值（有檢驗才填）','#readmitTSB'));
     }
-    const fillList=(id,items,empty)=>{const el=document.getElementById(id);if(!el)return;const markup=(items.length?items:[empty]).map(item=>`<li>${htmlEscape(item)}</li>`).join('');if(el.innerHTML!==markup)el.innerHTML=markup;};
-    fillList('reviewMissingList',basicMissing,'目前列出的關鍵資料已填；不代表內容已經醫師核對。');
-    fillList('reviewPendingList',uniquePending,'沒有額外待確認項目。');
-    fillList('reviewConflictList',conflicts,'結構檢查未發現衝突；仍須通讀，無法判定所有自由文字的矛盾。');
-    fillList('reviewOptionalList',optional,'上述重點選填項目均有記錄。');
+    fillReview('reviewMissingList',basicMissing,'目前列出的關鍵資料已填；不代表內容已經醫師核對。',true);
+    fillReview('reviewPendingList',uniquePending,'沒有額外待確認項目。',true);
+    fillReview('reviewConflictList',conflicts,'結構檢查未發現衝突；仍須通讀，無法判定所有自由文字的矛盾。',true);
+    fillReview('reviewOptionalList',optional,'上述重點選填項目均有記錄。',true);
     const summary=document.getElementById('reviewSummary');if(summary){
       summary.textContent=`關鍵資料未填 ${basicMissing.length} 項 · 前後／格式待核對 ${conflicts.length} 項${uniquePending.length?` · 已記錄待確認 ${uniquePending.length} 項`:''}。請通讀完整病歷後再貼入 HIS。`;
       document.getElementById('reviewMissing').dataset.issues=String(basicMissing.length+uniquePending.length>0);
@@ -2724,7 +2819,7 @@
       if(final.hr)parts.push(`HR ${final.hr}/min`);if(final.support)parts.push(`最後支持：${SUPPORT[final.support]}`);
       if(raw("birthFinalMin"))parts.push(`最後評估：生後 ${raw("birthFinalMin")} 分鐘`);if(final.note)parts.push(final.note);
       bridge.textContent=parts.join(" → ")||"產房狀況尚未記錄。前段摘要會顯示在這裡，不會自動判定正常或穩定。";}
-    [["birthReview",birth],["pathwayReview",path]].forEach(([id,items])=>{const el=document.getElementById(id);if(el){el.textContent=[...new Set(items)].join(" ");el.hidden=!items.length||(id==='pathwayReview'&&S.pathway==='readmit');}});
+    [["birthReview",birth],["pathwayReview",path]].forEach(([id,items])=>{const el=document.getElementById(id);if(el){fillReview(id,items);el.hidden=!items.length||(id==='pathwayReview'&&S.pathway==='readmit');}});
   }
 
   // ── 故事優先（2026-09-20）：故事卡只是設定既有三個開關 pathway／pwStandby／pwConsult 的組合；
@@ -2738,6 +2833,7 @@
   }
   function setTog(key,on){S[key]=!!on;document.querySelectorAll(`[data-tog="${key}"] button`).forEach(b=>b.setAttribute("aria-pressed",String(!!on)));}
   function applyStory(k){
+    clearReviewLocation();
     const cur=deriveStory();
     if(cur===k){ if(!['A','B'].includes(k))switchPathway(""); setTog("pwStandby",false); setTog("pwConsult",false); }
     else{ const st=STORY[k]; if(S.pathway!==st.pathway)switchPathway(st.pathway); setTog("pwStandby",st.standby); setTog("pwConsult",st.consult); }
@@ -2780,7 +2876,8 @@
     const key=`${S.pathway}:${S.journeyStep}`;
     journeyViews[key]={...journeyViews[key],offset:Math.max(0,workflowOffset()-ws.getBoundingClientRect().top)};
   }
-  function navigateWorkflow(id,{restore=true}={}){
+  function navigateWorkflow(id,{restore=true,fromReview=false}={}){
+    if(!fromReview)clearReviewLocation();
     const target=document.getElementById(id);if(!target)return;
     const previous=document.getElementById(workflowActive),key=workflowKey(workflowActive);
     if(previous)workflowViews[key]={...workflowViews[key],offset:Math.max(0,workflowOffset()-previous.getBoundingClientRect().top)};
@@ -2849,7 +2946,8 @@
     if(body&&li)li.appendChild(body);
     mountedJourneyStop="";
   }
-  function selectJourneyStep(id,{focus=false}={}){
+  function selectJourneyStep(id,{focus=false,fromReview=false}={}){
+    if(!fromReview)clearReviewLocation();
     const visible=journeyDefinitions().filter(x=>x.show).sort((a,b)=>a.order-b.order);
     if(!visible.some(x=>x.id===id))return;
     const ws=document.getElementById('journeyWorkspace');if(workflowActive==='pathwayCard')rememberJourneyView();
@@ -4528,7 +4626,7 @@ ${opLine}`);
     const modules=document.createElement("div");modules.id="readmitModules";illness.appendChild(modules);
     illness.insertBefore(modules,byId('readmitCourse').closest('.field'));
     illness.appendChild(byId('readmitCourse').closest('.field'));
-    for(const stop of ['prior','illness','evaluation'])document.querySelector(`[data-stop="${stop}"] .body`).insertAdjacentHTML('beforeend','<p class="readmit-local-review local-review" role="status"></p>');
+    for(const stop of ['prior','illness','evaluation'])document.querySelector(`[data-stop="${stop}"] .body`).insertAdjacentHTML('beforeend',`<p id="readmitReview-${stop}" class="readmit-local-review local-review" role="status"></p>`);
     for(const m of RM_MODULES){
       const panel=document.createElement("section");panel.className="readmit-module";panel.dataset.rmModule=m.key;panel.hidden=true;
       panel.innerHTML=`<h3>${m.title}</h3><div class="row2">${m.fields.map(([f,label,type,opts])=>{
@@ -4588,7 +4686,7 @@ ${opLine}`);
     review.querySelector('.sec-h').insertAdjacentHTML('afterend','<div class="workflow-review" id="workflowReview"><p id="reviewSummary" role="status"></p><section class="review-group" id="reviewMissing"><h3>關鍵資料未填</h3><ul id="reviewMissingList"></ul><div id="reviewPending" hidden><p>已帶入／已記錄，但仍待確認：</p><ul id="reviewPendingList"></ul></div></section><section class="review-group" id="reviewConflicts"><h3>前後不一致／格式需核對</h3><ul id="reviewConflictList"></ul></section><details class="review-group" id="reviewOptional"><summary id="reviewOptionalSummary">其他選填未記錄</summary><p class="review-help">僅供通讀時參考，不要求全部補齊；未填不代表正常、陰性或未做。以下為重點選填項目，不是所有空白欄位。</p><ul id="reviewOptionalList"></ul></details></div>');
     const nav=document.createElement('nav');nav.id='workflowNav';nav.className='flow-nav';nav.setAttribute('aria-label','目前位置與下一段');
     const stages=workflowStages=[[context,'入院設定'],[maternal,'產前資料'],[birth,'出生資料'],[pathway,'本次病程'],[review,'核對病歷']];
-    nav.innerHTML=`<button type="button" id="flowBack" aria-label="上一段" disabled>←</button><details id="flowMenu"><summary aria-labelledby="flowChapter flowDetail"><span id="flowChapter">入院設定</span><span id="flowDetail">第 1/5 段 · 點此切換</span></summary><div class="flow-menu-items">${stages.map(([card,label],i)=>`<button type="button" data-flow-target="${card.id}">${i+1}. ${label}</button>${card===pathway?'<div class="flow-substeps" id="flowSubsteps"></div>':''}`).join('')}</div></details><button type="button" id="flowNext">下一段 →</button>`;form.prepend(nav);
+    nav.innerHTML=`<button type="button" id="flowBack" aria-label="上一段" disabled>←</button><details id="flowMenu"><summary aria-labelledby="flowChapter flowDetail"><span id="flowChapter">入院設定</span><span id="flowDetail">第 1/5 段 · 點此切換</span></summary><div class="flow-menu-items">${stages.map(([card,label],i)=>`<button type="button" data-flow-target="${card.id}">${i+1}. ${label}</button>${card===pathway?'<div class="flow-substeps" id="flowSubsteps"></div>':''}`).join('')}</div></details><button type="button" id="flowNext">下一段 →</button><div id="reviewJumpBar" class="review-jump-bar" hidden><span id="reviewJumpStatus" role="status"></span><button type="button" id="returnToReview">返回核對</button></div>`;form.prepend(nav);
     for(let i=0;i<stages.length;i++){
       const host=i===1?medication:stages[i][0];
       host.insertAdjacentHTML('beforeend',`<div class="stage-actions"${host===pathway?' id="pathwayFallbackActions"':''}>${i>0?`<button type="button" class="secondary" data-flow-target="${stages[i-1][0].id}">← 上一段</button>`:''}${i<stages.length-1?`<button type="button" class="primary" data-flow-target="${stages[i+1][0].id}">下一段：${stages[i+1][1]} →</button>`:''}</div>`);
