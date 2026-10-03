@@ -114,7 +114,7 @@ for(const label of ['新竹','台東']){
 
   test(`${label} prenatal care is never mislabeled as an external OBGYN clinic`,()=>withPage(({select,click,campusValue,note})=>{
     const value=campusValue(label);select('ancPlace',value);
-    for(const status of ['regular','irregular','na']){
+    for(const status of ['regular','irregular','unknown']){
       click(`[data-seg="ancReg"] [data-v="${status}"]`);
       const sentence=note().split(/(?<=\.)\s+/).find(text=>/prenatal care/i.test(text)&&text.includes(value));
       assert.ok(sentence,`${label} prenatal care must be retained for ${status}`);

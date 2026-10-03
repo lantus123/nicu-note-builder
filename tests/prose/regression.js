@@ -397,12 +397,12 @@ test('pending screens refer to pending results without asserting negatives',()=>
   assert.doesNotMatch(admission,/all negative|pending for|not (?:obtained|performed)/i);
 });
 
-test('absent prenatal care does not turn undocumented conditions into negative tests',()=>{
-  const {admission}=notes([seg('ancReg','none')]);
+test('absent prenatal care preserves explicitly unknown histories and test results',()=>{
+  const {admission}=notes([pick('ryn','gdm','unknown'),...['gbs','hbsag','syphilis','hiv'].map(key=>screen(key,'unknown')),seg('ancReg','none')]);
   assert.match(admission,/no prenatal care|not received prenatal care/i);
   assert.doesNotMatch(admission,/were not examined|all negative/i);
   assert.ok(admission.split(/\.\s+/).some(s=>/GDM/.test(s)&&/not (?:available|documented)|unavailable|undocumented/i.test(s)),
-    'Maternal risk history must remain explicitly unknown');
+    'An explicitly unknown maternal risk history must remain unknown');
 });
 
 test('vaginal delivery is expressed without duplicated delivery nouns',()=>{
@@ -564,7 +564,8 @@ test('story C: baby-room work-up findings are recorded once and justify the admi
 test('story C: a work-up without recorded results is not written as normal; an explicit confirmation is',()=>{
   const pending=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brWorkup','cbc')]).admission;
   includes(pending,'A complete blood count with differential was obtained in the baby room.');
-  assert.doesNotMatch(pending,/unremarkable|normal|therefore/i);
+  const nurseryCourse=pending.split('\n\n').find(paragraph=>paragraph.includes('obtained in the baby room'));
+  assert.ok(nurseryCourse);assert.doesNotMatch(nurseryCourse,/unremarkable|normal|therefore/i);   // 只驗本次病程，不把產前超音波的正常預設誤當嬰兒室檢驗結果。
   const normal=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brWorkup','cbc'),pick('msel','brFindings','normal')]).admission;
   includes(normal,'and the results were unremarkable');
   includes(normal,'Subsequently, the infant was admitted');
@@ -578,10 +579,15 @@ test('story C: maternal-risk reason without any recorded risk falls back to a ge
   assert.doesNotMatch(admission,/maternal risk factors \(/);
 });
 
+// Optional name filter for focused reruns; npm test still executes the entire suite.
+const matchIndex=process.argv.indexOf('--match'),match=matchIndex<0?'':process.argv[matchIndex+1];
+if(matchIndex>=0&&!match)throw Error('--match requires a test-name fragment');
+const selected=match?tests.filter(([name])=>name.includes(match)):tests;
+if(!selected.length)throw Error('No regression scenarios match '+match);
 let failed=0;
-for(const [name,check] of tests){
+for(const [name,check] of selected){
   try{check();console.log(`✓ ${name}`);}
   catch(error){failed++;console.error(`✗ ${name}\n  ${error.message}`);}
 }
-if(failed){console.error(`${failed}/${tests.length} regression scenarios failed`);process.exitCode=1;}
-else console.log(`✓ ${tests.length} field-to-note regression scenarios passed`);
+if(failed){console.error(`${failed}/${selected.length} regression scenarios failed`);process.exitCode=1;}
+else console.log(`✓ ${selected.length} field-to-note regression scenarios passed`);

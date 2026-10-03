@@ -57,8 +57,7 @@ async function main(){
     assert.equal(await ev(`document.querySelector('#copy').dataset.primary`),'false');
     await at('#admissionContext');await shot('nicu-forward-entry-desktop.png');
     await click('#admissionContext [data-flow-target="prenatalCard"]');await input('gravida','2');await input('para','2');await input('matAge','32');
-    await click('[data-scrall] [data-v="neg"]');
-    await click('#confirmPrenatalNext');await click('[data-seg="gender"] [data-v="male"]');await input('gaW','39');await input('bw','3200');await click('[data-seg="delivery"] [data-v="nsd"]');
+    await click('#prenatalNext');await click('[data-seg="gender"] [data-v="male"]');await input('gaW','39');await input('bw','3200');await click('[data-seg="delivery"] [data-v="nsd"]');
     await input('birthHosp','Example Birth Clinic');await input('ap1','9');await input('ap5','10');await input('birthBreathing','crying');await input('birthResusStatus','none');
     await click('#birthHistoryCard [data-flow-target="pathwayCard"]');
     await click('[data-seg="readmitPrior"] [data-v="uneventful"]');await input('readmitDischargeDate','2026-09-17');await input('readmitDischargeWeight','3080');await click('[data-seg="readmitFeeding"] [data-v="breast milk"]');
@@ -136,8 +135,8 @@ async function main(){
     const fresh=async()=>{const previous=await ev('performance.timeOrigin');await send('Page.reload',{ignoreCache:true});for(let i=0;i<100;i++){if(await ev(`performance.timeOrigin!==${previous}&&!!document.querySelector('#workflowNav')&&document.readyState==='complete'`))return;await pause(100);}throw Error('Reload did not initialize');};
     const background=async(kind)=>{
       await click(kind==='A'?'#entryDirect':'[data-story="D"]');await click('[data-seg="dest"] [data-v="NICU"]');await input('birthDate',today);
-      await click('#flowNext');await input('gravida','2');await input('para','2');await input('matAge','30');await click('[data-scrall] [data-v="neg"]');
-      await click('#confirmPrenatalNext');await click('[data-seg="gender"] [data-v="male"]');await input('gaW',kind==='A'?'35':'37');await input('bw',kind==='A'?'2300':'2800');await click('[data-seg="delivery"] [data-v="nsd"]');await input('ap1','8');await input('ap5','9');
+      await click('#flowNext');await input('gravida','2');await input('para','2');await input('matAge','30');
+      await click('#prenatalNext');await click('[data-seg="gender"] [data-v="male"]');await input('gaW',kind==='A'?'35':'37');await input('bw',kind==='A'?'2300':'2800');await click('[data-seg="delivery"] [data-v="nsd"]');await input('ap1','8');await input('ap5','9');
     };
     await fresh();await background('A');await click('[data-story="A"]');await click('[data-msel="pwSbR"] [data-v="preterm labor"]');
     await input('birthBreathing','labored');await input('birthResusStatus','performed');await click('[data-add-birth="ppv"]');
@@ -189,21 +188,27 @@ async function main(){
     await click('[data-tab="adm"]');await resize(1440,1000);await click('[data-story="C"]');await click('[data-seg="dest"] [data-v="PICU"]');
     assert.match(await note(),/initially cared for in the baby room/);assert.match(await note(),/admitted to our PICU/);assert.doesNotMatch(await note(),/admitted to our baby room/);
     await at('#admissionContext');await shot('nicu-destination-C-desktop.png');
-    // Visible normal presets: the UI selection is not a recorded negative until confirmed.
+    // Live defaults must be visible and already included; navigation adds no attestation gate.
     await fresh();await resize(1440,1000);await chapter('prenatalCard');
-    const pendingDefaults=()=>ev(`document.querySelectorAll('.prenatal-status[data-pending="true"]').length`);
-    assert.equal(await pendingDefaults(),10);
-    assert.doesNotMatch(await note(),/No gestational diabetes|regular prenatal care|ultrasound showed normal/);
+    assert.equal(await ev(`document.querySelectorAll('[data-default-state="default"]').length`),10);
+    assert.match(await note(),/No gestational diabetes/);assert.match(await note(),/regular prenatal care/);assert.match(await note(),/ultrasound showed normal/);
+    assert.match(await note(),/all negative/);assert.match(await note(),/rubella IgG was reactive/);assert.match(await note(),/mother denied cigarette smoking/);
+    assert.equal(await ev(`document.querySelector('#confirmPrenatalNext,#prenatalSkip,[data-ryn] [data-v="na"],[data-r3] [data-v="na"],#screen input[value="na"]')`),null);
     const risksAt=async()=>{await ev(`window.scrollTo({top:scrollY+document.querySelector('#risks').getBoundingClientRect().top-145,behavior:'instant'})`);await pause(120);};
+    const prenatalAt=async(selector,card=false)=>{await ev(`(()=>{let e=document.querySelector(${JSON.stringify(selector)});if(${card})e=e.closest('.card');window.scrollTo({top:scrollY+e.getBoundingClientRect().top-document.querySelector('#workflowNav').getBoundingClientRect().bottom-18,behavior:'instant'});})()`);await pause(120);};
     await risksAt();await shot('nicu-prenatal-defaults-desktop.png');
     for(const width of [320,390]){
       await resize(width,844,true);await risksAt();
       assert.ok(await ev(`[...document.querySelectorAll('#risks button, [data-seg="ancReg"] button, [data-seg="us"] button')].filter(b=>!b.closest('.child')).every(b=>b.checkVisibility())`),'Normal and exception choices remain visible');
       assert.ok(await ev(`document.documentElement.scrollWidth<=document.documentElement.clientWidth+1`),'Prenatal choices must wrap on mobile');
       assert.equal(await ev(`document.querySelector('[data-ryn="gdm"] [data-v="no"]').getAttribute('aria-pressed')`),'true');
-      assert.equal(await ev(`getComputedStyle(document.querySelector('[data-ryn="gdm"] [data-v="no"]')).borderTopStyle`),'dashed');
+      assert.equal(await ev(`getComputedStyle(document.querySelector('[data-ryn="gdm"] [data-v="no"]')).borderTopStyle`),'solid');
       await shot('nicu-prenatal-defaults-mobile-'+width+'.png');
     }
+    await click('[data-habit="smoking"] button');assert.match(await note(),/reported cigarette smoking but denied alcohol consumption or substance abuse/);
+    await prenatalAt('[data-habit="smoking"]');await shot('nicu-prenatal-habits-mobile.png');
+    await prenatalAt('#screen',true);await shot('nicu-prenatal-screening-mobile.png');
+    await resize(1440,1000);await prenatalAt('#screen',true);await shot('nicu-prenatal-screening-desktop.png');await resize(390,844,true);
     await click('[data-ryn="gdm"] [data-v="yes"]');
     assert.equal(await ev(`document.querySelector('[data-child="gdm"]').checkVisibility()`),true);
     await click('[data-rc="gdm"] [data-v="insulin"]');await risksAt();await shot('nicu-prenatal-exception-mobile.png');
@@ -212,25 +217,27 @@ async function main(){
     await input('scr-select-hbsag','pos');await input('scr-select-gbs','pend');await click('[data-scrall] [data-v="neg"]');
     assert.equal(await ev(`document.querySelector('.scr-row[data-scr="hbsag"]').dataset.state`),'pos');
     assert.equal(await ev(`document.querySelector('.scr-row[data-scr="gbs"]').dataset.state`),'pend');
-    const pendingBeforeConfirm=await pendingDefaults();assert.equal(pendingBeforeConfirm,6);
-    await click('#confirmPrenatalNext');assert.equal(await pendingDefaults(),0);
+    await input('scr-select-rubella','nd');assert.match(await note(),/rubella IgG was nonreactive/);
+    await input('scr-select-rubella','untested');assert.match(await note(),/rubella IgG testing was not performed/);assert.doesNotMatch(await note(),/rubella IgG was (?:non)?reactive/);
+    await input('scr-select-rubella','unknown');assert.match(await note(),/rubella IgG result was unavailable/);
+    await click('#prenatalNext');
     const confirmedPrenatal=await note();assert.match(confirmedPrenatal,/treated with insulin/);assert.match(confirmedPrenatal,/synthetic ultrasound finding/);
     assert.match(confirmedPrenatal,/prenatal care.*was unavailable/);assert.match(confirmedPrenatal,/GBS\) culture result was pending/);
     assert.doesNotMatch(confirmedPrenatal,/ultrasound showed normal|all negative|No gestational diabetes/);
     await chapter('prenatalCard');await risksAt();await shot('nicu-prenatal-confirmed-mobile.png');
-    // A keyboard activation of the sticky action is one explicit confirmation, not navigation alone.
+    // Keyboard next is navigation only; changing an exception cannot reset it.
     await fresh();await resize(390,844,true);await chapter('prenatalCard');
-    assert.match(await ev(`document.querySelector('#flowNext').getAttribute('aria-label')`),/正常預設/);
+    await click('[data-ryn="gdm"] [data-v="unknown"]');
+    assert.doesNotMatch(await ev(`document.querySelector('#flowNext').getAttribute('aria-label')`),/核對/);
     await ev(`document.querySelector('#flowNext').focus({preventScroll:true})`);
     assert.equal(await ev('document.activeElement.id'),'flowNext');
     await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'});
     await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
     await pause(80);
-    assert.equal(await pendingDefaults(),0);assert.match(await note(),/regular prenatal care/);assert.match(await note(),/prenatal ultrasound showed normal findings/);
-    await fresh();await chapter('prenatalCard');await click('#prenatalSkip');assert.equal(await pendingDefaults(),10);
-    assert.doesNotMatch(await note(),/No gestational diabetes|regular prenatal care|ultrasound showed normal/);
+    assert.match(await note(),/gestational diabetes mellitus.*was unavailable/);assert.doesNotMatch(await note(),/No gestational diabetes/);
+    assert.match(await note(),/regular prenatal care/);assert.match(await note(),/prenatal ultrasound showed normal findings/);
     assert.deepEqual(errors,[]);
-    console.log(JSON.stringify({ok:true,url,entryTop,forwardClicks,forwardEntries,forcedBackwardSteps:0,EStages:3,routeStages,freshAdmissions:['direct A','outborn D'],destinations:{E:destinationOptions,C:'BR history to PICU',routeDraftsRestored:true,unsupportedPICUPlanBlocked:true},prenatalPresets:{visible:10,unconfirmedFactsExcluded:true,exceptionsPreserved:true,inPlaceDetails:true,keyboardConfirmation:true,skipDoesNotConfirm:true},DOL:18,desktop:['1440×1000','1366×768'],mobile:['320×844','360×844','390×844','390×540'],themes:['dark','light'],nativeKeyboard:true,clipboard:true,rectangles,screenshots:['/private/tmp/nicu-forward-*.png','/private/tmp/nicu-destination-*.png','/private/tmp/nicu-prenatal-*.png'],syntheticNote:'/private/tmp/nicu-forward-synthetic-note.txt'},null,2));
+    console.log(JSON.stringify({ok:true,url,entryTop,forwardClicks,forwardEntries,forcedBackwardSteps:0,EStages:3,routeStages,freshAdmissions:['direct A','outborn D'],destinations:{E:destinationOptions,C:'BR history to PICU',routeDraftsRestored:true,unsupportedPICUPlanBlocked:true},prenatalPresets:{visible:10,immediatelyInNote:true,defaultHabitsNegative:true,defaultScreeningNegative:true,rubellaReactive:true,exceptionsPreserved:true,inPlaceDetails:true,keyboardNavigation:true,noConfirmationGate:true},DOL:18,desktop:['1440×1000','1366×768'],mobile:['320×844','360×844','390×844','390×540'],themes:['dark','light'],nativeKeyboard:true,clipboard:true,rectangles,screenshots:['/private/tmp/nicu-forward-*.png','/private/tmp/nicu-destination-*.png','/private/tmp/nicu-prenatal-*.png'],syntheticNote:'/private/tmp/nicu-forward-synthetic-note.txt'},null,2));
   }finally{await send('Page.close').catch(()=>{});ws.close();for(const p of pending.values())clearTimeout(p.timer);}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

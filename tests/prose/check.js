@@ -37,14 +37,15 @@ for(const [name,r] of Object.entries(out)){
   let runLen=0,maxRun=0; tt.forEach(b=>{runLen=b?runLen+1:0; maxRun=Math.max(maxRun,runLen);});
   if(maxRun>=3)fails.push(`${name}: The/There ${maxRun} 連發`);
 }
-// 佔位符紀律哨兵：14=全未表態情境,篩檢必須是佔位、不得被寫成全陰
+// 稀疏情境仍缺基本資料，但使用者指定的正常預設直接寫入，不能要求另按確認。
 {const s14=out['14_稀疏欄位_佔位符測試'];
  if(s14&&!s14.error){
-   const unknownScreens=s14.admission.split(/\.\s+/).find(sentence=>
+   const defaultScreens=s14.admission.split(/\.\s+/).find(sentence=>
      ['(GBS)','(RPR)','(HBsAg)','(HIV)'].every(label=>sentence.includes(label)));
-   if(!unknownScreens||!unknownScreens.includes('____'))
-     fails.push('14: 未表態篩檢佔位句消失');
-   if(/all negative/.test(s14.admission))fails.push('14: 未表態被寫成 all negative（捏造）');}}
+   if(!defaultScreens||!defaultScreens.includes('all negative'))fails.push('14: 篩檢陰性預設未直接寫入');
+   if(!/rubella IgG was reactive/.test(s14.admission))fails.push('14: Rubella 有抗體預設未寫入');
+   if(!/No gestational diabetes/.test(s14.admission)||!/mother denied cigarette smoking/.test(s14.admission))fails.push('14: 母親病史或習慣的無預設未寫入');
+   if(!/____/.test(s14.admission))fails.push('14: 仍缺的基本資料佔位被移除');}}
 
 if(fails.length){
   console.error('✗ 不變量未過:');

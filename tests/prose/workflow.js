@@ -23,7 +23,7 @@ function page(run){
 }
 test('entry precedes chart; all IDs are unique and no duplicate jaundice onset exists',({d,get})=>{
   assert.equal(get('#admSections > .card').id,'admissionContext');
-  assert.deepEqual([...d.querySelectorAll('#admSections > .card')].map(e=>e.id||e.querySelector('h2').textContent.trim()),['admissionContext','prenatalCard','2產前篩檢 未填 4 項▾','2產程用藥','birthHistoryCard','pathwayCard','finalReviewCard']);
+  assert.deepEqual([...d.querySelectorAll('#admSections > .card')].map(e=>e.id||e.querySelector('h2').textContent.trim()),['admissionContext','prenatalCard','2產前篩檢 篩檢陰性・Rubella 有抗體▾','2產程用藥','birthHistoryCard','pathwayCard','finalReviewCard']);
   const ids=[...d.querySelectorAll('[id]')].map(e=>e.id);assert.equal(ids.length,new Set(ids).size);
   assert.equal(d.querySelector('#readmitJaundiceDOL'),null);
   for(const id of ['birthDate','admissionDate','readmitComplaint'])assert.ok(get('#admissionContext').contains(get('#'+id)));
@@ -49,11 +49,14 @@ test('birth team descriptions remain visible and entry selection stays synchroni
   story('E');assert.equal(get('#entryDirect').getAttribute('aria-checked'),'false');
   assert.equal(get('[data-story="E"]').getAttribute('aria-checked'),'true');
 });
-test('unknown data does not become DOL 1, a negative history, or unperformed prenatal tests',({note,seg,click,input})=>{
-  assert.match(note(),/day of life __/);assert.doesNotMatch(note(),/parents denied|mother denied|Neither amniocentesis|No gestational diabetes/);
+test('explicit unknown data overrides live defaults without assuming dates or prenatal tests',({note,seg,click,input})=>{
+  assert.match(note(),/day of life __/);assert.doesNotMatch(note(),/parents denied|Neither amniocentesis/);
+  assert.match(note(),/mother denied/);assert.match(note(),/No gestational diabetes/);
   seg('amnio','unknown');assert.match(note(),/Information on amniocentesis was unavailable/);
   click('[data-ryn="gdm"] [data-v="unknown"]');assert.match(note(),/gestational diabetes mellitus.*was unavailable/);
+  assert.doesNotMatch(note(),/No gestational diabetes/);
   click('[data-ryn="gdm"] [data-v="no"]');assert.match(note(),/No gestational diabetes/);
+  input('habitStatus','unknown');assert.doesNotMatch(note(),/mother denied/);
   input('habitStatus','negative');assert.match(note(),/mother denied/);
 });
 test('unknown dates never fall back to a stale calculated DOL',({seed,input,note})=>{

@@ -20,13 +20,15 @@ initializeAdmissionWorkflow 只搬動既有 DOM 控制項，保留 ID；各事�
 
 workflowNav 合併章節與子階段，手機只固定分頁列與這條導覽。選單支援章節／子階段直達，前後鈕依實際路徑銜接出生、病程與核對。workflowViews／journeyViews 僅存本次頁面的焦點及相對位置，ResizeObserver 量測實際導覽高度避免定位遮擋。填寫中可複製草稿，不因空白欄位鎖住；核對階段才強調複製病歷。
 
-## 可見正常預選與明確確認
+## 可見且直接生效的正常預設
 
-PRENATAL_NORMAL 定義八項母體／妊娠病史的「無」、ancReg「規則」及 us「正常」。S.prenatalPending 只管理 UI 預選；真正供 Admission／Acceptance／NI plan 使用的 S.r、S.ancReg、S.us 在確認前維持未記錄，不靠輸出時隱藏已誤存的正常值。
+PRENATAL_NORMAL 定義八項母體／妊娠病史的「無」、ancReg「規則」及 us「正常」，直接初始化實際狀態，供 Admission／Acceptance／NI plan 共用。S.prenatalEdited 只追蹤是否修改，用於顯示「預設／目前」來源，不再設待核對或提交機制。
 
-每項所有選項均保留並可點選，預選用勾號、虛線與待核對文字表示。單項點選明確記錄該項；confirmPrenatalDefaults 只提交仍待核對且未被修改的預設，不覆蓋異常、不詳、未記錄。底部與固定導覽的「已核對，下一段」是明確提交動作；章節選單、略過、返回與切分頁僅導覽，不提交。尚未確認的預設只在核對提示列出，不進入病歷。
+各項有／無／不詳等適用選項均保持可見，移除未記錄選項。下一段、章節選單、返回及切分頁僅導覽，不重新套用正常值。母親習慣 habitStatus 預設 negative，勾選的習慣寫陽性，其餘寫無；unknown 時只將未勾的習慣寫成資料不詳。介面提示正常預設已寫入但不代表已查證。
 
-選擇未產檢會取消尚未確認的超音波正常預選；已有明確超音波結果仍保留。一般產前超音波的正常／異常結果不再推定 level II 已施作。羊穿、NIPT、篩檢、家族史與用藥均不在正常預選內。篩檢批次快捷只補未填的四個核心項目，不能覆蓋既有結果；更正需直接選該項。
+選擇未產檢會把尚未修改的正常超音波改為 unknown；已有明確結果仍保留。一般產前超音波不推定 level II 已施作。羊穿、NIPT、家族史與用藥不擴大套用正常預設，類固醇初始為不詳。
+
+S.scr 預設 HBsAg／HBeAg／梅毒／HIV／GBS 為 neg，Rubella 為 pos（IgG 有抗體）。Rubella 的 nd 沿用「無抗體」，另以 untested 表示未驗；unknown 均寫 unavailable，不當成 pending 或未驗。S.scrEdited 保護單項手動結果（包括再點已選陰性）；批次只更新未手動修改的四個核心項目，S.scrBatch 標示整批來源。HBeAg 仍只在 HBsAg 陽性時顯示及寫入；Rubella 有抗體不列成異常陽性摘要。
 
 ## 共用資料與出生史
 
@@ -38,8 +40,8 @@ PRENATAL_NORMAL 定義八項母體／妊娠病史的「無」、ancReg「規則�
 | birthHosp／obFacility、obTransferFrom | 出生地／外院轉出來源 | 外院路徑出生院所移到出生區。E 留白不推定出生於本院。母親入院句不推定在本院待產。 |
 | gender、gaW/D、bw、growth | 開頭、體重分級、背景診斷、Acceptance | 出生體重不當成本次 E 評估體重；既有成長計算規則不改。 |
 | gravida、para、abortion、matAge、ap1/5/10 | 母親背景與 Apgar | 共用一次，不在出生處置或 E 重新輸入。 |
-| 母親風險、家族史、amnio、nipt | 明確陽性／陰性／不詳敘述 | 正常預選未核對前不寫陰性；批次確認保留異常、不詳與手動清空。家族史與羊穿／NIPT 不設正常預選。羊穿已有結果時不額外強調 NIPT 未做。 |
-| habitStatus、smoking/alcohol/drug | 已確認的陽性與陰性習慣史 | 未確認不寫 denied；不詳只涵蓋尚未勾陽性的項目。 |
+| 母親風險、家族史、amnio、nipt | 陽性／陰性／不詳敘述 | 母親風險正常預設直接寫無，例外即時替換。家族史與羊穿／NIPT 不設正常預設。羊穿已有結果時不額外強調 NIPT 未做。 |
+| habitStatus、smoking/alcohol/drug | 陽性與陰性習慣史 | 預設無；只勾選特定習慣即寫陽性。不詳只涵蓋尚未勾陽性的項目。 |
 | birthBreathing/Tone/HR、birthInitialNote | 出生初始觀察 | 不由 Apgar 推定其他生命徵象。 |
 | birthResusStatus、birthEvents | 實際出生處置及重新評估 | 未記錄、確認無、實際施作分開；處置與重新評估可分別記錄。 |
 | birthFinalBreathing/Tone/HR/Support/Min/Note | 出生處置後狀況 | 不推定改善、穩定或持續支持。 |
@@ -95,7 +97,7 @@ screen_onset、care_onset 是草稿結構的非臨床佔位，保持隱藏且不
 
 ## 驗收與界限
 
-- tests/prose/prenatal-defaults.js：預選顯示與事實分離、單項／整段確認、略過與章節跳轉、已填資料保護、無產檢與超音波邊界、篩檢保護與病史跨路徑共享。Chrome 試填另驗證桌面及 320／390 px 的全部選項可見、原地展開、Enter 確認、略過與選取樣式，並留存合成資料截圖。
+- tests/prose/prenatal-defaults.js：正常值直接寫入、移除未記錄／確認門檻、母親習慣預設與例外、導航不重設、無產檢與超音波邊界、篩檢手動結果保護及跨路徑共享。ui-screening.js 驗證 Rubella 有／無抗體、待報、未驗及不詳的獨立語意。Chrome 試填驗證桌面及 320／390 px 全部選項可見、原地展開、鍵盤導覽、即時病歷與選取樣式，並留存合成資料截圖。
 - tests/prose/destination.js：住院去處白名單、E 的 NICU 限制、BR 歷史與本次收治區分、切換路徑草稿、舊值防護及 PICU／未選去處的 plan 邊界。實際 Chrome 試填另驗證 320 px 的去處選項、提示、跨分頁病歷與切回草稿。
 - tests/prose/workflow.js：順向排列、唯一 ID、DOL 邊界、各模組輸出、混合症狀、陰性／未知、草稿隔離、支持／體重時點、E 既往急救隔離。
 - 既有 prose／timeline／downstream／plan／pedigree／navigation／clipboard 等測試繼續執行；變更輸出快照須逐項核對，不能只更新快照掩蓋錯誤。

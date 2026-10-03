@@ -27,33 +27,34 @@ function withPage(check){
 const tests=[];
 const test=(name,check)=>tests.push([name,check]);
 
-test('screening controls have native accessible groups and preserve undocumented defaults',()=>withPage(({d,row,radio,state})=>{
+test('screening controls have accessible groups and visible live normal defaults',()=>withPage(({d,row,radio,state,note})=>{
   assert.equal(d.querySelector('.scr-btn'),null,'The cycling button must not remain as a hidden fallback');
   for(const key of ['hbsag','hbeag','syphilis','hiv','gbs','rubella']){
-    const el=row(key), values=key==='rubella'?['neg','pos','pend','nd']:['na','neg','pos','pend','nd'];
+    const el=row(key), values=key==='rubella'?['pos','nd','pend','untested','unknown']:['neg','pos','pend','nd','unknown'];
     assert.deepEqual([...el.querySelectorAll('input[type="radio"]')].map(input=>input.value),values);
     assert.ok(el.querySelector('fieldset legend').textContent.trim());
     const select=el.querySelector('select');
     assert.ok(d.getElementById(select.getAttribute('aria-labelledby'))?.textContent.trim());
     for(const value of values){assert.equal(radio(key,value).name,`scr-${key}`);assert.ok(radio(key,value).labels.length);}
-    state(key,key==='rubella'?'neg':'na');
+    state(key,key==='rubella'?'pos':'neg');assert.match(el.querySelector('.prenatal-status').textContent,/預設/);
   }
-  radio('gbs','na').focus();
-  assert.equal(d.activeElement,radio('gbs','na'),'Native radios remain keyboard-focusable');
+  radio('gbs','neg').focus();
+  assert.equal(d.activeElement,radio('gbs','neg'),'Native radios remain keyboard-focusable');
+  assert.match(note(),/all negative/);assert.match(note(),/rubella IgG was reactive/);
 }));
 
 test('desktop choices select the requested result directly and never cycle on a repeated click',()=>withPage(({pick,state,note})=>{
   pick('gbs','nd');state('gbs','nd');assert.match(note(),/GBS\) culture was not obtained/);
   pick('gbs','pos');state('gbs','pos');assert.match(note(),/GBS\) culture was positive/);
   pick('gbs','pos');state('gbs','pos');
-  pick('gbs','neg');state('gbs','neg');assert.match(note(),/GBS\) culture was negative/);
-  pick('gbs','na');state('gbs','na');assert.doesNotMatch(note(),/GBS\) culture was (?:positive|negative|not obtained)/);
+  pick('gbs','neg');state('gbs','neg');assert.match(note(),/all negative/);
+  pick('gbs','unknown');state('gbs','unknown');assert.match(note(),/GBS\) culture result was unavailable/);assert.doesNotMatch(note(),/all negative/);
 }));
 
 test('mobile native selects and desktop radios stay synchronized in both directions',()=>withPage(({pick,select,state,note})=>{
   select('gbs','pend');state('gbs','pend');assert.match(note(),/GBS\) culture result was pending/);
   pick('gbs','pos');state('gbs','pos');
-  select('gbs','na');state('gbs','na');
+  select('gbs','unknown');state('gbs','unknown');
   select('hbsag','pos');state('hbsag','pos');
 }));
 
@@ -67,7 +68,7 @@ test('HBeAg becomes available with positive HBsAg and retains its recorded value
   assert.match(note(),/HBeAg\) result was pending/);
 }));
 
-test('bulk screening fills only undocumented core fields and preserves existing results',()=>{
+test('bulk screening changes only untouched core defaults and preserves explicit results',()=>{
   for(const value of ['neg','pend','nd'])withPage(({d,pick,state,note})=>{
     pick('hbsag','pos');pick('hbeag','pos');pick('rubella','nd');pick('gbs','pend');
     d.querySelector(`[data-scrall] [data-v="${value}"]`).click();
@@ -79,15 +80,16 @@ test('bulk screening fills only undocumented core fields and preserves existing 
   });
 });
 
-test('Rubella keeps its distinct IgG semantics and an unmentioned value stays neutral',()=>withPage(({row,pick,select,note})=>{
+test('Rubella antibody, pending, untested and unknown states remain distinct',()=>withPage(({row,pick,select,note})=>{
   const el=row('rubella');
-  assert.equal(el.querySelector('input[value="neg"]').closest('label').dataset.tone,'neutral');
-  assert.equal(el.querySelector('select').dataset.tone,'neutral');
-  assert.doesNotMatch(note(),/rubella IgG/i);
+  assert.equal(el.querySelector('input[value="neg"]'),null);
+  assert.equal(el.querySelector('select').dataset.tone,'good');
+  assert.match(note(),/rubella IgG was reactive/);
   pick('rubella','pos');assert.match(note(),/rubella IgG was reactive/);assert.equal(el.querySelector('select').dataset.tone,'good');
   select('rubella','nd');assert.match(note(),/rubella IgG was nonreactive/);assert.equal(el.querySelector('select').dataset.tone,'risk');
   select('rubella','pend');assert.match(note(),/rubella IgG result was pending/);
-  pick('rubella','neg');assert.doesNotMatch(note(),/rubella IgG/i);assert.equal(el.querySelector('select').dataset.tone,'neutral');
+  select('rubella','untested');assert.match(note(),/rubella IgG testing was not performed/);assert.doesNotMatch(note(),/rubella IgG was (?:non)?reactive/);
+  pick('rubella','unknown');assert.match(note(),/rubella IgG result was unavailable/);assert.equal(el.querySelector('select').dataset.tone,'neutral');
 }));
 
 test('direct GBS risk selection retains the IAP prompt without recording prophylaxis',()=>withPage(({d,pick,select,note})=>{
@@ -95,7 +97,7 @@ test('direct GBS risk selection retains the IAP prompt without recording prophyl
   pick('gbs','pos');assert.equal(hint.hidden,false);assert.ok(hint.classList.contains('pulse'));
   assert.equal(d.querySelector('[data-seg="iap"] [data-v="none"]').getAttribute('aria-pressed'),'true');
   assert.doesNotMatch(note(),/prophylaxis \(IAP\) was (?:in)?complete/);
-  select('gbs','na');assert.equal(hint.hidden,true);
+  select('gbs','neg');assert.equal(hint.hidden,true);
 }));
 
 // 預覽唯讀（2026-09-24 Ryan）：改篩檢就直接重組，不再需要按「套用最新選擇」。
