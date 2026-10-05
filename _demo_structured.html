@@ -3091,6 +3091,18 @@
     for(const [field,label] of [['birthTime','出生'],['admissionTime','入院']])if(raw(field)&&!clockTime(raw(field)))contextIssues.push(reviewIssue(`${label}時間請用有效的 24 小時 HH:MM；未核對的時間不寫入病歷。`,'#'+field));
     if(di.birth!==null&&di.admission!==null&&di.admission===di.birth&&clockTime(raw('birthTime'))&&clockTime(raw('admissionTime'))&&clockTime(raw('admissionTime'))<clockTime(raw('birthTime')))contextIssues.push(reviewIssue('同一天的入院時間早於出生時間，請核對。','#admissionTime'));
     if(di.birth!==null&&di.admission!==null&&di.admission<di.birth)contextIssues.push(reviewIssue('入院日期早於出生日期，請核對。','#admissionDate'));
+    // 產程用藥的開始日（自由文字「月/日」）比出生早超過 7 天＝多半是前次住院；只提醒不擋，解析不出來或沒有出生日期就不提示。
+    const medIssues=[];
+    if(di.birth!==null){
+      const daysBeforeBirth=text=>{const m=/^\s*(?:(\d{4})[\/.-])?(\d{1,2})[\/.-](\d{1,2})\s*$/.exec(text||"");if(!m)return null;
+        const month=Number(m[2]),day=Number(m[3]);if(month<1||month>12||day<1||day>31)return null;
+        const birthYear=new Date(di.birth).getUTCFullYear();let date=Date.UTC(m[1]?Number(m[1]):birthYear,month-1,day);
+        if(!m[1]&&date>di.birth)date=Date.UTC(birthYear-1,month-1,day);
+        return Math.round((di.birth-date)/86400000);};
+      const early=[['iapSince','IAP',true],['tocoSince','安胎',S.toco!=="none"&&!S.tocoDischarged]];
+      for(const [field,label,active] of early){const days=active?daysBeforeBirth(raw(field)):null;
+        if(days!==null&&days>7)medIssues.push(reviewIssue(`${label}開始日期比出生早 ${days} 天，不像產程用藥；若是前次住院，請改填「安胎後已出院」。`,'#'+field));}
+    }
     const basicMissing=[
       [!S.pathway,'入院路徑','#entryRoutes','入院情境'],[!admissionDestination(),'收治單位','[data-seg="dest"]','收治單位'],
       [!raw('birthDate'),'出生日期','#birthDate'],[!raw('gaW'),'GA','#gaW'],[!raw('bw'),'出生體重','#bw'],
@@ -3100,7 +3112,7 @@
       [S.pathway==='readmit'&&!S.readmitProblems.length&&!raw('readmitComplaint'),'主要問題','[data-msel="readmitProblems"]','本次主要問題']
     ].filter(([missing])=>missing).map(([,message,selector,label])=>reviewIssue(message,selector,label));
     const numericIssues=[...document.querySelectorAll('#admSections input[type="number"]')].filter(el=>el.value&&!el.closest('[hidden]')&&!el.validity.valid).map(el=>reviewIssue(`${reviewFieldLabel(el)}：數值或單位範圍需核對。`,'#'+el.id));
-    const all=[...new Set([...birth,...path,...contextIssues,...numericIssues,...(S.destNotice?[reviewIssue(S.destNotice,'[data-seg="dest"]','收治單位')]:[])])];
+    const all=[...new Set([...birth,...path,...contextIssues,...medIssues,...numericIssues,...(S.destNotice?[reviewIssue(S.destNotice,'[data-seg="dest"]','收治單位')]:[])])];
     fillReview('contextReview',contextIssues);
     document.querySelectorAll('.readmit-local-review').forEach(el=>fillReview(el.id,[...path.filter(item=>!item.startsWith('先前進食描述與每餐奶量')),...numericIssues]));
     const conflicts=all.filter(item=>!pending.includes(item)),uniquePending=[...new Set(pending)];
