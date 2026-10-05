@@ -72,7 +72,7 @@ test('產房結束時掛著 CPAP 就會進診斷、計畫與 acceptance（沒有
   story('A');input('birthResusStatus','none');input('birthFinalSupport','cpap');
   assert.ok(dx().includes('Respiratory distress'),`DX chip 缺 Respiratory distress：${dx().join('|')}`);
   const admission=note();
-  assert.match(admission,/with a tentative diagnosis of respiratory distress/);
+  assert.match(admission,/Under the tentative diagnosis of respiratory distress, the infant was admitted/);
   const plan=onTab('plan');
   assert.match(plan,/sepsis work-up/);
   assert.match(plan,/OG decompression/);
@@ -225,11 +225,11 @@ test('週數邊界：36+6 是 late preterm、37+0 是 term、42+0 是 post-term�
   const {input,note,dx}=page;
   const head=()=>note().split('\n')[0];
   input('gaW','36');input('gaD','6');
-  assert.match(head(),/late preterm male infant/);assert.equal(dx()[0],'Prematurity');
+  assert.match(head(),/late preterm male newborn/);assert.equal(dx()[0],'Prematurity');
   input('gaW','37');input('gaD','0');
-  assert.match(head(),/ term male infant/);assert.equal(dx()[0],'Term newborn');
+  assert.match(head(),/ term male newborn/);assert.equal(dx()[0],'Term newborn');
   input('gaW','42');input('gaD','0');
-  assert.match(head(),/post-term male infant/);assert.equal(dx()[0],'Post-term newborn');
+  assert.match(head(),/post-term male newborn/);assert.equal(dx()[0],'Post-term newborn');
   input('gaW','');input('gaD','');
   assert.doesNotMatch(head(),/\bterm\b/);assert.equal(dx()[0],'Newborn');
 });

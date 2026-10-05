@@ -101,9 +101,9 @@ test('unknown prior support offers direct mode choices without inferring continu
 });
 test('changing relationship preserves its own draft and does not leak settings or stability',({story,input,choose,seg,note,get})=>{
  story('A');input('birthFinalSupport','cpap');choose('obRespRelation','changed');seg('obRespType','ppv');input('obFiO2','40');get('[data-tog="obRespStable"] button').click();
- choose('obRespRelation','continued');assert.equal(get('#obFiO2').value,'');assert.doesNotMatch(note(),/40%|remained stable during/);
- choose('obRespRelation','changed');assert.equal(get('#obFiO2').value,'40');assert.match(note(),/remained stable during/);
- choose('obRespRelation','stopped');assert.doesNotMatch(note(),/40%|remained stable during/);
+ choose('obRespRelation','continued');assert.equal(get('#obFiO2').value,'');assert.doesNotMatch(note(),/40%|stable heart rate|remained stable during/);
+ choose('obRespRelation','changed');assert.equal(get('#obFiO2').value,'40');assert.match(note(),/\(FiO2 40%\), with stable heart rate and oxygen saturation\./);assert.doesNotMatch(note(),/remained stable during/);
+ choose('obRespRelation','stopped');assert.doesNotMatch(note(),/40%|stable heart rate|remained stable during/);
 });
 test('reconfirming a changed predecessor does not silently reuse settings from the old mode',({story,input,choose,get,note})=>{
  story('A');input('birthFinalSupport','cpap');choose('obRespRelation','continued');input('obPEEP','6');input('obFiO2','30');input('birthFinalSupport','ett');choose('obRespRelation','continued');assert.equal(get('#obPEEP').value,'');assert.equal(get('#obFiO2').value,'');assert.doesNotMatch(note(),/30%|6 cmH2O/);

@@ -50,21 +50,21 @@ test('birth team descriptions remain visible and entry selection stays synchroni
   assert.equal(get('[data-story="E"]').getAttribute('aria-checked'),'true');
 });
 test('explicit unknown data overrides live defaults without assuming dates or prenatal tests',({note,seg,click,input})=>{
-  assert.match(note(),/day of life __/);assert.doesNotMatch(note(),/parents denied|Neither amniocentesis/);
-  assert.match(note(),/mother denied/);assert.match(note(),/No gestational diabetes/);
+  assert.match(note(),/This __-day-old/);assert.doesNotMatch(note(),/parents denied|Neither amniocentesis/);
+  assert.match(note(),/mother denied/);assert.match(note(),/There was no gestational diabetes/);
   seg('amnio','unknown');assert.match(note(),/Information on amniocentesis was unavailable/);
   click('[data-ryn="gdm"] [data-v="unknown"]');assert.match(note(),/gestational diabetes mellitus.*was unavailable/);
-  assert.doesNotMatch(note(),/No gestational diabetes/);
-  click('[data-ryn="gdm"] [data-v="no"]');assert.match(note(),/No gestational diabetes/);
+  assert.doesNotMatch(note(),/There was no gestational diabetes/);
+  click('[data-ryn="gdm"] [data-v="no"]');assert.match(note(),/There was no gestational diabetes/);
   input('habitStatus','unknown');assert.doesNotMatch(note(),/mother denied/);
   input('habitStatus','negative');assert.match(note(),/mother denied/);
 });
 test('unknown dates never fall back to a stale calculated DOL',({seed,input,note})=>{
-  seed();assert.match(note(),/day of life 18/);input('birthDate','');assert.match(note(),/day of life __/);
-  input('birthDate','2026-10-03');assert.match(note(),/day of life __/);
+  seed();assert.match(note(),/This 18-day-old/);input('birthDate','');assert.match(note(),/This __-day-old/);
+  input('birthDate','2026-10-03');assert.match(note(),/This __-day-old/);
 });
 for(const [birth,admission,dol] of [['2026-10-02','2026-10-02',1],['2026-09-30','2026-10-02',3],['2024-02-28','2024-03-01',3],['2025-12-31','2026-01-01',2]]){
-  test(`calendar DOL ${birth} to ${admission}`,({input,note})=>{input('birthDate',birth);input('admissionDate',admission);assert.match(note(),new RegExp('day of life '+dol+'\\b'));});
+  test(`calendar DOL ${birth} to ${admission}`,({input,note})=>{input('birthDate',birth);input('admissionDate',admission);assert.match(note(),new RegExp('This '+dol+'-day-old '));});
 }
 test('E retains visible birth observations and resuscitation without switching route',({seed,story,visible,input,note})=>{
   seed();story('E');assert.equal(visible('birthBreathing'),true);assert.equal(visible('birthResusStatus'),true);
@@ -91,7 +91,7 @@ test('feeding is included once; supplied fragments acquire a subject',({seed,sto
   assert.equal((note().match(/was fed breast milk/g)||[]).length,1);
 });
 test('birth hospital and maternal admission location are not inferred for E',({story,input,note})=>{
-  story('E');input('admReason','induction of labor');assert.match(note(),/delivered at ____/);assert.doesNotMatch(note(),/mother was admitted to our hospital/);
+  story('E');input('admReason','induction of labor');assert.match(note(),/newborn was born to .* at ____ via/);assert.doesNotMatch(note(),/mother was admitted to our hospital/);
 });
 test('acceptance support has an explicit reuse action and does not rewrite admission',({seed,story,seg,click,tab,note})=>{
   seed();story('E');seg('resp','room air');const admission=note();tab('acc');assert.match(note(),/Respiratory support at acceptance is ____/);

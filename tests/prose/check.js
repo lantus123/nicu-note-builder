@@ -31,7 +31,10 @@ for(const [name,r] of Object.entries(out)){
   // The/There 開頭句 ≤35% 且無三連發（admission 敘事段）
   const body=(r.admission||'').split('Tentative diagnosis')[0];
   const ss=body.split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(Boolean);
-  const tt=ss.map(s=>/^(The|There)\b/.test(s));
+  // 院內模板骨架指定的句首（2026-10-05 Ryan 核准）不計入 The/There 比例：
+  // EDC 句、There was no … 併發症句、媽媽住院／再入院句、母親其他病史句。
+  const TEMPLATE=/^(The expected date of confinement was|There was no .+(?:during pregnancy|\(PPH\)[^.]*)\.$|The mother was (?:re)?admitted (?:to our hospital )?for|The mother had a history of)/;
+  const tt=ss.map(s=>/^(The|There)\b/.test(s)&&!TEMPLATE.test(s));
   const ratio=tt.filter(Boolean).length/Math.max(1,ss.length);
   if(ratio>0.35)fails.push(`${name}: The/There 開頭 ${(ratio*100).toFixed(0)}% >35%`);
   let runLen=0,maxRun=0; tt.forEach(b=>{runLen=b?runLen+1:0; maxRun=Math.max(maxRun,runLen);});
@@ -44,7 +47,7 @@ for(const [name,r] of Object.entries(out)){
      ['(GBS)','(RPR)','(HBsAg)','(HIV)'].every(label=>sentence.includes(label)));
    if(!defaultScreens||!defaultScreens.includes('all negative'))fails.push('14: 篩檢陰性預設未直接寫入');
    if(!/rubella IgG was reactive/.test(s14.admission))fails.push('14: Rubella 有抗體預設未寫入');
-   if(!/No gestational diabetes/.test(s14.admission)||!/mother denied cigarette smoking/.test(s14.admission))fails.push('14: 母親病史或習慣的無預設未寫入');
+   if(!/There was no gestational diabetes/.test(s14.admission)||!/mother denied cigarette smoking/.test(s14.admission))fails.push('14: 母親病史或習慣的無預設未寫入');
    if(!/____/.test(s14.admission))fails.push('14: 仍缺的基本資料佔位被移除');}}
 
 if(fails.length){

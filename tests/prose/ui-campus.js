@@ -46,7 +46,7 @@ function withPage(check,{persistedHome}={}){
   finally{W.close();}
 }
 function birthSentence(text){
-  const sentence=text.match(/[^.\n]*was delivered[^.\n]*\./)?.[0];
+  const sentence=text.match(/[^.\n]*(?:was delivered|newborn was born)[^.\n]*\./)?.[0];   // Admission 模板開場句／Acceptance 出生句
   assert.ok(sentence,'The note must contain a delivery sentence');return sentence;
 }
 function assertBirthplace(text,value){

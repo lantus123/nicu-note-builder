@@ -119,3 +119,14 @@ screen_onset、care_onset 是草稿結構的非臨床佔位，保持隱藏且不
 - tests/prose/browser-workflow.cjs：獨立 Chrome CDP，1440／1366 px 桌面、320／360／390 px 手機尺寸、短視窗及亮／暗主題；檢查 CSS viewport、遮擋、點擊命中、原生文字輸入與複製。混合 E 假病例從入口走到核對，另重新開頁填直接入院 A 及外院轉入 D；檢查返回相對位置、跨分頁、舊進食描述衝突與復原。截圖需由驗收者目視，不只看程式斷言。
 - 自動化結果與模擬試填不等同真實住院醫師使用者測試，也不表示任意自由文字的所有語意矛盾都能偵測。檢查與劑量規則未在此次改版重新做醫療有效性驗證。
 - tests/prose/browser-clarity.cjs：10 種寬度（320–1920 px）、明暗主題、125%／150% 等效 reflow、按鈕不位移、24 px 共用 grid 間距、階段軸完整、共用分頁與預覽定位；不是原生縮放或 Safari 實機測試。所有原生滑鼠／鍵盤瀏覽器腳本依序執行。
+
+## 院內模板骨架（2026-10-05）
+
+| 輸入／狀態 | 輸出或用途 | 邊界 |
+| --- | --- | --- |
+| DOL、性別、GA、BW、growth、matAge、G/P/A、出生時間／日期／院所、生產方式、csReason | Admission 開場一句＋ EDC 句 | 缺值規則沿用舊句；只改句型。Acceptance 出生段不變。 |
+| complication 陰性清單 | `There was no … during pregnancy.` | 含 PPH 時省略 during pregnancy；陽性仍走 notable for 句。 |
+| 四項篩檢全陰性＋rubella | 併為一句 | 任一項非陰性時 rubella 維持獨立句。 |
+| admReason | 第二段首句 | 本院出生才寫 to our hospital；外接／E 無原因不出句。 |
+| obSx、pwOnset、obRespRelation／obRespType、obRespStable | 入院前段 | 已在出生／產房結束評估寫過的同一所見不重列；Because … persisted 只用於有實際處置動作的支持；時間片語同段一次。 |
+| 結語 | Under the tentative diagnosis of … | A–D 不寫入院日期；E 不變；Acceptance 入院句不變。 |

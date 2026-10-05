@@ -35,7 +35,7 @@ const tests=[];const test=(name,fn)=>tests.push([name,()=>withPage(fn)]);
 test('birth day is DOL 1; date-derived DOL and PMA use elapsed days',({input,tab,note,get})=>{
   input('birthDate','2026-08-27'); // fixed admission date = 2026-08-30
   assert.match(get('#dolStatus').textContent,/DOL 4.*經過 3 天/);
-  assert.match(note(),/now on day of life 4/);
+  assert.match(note(),/This 4-day-old /);
   tab('acc');
   assert.match(note(),/^DOL 4, PMA 38\+5 wks/);
 });
@@ -50,10 +50,10 @@ test('automatic mode is visible and filling only the birth date calculates throu
   assert.equal(W.getComputedStyle(get('#dolManualWrap')).display,'none');
   input('birthDate','2026-08-13');
   assert.match(get('#dolStatus').textContent,/DOL 18.*今天 2026-08-30/);
-  assert.match(note(),/now on day of life 18/);
+  assert.match(note(),/This 18-day-old /);
   assert.equal(W.getComputedStyle(get('#dolManualWrap')).display,'none','a calculated DOL above 4 must not look like a manual entry');
   input('birthDate','2026-08-30');
-  assert.match(note(),/now on day of life 1/);
+  assert.match(note(),/This 1-day-old /);
 });
 
 test('backdated admission uses that date and the today action restores automatic calculation',({input,get,click,seg,tab,note})=>{
@@ -72,17 +72,17 @@ test('backdated admission uses that date and the today action restores automatic
   assert.match(get('#admissionDateSummary').textContent,/今天入院.*已自動帶入/);
   assert.equal(get('#dolAutoReset').getAttribute('aria-pressed'),'true');
   assert.equal(get('#dolManualWrap').hidden,true);
-  assert.match(note(),/now on day of life 18/);
+  assert.match(note(),/This 18-day-old /);
   tab('acc');assert.match(note(),/^DOL 18, PMA 40\+5 wks/);
 });
 
 test('native date-picker change events recalculate DOL',({W,get,note})=>{
   get('#birthDate').value='2026-08-27';
   get('#birthDate').dispatchEvent(new W.Event('change',{bubbles:true}));
-  assert.match(note(),/now on day of life 4/);
+  assert.match(note(),/This 4-day-old /);
   get('#admissionDate').value='2026-08-28';
   get('#admissionDate').dispatchEvent(new W.Event('change',{bubbles:true}));
-  assert.match(note(),/now on day of life 2/);
+  assert.match(note(),/This 2-day-old /);
 });
 
 test('manual DOL mismatch is visible and can return to automatic calculation',({input,seg,click,get})=>{
@@ -101,7 +101,7 @@ test('story E creates a chronological outpatient readmission narrative without t
   input('readmitCourse','The jaundice persisted after discharge.');seg('readmitSource','clinic');
   input('readmitCurrentWeight','3260');input('readmitTSB','15.2');input('readmitDB','0.6');
   const text=note();
-  assert.match(text,/now on day of life 18/);
+  assert.match(text,/This 18-day-old /);
   assert.match(text,/initial postnatal course was uneventful/);
   assert.match(text,/discharged home on day of life 3 at a weight of 3000 g/);
   assert.match(text,/Jaundice was noted on day of life 3/);

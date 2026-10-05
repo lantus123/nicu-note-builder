@@ -44,7 +44,7 @@ async function main(){
     assert.equal(await ev(`document.querySelector('#admissionDateDetails').open`),false);
     assert.equal(await ev(`document.querySelector('#admissionDate').checkVisibility()`),false,'Default admission date must not require an input');
     assert.ok(await ev(`[...document.querySelectorAll('#entryRoutes .d, #entryRoutes .p, #entryRoutes .k')].every(e=>e.getClientRects().length&&getComputedStyle(e).display!=='none')`),'Scenario descriptions must be visible');
-    await input('birthDate',today);assert.match(await note(),/day of life 1\b/);
+    await input('birthDate',today);assert.match(await note(),/This 1-day-old /);
     assert.equal(await ev(`document.querySelector('#admissionDateDetails').open`),false);
     clicks=0;entries=0;
     await click('[data-story="E"]');
@@ -53,7 +53,7 @@ async function main(){
     await input('birthDate','2026-09-15');await input('birthTime','06:20');
     await click('#admissionDateDetails > summary');await input('admissionDate','2026-10-02');await input('admissionTime','14:37');await click('#admissionDateDetails > summary');
     assert.match(await ev(`document.querySelector('#admissionDateSummary').textContent`),/2026-10-02.*14:37/);
-    assert.match(await note(),/day of life 18/);
+    assert.match(await note(),/This 18-day-old /);
     assert.equal(await ev(`document.querySelector('#copy').dataset.primary`),'false');
     await at('#admissionContext');await shot('nicu-forward-entry-desktop.png');
     await click('#admissionContext [data-flow-target="prenatalCard"]');await input('gravida','2');await input('para','2');await input('matAge','32');
@@ -192,7 +192,7 @@ async function main(){
     // Live defaults must be visible and already included; navigation adds no attestation gate.
     await fresh();await resize(1440,1000);await chapter('prenatalCard');
     assert.equal(await ev(`document.querySelectorAll('[data-default-state="default"]').length`),10);
-    assert.match(await note(),/No gestational diabetes/);assert.match(await note(),/regular prenatal care/);assert.match(await note(),/ultrasound showed normal/);
+    assert.match(await note(),/There was no gestational diabetes/);assert.match(await note(),/regular prenatal care/);assert.match(await note(),/ultrasound showed normal/);
     assert.match(await note(),/all negative/);assert.match(await note(),/rubella IgG was reactive/);assert.match(await note(),/mother denied cigarette smoking/);
     assert.equal(await ev(`document.querySelector('#confirmPrenatalNext,#prenatalSkip,[data-ryn] [data-v="na"],[data-r3] [data-v="na"],#screen input[value="na"]')`),null);
     const risksAt=async()=>{await ev(`window.scrollTo({top:scrollY+document.querySelector('#risks').getBoundingClientRect().top-145,behavior:'instant'})`);await pause(120);};
@@ -224,7 +224,7 @@ async function main(){
     await click('#prenatalNext');
     const confirmedPrenatal=await note();assert.match(confirmedPrenatal,/treated with insulin/);assert.match(confirmedPrenatal,/synthetic ultrasound finding/);
     assert.match(confirmedPrenatal,/prenatal care.*was unavailable/);assert.match(confirmedPrenatal,/GBS\) culture result was pending/);
-    assert.doesNotMatch(confirmedPrenatal,/ultrasound showed normal|all negative|No gestational diabetes/);
+    assert.doesNotMatch(confirmedPrenatal,/ultrasound showed normal|all negative|There was no gestational diabetes/);
     await chapter('prenatalCard');await risksAt();await shot('nicu-prenatal-confirmed-mobile.png');
     // Keyboard next is navigation only; changing an exception cannot reset it.
     await fresh();await resize(390,844,true);await chapter('prenatalCard');
@@ -235,7 +235,7 @@ async function main(){
     await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'});
     await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
     await pause(80);
-    assert.match(await note(),/gestational diabetes mellitus.*was unavailable/);assert.doesNotMatch(await note(),/No gestational diabetes/);
+    assert.match(await note(),/gestational diabetes mellitus.*was unavailable/);assert.doesNotMatch(await note(),/There was no gestational diabetes/);
     assert.match(await note(),/regular prenatal care/);assert.match(await note(),/prenatal ultrasound showed normal findings/);
     // Review hints must locate the exact field, even in parked E stages and closed details.
     // Real pointer/keyboard activation, actual viewport geometry and unchanged note are checked.

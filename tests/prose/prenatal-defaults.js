@@ -21,7 +21,7 @@ test('normal history and prenatal defaults are visible and immediately written',
   for(const key of ['gdm','pih','aph','pph','uri','fever','prom'])assert.equal(selected(key),'no');
   assert.equal(selected('pre'),'neg');assert.equal(selected('ancReg'),'regular');assert.equal(selected('us'),'normal');
   assert.match(get('#prenatalDefaultStatus').textContent,/直接帶入病歷/);
-  assert.match(note(),/No gestational diabetes mellitus/);assert.match(note(),/regular prenatal care/);assert.match(note(),/prenatal ultrasound showed normal findings/);
+  assert.match(note(),/There was no gestational diabetes mellitus/);assert.match(note(),/regular prenatal care/);assert.match(note(),/prenatal ultrasound showed normal findings/);
   for(const control of d.querySelectorAll('[data-default-state]')){
     assert.ok(d.getElementById(control.getAttribute('aria-labelledby')));assert.ok(d.getElementById(control.getAttribute('aria-describedby')));
     assert.equal(control.querySelectorAll('[aria-pressed="true"]').length,1);
@@ -42,13 +42,13 @@ test('exceptions immediately replace normal defaults without navigation',({risk,
   seg('ancReg','irregular');seg('us','abnormal');input('usFindings','a synthetic ultrasound abnormality');
   assert.equal(selected('gdm'),'yes');assert.equal(selected('pre'),'highrisk');assert.equal(selected('fever'),'unknown');
   assert.match(note(),/gestational diabetes mellitus \(GDM\) treated with insulin/);assert.match(note(),/irregular prenatal care/);assert.match(note(),/synthetic ultrasound abnormality/);
-  assert.doesNotMatch(note(),/ultrasound showed normal|No gestational diabetes/);assert.equal(get('[data-child="gdm"]').hidden,false);assert.equal(get('#prenatalStatus-gdm').dataset.default,'false');
+  assert.doesNotMatch(note(),/ultrasound showed normal|There was no gestational diabetes/);assert.equal(get('[data-child="gdm"]').hidden,false);assert.equal(get('#prenatalStatus-gdm').dataset.default,'false');
 });
 test('unknown history and findings survive forward navigation without reverting to normal',({risk,seg,click,note,selected})=>{
   risk('gdm','unknown');seg('ancReg','unknown');seg('us','unknown');click('#prenatalNext');
   for(const key of ['gdm','ancReg','us'])assert.equal(selected(key),'unknown');
   assert.match(note(),/gestational diabetes mellitus.*was unavailable/);assert.match(note(),/prenatal care.*was unavailable/);assert.match(note(),/ultrasound findings were unavailable/);
-  assert.doesNotMatch(note(),/regular prenatal care|ultrasound showed normal|No gestational diabetes/);
+  assert.doesNotMatch(note(),/regular prenatal care|ultrasound showed normal|There was no gestational diabetes/);
 });
 test('repeated normal selections are idempotent and never clear the value',({risk,seg,selected,note})=>{
   const original=note();risk('gdm','no');risk('gdm','no');seg('ancReg','regular');seg('us','normal');
@@ -58,7 +58,7 @@ test('tabs, chapter jumps, back and forward preserve exceptions',({risk,seg,clic
   risk('gdm','yes');seg('us','unknown');note('acc');note('plan');note('adm');
   click('#flowMenu [data-flow-target="prenatalCard"]');assert.doesNotMatch(get('#flowNext').textContent,/核對/);
   click('#flowNext');click('#flowBack');click('#flowMenu [data-flow-target="birthHistoryCard"]');
-  assert.equal(selected('gdm'),'yes');assert.equal(selected('us'),'unknown');assert.doesNotMatch(note(),/No gestational diabetes|ultrasound showed normal/);
+  assert.equal(selected('gdm'),'yes');assert.equal(selected('us'),'unknown');assert.doesNotMatch(note(),/There was no gestational diabetes|ultrasound showed normal/);
 });
 test('no prenatal care withdraws only the untouched normal ultrasound default',({seg,get,note,selected})=>{
   seg('ancReg','none');assert.equal(selected('us'),'unknown');assert.equal(get('#prenatalNoCareNotice').hidden,false);
@@ -71,7 +71,7 @@ test('an explicitly selected ultrasound result survives no prenatal care',({seg,
 });
 test('screening defaults are negative with reactive Rubella, not assumed infection',({get,note})=>{
   for(const key of ['hbsag','hbeag','hiv','gbs','syphilis'])assert.equal(get(`.scr-row[data-scr="${key}"]`).dataset.state,'neg');
-  assert.equal(get('.scr-row[data-scr="rubella"]').dataset.state,'pos');assert.match(note(),/all negative/);assert.match(note(),/Maternal rubella IgG was reactive/);
+  assert.equal(get('.scr-row[data-scr="rubella"]').dataset.state,'pos');assert.match(note(),/all negative/);assert.match(note(),/all negative, and rubella IgG was reactive/);
   assert.equal(get('[data-csum="scr"]').textContent,'篩檢陰性・Rubella 有抗體');
 });
 test('screening exceptions replace the all-negative sentence and persist on navigation',({screen,click,get,note})=>{

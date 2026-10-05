@@ -57,6 +57,17 @@
 - **產房／刀房由生產方式自動決定**：NSD 寫 delivery room、C/S 寫 operating room，用於 standby 句、產房再評估句、Acceptance 的 surfactant 句；會診句只在明選「直接入院」時才加地點（嬰兒室路徑的會診地點不是產房）。
 - 新欄位的用途、跨分頁範圍與刻意排除的資料見 [Admission 欄位對照](docs/admission-field-map.md)。這份對照涵蓋本次時間線改版，不代表全專案歷史欄位已完成全面稽核。
 
+## Admission 院內模板骨架（2026-10-05）
+
+住院醫師回饋產出的 note 冗長、連結詞不順，Admission 文案改回院內模板的句型與順序。縮寫首次出現展開全稱的慣例保留；沒填的照舊不寫或出灰字，不代入預設臨床事實。
+
+- **開場一句**：`This {N}-day-old {term…} {sex} newborn was born to a {age}-year-old G{g}P{p} mother at a gestational age (GA) of {w+d} weeks with a birth weight (BW) of {bw} g (AGA) at {時間} on {日期} at {院所} via {VD／C/S} due to {C/S 原因}.`，接 `The expected date of confinement was {EDC}.`。必填缺值維持灰字，出生時間／日期等選填缺值整段省略；日齡沿用自動計算的 DOL。外接寫外院出生院所，E 未填出生院所不推定本院。出生摘要與母體背景併為第一段（後句的 she 才有先行詞）。
+- **併發症否定**：`There was no {清單} during pregnancy.`；清單含 PPH 時不寫 during pregnancy（產後出血不在孕期內）。四項篩檢全陰性時與 rubella IgG 併成 `…were all negative, and rubella IgG was reactive.`。
+- **第二段開頭固定是媽媽這次住院**：本院出生寫 `The mother was admitted to our hospital for {原因}.`；外接／E 只在有填原因時寫 `The mother was admitted for {原因}.`（不推定在本院待產）。不再寫 `Prior to delivery,`；類固醇仍併入這句。
+- **出生後到入院去重**：入院前症狀若已在出生觀察或產房結束評估寫過（且不是選「新出現／再次出現」），不再重列；同一段的 before admission／during transport／in the baby room 只寫一次。症狀持續且有實際呼吸處置（開始、持續、換方式、調整設定、再開始）時寫 `Because {症狀} persisted, …`；只記錄「當時使用」的被動句不接因果。直接入院而入院前沒選症狀時，只有出生當下與產房結束評估都記錄到的同一異常呼吸才能當 persisted 的依據。PPV 與已勾選的 HR／SpO₂ 穩定併成 `…, with stable heart rate and oxygen saturation.`。
+- **結語**：`Under the tentative diagnosis of {dx}, the infant was admitted to {去處} for further evaluation and treatment.`；外接寫 `…, the infant was transferred from {來源} to our hospital and admitted to {去處} …`；嬰兒室檢查異常保留 therefore。出生後入院（直接、嬰兒室、外接）不寫入院日期；E 維持原句與日期。診斷空白沿用原本不寫診斷的句型。Acceptance 自己的入院句不變，Acceptance 與 Admission 共用的出生與入院前敘述同步套用上述去重。
+- `tests/prose/check.js` 的 The/There 句首比例不計模板指定的句首（EDC、There was no 併發症、媽媽住院／再入院等）；其餘句子照舊受限。驗收在 `tests/prose/template-prose.js`。
+
 ## NI plan 讀 admission 的哪些東西（2026-09-23）
 
 - **去處決定配置**：`allowedDestinations()` 統一路徑限制，`DEST_PLAN` 統一 plan 配置。`NBC` 維持**非加護病房配置**：不寫 Giraffe、不寫 Minimize handling、A-line 不因插管自動列入。`NICU` 維持原加護配置。未選／無效去處不再回退為 NICU；`PICU` 在專用院內模板確認前不產生 NI plan，控制項收起，`#planWarn` 說明原因，Admission／Acceptance 仍可使用。提示只進 UI，不進複製病歷。**此變更不新增 PICU 治療規則或劑量；NBC 細項仍待 Ryan 校正。**

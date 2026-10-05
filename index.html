@@ -2240,6 +2240,8 @@
   const EVENT_NAMES={ppv:"PPV",intubation:"插管",compressions:"胸外按壓",epinephrine:"Epinephrine",assessment:"重新評估",o2:"氧氣",cpap:"CPAP"};
   const BREATHING={crying:"was crying",spontaneous:"was breathing spontaneously",apnea:"was apneic",gasping:"was gasping",labored:"had labored breathing",ineffective:"had ineffective breathing"};
   const TONE={good:"had good muscle tone",poor:"had poor muscle tone",flaccid:"was flaccid"};
+  // 異常呼吸的名詞形：產房結束評估與出生當下相同時寫「… persisted」（正常哭聲／自主呼吸不寫持續）。
+  const BREATHING_NOUN={labored:"labored breathing",apnea:"apnea",gasping:"gasping",ineffective:"ineffective breathing"};
   const SUPPORT={room:"room air",o2:"supplemental oxygen",cpap:"CPAP",ppv:"positive-pressure ventilation (PPV)",ett:"mechanical ventilation via an endotracheal tube"};
   const raw=id=>V(id).trim();
   const clockTime=value=>{const v=String(value||'').trim(),t=/^\d{3,4}$/.test(v)?v.padStart(4,'0').replace(/(..)(..)/,'$1:$2'):v;return /^([01]?\d|2[0-3]):[0-5]\d$/.test(t)?t.padStart(5,'0'):'';};
@@ -2354,6 +2356,21 @@
   // 且故事 B 的會診句寫在急救之後，與時間線站序矛盾 ⇒ 拆成 birthObservation／birthCourse 兩段由呼叫端夾 Apgar。
   function birthObservation(){return assessmentText(readAssessment("birth"),"At birth");}
   function birthNarrative(){return [...birthObservation(),...birthCourse()];}
+  // 入院前症狀（obSx 值）中，已在出生觀察或產房結束評估寫過的同一所見；E 的出生史不參與。
+  function birthRecordedFindings(){
+    if(S.pathway==="readmit")return [];
+    const found=new Set();
+    for(const prefix of ["birth","birthFinal"]){
+      const a=readAssessment(prefix);
+      if(a.breathing==="apnea")found.add("apnea");
+    }
+    return [...found];
+  }
+  // 出生當下與產房結束評估都記錄到的同一異常呼吸所見（名詞形，供 persisted 句使用）。
+  function persistingBirthFindings(){
+    const a=readAssessment("birth"),f=readAssessment("birthFinal");
+    return a.breathing&&a.breathing===f.breathing&&BREATHING_NOUN[a.breathing]?[BREATHING_NOUN[a.breathing]]:[];
+  }
   function recordNoteScope(scopes,out,key,start=0){if(scopes)for(let i=start;i<out.length;i++)scopes[i]=key;}
   function noteScope(html,key){return key?`<span class="note-scope" data-note-phase="${key}">${html}</span>`:html;}
   function birthCourse(scopes){
@@ -2477,10 +2494,11 @@
   function pathwaySupportMode(){return resolvedSupport("obRespRelation",S.obRespType).mode;}
   function supportSentence(field,selected,context,settings={}){
     const {mode,relation,source,confirmed}=resolvedSupport(field,selected);
-    if(relation==="stopped")return source&&source!=="room"&&S.continuitySignatures[field]===sourceStamp(field)?`${sentence(SUPPORT[source]).replace(/\.$/,"")} was discontinued ${context}.`:"";
+    const at=context?" "+context:"";   // 同段已寫過時間片語時，呼叫端傳空字串
+    if(relation==="stopped")return source&&source!=="room"&&S.continuitySignatures[field]===sourceStamp(field)?`${sentence(SUPPORT[source]).replace(/\.$/,"")} was discontinued${at}.`:"";
     if(!mode)return "";
     if(mode==='room'&&['new','repeat','settings'].includes(relation))return ''; // 舊稿衝突保留於欄位與檢核，不生成虛構處置。
-    if(mode==="room")return relation==='changed'&&source&&source!=='room'&&S.continuitySignatures[field]===sourceStamp(field)?`The infant was switched from ${SUPPORT[source]} to room air ${context}.`:`The infant ${confirmed?"continued breathing":"was breathing"} room air ${context}.`;
+    if(mode==="room")return relation==='changed'&&source&&source!=='room'&&S.continuitySignatures[field]===sourceStamp(field)?`The infant was switched from ${SUPPORT[source]} to room air${at}.`:`The infant ${confirmed?"continued breathing":"was breathing"} room air${at}.`;
     let action;
     if(confirmed&&relation==='settings')action=`settings for ${SUPPORT[mode]} were adjusted`;
     else if(confirmed)action=`${SUPPORT[mode]} was continued`;
@@ -2490,7 +2508,7 @@
     else action=`the infant was receiving ${SUPPORT[mode]}`;
     const device=mode==="o2"&&settings.device?` via ${settings.device}`:"";
     const ps=eventSettings({...settings,kind:mode==="ett"?"intubation":mode});
-    return sentence(`${action} ${context}${device}${ps}`);
+    return sentence(`${action}${at}${device}${ps}`);
   }
   // 母體風險因子直接從第 2 區帶（發燒／PROM 時數／GBS 陽性），不在嬰兒室那站重填
   function maternalRiskPhrases(){
@@ -2676,11 +2694,16 @@
     let brAbnormal=false;   // 嬰兒室檢查有異常 ⇒ 結語用 therefore（收入的理由就是它）
     if(S.pathway==="nursery")out.push("The infant was initially cared for in the baby room.");
     const context=S.outborn?"During transport":S.pathway==="nursery"?"During observation in the baby room":"Before admission";
-    if(sx){
-      const timing=h&&u?` at ${h} ${unitLabel(h,u==="minutes"?"minute":"hour")} of age`:"";
+    // 2026-10-05 去重：出生觀察／產房再評估已寫過的同一所見（起始未明或持續）不再重列；同段時間片語只寫一次。
+    const sxTiming=h&&u?` at ${h} ${unitLabel(h,u==="minutes"?"minute":"hour")} of age`:"";
+    const repeatedSx=(!S.pwOnset||["observed","persisted"].includes(S.pwOnset))?S.obSx.filter(x=>birthRecordedFindings().includes(x)):[];
+    const newSx=S.obSx.filter(x=>!repeatedSx.includes(x));
+    let contextUsed=false,sxText="";
+    if(newSx.length){
       const verb={developed:"developed",persisted:"persisted",recurrent:"recurred",observed:"were noted"}[S.pwOnset]||"were noted";
       const observed=S.pwOnset==="observed"||!S.pwOnset;
-      (S.outborn?transportIntro:out).push(`${context}, ${sx} ${observed?(pluralFinding(S.obSx)?"were noted":"was noted"):verb}${timing}.`);
+      sxText=`${context}, ${joinAnd(newSx)} ${observed?(pluralFinding(newSx)?"were noted":"was noted"):verb}${sxTiming}.`;
+      (S.outborn?transportIntro:out).push(sxText);contextUsed=true;
     }
     mark('route');
     // 故事 C（2026-09-20 Ryan）：嬰兒室有狀況或有母體風險 → 兒科去看（不是會診）→ 在嬰兒室抽血 → 結果異常才收。
@@ -2728,17 +2751,46 @@
       mark('obArrive');
     }
     out.push(...transportIntro);
-    const mode=pathwaySupportMode(),support=supportSentence("obRespRelation",S.obRespType,
-      S.outborn?"during transport":S.pathway==="nursery"?"in the baby room":"before admission",{
+    const mode=pathwaySupportMode(),relation=raw("obRespRelation"),supportContext=S.outborn?"during transport":S.pathway==="nursery"?"in the baby room":"before admission";
+    const supportSettings={
         device:mode==="o2"?({hood:"an oxygen hood",cannula:"a nasal cannula",mask:"a face mask"})[S.obO2Dev]:"",
         flow:mode==="o2"?raw("obO2Flow"):"",fiO2:["cpap","ppv","ett"].includes(mode)?raw("obFiO2"):"",
-        pip:["ppv","ett"].includes(mode)?raw("obIP"):"",peep:["cpap","ppv","ett"].includes(mode)?raw("obPEEP"):"",rr:mode==="ett"?raw("obRR"):""});
-    if(support)out.push(support);
-    if(mode==="ppv"&&S.obRespStable)out.push("Heart rate and oxygen saturation remained stable during positive-pressure ventilation.");
-    S.courseEvents.filter(e=>!S.outborn||!['outside','arrival'].includes(e.phase)).forEach(e=>out.push(...eventNarrative(e,"course")));
+        pip:["ppv","ett"].includes(mode)?raw("obIP"):"",peep:["cpap","ppv","ett"].includes(mode)?raw("obPEEP"):"",rr:mode==="ett"?raw("obRR"):""};
+    // 「症狀持續而給支持」才用 Because … persisted 接；被動描述（was receiving）或停用不接因果。
+    const supportAction=["o2","cpap","ppv","ett"].includes(mode)&&["new","repeat","changed","settings","continued"].includes(relation);
+    const sxLast=!!sxText&&out[out.length-1]===sxText;
+    let because=[],replaceSx=false;
+    if(supportAction){
+      if(sxLast&&S.pwOnset==="persisted"&&!sxTiming){because=[...S.obSx];replaceSx=true;}
+      else if(repeatedSx.length)because=repeatedSx;
+      else if(!S.obSx.length&&S.pathway==="direct"&&!out.length)because=persistingBirthFindings();
+    }
+    let support=supportSentence("obRespRelation",S.obRespType,contextUsed&&!replaceSx?"":supportContext,supportSettings);
+    // PPV 與「HR／SpO2 穩定」同一句（穩定只在使用者勾選時寫）。
+    if(support&&mode==="ppv"&&S.obRespStable)support=support.replace(/\.$/,", with stable heart rate and oxygen saturation.");
+    if(support&&because.length){
+      support=`Because ${joinAnd(because)} persisted, ${/^[A-Z][A-Z]/.test(support)?support:support[0].toLowerCase()+support.slice(1)}`;
+      if(replaceSx)out[out.length-1]=support;else out.push(support);
+    }else if(support)out.push(support);
+    if(support&&!replaceSx&&!contextUsed)contextUsed=new RegExp(supportContext+"\\b").test(support);
+    S.courseEvents.filter(e=>!S.outborn||!['outside','arrival'].includes(e.phase)).forEach(e=>{
+      const lines=eventNarrative(e,"course");
+      // 轉送途中的後續事件：同段已寫過 During transport 就不再重複時間片語（只動組稿句，不動使用者補充）。
+      if(S.outborn&&e.phase==='transport'&&lines.length&&/^During transport(?:, | (?=at \d))/.test(lines[0])){
+        if(contextUsed)lines[0]=sentence(lines[0].replace(/^During transport(?:, | (?=at \d))/,""));
+        else contextUsed=true;
+      }
+      out.push(...lines);});
     mark('route');
-    if(S.outborn)out.push(`Subsequently, the infant was transferred from ${transferSource||"____"} to our hospital${closeAdmission?` and admitted to ${destPhrase()}${admissionWhen()} for further evaluation and management`:""}${closeAdmission&&diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
-    else if(closeAdmission)out.push(`${brAbnormal?"The infant was therefore admitted":"Subsequently, the infant was admitted"} to ${destPhrase()}${admissionWhen()} for further evaluation and management${diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
+    // 院內模板結語：Under the tentative diagnosis of …, the infant was admitted to … for further evaluation and treatment.
+    // 出生後入院（direct／nursery／outborn）不寫入院日期；診斷空白時沿用原本不寫診斷的句型。
+    const underDx=diagnosis?`Under the tentative diagnosis of ${diagnosis}, the infant`:"";
+    if(S.outborn)out.push(closeAdmission
+      ?`${underDx||"Subsequently, the infant"} was transferred from ${transferSource||"____"} to our hospital and admitted to ${destPhrase()} for further evaluation and treatment.`
+      :`Subsequently, the infant was transferred from ${transferSource||"____"} to our hospital.`);
+    else if(closeAdmission)out.push(underDx
+      ?`${underDx} was ${brAbnormal?"therefore ":""}admitted to ${destPhrase()} for further evaluation and treatment.`
+      :`${brAbnormal?"The infant was therefore admitted":"Subsequently, the infant was admitted"} to ${destPhrase()} for further evaluation and treatment.`);
     // 入院時呼吸支持＋入院時狀況合併成一句。closeAdmission===false（Acceptance 呼叫）時不寫呼吸支持：
     // Acceptance 自己有「At acceptance, the infant is receiving…」句，且靠 startsWith(`On admission to X, `) 把這句 pop 走。
     const assessment=admissionAssessmentSentence(closeAdmission);if(assessment)out.push(assessment);
@@ -3703,17 +3755,19 @@
     // 改法6：was delivered 消 newborn-was-born 同根重複;成熟度詞純 GA 推導(WHO 分帶),GA 空→無詞
     // 語序採審查修正:delivered in {地點} 緊鄰,避免 "to a mother in {地點}" 被讀成修飾 mother
     const matW=gw?(gw<28?"extremely preterm":gw<32?"very preterm":gw<34?"moderately preterm":gw<37?"late preterm":gw>=42?"post-term":"term"):"";
-    let s1=`This ${matW?sl(matW)+" ":""}${sex?sl(sex):ph("____")} infant, now on day of life ${dolN?sl(dolN):ph("__")}, was delivered at ${birthPlace}${bornWhen?" "+sl(bornWhen):""} via ${via?sl(via):ph("____")}`;
-    if(S.delivery==="cs") s1+=` for ${csR?sl(csR):ph("____")}`;
-    s1+=`, at a gestational age of ${gw?sl(gaTxt):ph(gaTxt)}`;
+    // 2026-10-05 院內模板骨架：嬰兒、母親、GA、BW、出生時地與生產方式合成一句（各片段缺值規則沿用舊句）。
+    const gaDisp=(gw||"__")+(gd&&gd!=="0"?`+${gd}`:"");
+    let s1=`This ${dolN?sl(dolN):ph("__")}-day-old ${matW?sl(matW)+" ":""}${sex?sl(sex):ph("____")} newborn was born to a ${matAge?sl(matAge):ph("__")}-year-old G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}${A?`A${sl(A)}`:""} mother`;
+    s1+=` at a gestational age (GA) of ${gw?sl(gaDisp):ph(gaDisp)} weeks with a birth weight (BW) of ${V("bw")?sl(bw):ph(bw)} g (${S.growth==="?"?ph("____"):sl(S.growth,S.growth==="SGA"||S.growth==="LGA")})`;
+    s1+=`${bornWhen?" "+sl(bornWhen):""} at ${birthPlace} via ${via?sl(via):ph("____")}`;
+    if(S.delivery==="cs") s1+=` due to ${csR?sl(csR):ph("____")}`;
     P0.push(s1+".");
-    P0.push(`Birth weight (BW) was ${V("bw")?sl(bw):ph(bw)} g (${S.growth==="?"?ph("____"):sl(S.growth,S.growth==="SGA"||S.growth==="LGA")}).`);
     let edc=inV("edc");
     // 空白→由 GA 反推，基準必須是出生日而非今天（補打 note 時 today 會讓 EDC 整整偏移日齡天數）
     {const bdRaw=inV("birthDate");
      if(!edc&&gw&&bdRaw){const rem=280-(gw*7+parseInt(gd||"0",10)); const d=new Date(bdRaw+"T00:00:00"); d.setDate(d.getDate()+rem);
        edc=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}}
-    P1.push(`The mother was ${matAge?sl(matAge):ph("__")} years old (G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}${A?`A${sl(A)}`:""}), with an estimated due date of ${edc?sl(fmtDate(edc)):ph("____")}.`);
+    P0.push(`The expected date of confinement was ${edc?sl(fmtDate(edc)):ph("____")}.`);
     const anc=inV("ancPlace"), isMMH=HOME_CAMPUSES.some(c=>c.value===anc);
     const usFind=clause("usFindings");
     // 產檢規律性與超音波各自可「未提及」；能合則合成一句，皆未提及則整句不出
@@ -3765,13 +3819,15 @@
       } else if(S.r[k]?.reviewed)cNeg.push(label);
     });
     const uriOn=S.r.uri&&S.r.uri.on;
+    // 模板句型 There was no … during pregnancy；PPH 在產後，清單含 PPH 時不加 during pregnancy。
+    const noComplications=list=>`There was no ${sl(joinOr(list))}${list.some(x=>/\(PPH\)/.test(x))?"":" during pregnancy"}.`;
     const unknownMaternal=complSet.filter(([k])=>S.r[k]?.status==='unknown').map(([,label])=>label);
     if(unknownMaternal.length)P1.push(`Maternal history regarding ${sl(joinAnd(unknownMaternal))} was unavailable.`);
     // 沒有產檢不等於每一項都未驗；保留未記錄的病史範圍，不補陰性或未檢查的事實。
     if(S.ancReg==="none"){
       if(uriOn)P1.push(`The mother had ${sl("upper respiratory tract infection (URI) symptoms",true)} during pregnancy.`);
       if(cPos.length)P1.push(`Maternal history was notable for ${sl(joinAnd(cPos),true)}.`);
-      if(cNeg.length)P1.push(`No ${sl(joinOr(cNeg))} was reported in the maternal history.`);
+      if(cNeg.length)P1.push(noComplications(cNeg));
       const undocumented=complSet.filter(([k])=>!S.r[k]?.on&&!S.r[k]?.reviewed&&S.r[k]?.status!=='unknown').map(([,label])=>label);
       if(undocumented.length)P1.push(`The maternal history regarding ${sl(joinAnd(undocumented))} was not documented.`);
     }else if(cPos.length){
@@ -3785,7 +3841,7 @@
         ? `Maternal history included ${sl("upper respiratory tract infection (URI) symptoms",true)} during pregnancy, with no reported ${sl(joinOr(cNeg))}.`
         : `Maternal history included ${sl("upper respiratory tract infection (URI) symptoms",true)} during pregnancy.`);
     }else if(cNeg.length){
-      P1.push(`No ${sl(joinOr(cNeg))} was reported in the maternal history.`);
+      P1.push(noComplications(cNeg));
     }
     if(S.r.pre.on&&S.r.pre.val==="highrisk") P1.push(`The mother was at ${sl("high risk for preeclampsia",true)}, and ${sl("low-dose aspirin was administered for prophylaxis")}.`);
 
@@ -3827,11 +3883,12 @@
     // Rubella 是 IgG（抗體）不是 IgM（感染）：reactive=有免疫力(正常)，nonreactive=無免疫力(產後需補接種)
     // 緊跟血清之後（改法4 移位：感染篩檢集中一處）
     {const rv=S.scr.rubella;
-     if(rv==="pos")P1.push(`Maternal rubella IgG was ${sl("reactive")}.`);
-     else if(rv==="nd")P1.push(`Maternal rubella IgG was ${sl("nonreactive",true)}.`);
-     else if(rv==="pend")P1.push(`The maternal rubella IgG result was ${sl("pending",true)}.`);
-     else if(rv==="untested")P1.push(`Maternal rubella IgG testing was ${sl("not performed",true)}.`);
-     else if(rv==="unknown")P1.push(`The maternal rubella IgG result was ${sl("unavailable",true)}.`);}
+     const rub={pos:`rubella IgG was ${sl("reactive")}`,nd:`rubella IgG was ${sl("nonreactive",true)}`,
+       pend:`the rubella IgG result was ${sl("pending",true)}`,untested:`rubella IgG testing was ${sl("not performed",true)}`,
+       unknown:`the rubella IgG result was ${sl("unavailable",true)}`}[rv];
+     // 四項篩檢全陰性句之後緊接 rubella → 併成 …were all negative, and rubella IgG was …（院內模板）。
+     if(rub&&allScreenNeg)P1[P1.length-1]=P1[P1.length-1].replace(/\.$/,`, and ${rub}.`);
+     else if(rub)P1.push(`${rv==="pend"||rv==="unknown"?"The maternal":"Maternal"} ${rub.replace(/^the /,"")}.`);}
 
     // ── 家族史＋母親習慣（改法5：兩組全陰合併一句；有陽性 → notable for 對比句）──
     const parSet=[["thal","thalassemia"],["g6pd","G6PD deficiency"],["thyroid","thyroid disease"]];
@@ -3867,7 +3924,10 @@
     }
 
     // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar +（外接轉入過程）+ 入院 ──
-    if(admR||(!S.outborn&&S.pathway!=="readmit")) P2.push(`Prior to delivery, the mother was admitted for ${admR?sl(admR):ph("____")}.`);
+    // 第二段固定以媽媽這次住院開頭；本院出生才寫 to our hospital（外接／E 的出生院所未必是本院）。
+    const ourBirth=!S.outborn&&S.pathway!=="readmit";
+    if(admR||ourBirth) P2.push(`The mother was admitted${ourBirth?" to our hospital":""} for ${admR?sl(admR):ph("____")}.`);
+    const motherAdmissionIdx=P2.length-1;
     // 產程事件依時序輸出：破水 → 安胎 → 產前類固醇 → MgSO4 → 產程 IAP → 生產
     // （舊順序是 IAP→類固醇→生產→破水，會讓「剖腹順利」出現在「破水發生於生產前」之前）
     const pr=S.r.prom;
@@ -3880,7 +3940,7 @@
       const course=st.extra.includes("incomplete")?"an incomplete course":st.extra.includes("complete")?"a complete course":"";
       const stTxt=`antenatal betamethasone (${sl((st.val||"?")+" dose"+(st.val==="1"?"":"s"))}${course?", "+sl(course):""}) was administered for fetal lung maturation${sd?` on ${sl(sd)}`:""}`;
       // 前句恰為母入院句（非外接、無 PROM/安胎）→ 併句消孤立（改法7）；否則獨立句
-      if(!S.outborn&&!pr.on&&S.toco==="none"&&P2.length&&P2[P2.length-1].startsWith("Prior to delivery, the mother was admitted"))
+      if(!S.outborn&&!pr.on&&motherAdmissionIdx>=0&&P2.length-1===motherAdmissionIdx)
         P2[P2.length-1]=P2[P2.length-1].replace(/\.$/,`, and ${stTxt}.`);
       else P2.push(`${stTxt.charAt(0).toUpperCase()+stTxt.slice(1)}.`);}
     if(S.mgso4!=="none") P2.push(`Before delivery, MgSO4 was administered for ${sl(S.mgso4==="neuro"?"fetal neuroprotection":"seizure prophylaxis")}.`);
@@ -3983,7 +4043,8 @@
     // 開頭摘要、母體／產前背景、產程與產房處置、入院前經過分段；只有入院結語時併回產程段。
     const courseParts=P2.length-postnatalStart>1?[P2.slice(0,postnatalStart),P2.slice(postnatalStart)]:[P2];
     const [pedDiagram,pedNotes]=buildPedigree().split('\n\n');
-    writeNote([P0.map(t=>noteScope(t,'birth:info')),P1.map(t=>noteScope(t,'prenatal')),...courseParts].filter(p=>p.length).map(p=>p.join(" ")).join("\n\n")
+    // 院內模板：出生摘要與母體／產前背景同一段（開場句已帶出 mother，後句的 she 才有先行詞）。
+    writeNote([[...P0.map(t=>noteScope(t,'birth:info')),...P1.map(t=>noteScope(t,'prenatal'))],...courseParts].filter(p=>p.length).map(p=>p.join(" ")).join("\n\n")
       + "\n\n" + noteScope("Tentative diagnosis:\n" + DX.map(d=>"# "+sl(d.f)).join("\n"),'review')
       + `\n\nMaternal chart number: ${chartNo?sl(chartNo):ph("____")}\nPedigree:`
       + `\n<span class="pedigree">${pedigreeHtml(pedDiagram)}</span>\n\n<span class="pedigree-notes">${esc(pedNotes)}</span>`,"html");   // 圖保持等寬，圖下註記可換行；自由文字一律 escape。

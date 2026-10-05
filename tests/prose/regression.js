@@ -492,7 +492,7 @@ test('destination is a placeholder until chosen, then names the chosen unit in b
   assert.doesNotMatch(none.admission,/our NICU|our NBC|baby room/);
   assert.equal(none.plan,'','Unselected destination must not default to NICU orders');
   const nbc=notes([seg('dest','NBC')]);
-  assert.match(nbc.admission,/admitted to our NBC(?: on [^.]+)? for further evaluation and management/);
+  assert.match(nbc.admission,/admitted to our NBC for further evaluation and treatment/);
   includes(nbc.acceptance,'admitted to our NBC');
   assert.doesNotMatch(nbc.admission,/our NICU/);
   const picu=notes([seg('dest','PICU')]);
@@ -555,7 +555,7 @@ test('story C: baby-room work-up findings are recorded once and justify the admi
     pick('msel','brFindings','bandemia'),pick('msel','brFindings','crp'),set('brCrp','12.3')]);
   includes(admission,'complete blood count with differential');
   includes(admission,'were obtained in the baby room, which showed bandemia and an elevated CRP level (12.3 mg/dL).');
-  includes(admission,'The infant was therefore admitted to our NBC');
+  includes(admission,'Under the tentative diagnosis of suspected neonatal sepsis, the infant was therefore admitted to our NBC');
   assert.doesNotMatch(admission,/Subsequently, the infant was admitted/);
   includes(acceptance,'bandemia');
   assert.equal((admission.match(/bandemia/g)||[]).length,1,'the finding is stated once');
