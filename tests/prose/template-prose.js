@@ -1,4 +1,4 @@
-// 2026-10-05 院內模板骨架回歸（A：文案回到模板骨架）。
+// 2026-10-05 院內模板骨架回歸（A：文案回到模板骨架；B：住院醫師手打的洞）。
 // 全部是虛構資料；固定日期 2026-08-30（DOL 1 = 出生當天）。
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -154,6 +154,58 @@ test('A4 Acceptance still owns its admission sentence',({story,seg,msel,note})=>
   const acc=note('acc');
   assert.match(acc,/The infant was admitted to our NICU on August 30, 2026 with respiratory distress for further evaluation and treatment\./);
   assert.doesNotMatch(acc,/Under the tentative diagnosis/);
+});
+
+// ── B：補住院醫師手打的洞 ──
+test('B1 maternal other history is normalized, escaped once and follows the complications',({input,body,get})=>{
+  input('matOtherHx','  # Charcot-Marie-Tooth disease with normal function and without medication.  ');
+  assert.match(body(),/or maternal fever\. The mother had a history of Charcot-Marie-Tooth disease with normal function and without medication\. Maternal group B/);
+  input('matOtherHx','A & B <x>');
+  assert.match(body(),/The mother had a history of A & B <x>\./);
+  assert.match(get('#note').innerHTML,/history of <span class="slot abn">A &amp; B &lt;x&gt;<\/span>\./,'escaped exactly once');
+  input('matOtherHx','   ');assert.doesNotMatch(body(),/had a history of/);
+});
+test('B2 birth signs follow the breathing clause as nouns',({story,input,msel,body})=>{
+  story('A');input('birthBreathing','labored');msel('birthSigns','cyanosis');
+  assert.match(body(),/At birth, the infant had labored breathing, with cyanosis\./);
+  msel('birthSigns','grunting');
+  assert.match(body(),/At birth, the infant had labored breathing, with grunting and cyanosis\./);
+  input('birthBreathing','');
+  assert.match(body(),/At birth, grunting and cyanosis were noted\./);
+  msel('birthSigns','grunting');msel('birthSigns','cyanosis');msel('birthSigns','retractions');
+  assert.match(body(),/At birth, retractions were noted\./);
+  input('birthHR','90');
+  assert.match(body(),/At birth, retractions were noted, with a heart rate of 90 beats\/min\./);
+});
+test('B3 the delivery-room end assessment writes persisting findings once',({story,seg,input,msel,body,note})=>{
+  story('A');seg('delivery','cs');input('birthBreathing','labored');msel('birthSigns','cyanosis');
+  input('birthFinalBreathing','labored');msel('birthFinalSigns','grunting');
+  assert.match(body(),/On reassessment in the operating room, labored breathing persisted, with grunting\./);
+  msel('birthFinalSigns','cyanosis');
+  assert.match(body(),/On reassessment in the operating room, labored breathing and cyanosis persisted, with grunting\./);
+  input('birthFinalBreathing','spontaneous');
+  assert.match(body(),/On reassessment in the operating room, cyanosis persisted, and the infant was breathing spontaneously, with grunting\./);
+  msel('birthFinalSigns','cyanosis');msel('birthFinalSigns','grunting');input('birthFinalBreathing','labored');input('birthFinalSupport','cpap');
+  assert.match(body(),/labored breathing persisted, and the infant was receiving CPAP\./);
+  assert.match(note('acc'),/labored breathing persisted, and the infant was receiving CPAP\./,'Acceptance shares the delivery-room narrative');
+});
+test('B3 a timed end assessment with only signs is not reported as unspecified',({story,input,msel,body})=>{
+  story('A');input('birthFinalMin','10');msel('birthFinalSigns','retractions');
+  assert.match(body(),/On reassessment at 10 minutes of age, retractions were noted\./);
+  assert.doesNotMatch(body(),/findings were not specified/);
+});
+test('B4 signs follow the labored-breathing precedent downstream: narrative and summaries only',({story,seg,input,msel,get,note})=>{
+  story('A');seg('dest','NICU');input('gaW','39');msel('birthSigns','grunting');msel('birthFinalSigns','cyanosis');
+  assert.doesNotMatch(get('#dx').textContent,/Respiratory distress/,'labored breathing never created a diagnosis; signs do not either');
+  assert.match(get('[data-stop-toggle="birth"] .sum').textContent,/Grunting/);
+  assert.match(get('[data-stop-toggle="drEnd"] .sum').textContent,/Cyanosis/);
+  note('plan');
+});
+test('B pre-admission symptoms already written at birth are not relisted',({story,input,msel,choose,seg,body})=>{
+  story('A');input('birthFinalBreathing','labored');msel('birthFinalSigns','grunting');msel('obSx','grunting');
+  assert.doesNotMatch(body(),/grunting was noted/);
+  choose('obRespRelation','new');seg('obRespType','cpap');
+  assert.match(body(),/Because grunting persisted, CPAP was initiated before admission\./);
 });
 
 let failed=0;

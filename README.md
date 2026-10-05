@@ -66,6 +66,8 @@
 - **第二段開頭固定是媽媽這次住院**：本院出生寫 `The mother was admitted to our hospital for {原因}.`；外接／E 只在有填原因時寫 `The mother was admitted for {原因}.`（不推定在本院待產）。不再寫 `Prior to delivery,`；類固醇仍併入這句。
 - **出生後到入院去重**：入院前症狀若已在出生觀察或產房結束評估寫過（且不是選「新出現／再次出現」），不再重列；同一段的 before admission／during transport／in the baby room 只寫一次。症狀持續且有實際呼吸處置（開始、持續、換方式、調整設定、再開始）時寫 `Because {症狀} persisted, …`；只記錄「當時使用」的被動句不接因果。直接入院而入院前沒選症狀時，只有出生當下與產房結束評估都記錄到的同一異常呼吸才能當 persisted 的依據。PPV 與已勾選的 HR／SpO₂ 穩定併成 `…, with stable heart rate and oxygen saturation.`。
 - **結語**：`Under the tentative diagnosis of {dx}, the infant was admitted to {去處} for further evaluation and treatment.`；外接寫 `…, the infant was transferred from {來源} to our hospital and admitted to {去處} …`；嬰兒室檢查異常保留 therefore。出生後入院（直接、嬰兒室、外接）不寫入院日期；E 維持原句與日期。診斷空白沿用原本不寫診斷的句型。Acceptance 自己的入院句不變，Acceptance 與 Admission 共用的出生與入院前敘述同步套用上述去重。
+- **母親其他病史**：第 2 區「母親其他病史」選填英文欄，輸出 `The mother had a history of {文字}.`，接在併發症句之後；去頭尾空白、開頭 `#`、結尾句點，只 escape 一次，空白不出句。只進 Admission。
+- **出生當下／產房結束評估的呼吸徵象**（cyanosis、grunting、retractions，可多選）：接在呼吸子句後用名詞形 `At birth, the infant had labored breathing, with grunting and cyanosis.`；沒記錄呼吸時寫 `At birth, grunting and cyanosis were noted.`。產房結束評估與出生當下相同的異常呼吸／徵象寫 `…, labored breathing persisted, with grunting.`，只有新出現或不同的照一般寫法。下游比照 labored 呼吸值：只進敘述（Admission／Acceptance 共用）與階段摘要，不新增 DX、NI plan 或 Acceptance 規則；徵象也參與上方的入院前去重。
 - `tests/prose/check.js` 的 The/There 句首比例不計模板指定的句首（EDC、There was no 併發症、媽媽住院／再入院等）；其餘句子照舊受限。驗收在 `tests/prose/template-prose.js`。
 
 ## NI plan 讀 admission 的哪些東西（2026-09-23）

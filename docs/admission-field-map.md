@@ -130,3 +130,5 @@ screen_onset、care_onset 是草稿結構的非臨床佔位，保持隱藏且不
 | admReason | 第二段首句 | 本院出生才寫 to our hospital；外接／E 無原因不出句。 |
 | obSx、pwOnset、obRespRelation／obRespType、obRespStable | 入院前段 | 已在出生／產房結束評估寫過的同一所見不重列；Because … persisted 只用於有實際處置動作的支持；時間片語同段一次。 |
 | 結語 | Under the tentative diagnosis of … | A–D 不寫入院日期；E 不變；Acceptance 入院句不變。 |
+| matOtherHx | `The mother had a history of …`（併發症句之後） | 自由英文；去 `#`／句點；空白不出句；只進 Admission。 |
+| birthSigns、birthFinalSigns | 出生／產房結束評估的 with … 名詞片語；相同者 persisted | 比照 labored：不進 DX／plan 規則；參與入院前症狀去重。 |

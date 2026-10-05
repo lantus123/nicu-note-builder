@@ -791,6 +791,8 @@
         <input class="tin" id="niptFind" placeholder="高風險項目（如 trisomy 21）"></div></div>
     <p class="man-h" style="margin:16px 0 7px">病史（有 risk 才展開）</p>
     <div id="risks"></div>
+    <div class="field" style="margin-top:10px"><label class="lab" for="matOtherHx">母親其他病史 <span class="q">（選填，英文；輸出 The mother had a history of …）</span></label>
+      <input class="tin" id="matOtherHx" placeholder="例：hypothyroidism under regular follow-up"></div>
     <p class="man-h" style="margin:15px 0 7px">雙親病史（無／母／父／雙親）</p>
     <div class="field"><span class="lab">地中海型貧血 <span class="q">Thalassemia</span></span>
       <div class="seg" data-par="thal"><button data-v="none">無</button><button data-v="mother">母親</button><button data-v="father">父親</button><button data-v="both">雙親</button></div></div>
@@ -889,6 +891,8 @@
         <div class="field"><label class="lab" for="birthHR">心率 <span class="q">（選填）</span></label>
           <div class="num"><input type="number" id="birthHR" min="0" placeholder="未記錄"><span class="u">/min</span></div></div>
       </div>
+      <div class="field"><span class="lab">呼吸徵象 <span class="q">（多選，有才勾）</span></span>
+        <div class="seg risk" data-msel="birthSigns"><button type="button" data-on data-v="cyanosis">Cyanosis</button><button type="button" data-on data-v="grunting">Grunting</button><button type="button" data-on data-v="retractions">Retractions</button></div></div>
       <div class="field"><label class="lab" for="birthInitialNote">其他出生觀察 <span class="q">（選填，英文）</span></label><input class="tin" id="birthInitialNote" placeholder="補充未涵蓋的實際觀察"></div>
     </div>
     <div class="clinical-stage">
@@ -952,6 +956,8 @@
         <div class="field"><label class="lab" for="birthFinalSupport">當時呼吸支持</label>
           <select class="tin" id="birthFinalSupport"><option value="">未記錄</option><option value="room">Room air</option><option value="o2">O₂</option><option value="cpap">CPAP</option><option value="ppv">PPV</option><option value="ett">ETT / Mechanical ventilation</option></select></div>
       </div>
+      <div class="field"><span class="lab">呼吸徵象 <span class="q">（多選，有才勾；與出生當下相同會寫 persisted）</span></span>
+        <div class="seg risk" data-msel="birthFinalSigns"><button type="button" data-on data-v="cyanosis">Cyanosis</button><button type="button" data-on data-v="grunting">Grunting</button><button type="button" data-on data-v="retractions">Retractions</button></div></div>
       <div class="field"><label class="lab" for="birthFinalNote">結束時補充 <span class="q">（選填，英文）</span></label><input class="tin" id="birthFinalNote" placeholder="補充當時的實際狀況"></div>
     </div>
             </div>
@@ -1804,7 +1810,7 @@
            resus:"none",resp:"",acceptanceResp:"",acceptanceWeightMode:"admission",surfactant:false,birthEvents:[],courseEvents:[],nextEventId:1,
            routeDrafts:{},continuitySignatures:{},lastRemoved:null,birthNegConfirmed:false,prenatalEdited:{},
            amnio:"na",nipt:"na",mgso4:"none",toco:"none",iap:"none",us:"normal",ancReg:"regular",
-           fd:false,doic:false,msaf:false,msafGrade:"",
+           fd:false,doic:false,msaf:false,msafGrade:"",birthSigns:[],birthFinalSigns:[],   // 出生當下／產房結束評估的呼吸徵象（多選，空＝不寫）
            // pathway 不預設：預選「直接入院」＝零點擊就斷言路徑（2026-09-19 住院醫師混亂盤點）
            pathway:"",outborn:false,obRespType:"",obRespStable:false,obSx:[],brEval:[],brWorkup:[],brFindings:[],obO2Dev:"",   // 支持與裝置皆不預設，避免寫成未確認事實。
            readmitPrior:"",readmitFeeding:"",readmitSource:"",readmitBaseline:[],readmitProblems:[],readmitJaundiceSigns:[],
@@ -2280,18 +2286,32 @@
   const sentence=s=>s?finish(/^[a-z][A-Z]/.test(s)?s:s[0].toUpperCase()+s.slice(1)):"";
   const activeBirthEvents=()=>S.birthEvents.filter(e=>e.kind==="assessment"||raw("birthResusStatus")==="performed");
   const birthHasAction=()=>activeBirthEvents().some(e=>e.kind!=="assessment");
-  const readAssessment=prefix=>({breathing:raw(prefix+"Breathing"),tone:raw(prefix+"Tone"),hr:raw(prefix+"HR"),support:raw(prefix+"Support"),note:raw(prefix==="birth"?"birthInitialNote":prefix+"Note")});
-  function assessmentText(a,lead){
-    const parts=[];
-    const spontaneousInAir=a.breathing==="spontaneous"&&a.support==="room";
-    if(BREATHING[a.breathing])parts.push(BREATHING[a.breathing]+(spontaneousInAir?" in room air":""));
+  const readAssessment=prefix=>({breathing:raw(prefix+"Breathing"),tone:raw(prefix+"Tone"),hr:raw(prefix+"HR"),support:raw(prefix+"Support"),note:raw(prefix==="birth"?"birthInitialNote":prefix+"Note"),signs:[...(S[prefix+"Signs"]||[])]});
+  // 呼吸徵象固定輸出順序（與模板範例 with grunting and cyanosis 一致）；obSx 對應值供入院前去重。
+  const SIGN_ORDER=["grunting","retractions","cyanosis"],SIGN_TO_SX={grunting:"grunting",retractions:"subcostal retractions",cyanosis:"cyanosis"};
+  // prior＝同一出生經過的前一個評估點（產房結束評估傳出生當下）：相同的異常呼吸／徵象寫 persisted，只有新出現或不同的照一般寫法。
+  function assessmentText(a,lead,prior){
+    const parts=[],persisted=[];
+    const signs=SIGN_ORDER.filter(x=>(a.signs||[]).includes(x));
+    let breathing=a.breathing,newSigns=signs;
+    if(prior){
+      if(breathing&&breathing===prior.breathing&&BREATHING_NOUN[breathing]){persisted.push(BREATHING_NOUN[breathing]);breathing="";}
+      persisted.push(...signs.filter(x=>(prior.signs||[]).includes(x)));newSigns=signs.filter(x=>!(prior.signs||[]).includes(x));
+    }
+    const spontaneousInAir=breathing==="spontaneous"&&a.support==="room";
+    if(BREATHING[breathing])parts.push(BREATHING[breathing]+(spontaneousInAir?" in room air":""));
     if(TONE[a.tone])parts.push(TONE[a.tone]);
     if(SUPPORT[a.support]&&!spontaneousInAir)parts.push(a.support==="room"?"was breathing room air":`was receiving ${SUPPORT[a.support]}`);
     const hr=a.hr!==undefined&&a.hr!==""?`a heart rate of ${a.hr} beats/min`:"";
     // 「had labored breathing and had poor muscle tone」→ 同一個開頭動詞（had／was）只留第一次（2026-09-20 順流程時抓到）
     const lead0=(parts[0]||"").match(/^(had|was) /); const deduped=parts.map((x,i)=>i>0&&lead0&&x.startsWith(lead0[0])?x.slice(lead0[0].length):x);
-    const finding=parts.length?joinAnd(deduped)+(hr?`, with ${hr}`:""):hr?`had ${hr}`:"";
-    return [finding?`${lead}, the infant ${finding}.`:"",sentence(a.note||"")].filter(Boolean);
+    // 徵象用名詞形接在呼吸子句之後：…had labored breathing, with grunting and cyanosis.
+    const withList=[...newSigns,hr].filter(Boolean),withTxt=withList.length?`, with ${joinAnd(withList)}`:"";
+    const finding=persisted.length?`${lead}, ${joinAnd(persisted)} persisted${parts.length?`, and the infant ${joinAnd(deduped)}`:""}${withTxt}.`
+      :parts.length?`${lead}, the infant ${joinAnd(deduped)}${withTxt}.`
+      :newSigns.length?`${lead}, ${joinAnd(newSigns)} ${pluralFinding(newSigns)?"were":"was"} noted${hr?`, with ${hr}`:""}.`
+      :hr?`${lead}, the infant had ${hr}.`:"";
+    return [finding,sentence(a.note||"")].filter(Boolean);
   }
   function eventSettings(e){
     const settings=[];
@@ -2353,6 +2373,7 @@
   // 且故事 B 的會診句寫在急救之後，與時間線站序矛盾 ⇒ 拆成 birthObservation／birthCourse 兩段由呼叫端夾 Apgar。
   function birthObservation(){return assessmentText(readAssessment("birth"),"At birth");}
   function birthNarrative(){return [...birthObservation(),...birthCourse()];}
+  function maternalOtherHistory(){return raw("matOtherHx").replace(/^#+\s*/,"").replace(/[.。\s]+$/,"").trim();}
   // 入院前症狀（obSx 值）中，已在出生觀察或產房結束評估寫過的同一所見；E 的出生史不參與。
   function birthRecordedFindings(){
     if(S.pathway==="readmit")return [];
@@ -2360,13 +2381,15 @@
     for(const prefix of ["birth","birthFinal"]){
       const a=readAssessment(prefix);
       if(a.breathing==="apnea")found.add("apnea");
+      a.signs.forEach(x=>found.add(SIGN_TO_SX[x]));
     }
     return [...found];
   }
   // 出生當下與產房結束評估都記錄到的同一異常呼吸所見（名詞形，供 persisted 句使用）。
   function persistingBirthFindings(){
     const a=readAssessment("birth"),f=readAssessment("birthFinal");
-    return a.breathing&&a.breathing===f.breathing&&BREATHING_NOUN[a.breathing]?[BREATHING_NOUN[a.breathing]]:[];
+    return [...(a.breathing&&a.breathing===f.breathing&&BREATHING_NOUN[a.breathing]?[BREATHING_NOUN[a.breathing]]:[]),
+      ...SIGN_ORDER.filter(x=>a.signs.includes(x)&&f.signs.includes(x))];
   }
   function recordNoteScope(scopes,out,key,start=0){if(scopes)for(let i=start;i<out.length;i++)scopes[i]=key;}
   function noteScope(html,key){return key?`<span class="note-scope" data-note-phase="${key}">${html}</span>`:html;}
@@ -2382,8 +2405,8 @@
     activeBirthEvents().forEach(e=>out.push(...eventNarrative(e,"birth")));
     recordNoteScope(scopes,out,'birth:dr',actionStart);const reassessmentStart=out.length;
     const time=raw("birthFinalMin");
-    const final=readAssessment("birthFinal"),findings=assessmentText(final,time?`On reassessment at ${time} ${unitLabel(time,"minute")} of age`:`On reassessment in ${deliveryPlace()}`);
-    if(time&&!final.breathing&&!final.tone&&!final.hr&&!final.support)out.push(`A delivery-room reassessment was recorded at ${time} ${unitLabel(time,"minute")} of age${final.note?".":"; the findings were not specified."}`);
+    const final=readAssessment("birthFinal"),findings=assessmentText(final,time?`On reassessment at ${time} ${unitLabel(time,"minute")} of age`:`On reassessment in ${deliveryPlace()}`,readAssessment("birth"));
+    if(time&&!final.breathing&&!final.tone&&!final.hr&&!final.support&&!final.signs.length)out.push(`A delivery-room reassessment was recorded at ${time} ${unitLabel(time,"minute")} of age${final.note?".":"; the findings were not specified."}`);
     out.push(...findings);
     recordNoteScope(scopes,out,'birth:drEnd',reassessmentStart);
     return out;
@@ -3096,12 +3119,12 @@
     if(bridge){const initial=readAssessment("birth"),parts=[];
       if(initial.breathing)parts.push(`出生：${document.getElementById("birthBreathing").selectedOptions[0].textContent}`);
       if(initial.tone)parts.push(`出生肌張力：${document.getElementById("birthTone").selectedOptions[0].textContent}`);
-      if(initial.hr)parts.push(`出生 HR ${initial.hr}/min`);if(initial.note)parts.push(initial.note);
+      if(initial.hr)parts.push(`出生 HR ${initial.hr}/min`);if(initial.signs.length)parts.push(`出生徵象：${initial.signs.join("、")}`);if(initial.note)parts.push(initial.note);
       if(active.length)parts.push(active.map(e=>EVENT_NAMES[e.kind]).join(" → "));
       else if(raw("birthResusStatus")==="none")parts.push("已確認無需急救");
       if(final.breathing)parts.push(`最後呼吸：${document.getElementById("birthFinalBreathing").selectedOptions[0].textContent}`);
       if(final.tone)parts.push(`最後肌張力：${document.getElementById("birthFinalTone").selectedOptions[0].textContent}`);
-      if(final.hr)parts.push(`HR ${final.hr}/min`);if(final.support)parts.push(`最後支持：${SUPPORT[final.support]}`);
+      if(final.hr)parts.push(`HR ${final.hr}/min`);if(final.signs.length)parts.push(`最後徵象：${final.signs.join("、")}`);if(final.support)parts.push(`最後支持：${SUPPORT[final.support]}`);
       if(raw("birthFinalMin"))parts.push(`最後評估：生後 ${raw("birthFinalMin")} 分鐘`);if(final.note)parts.push(final.note);
       bridge.textContent=parts.join(" → ")||"產房狀況尚未記錄。前段摘要會顯示在這裡，不會自動判定正常或穩定。";}
     [["birthReview",birth],["pathwayReview",path]].forEach(([id,items])=>{const el=document.getElementById(id);if(el){fillReview(id,items);el.hidden=!items.length||(id==='pathwayReview'&&S.pathway==='readmit');}});
@@ -3132,10 +3155,10 @@
     const j=a=>a.filter(Boolean).join(" · "), active=activeBirthEvents();
     switch(id){
       case "standby":return j([mselTxt("pwSbR"),raw("pwSbRIn")]);
-      case "birth":return j([optTxt("birthBreathing"),optTxt("birthTone"),raw("birthHR")&&`HR ${raw("birthHR")}`,raw("birthInitialNote"),S.fd&&"Fetal distress",S.doic&&`DOIC${raw("doicMin")?` ${raw("doicMin")} 分`:""}`,S.msaf&&"MSAF",S.birthNegConfirmed&&"已確認 FD／DOIC／MSAF 未發生"]);
+      case "birth":return j([optTxt("birthBreathing"),optTxt("birthTone"),raw("birthHR")&&`HR ${raw("birthHR")}`,mselTxt("birthSigns"),raw("birthInitialNote"),S.fd&&"Fetal distress",S.doic&&`DOIC${raw("doicMin")?` ${raw("doicMin")} 分`:""}`,S.msaf&&"MSAF",S.birthNegConfirmed&&"已確認 FD／DOIC／MSAF 未發生"]);
       case "consult":return j([raw("pwConsultReason"),raw("pwConsultH")&&`生後 ${raw("pwConsultH")} 小時`]);
       case "dr":return active.length?active.map(e=>EVENT_NAMES[e.kind]).join(" → "):raw("birthResusStatus")==="none"?"已確認無需急救":raw("birthResusStatus")==="performed"?"有施作（尚未新增項目）":"";
-      case "drEnd":return j([optTxt("birthFinalSupport"),raw("birthFinalMin")&&`生後 ${raw("birthFinalMin")} 分`,optTxt("birthFinalBreathing"),optTxt("birthFinalTone"),raw("birthFinalHR")&&`HR ${raw("birthFinalHR")}`,raw("birthFinalNote")]);
+      case "drEnd":return j([optTxt("birthFinalSupport"),raw("birthFinalMin")&&`生後 ${raw("birthFinalMin")} 分`,optTxt("birthFinalBreathing"),optTxt("birthFinalTone"),raw("birthFinalHR")&&`HR ${raw("birthFinalHR")}`,mselTxt("birthFinalSigns"),raw("birthFinalNote")]);
       case "obCare":return j([raw("obFacility"),raw("obTransferFrom")&&raw("obTransferFrom")!==raw("obFacility")&&`轉自 ${raw("obTransferFrom")}`,segTxt("obM1Type"),optTxt("obM1Relation")]);
       case "obConsult":return raw("obReason");
       case "obArrive":return raw("obArrival");
@@ -3697,7 +3720,7 @@
     setCsum("scr",scrPos.length?scrPos.join("・"):naCore?`未填 ${naCore} 項`:"篩檢陰性・Rubella 有抗體",!scrPos.length);}
     const resusN=activeBirthEvents().map(e=>EVENT_NAMES[e.kind]).join(" → "), ev=[];
     if(S.fd)ev.push("fetal distress"); if(S.doic)ev.push("DOIC"); if(S.msaf)ev.push("MSAF");
-    const observations=[raw("birthBreathing"),raw("birthTone"),raw("birthHR"),raw("birthInitialNote"),raw("birthFinalBreathing"),raw("birthFinalTone"),raw("birthFinalHR"),raw("birthFinalMin"),raw("birthFinalSupport"),raw("birthFinalNote")].some(Boolean);
+    const observations=[raw("birthBreathing"),raw("birthTone"),raw("birthHR"),raw("birthInitialNote"),raw("birthFinalBreathing"),raw("birthFinalTone"),raw("birthFinalHR"),raw("birthFinalMin"),raw("birthFinalSupport"),raw("birthFinalNote"),S.birthSigns.length,S.birthFinalSigns.length].some(Boolean);
     const rs=[resusN,...ev].filter(Boolean); setCsum("resus",rs.length?rs.join("・"):raw("birthResusStatus")==="none"?"已確認無需急救":observations?"已記錄出生觀察":"尚未記錄",!rs.length&&!observations);
     // 入院路徑顯隱矩陣（症狀 chip 與階梯 A 為 direct/nursery/consult/outborn 共用；direct 全空＝零句不影響現行輸出）
     const pwSx=["direct","nursery","outborn"].includes(S.pathway);
@@ -3841,6 +3864,8 @@
       P1.push(noComplications(cNeg));
     }
     if(S.r.pre.on&&S.r.pre.val==="highrisk") P1.push(`The mother was at ${sl("high risk for preeclampsia",true)}, and ${sl("low-dose aspirin was administered for prophylaxis")}.`);
+    // 母親其他病史（自由英文）：去頭尾空白、開頭 #、結尾句點；只 escape 一次；空白不出句。
+    {const otherHx=maternalOtherHistory(); if(otherHx)P1.push(`The mother had a history of ${sl(esc(otherHx),true)}.`);}
 
     // ── 母體篩檢（改法4：GBS＋血清全陰 → 窮舉式總括一句；否則 GBS 句照舊、血清區塊移到緊鄰其後）──
     const serTests=[
