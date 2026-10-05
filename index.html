@@ -624,6 +624,8 @@
   .band-node .tm{font-size:11px;line-height:1.35;color:var(--ink-3);font-family:var(--mono);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
   .band-node.warn .nm,.band-node.warn .tm{color:var(--risk)}
   .band-empty{margin:0;padding:6px 12px 2px;font-size:12px;color:var(--ink-3)}
+  .band-seg:has(.band-empty){flex:0 0 auto;width:124px}
+  .band-empty{white-space:nowrap}
   .band-head:focus-visible,.band-node:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
   .flow-band .review-jump-bar{margin-top:8px;padding-top:6px}
   .band-pulse{box-shadow:0 0 0 6px var(--accent-soft);border-radius:10px;transition:box-shadow .5s}
@@ -639,6 +641,54 @@
   .note[data-stage-focus] .note-scope[data-current="true"]{color:var(--doc-ink)}
   .note[data-stage-focus] .note-scope[data-current="false"] *{color:inherit}
   @media(max-width:1179px){.flow-band{margin-bottom:14px}}
+
+  /* 第 2 段確認清單（2026-10-06）：一項一列、寬螢幕多欄；正常值中性、異常值 risk。 */
+  .prenatal-default-info{padding:0;border:0;background:transparent;margin:0 0 10px;font-size:12.5px;line-height:1.6}
+  .pn-compact .prenatal-default-info,#prenatalDefaultStatus{font-weight:500;color:var(--ink-3)}
+  .pn-compact,.pn-compact>.section-content:not([hidden]),#risks.pn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));column-gap:28px;align-items:start}
+  .pn-compact>*,.pn-compact>.section-content>*{grid-column:1/-1}
+  .pn-compact>.pn-row,.pn-compact>.section-content>.pn-row,#risks.pn-grid>.risk-item{grid-column:auto}
+  @media(min-width:700px){.pn-compact>.pn-row.pn-wide,.pn-compact>.section-content>.pn-row.pn-wide{grid-column:span 2}}
+  .pn-compact>.pn-gp{grid-column:auto;margin-bottom:6px}
+  .pn-compact>.pn-row.pn-full,.pn-compact>.section-content>.pn-row.pn-full{grid-column:1/-1}
+  .pn-compact .pn-full .row2{grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:4px 16px}
+  .pn-compact .pn-full .row2 .lab{margin-bottom:4px;font-size:12.5px}
+  .pn-compact .pn-full>.man-h{margin:2px 0 0;font-size:12px}
+  .pn-compact>.sec-h{margin-bottom:8px}
+  .pn-compact>p.man-h{margin:12px 0 2px;font-size:12px;font-weight:650;letter-spacing:.04em}
+  .pn-compact .pn-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;min-height:42px;margin:0;padding:4px 0;border-bottom:1px solid var(--line)}
+  .pn-compact .pn-row>.lab,.pn-compact .pn-row>label.lab{flex:1 1 96px;margin:0;font-size:13.5px;line-height:1.4}
+  .pn-compact .pn-row>.lab .q{font-size:12px}
+  .pn-compact .pn-row>*:not(.lab):not(.seg):not(.yn):not(.prenatal-status){flex:1 1 100%}
+  .pn-compact .pn-row>.seg,.pn-compact .pn-row>.yn{flex:0 1 auto;justify-content:flex-end;margin:0!important}
+  .pn-compact .pn-row>.tin,.pn-compact .pn-row>input,.pn-compact .pn-row>select{flex:1 1 150px!important;min-height:36px;padding-block:5px}
+  .pn-compact .pn-row>.seg[data-fill]{flex:1 1 100%;justify-content:flex-start}
+  .pn-compact .pn-habit>div{display:flex;flex-wrap:wrap;gap:4px;flex:0 1 auto!important}
+  .pn-compact .pn-habit>#habitDefaultStatus{margin:0;font-size:12px}
+  .pn-compact .prenatal-status{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0;padding:0;border:0}
+  .pn-compact .gp-apgar,.pn-compact>div:has(>.num){margin-bottom:6px}
+  .pn-compact .seg button,.pn-compact .yn button{flex:0 0 auto;min-height:34px;min-width:0;padding:4px 10px;font-size:13px;border-radius:7px}
+  .pn-compact .seg button.choice-button,.pn-compact .yn button.choice-button{padding-left:26px}
+  .pn-compact .choice-button[data-choice-kind]::before{left:8px;width:12px;height:12px;margin-top:-6px}
+  .pn-compact .seg button[aria-pressed="true"],.pn-compact .yn button[aria-pressed="true"],.pn-compact .seg.risk button[aria-pressed="true"][data-on]{background:var(--surface-2);border-color:var(--ink-3);color:var(--ink);font-weight:650}
+  .pn-compact .choice-button[data-choice-kind][aria-pressed="true"]::before{border-color:var(--ink-2);background:var(--ink-2)}
+  .pn-compact .seg button[data-abn][aria-pressed="true"],.pn-compact .yn button[data-abn][aria-pressed="true"],.pn-compact .seg.risk button[data-abn][aria-pressed="true"][data-on]{background:var(--risk-soft);border-color:var(--risk-line);color:var(--risk)}
+  .pn-compact .choice-button[data-abn][aria-pressed="true"]::before{border-color:var(--risk);background:var(--risk)}
+  .pn-compact .seg[data-fill] button[aria-pressed="true"]{background:var(--surface-2);border-color:var(--ink-3);color:var(--ink)}
+  #risks.pn-grid .risk-item{padding:4px 0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;min-height:42px}
+  #risks.pn-grid .risk-item.active{background:transparent;border-color:var(--line)}
+  #risks.pn-grid .risk-top{gap:4px 10px}
+  #risks.pn-grid .risk-name{flex:1 1 96px;font-size:13.5px;font-weight:650;color:var(--ink-2)}
+  #risks.pn-grid .risk-name small{display:inline;margin-left:6px;font-size:11.5px}
+  #risks.pn-grid .child{margin-top:6px;padding-top:6px}
+  .pn-compact #screen .scr-row{padding:4px 2px;min-height:42px}
+  .pn-compact .scr-choice span{min-height:34px;font-size:12.5px}
+  .pn-compact .scr-choice input:checked+span,.pn-compact .scr-choice[data-tone] input:checked+span,.pn-compact .scr-select[data-tone]{background:var(--surface-2);border-color:var(--ink-3);color:var(--ink)}
+  .pn-compact .scr-choice[data-tone="risk"] input:checked+span,.pn-compact .scr-select[data-tone="risk"]{background:var(--risk-soft);border-color:var(--risk-line);color:var(--risk)}
+  .pn-compact .scr-select{min-height:36px}
+  @media(max-width:799px){.pn-compact .seg button,.pn-compact .yn button,.pn-compact .scr-choice span{min-height:44px}}
+  #reviewMissing>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:650;color:var(--ink-2)}
+  #reviewMissing[data-issues="true"]>summary{color:var(--risk)}
 </style>
 
 <div class="app-layout">
@@ -1835,7 +1885,8 @@
   const S={gender:"",dest:"",destNotice:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,r:{},   // 住院去處 NBC/NICU/PICU；E 僅 NBC/PICU，不預設。BR 是健康新生兒照護。性別/生產方式亦不預設。
            scr:{hbsag:"neg",hbeag:"neg",syphilis:"neg",rubella:"pos",hiv:"neg",gbs:"neg"},scrEdited:{},scrBatch:{},
            resus:"none",resp:"",acceptanceResp:"",acceptanceWeightMode:"admission",surfactant:false,birthEvents:[],courseEvents:[],nextEventId:1,
-           routeDrafts:{},continuitySignatures:{},lastRemoved:null,birthNegConfirmed:false,prenatalEdited:{},
+           routeDrafts:{},continuitySignatures:{},lastRemoved:null,birthNegConfirmed:false,prenatalEdited:{},prenatalConfirmed:false,   // prenatalConfirmed：按過第 2 段「以上都對」；只給複製提醒用，不進病歷
+           
            amnio:"na",nipt:"na",mgso4:"none",toco:"none",iap:"none",us:"normal",ancReg:"regular",
            fd:false,doic:false,msaf:false,msafGrade:"",birthSigns:[],birthFinalSigns:[],tocoDischarged:false,   // 出生當下／產房結束評估的呼吸徵象（多選，空＝不寫）；安胎後已出院（前次住院）
            // pathway 不預設：預選「直接入院」＝零點擊就斷言路徑（2026-09-19 住院醫師混亂盤點）
@@ -2238,7 +2289,7 @@
       badge.dataset.default=String(isDefault);badge.textContent=`${isDefault?'預設':'目前'}：${label}`;
     }
     const status=document.getElementById('prenatalDefaultStatus');
-    if(status)status.textContent='正常預設已直接帶入病歷；請依實際資料修改例外。';
+    if(status)status.textContent='正常預設已直接帶入病歷：對的不用動，例外直接點選；預設不代表已查證，羊穿／NIPT、家族史與用藥不套用預設。';
     const habits=document.getElementById('habitDefaultStatus');if(habits){const active=Object.entries(S.habit).filter(([,on])=>on).map(([k])=>({smoking:'吸菸',alcohol:'飲酒',drug:'藥物濫用'}[k]));habits.textContent=raw('habitStatus')==='unknown'?`未勾選的習慣：不詳${active.length?'；已記錄：'+active.join('、'):''}`:active.length?`已記錄：${active.join('、')}；其餘為無。`:'預設：無吸菸、飲酒或藥物濫用，已帶入病歷。';}
     const noCare=document.getElementById('prenatalNoCareNotice');if(noCare)noCare.hidden=S.ancReg!=="none";
   }
@@ -3153,6 +3204,8 @@
       document.getElementById('reviewPending').hidden=!uniquePending.length;
       document.getElementById('reviewConflicts').dataset.issues=String(conflicts.length>0);
       document.getElementById('reviewOptionalSummary').textContent=`其他選填未記錄（${optional.length} 項） · 展開查看`;
+      // 缺漏已在各段結尾處理；這裡預設收合成一行計數，「前後不一致」維持展開。
+      document.getElementById('reviewMissingSummary').textContent=`關鍵資料未填（${basicMissing.length} 項${uniquePending.length?`，另 ${uniquePending.length} 項已記錄待確認`:''}） · 展開查看`;
     }
     S.copyWarnings=all.length+basicMissing.length;
     lastReviewLists={missing:basicMissing,pending:uniquePending,conflicts};
@@ -5335,7 +5388,7 @@ ${opLine}`);
       seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===initial)));
       S.r[key].reviewed=initial!=='unknown';S.r[key].status=initial;if(seg.dataset.r3)S.r[key].val=initial;
     });
-    maternal.querySelector('.sec-h').insertAdjacentHTML('afterend','<div class="prenatal-default-info"><p id="prenatalDefaultStatus" role="status"></p><p>母親病史與習慣預設無、產檢規則、超音波正常；篩檢預設陰性，Rubella 預設有抗體。所有選項保持可見，異常細節在原處展開。</p><p>預設不代表已查證，複製前請確認符合實際資料。羊穿／NIPT、家族史與用藥不套用正常預設。</p></div>');
+    maternal.querySelector('.sec-h').insertAdjacentHTML('afterend','<div class="prenatal-default-info"><p id="prenatalDefaultStatus" role="status"></p></div>');
     for(const key of Object.keys(PRENATAL_NORMAL)){
       const control=document.querySelector(`[data-ryn="${key}"],[data-r3="${key}"],[data-seg="${key}"]`),label=control.closest('.risk-item')?.querySelector('.risk-name')||control.closest('.field').querySelector('.lab');
       label.id=`prenatalLabel-${key}`;control.setAttribute('role','group');control.setAttribute('aria-labelledby',label.id);control.setAttribute('aria-describedby',`prenatalStatus-${key}`);
@@ -5344,7 +5397,32 @@ ${opLine}`);
     }
     document.querySelector('[data-seg="us"]').closest('.field').insertAdjacentHTML('beforeend','<p class="man-h" id="prenatalNoCareNotice" hidden>已選未產檢，尚未修改的超音波正常預設改為不詳；已明確選過的結果保留，可依實際報告修改。</p>');
     document.querySelector('[data-habit="drug"]').parentElement.insertAdjacentHTML('afterend','<p class="man-h" id="habitDefaultStatus"></p><label class="lab" for="habitStatus">未勾選的母親習慣</label><select class="tin" id="habitStatus"><option value="negative">無（預設）</option><option value="unknown">不詳</option></select>');
-    review.querySelector('.sec-h').insertAdjacentHTML('afterend','<div class="workflow-review" id="workflowReview"><p id="reviewSummary" role="status"></p><section class="review-group" id="reviewMissing"><h3>關鍵資料未填</h3><ul id="reviewMissingList"></ul><div id="reviewPending" hidden><p>已帶入／已記錄，但仍待確認：</p><ul id="reviewPendingList"></ul></div></section><section class="review-group" id="reviewConflicts"><h3>前後不一致／格式需核對</h3><ul id="reviewConflictList"></ul></section><details class="review-group" id="reviewOptional"><summary id="reviewOptionalSummary">其他選填未記錄</summary><p class="review-help">僅供通讀時參考，不要求全部補齊；未填不代表正常、陰性或未做。以下為重點選填項目，不是所有空白欄位。</p><ul id="reviewOptionalList"></ul></details></div>');
+    review.querySelector('.sec-h').insertAdjacentHTML('afterend','<div class="workflow-review" id="workflowReview"><p id="reviewSummary" role="status"></p><details class="review-group" id="reviewMissing"><summary id="reviewMissingSummary">關鍵資料未填</summary><ul id="reviewMissingList"></ul><div id="reviewPending" hidden><p>已帶入／已記錄，但仍待確認：</p><ul id="reviewPendingList"></ul></div></details><section class="review-group" id="reviewConflicts"><h3>前後不一致／格式需核對</h3><ul id="reviewConflictList"></ul></section><details class="review-group" id="reviewOptional"><summary id="reviewOptionalSummary">其他選填未記錄</summary><p class="review-help">僅供通讀時參考，不要求全部補齊；未填不代表正常、陰性或未做。以下為重點選填項目，不是所有空白欄位。</p><ul id="reviewOptionalList"></ul></details></div>');
+    // 第 2 段＝確認清單：每個項目一列（左項目名、右選項鈕），寬螢幕 2–3 欄；所有項目留在畫面上。
+    // 選中的正常／預設值用中性樣式，選中的異常值（data-abn）才用 risk。純版面：id、data 屬性、state、事件不變。
+    {
+      const habitHead=[...maternal.querySelectorAll(':scope > p.man-h')].find(p=>p.textContent.includes('母親習慣')),habitButtons=document.querySelector('[data-habit="drug"]').parentElement;
+      const habitRow=document.createElement('div');habitRow.className='field pn-habit';habitHead.replaceWith(habitRow);
+      const habitLabel=document.createElement('span');habitLabel.className='lab';habitLabel.textContent='母親習慣（有才勾）';habitRow.append(habitLabel,habitButtons,byId('habitDefaultStatus'));
+      const statusRow=document.createElement('div');statusRow.className='field';habitRow.after(statusRow);statusRow.append(document.querySelector('label[for="habitStatus"]'),byId('habitStatus'));
+      const abnormal={ancReg:['irregular','none'],us:['abnormal'],amnio:['abnormal'],nipt:['high'],mgso4:['neuro','seizure'],toco:['ritodrine','atosiban'],iap:['complete','incomplete']};
+      for(const [key,values] of Object.entries(abnormal))for(const v of values)document.querySelector(`[data-seg="${key}"] [data-v="${v}"]`)?.setAttribute('data-abn','');
+      document.querySelectorAll('[data-ryn] [data-v="yes"],[data-r3] [data-v="highrisk"],[data-r3] [data-v="confirmed"],[data-par] [data-v="mother"],[data-par] [data-v="father"],[data-par] [data-v="both"],[data-habit] button').forEach(b=>b.setAttribute('data-abn',''));
+      for(const card of [maternal,screening,medication]){
+        card.classList.add('pn-compact');
+        const host=card.querySelector(':scope > .section-content')||card;
+        for(const field of host.querySelectorAll(':scope > .field')){
+          field.classList.add('pn-row');
+          const buttons=field.querySelectorAll(':scope > .seg > button[data-v], :scope > .seg[data-habit] button');
+          if(field.querySelector(':scope > [data-fill]')||buttons.length>4||field.classList.contains('pn-habit'))field.classList.add('pn-wide');
+        }
+      }
+      byId('risks').classList.add('pn-grid');
+      byId('gravida').closest('#prenatalCard > div')?.classList.add('pn-gp');
+      // 有子欄位（藥名、日期、整批說明）的項目佔整列，避免在窄欄裡直排。
+      for(const sel of ['[data-seg="iap"]','[data-scrall]'])document.querySelector(sel).closest('.field').classList.add('pn-full');
+      for(const sel of ['[data-seg="toco"]','#matOtherHx'])document.querySelector(sel).closest('.field').classList.add('pn-wide');
+    }
     const nav=document.createElement('nav');nav.id='workflowNav';nav.className='flow-band';nav.setAttribute('aria-label','病歷段落與時序');
     const stages=workflowStages=[[context,'入院設定'],[maternal,'產前資料'],[birth,'出生資料'],[pathway,'本次病程'],[review,'核對病歷']];
     const capText=['情境 · 去處 · 日期','','','','前後矛盾 · 複製'];
@@ -5527,9 +5605,12 @@ ${opLine}`);
     const blanks=(txt.match(/_{2,}|……|——/g)||[]).length;   // 未填佔位:____/……/——(四分頁通用)
     status.textContent=ok?(S.copyWarnings?`已複製 · 仍有 ${S.copyWarnings} 項待核對，請先確認再貼入 HIS。`:blanks?`已複製 ✓ · 尚有 ${blanks} 空格，請核對後再貼入 HIS。`:"已複製 ✓")
       :"未能複製，請展開預覽後選取文字複製。";
+    // 複製把關：只提醒不擋。第 2 段還沒按過「以上都對」時，Admission 的複製狀態多一句。
+    const prenatalUnconfirmed=ok&&S.mode==="adm"&&!S.prenatalConfirmed;
+    if(prenatalUnconfirmed)status.textContent+=" 產前資料仍是預設值，尚未確認。";
     status.hidden=false; updateCollapsedDockHeight();
     if(copyFeedbackTimer!==null)clearTimeout(copyFeedbackTimer);
-    copyFeedbackTimer=setTimeout(()=>{status.hidden=true;updateCollapsedDockHeight();},blanks||!ok?5000:2000);
+    copyFeedbackTimer=setTimeout(()=>{status.hidden=true;updateCollapsedDockHeight();},blanks||!ok||prenatalUnconfirmed?5000:2000);
   });
   initializeAdmissionWorkflow();
   render();

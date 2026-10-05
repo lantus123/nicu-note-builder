@@ -294,6 +294,8 @@ async function main(){
     await click(reviewLink('#gaW'));await checkLocated('gaW','出生資料');await input('gaW','39');await click('#returnToReview');
     assert.equal(await ev(`!!document.querySelector('#reviewConflictList [data-review-target="#gaW"]')`),false);
     // Space on the missing-action hint focuses its group; it must never press +PPV.
+    // 「關鍵資料未填」預設收合成一行計數（缺漏改在各段結尾處理），先展開。
+    if(!await ev(`document.querySelector('#reviewMissing').open`))await click('#reviewMissingSummary');
     const addHint=reviewLink('#birthActionsWrap .event-add');await position(addHint);
     await ev(`document.querySelector(${JSON.stringify(addHint)}).focus({preventScroll:true})`);
     await send('Input.dispatchKeyEvent',{type:'keyDown',key:' ',code:'Space',windowsVirtualKeyCode:32,text:' '});

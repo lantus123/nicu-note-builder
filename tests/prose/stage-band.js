@@ -7,12 +7,14 @@ assert.equal(source.split('function render(){').length,2);
 const html=source.replace('function render(){','window.bandTest={S,render}; function render(){');
 const tests=[];
 const test=(name,run)=>tests.push([name,run]);
-function page(run){
+async function page(run){
   const errors=[];
   const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'https://nicu-band.test/',beforeParse(W){
     let y=0;Object.defineProperty(W,'scrollY',{get:()=>y,configurable:true});
     W.scrollTo=(a,b)=>{y=typeof a==='object'?(a.top??y):b;};
     W.HTMLElement.prototype.scrollIntoView=()=>{};
+    Object.defineProperty(W.HTMLElement.prototype,'innerText',{configurable:true,get(){return this.textContent;}});   // jsdom 沒有排版
+    Object.defineProperty(W.navigator,'clipboard',{configurable:true,value:{async writeText(text){(W.copies=W.copies||[]).push(text);}}});
     W.addEventListener('error',e=>errors.push(String(e.error?.stack||e.message)));
   }});
   const W=dom.window,d=W.document;
@@ -29,7 +31,7 @@ function page(run){
   const nodes=i=>[...d.querySelectorAll(`[data-band-seg="${i}"] .band-node`)].map(n=>n.dataset.bandNode);
   const places=i=>[...d.querySelectorAll(`[data-band-seg="${i}"] .band-places span`)].map(s=>s.textContent);
   const key=(k,target=d.activeElement||d.body)=>target.dispatchEvent(new W.KeyboardEvent('keydown',{key:k,altKey:true,bubbles:true,cancelable:true}));
-  try{run({W,d,get,click,input,seg,story,note,chapter,current,shown,status,nodes,places,key});assert.deepEqual(errors,[],'Page errors');}
+  try{await run({W,d,get,click,input,seg,story,note,chapter,current,shown,status,nodes,places,key});assert.deepEqual(errors,[],'Page errors');}
   finally{W.close();}
 }
 
@@ -166,7 +168,61 @@ test('focusing a field that belongs to another stage shows that stage first',({g
   get('#gravida').focus();assert.equal(chapter(),'產前資料');
 });
 
+// ── 第三階段：產前確認清單、各段結尾缺漏、核對收合、複製把關 ──
+test('prenatal checklist keeps every item visible as one row; ids and data attributes are unchanged',({d,get,click})=>{
+  click('#stageBand [data-flow-target="prenatalCard"]');
+  for(const card of [get('#prenatalCard'),...d.querySelectorAll('#admSections > .card.pn-compact')])assert.equal(card.classList.contains('pn-compact'),true);
+  assert.equal(d.querySelectorAll('#admSections > .card.pn-compact').length,3);
+  for(const sel of ['[data-ryn="gdm"]','[data-ryn="pih"]','[data-r3="pre"]','[data-ryn="aph"]','[data-ryn="pph"]','[data-ryn="uri"]','[data-ryn="fever"]','[data-ryn="prom"]','[data-ryn="steroid"]','[data-seg="ancReg"]','[data-seg="us"]','[data-seg="amnio"]','[data-seg="nipt"]','[data-par="thal"]','[data-par="g6pd"]','[data-par="thyroid"]','[data-habit="smoking"]','[data-habit="alcohol"]','[data-habit="drug"]','[data-seg="mgso4"]','[data-seg="toco"]','[data-seg="iap"]','#habitStatus','#admReason','#edc','#ancPlace','#matOtherHx','#gravida','#para','#matAge','#tocoSince','#iapSince','#iapDrug']){
+    const el=get(sel);assert.equal(el.closest('[hidden]'),null,sel+' stays on screen');assert.equal(el.closest('details:not([open])'),null,sel+' is not folded away');
+  }
+  for(const k of ['hbsag','syphilis','rubella','hiv','gbs'])assert.equal(get(`.scr-row[data-scr="${k}"]`).closest('[hidden]'),null);
+  assert.equal(get('#prenatalStatus-gdm').dataset.default,'true','Default badges remain for assistive technology');
+  assert.ok(d.querySelectorAll('#prenatalCard .pn-row').length>=8);assert.ok(get('#risks').classList.contains('pn-grid'));
+  assert.match(get('#prenatalDefaultStatus').textContent,/直接帶入病歷/);assert.equal(get('.prenatal-default-info').children.length,1,'The long explanation is one line');
+});
+
+test('only abnormal choices carry the risk marker; defaults and unknown stay neutral',({d,get})=>{
+  for(const sel of ['[data-ryn="gdm"] [data-v="yes"]','[data-r3="pre"] [data-v="confirmed"]','[data-r3="pre"] [data-v="highrisk"]','[data-seg="ancReg"] [data-v="irregular"]','[data-seg="us"] [data-v="abnormal"]','[data-seg="nipt"] [data-v="high"]','[data-par="thal"] [data-v="mother"]','[data-habit="smoking"] button','[data-seg="iap"] [data-v="complete"]','[data-seg="toco"] [data-v="ritodrine"]'])assert.ok(get(sel).hasAttribute('data-abn'),sel);
+  for(const sel of ['[data-ryn="gdm"] [data-v="no"]','[data-ryn="gdm"] [data-v="unknown"]','[data-r3="pre"] [data-v="neg"]','[data-seg="ancReg"] [data-v="regular"]','[data-seg="us"] [data-v="normal"]','[data-seg="nipt"] [data-v="low"]','[data-par="thal"] [data-v="none"]','[data-seg="iap"] [data-v="none"]'])assert.equal(get(sel).hasAttribute('data-abn'),false,sel);
+  assert.equal(d.querySelectorAll('#prenatalCard [aria-pressed="true"][data-abn]').length,0,'Fresh defaults have no abnormal selection');
+});
+
+test('stage ends list their own missing items and the links land on the field',({d,get,click,chapter,note})=>{
+  const before=note();
+  assert.match(get('#stageMissing-1').textContent,/入院路徑.*收治單位.*出生日期/);assert.equal(get('#stageMissing-2').hidden,true);
+  assert.match(get('#stageMissing-3').textContent,/GA.*出生體重.*性別.*生產方式/);
+  const link=[...get('#stageMissing-3').querySelectorAll('[data-stage-target]')].find(b=>b.dataset.stageTarget==='#bw');
+  click('#stageBand [data-flow-target="admissionContext"]');link.click();
+  assert.equal(chapter(),'出生資料');assert.equal(d.activeElement,get('#bw'));assert.equal(get('#reviewJumpBar').hidden,true,'Stage-end links do not offer "return to review"');
+  assert.equal(note(),before);
+  get('#bw').value='3000';get('#bw').dispatchEvent(new d.defaultView.Event('input',{bubbles:true}));assert.doesNotMatch(get('#stageMissing-3').textContent,/出生體重/);
+});
+
+test('"all correct" records confirmation without changing the note',({W,get,click,note,chapter,status})=>{
+  assert.equal(get('#prenatalNext').textContent,'以上都對，下一段：出生資料 →');
+  const before=note();click('#stageBand [data-flow-target="prenatalCard"]');assert.equal(W.bandTest.S.prenatalConfirmed,false);
+  click('#prenatalNext');assert.equal(W.bandTest.S.prenatalConfirmed,true);assert.equal(chapter(),'出生資料');assert.equal(note(),before);assert.equal(status(2).textContent,'完成');
+});
+
+test('review: missing and optional groups fold into one-line counts; conflicts stay expanded',({get,input})=>{
+  assert.equal(get('#reviewMissing').tagName,'DETAILS');assert.equal(get('#reviewMissing').open,false);
+  assert.match(get('#reviewMissingSummary').textContent,/關鍵資料未填（\d+ 項/);assert.equal(get('#reviewOptional').open,false);
+  assert.equal(get('#reviewConflicts').tagName,'SECTION');
+  input('gaW','99');assert.match(get('#reviewConflictList').textContent,/GA/);assert.equal(get('#reviewConflictList').closest('details'),null);
+});
+
+test('copy gate: unconfirmed prenatal data adds a reminder but still copies',async({W,get,click})=>{
+  const copy=async()=>{click('#copy');await new Promise(r=>setImmediate(r));return get('#copyStatus').textContent;};
+  let text=await copy();assert.equal(W.copies.length,1,'Copy is not blocked');assert.match(text,/產前資料仍是預設值，尚未確認/);
+  click('#stageBand [data-flow-target="finalReviewCard"]');assert.equal(get('#copy').textContent,'複製病歷');text=await copy();assert.match(text,/尚未確認/);
+  click('#stageBand [data-flow-target="prenatalCard"]');click('#prenatalNext');text=await copy();assert.doesNotMatch(text,/尚未確認/);assert.equal(W.copies.length,3);
+  assert.equal(W.copies[0],W.copies[2],'The gate never changes the copied text');
+});
+
+(async()=>{
 let failed=0;
-for(const [name,run] of tests){try{page(run);console.log('✓ '+name);}catch(e){failed++;console.error('✗ '+name+'\n'+e.stack);}}
+for(const [name,run] of tests){try{await page(run);console.log('✓ '+name);}catch(e){failed++;console.error('✗ '+name+'\n'+e.stack);}}
 console.log(`${tests.length-failed}/${tests.length} stage band checks passed`);
 if(failed)process.exitCode=1;
+})();
