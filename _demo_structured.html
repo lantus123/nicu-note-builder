@@ -2964,7 +2964,7 @@
     }
     const di=dolInfo(),checks=[];
     const fatherKey=fatherHistoryKey();
-    if(fatherKey&&['none','mother','unknown'].includes(S.parent[fatherKey]))path.push(reviewIssue('父親其他病史與上方雙親病史選擇不一致，請核對；原文字保留。','#fatherHistory'));
+    if(fatherKey&&['none','unknown'].includes(S.parent[fatherKey]))path.push(reviewIssue('父親其他病史與上方雙親病史的「無／不詳」不一致，請核對；原文字保留。','#fatherHistory'));
     if(di.birth!==null&&di.admission!==null&&di.admission<di.birth)path.push(reviewIssue("入院日期早於出生日期，請核對。",'#admissionDate'));
     if(di.conflict&&!S.dolAuto)path.push(reviewIssue(`手動 DOL ${di.manual??"__"} 與日期推算 DOL ${di.calculated} 不一致。`,S.dol==='x'?'#dolOther':'[data-seg="dol"]','手動入院日齡 DOL'));
     if(di.calculated!==null&&!di.conflict)checks.push(`✓ 出生日期、入院日期與 DOL ${di.value} 一致`);

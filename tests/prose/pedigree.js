@@ -369,11 +369,16 @@ test('父親疾病與無病史衝突時提醒可直達，且不產生相反的�
   assert.doesNotMatch(get('#note').textContent,/Parental history regarding G6PD deficiency was unavailable/);
 });
 
-test('甲狀腺類型沿用唯一資料，不由病名推定藥物',({click,seg,get,annotations})=>{
+test('甲狀腺類型沿用唯一資料，不由病名推定藥物或另一方疾病類型',({click,seg,input,d,get,annotations})=>{
   click('[data-par="thyroid"] [data-v="both"]');seg('thyType','hypo');
   assert.equal((annotations().match(/hypothyroidism/g)||[]).length,2);
   assert.match(get('#note').textContent,/parental hypothyroidism/);
   assert.doesNotMatch(get('#note').textContent,/treated with thyroxine/);
+  click('[data-par="thyroid"] [data-v="mother"]');input('fatherHistory','hyperthyroidism');
+  const prose=get('#note').textContent.split('Pedigree:')[0];
+  assert.match(prose,/maternal hypothyroidism and paternal hyperthyroidism/);
+  assert.doesNotMatch(prose,/paternal hypothyroidism/);
+  assert.equal(d.querySelector('#reviewConflictList [data-review-target="#fatherHistory"]'),null,'只記母親的類型，不等於否認父親可有另一類型');
 });
 
 test('長病名不改圖形，自由文字不被當成 HTML 執行',({input,get,tree,annotations,addSib})=>{
