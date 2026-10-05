@@ -98,8 +98,8 @@ test('status text follows filling: missing, not started and complete',({status,s
   assert.match(status(3).textContent,/^缺 4 項$/);assert.equal(status(4).textContent,'未開始');assert.equal(status(5).textContent,'未開始');
   story('A');seg('dest','NICU');input('birthDate','2026-08-29');assert.equal(status(1).textContent,'完成');assert.equal(status(1).dataset.risk,'false');
   seg('gender','female');input('gaW','38');input('bw','3100');assert.equal(status(3).textContent,'缺 1 項');
-  seg('delivery','nsd');assert.equal(status(3).textContent,'完成');
-  assert.equal(status(4).textContent,'未開始');click('#admissionStatusBody [data-seg="resp"] [data-v="room air"]');assert.equal(status(4).textContent,'完成');
+  seg('delivery','nsd');assert.equal(status(3).textContent,'已記錄 1／5');
+  assert.equal(status(4).textContent,'未開始');click('#admissionStatusBody [data-seg="resp"] [data-v="room air"]');assert.equal(status(4).textContent,'已記錄 1／2');
   click('#prenatalNext');assert.equal(status(2).textContent,'完成');
   click('#stageBand [data-flow-target="finalReviewCard"]');assert.equal(status(5).textContent,'完成');
 });

@@ -667,6 +667,8 @@
   .pn-compact .pn-habit>#habitDefaultStatus{margin:0;font-size:12px}
   .pn-compact .prenatal-status{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0;padding:0;border:0}
   .pn-compact .gp-apgar,.pn-compact>div:has(>.num){margin-bottom:6px}
+  .pn-compact .pn-gp .num input{width:56px;flex:0 0 56px}   /* G／P／年齡留在同一列 */
+  .sec-h[tabindex="-1"]:focus{outline:none}   /* 換段時程式聚焦標題只為了讀屏與鍵盤起點，不畫焦點框 */
   .pn-compact .seg button,.pn-compact .yn button{flex:0 0 auto;min-height:34px;min-width:0;padding:4px 10px;font-size:13px;border-radius:7px}
   .pn-compact .seg button.choice-button,.pn-compact .yn button.choice-button{padding-left:26px}
   .pn-compact .choice-button[data-choice-kind]::before{left:8px;width:12px;height:12px;margin-top:-6px}
@@ -3432,7 +3434,7 @@
       if(S.r.prom?.on)nodes.push({key:'prenatal:rom',name:'破水',time:raw('promH')?`${raw('promH')} ${S.numUnit?.promH==='days'?'天':'小時'}`:'已記錄',has:true,block:()=>bandField('.risk-item[data-k="prom"]')});
       if(toco&&!S.tocoDischarged)nodes.push({key:'prenatal:toco',name:'安胎',time:raw('tocoSince')||'已記錄',has:true,block:()=>bandField('[data-seg="toco"]')});
       if(S.r.steroid?.on)nodes.push({key:'prenatal:steroid',name:'類固醇',time:raw('steroidDates')||'已記錄',has:true,block:()=>bandField('.risk-item[data-k="steroid"]')});
-      if(S.iap&&S.iap!=='none')nodes.push({key:'prenatal:iap',name:'IAP',time:raw('iapSince')||'已記錄',has:true,block:()=>bandField('[data-seg="iap"]')});
+      if((S.iap&&S.iap!=='none')||raw('iapDrug')||raw('iapSince'))nodes.push({key:'prenatal:iap',name:'IAP',time:raw('iapSince')||'已記錄',has:true,block:()=>bandField('[data-seg="iap"]')});
       return nodes;
     }
     const places=bandPlaces();
@@ -3474,8 +3476,10 @@
     if(i===4)return n?[`${n} 項待核對`,true]:[stageVisited.has('finalReviewCard')?'完成':'未開始',false];
     const parts=[];if(group.missing.length)parts.push(`缺 ${group.missing.length} 項`);if(group.conflicts.length)parts.push(`${group.conflicts.length} 項待核對`);
     if(parts.length)return [parts.join('・'),true];
-    const started=i===0?true:i===1?!!S.prenatalConfirmed:i===2?bandNodes(2).some(n=>n.has):!!S.pathway&&(bandNodes(3)||[]).some(n=>n.has);
-    return [started?'完成':'未開始',false];
+    if(i<2)return [i===0||S.prenatalConfirmed?'完成':'未開始',false];
+    // 出生資料／本次病程：節點沒有全部記錄就不寫「完成」，改寫已記錄幾站（未記錄的站可能本來就不適用，所以不用提醒色）。
+    const nodes=i===2?bandNodes(2):S.pathway?(bandNodes(3)||[]):[],done=nodes.filter(n=>n.has).length;
+    return [!done?'未開始':done===nodes.length?'完成':`已記錄 ${done}／${nodes.length}`,false];
   }
   function renderStageBand(){
     const band=document.getElementById('stageBand');if(!band||!workflowStages.length)return;
