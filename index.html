@@ -596,7 +596,7 @@
   .band-seg::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--accent);transform:scaleX(0);transition:transform .3s}
   .band-seg.cur{background:var(--accent-soft)}
   .band-seg.cur::after{transform:scaleX(1)}
-  .band-seg.cap{flex:0 0 auto;width:112px}
+  .band-seg.cap{flex:0 0 auto;width:92px}   /* 兩端收窄：外接 12 個節點時第 5 段才不會被擠出 1440 寬的左欄 */
   .band-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px;min-height:28px;padding:3px 10px;margin:0;text-align:left;border:0;background:none;font:inherit;color:var(--ink);cursor:pointer;border-radius:8px}
   .band-head .n{font-size:12px;font-weight:700;color:var(--ink-3)}
   .band-head .t{font-size:14px;font-weight:650;white-space:nowrap}
@@ -604,12 +604,12 @@
   .band-seg.cap .band-head .s{margin-left:0;flex-basis:100%}
   .band-head .s[data-risk="true"]{color:var(--risk);font-weight:600}
   .band-seg.cur .band-head .n{color:var(--accent-ink)}
-  .band-one{padding:0 10px;font-size:12px;line-height:1.45;color:var(--ink-3)}
+  .band-one{display:none}
   .band-places{display:flex;padding:0 4px;font-size:11px;line-height:1.4;color:var(--ink-3)}
   .band-places[hidden]{display:none}
-  .band-places span{margin:0 6px;padding-bottom:2px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .band-places span{min-width:0;margin:0 4px;padding-bottom:2px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .band-nodes{display:flex;padding:0 4px}
-  .band-node{flex:1 1 0;min-width:60px;position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:15px 3px 2px;margin:0;border:0;background:none;font:inherit;color:var(--ink);text-align:center;cursor:pointer;border-radius:8px}
+  .band-node{flex:1 1 0;min-width:54px;position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:15px 3px 2px;margin:0;border:0;background:none;font:inherit;color:var(--ink);text-align:center;cursor:pointer;border-radius:8px}
   .band-node::before{content:"";position:absolute;top:6px;left:0;right:0;height:2px;background:var(--line)}
   .band-node:first-child::before{left:50%}
   .band-node:last-child::before{right:50%}
@@ -623,6 +623,7 @@
   .band-node:not(.has) .nm{color:var(--ink-3);font-weight:500}
   .band-node .tm{font-size:11px;line-height:1.35;color:var(--ink-3);font-family:var(--mono);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
   .band-node.warn .nm,.band-node.warn .tm{color:var(--risk)}
+  .band-node .nm,.band-node .tm{width:0;min-width:100%}   /* 不換行的時間文字不撐大帶子的最小寬度；實際寬度仍跟著節點 */
   .band-empty{margin:0;padding:6px 12px 2px;font-size:12px;color:var(--ink-3)}
   .band-seg:has(.band-empty){flex:0 0 auto;width:124px}
   .band-empty{white-space:nowrap}
