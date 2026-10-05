@@ -665,7 +665,7 @@
       </div>
       <div class="field">
         <span class="lab">出生體重 <span class="q">(g)</span></span>
-        <div class="num"><input type="number" id="bw" placeholder="2150" min="300" max="6000" step="10"><span class="u">g</span></div>
+        <div class="num"><input type="number" id="bw" placeholder="2150" min="300" max="6000" step="1"><span class="u">g</span></div>
         <div class="wclass" id="wclass"></div>
       </div>
     </div>
@@ -2795,17 +2795,17 @@
     // 「症狀持續而給支持」才用 Because … persisted 接；被動描述（was receiving）或停用不接因果。
     const supportAction=["o2","cpap","ppv","ett"].includes(mode)&&["new","repeat","changed","settings","continued"].includes(relation);
     const sxLast=!!sxText&&out[out.length-1]===sxText;
-    let because=[],replaceSx=false;
+    let because=[],replaceSx=false,saidPersisted=false;   // saidPersisted：產房再評估句已寫過 persisted，這裡改用 Therefore 接，不重講一次
     if(supportAction){
       if(sxLast&&S.pwOnset==="persisted"&&!sxTiming){because=[...S.obSx];replaceSx=true;}
       else if(repeatedSx.length)because=repeatedSx;
-      else if(!S.obSx.length&&S.pathway==="direct"&&!out.length)because=persistingBirthFindings();
+      else if(!S.obSx.length&&S.pathway==="direct"&&!out.length){because=persistingBirthFindings();saidPersisted=because.length>0;}
     }
     let support=supportSentence("obRespRelation",S.obRespType,contextUsed&&!replaceSx?"":supportContext,supportSettings);
     // PPV 與「HR／SpO2 穩定」同一句（穩定只在使用者勾選時寫）。
     if(support&&mode==="ppv"&&S.obRespStable)support=support.replace(/\.$/,", with stable heart rate and oxygen saturation.");
     if(support&&because.length){
-      support=`Because ${joinAnd(because)} persisted, ${/^[A-Z][A-Z]/.test(support)?support:support[0].toLowerCase()+support.slice(1)}`;
+      support=`${saidPersisted?"Therefore":`Because ${joinAnd(because)} persisted`}, ${/^[A-Z][A-Z]/.test(support)?support:support[0].toLowerCase()+support.slice(1)}`;
       if(replaceSx)out[out.length-1]=support;else out.push(support);
     }else if(support)out.push(support);
     if(support&&!replaceSx&&!contextUsed)contextUsed=new RegExp(supportContext+"\\b").test(support);
@@ -3099,9 +3099,9 @@
         const birthYear=new Date(di.birth).getUTCFullYear();let date=Date.UTC(m[1]?Number(m[1]):birthYear,month-1,day);
         if(!m[1]&&date>di.birth)date=Date.UTC(birthYear-1,month-1,day);
         return Math.round((di.birth-date)/86400000);};
-      const early=[['iapSince','IAP',true],['tocoSince','安胎',S.toco!=="none"&&!S.tocoDischarged]];
+      const early=[['iapSince','IAP',true],['tocoSince','安胎',S.toco!=="none"&&!S.tocoDischarged]];   // 兩個欄位的畫面標籤都只有 since，提示要自己帶名稱
       for(const [field,label,active] of early){const days=active?daysBeforeBirth(raw(field)):null;
-        if(days!==null&&days>7)medIssues.push(reviewIssue(`${label}開始日期比出生早 ${days} 天，不像產程用藥；若是前次住院，請改填「安胎後已出院」。`,'#'+field));}
+        if(days!==null&&days>7)medIssues.push(reviewIssue(`${label}開始日期比出生早 ${days} 天，不像產程用藥；若是前次住院，請改填「安胎後已出院」。`,'#'+field,`${label}開始日期`));}
     }
     const basicMissing=[
       [!S.pathway,'入院路徑','#entryRoutes','入院情境'],[!admissionDestination(),'收治單位','[data-seg="dest"]','收治單位'],
@@ -3824,8 +3824,8 @@
     const ancPart = S.ancReg==="unknown" ? `The frequency of prenatal care${anc?` at ${sl(anc+(isMMH?"":" OBGYN clinic"))}`:""} was unavailable`
       : S.ancReg==="na" ? (anc?`Prenatal care was documented at ${sl(anc+(isMMH?"":" OBGYN clinic"))}`:"")
       : S.ancReg==="none"
-        ? `During pregnancy, she had ${sl("not received prenatal care",true)}`
-        : `During pregnancy, she received ${sl(S.ancReg==="irregular"?"irregular":"regular", S.ancReg==="irregular")} prenatal care at ${anc?sl(anc+(isMMH?"":" OBGYN clinic")):ph("____")}`;
+        ? `During pregnancy, the mother had ${sl("not received prenatal care",true)}`
+        : `The mother received ${sl(S.ancReg==="irregular"?"irregular":"regular", S.ancReg==="irregular")} prenatal care at ${anc?sl(anc+(isMMH?"":" OBGYN clinic")):ph("____")}`;
     const usTxt = S.us==="abnormal" ? (usFind?`showed ${sl(usFind,true)}`:`showed ${sl("abnormal findings",true)}`) : `showed ${sl("normal findings")}`;
     const usPart = S.us==="na" ? "" : S.us==="unknown" ? "prenatal ultrasound findings were unavailable" : `prenatal ultrasound ${usTxt}`;   // 一般超音波結果不證明做過 level II。
     if(ancPart&&usPart)P1.push(`${ancPart}, and ${usPart}.`);
@@ -4106,8 +4106,8 @@
     const source=raw("obTransferFrom")||(inheritedSource===(raw("homeHosp")||"TPEMMH")?"":inheritedSource);
     const courseScopes=[];P2.push(...postnatalNarrative({transferSource:source,diagnosis:closingDx,scopes:courseScopes}).map((text,i)=>noteScope(esc(text),courseScopes[i])));
 
-    // 開頭摘要、母體／產前背景、產程與產房處置、入院前經過分段；只有入院結語時併回產程段。
-    const courseParts=P2.length-postnatalStart>1?[P2.slice(0,postnatalStart),P2.slice(postnatalStart)]:[P2];
+    // 開頭摘要、母體／產前背景、產程與產房處置、入院前經過分段；入院前經過只有一句加結語時併回產程段（院內模板是兩段）。
+    const courseParts=P2.length-postnatalStart>2?[P2.slice(0,postnatalStart),P2.slice(postnatalStart)]:[P2];
     const [pedDiagram,pedNotes]=buildPedigree().split('\n\n');
     // 院內模板：出生摘要與母體／產前背景同一段（開場句已帶出 mother，後句的 she 才有先行詞）。
     writeNote([[...P0.map(t=>noteScope(t,'birth:info')),...P1.map(t=>noteScope(t,'prenatal'))],...courseParts].filter(p=>p.length).map(p=>p.join(" ")).join("\n\n")
