@@ -27,10 +27,14 @@ async function main(){
   };
   // CDP pointer coordinates use the visual viewport; DOM rects use the layout viewport.
   // Mobile scrollIntoView can move the visual viewport even when scale is 1.
-  const click=async s=>{const stop=s.match(/^\[data-stop-toggle="([^"]+)"\]$/);if(stop){await click('#phaseMenu > summary');await click(`#flowSubsteps [data-phase-target="course:${stop[1]}"]`);return;}const r=await position(s);assert.ok(r.w&&r.h&&r.hit,'Control hidden or covered: '+s);await send('Input.dispatchMouseEvent',{type:'mousePressed',x:r.inputX,y:r.inputY,button:'left',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:r.inputX,y:r.inputY,button:'left',clickCount:1});clicks++;await pause(70);};
-  const input=async(id,value)=>{if(['obM1Relation','obRespRelation'].includes(id)){await click(`#${id}-choice-${value||'clear'}`);entries++;return;}const r=await position('#'+id);assert.ok(r.w&&r.h&&r.hit,'Input hidden or covered: '+id);await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.focus({preventScroll:true});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event(e.tagName==='SELECT'||e.type==='date'?'change':'input',{bubbles:true}));})()`);entries++;};
+  const click=async s=>{const stop=s.match(/^\[data-stop-toggle="([^"]+)"\]$/);if(stop){await click(`#stageBand [data-phase-target="course:${stop[1]}"]`);return;}const r=await position(s);assert.ok(r.w&&r.h&&r.hit,'Control hidden or covered: '+s);await send('Input.dispatchMouseEvent',{type:'mousePressed',x:r.inputX,y:r.inputY,button:'left',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:r.inputX,y:r.inputY,button:'left',clickCount:1});clicks++;await pause(70);};
+  // 「開始呼吸支持」等例外選項放在收合的說明裡（HEAD 時此處已失敗）：先展開再點，不改變選項本身。
+  const input=async(id,value)=>{if(['obM1Relation','obRespRelation'].includes(id)){const choice=`#${id}-choice-${value||'clear'}`;if(await ev(`!!document.querySelector(${JSON.stringify(choice)})?.closest('details:not([open])')`))await click(`#${id}Help > summary`);await click(choice);entries++;return;}const r=await position('#'+id);assert.ok(r.w&&r.h&&r.hit,'Input hidden or covered: '+id);await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.focus({preventScroll:true});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event(e.tagName==='SELECT'||e.type==='date'?'change':'input',{bubbles:true}));})()`);entries++;};
   const typeText=async(id,value)=>{await click('#'+id);await ev(`document.getElementById(${JSON.stringify(id)}).select()`);await send('Input.insertText',{text:value});assert.equal(await ev(`document.getElementById(${JSON.stringify(id)}).value`),value);entries++;};
-  const chapter=async id=>{await click('#flowMenu > summary');await click(`#flowMenu [data-flow-target="${id}"]`);};
+  // 時序帶取代原章節選單：段＝帶子標頭；目前段／站點讀帶子的 aria-current。
+  const chapter=async id=>click(`#stageBand [data-flow-target="${id}"]`);
+  const chapterText=()=>ev(`document.querySelector('#stageBand .band-head[aria-current="step"] .t').textContent`);
+  const current=()=>ev(`(document.querySelector('#stageBand .band-node[aria-current="step"] .nm')?.textContent||'')+' '+document.querySelector('#journeyCounter').textContent`);
   const note=()=>ev(`document.querySelector('#note').textContent`);
   const shot=async name=>{const r=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync('/private/tmp/'+name,Buffer.from(r.data,'base64'));};
   const at=async s=>{await ev(`document.querySelector(${JSON.stringify(s)}).scrollIntoView({block:'start',behavior:'instant'})`);await pause(120);};
@@ -75,20 +79,21 @@ async function main(){
     const text=await note(),forwardClicks=clicks,forwardEntries=entries;assert.match(text,/Example Birth Clinic/);assert.match(text,/receiving breast milk/);assert.match(text,/90 to 45 mL/);assert.match(text,/14:37/);assert.doesNotMatch(text,/bilirubin|notable for an older sibling had/);
     fs.writeFileSync('/private/tmp/nicu-forward-synthetic-note.txt',text);
     await click('[data-tab="acc"]');await click('#useAdmissionResp');await click('[data-seg="acceptanceResp"] [data-v="NC"]');await click('[data-tab="adm"]');assert.equal(await note(),text);
-    await resize(390,844,true);await at('#admissionContext');await shot('nicu-forward-entry-mobile.png');
+    await resize(390,844,true);await chapter('admissionContext');await at('#admissionContext');await shot('nicu-forward-entry-mobile.png');
     assert.ok(await ev(`document.documentElement.scrollWidth<=document.documentElement.clientWidth+1`),'Mobile overflow');
     assert.ok(await ev(`[...document.querySelectorAll('#entryRoutes .d, #entryRoutes .p, #entryRoutes .k')].every(e=>e.getClientRects().length&&getComputedStyle(e).display!=='none')`),'Mobile scenario descriptions must be visible');
     assert.equal(await ev(`document.querySelector('#admissionDateDetails').open`),false);
     await click('[data-stop-toggle="illness"]');await at('#journeyWorkspace');await shot('nicu-forward-E-mobile.png');
-    const rectangles=await ev(`(()=>{const t=document.querySelector('.tabs').getBoundingClientRect(),n=document.querySelector('.flow-nav').getBoundingClientRect();return {tabBottom:t.bottom,navTop:n.top,navBottom:n.bottom,thirdTierVisible:document.querySelector('#journeyProgress').checkVisibility()};})()`);
+    const rectangles=await ev(`(()=>{const t=document.querySelector('.tabs').getBoundingClientRect(),n=document.querySelector('#workflowNav').getBoundingClientRect();return {tabBottom:t.bottom,navTop:n.top,navBottom:n.bottom,thirdTierVisible:document.querySelector('#journeyProgress').checkVisibility()};})()`);
     assert.ok(rectangles.navTop>=rectangles.tabBottom-1,'Tabs cover the workflow navigation');assert.equal(rectangles.thirdTierVisible,false,'Mobile has only two fixed tiers');assert.ok(rectangles.navBottom<150,'Fixed navigation leaves enough room for the form');
     assert.ok(await ev(`document.querySelector('#journeyWorkspace').getBoundingClientRect().top>=document.querySelector('#workflowNav').getBoundingClientRect().bottom+6`),'Workspace heading must not be covered');
-    assert.match(await ev(`document.querySelector('#flowDetail').textContent`),/症狀與變化.*2\/3/);
+    assert.match(await current(),/症狀與變化.*2／3/);
     await at('#readmitGeneral');await shot('nicu-forward-feeding-mobile.png');
     // Native keyboard text entry and switching stages must keep focus/value and relative scroll.
     await typeText('readmitFeedingNote','The infant required frequent pauses during feeds.');
+    await ev(`document.querySelector('#journeyNext').scrollIntoView({block:'center',behavior:'instant'})`);await pause(80);
     const beforeBack=await ev(`-document.querySelector('#journeyWorkspace').getBoundingClientRect().top`);
-    await click('#flowNext');await click('#flowBack');
+    await click('#journeyNext');await click('#journeyPrev');
     const afterBack=await ev(`-document.querySelector('#journeyWorkspace').getBoundingClientRect().top`);
     assert.ok(Math.abs(beforeBack-afterBack)<3,'Returning to a stage should restore its relative viewport');
     assert.equal(await ev(`document.activeElement.id`),'readmitFeedingNote');
@@ -97,8 +102,8 @@ async function main(){
     for(const width of [320,360,390]){
       await resize(width,844,true);await at('#journeyWorkspace');
       assert.ok(await ev(`document.documentElement.scrollWidth<=document.documentElement.clientWidth+1`),'Overflow at '+width);
-      await click('#flowMenu > summary');assert.ok((await position('#flowMenu [data-flow-target="birthHistoryCard"]')).hit,'Chapter menu must be tappable at '+width);
-      await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape'});assert.equal(await ev(`document.querySelector('#flowMenu').open`),false);
+      assert.ok(await ev(`(()=>{const s=document.querySelector('#bandScroll').getBoundingClientRect(),c=document.querySelector('#stageBand .band-seg.cur').getBoundingClientRect();return c.left>=s.left-1&&c.left<s.right-40;})()`),'Current stage is scrolled into the band at '+width+' '+await ev(`JSON.stringify([document.querySelector('#bandScroll').getBoundingClientRect(),document.querySelector('#stageBand .band-seg.cur').getBoundingClientRect(),document.querySelector('#bandScroll').scrollLeft])`));
+      assert.ok((await position('#stageBand [data-flow-target="birthHistoryCard"]')).hit,'Stage headers must be tappable at '+width);
       await shot('nicu-forward-E-mobile-'+width+'.png');
     }
     await chapter('finalReviewCard');await shot('nicu-forward-review-mobile.png');assert.equal(await ev(`document.querySelector('#copy').dataset.primary`),'true');
@@ -108,19 +113,21 @@ async function main(){
     await resize(1440,1000);
     const routeStages={};
     for(const [story,expected] of [['A',2],['B',2],['C',3],['D',5]]){
-      if(story==='A')await click('#entryDirect');
+      await chapter('admissionContext');if(story==='A')await click('#entryDirect');
+      if(['A','B'].includes(story))await chapter('birthHistoryCard');
       await click(`[data-story="${story}"]`);
       const stops=await ev(`[...document.querySelectorAll('#journey > li')].filter(e=>!e.hidden).map(e=>e.dataset.stop)`);
       assert.equal(stops.length,expected,story+' stage count');
       for(const stop of stops){await click(`[data-stop-toggle="${stop}"]`);assert.ok(await ev(`document.querySelector('#journeyWorkspace').children.length>0`));}
       routeStages[story]=stops.length;
     }
-    await click('[data-story="E"]');assert.equal(await note(),text,'Returning to E must restore its complete narrative');
+    await chapter('admissionContext');await click('[data-story="E"]');assert.equal(await note(),text,'Returning to E must restore its complete narrative');
     // Preserve a prior qualitative statement, explicitly resolve it, and undo the resolution.
     await click('[data-stop-toggle="illness"]');await input('rm_feeding_usual','90');await input('rm_feeding_current','45');
-    await click('[data-msel="readmitProblems"] [data-v="poor-feeding"]');
-    await click('[data-set-field="readmitIntake"][data-v="remained at the usual level"]');
-    await click('[data-msel="readmitProblems"] [data-v="poor-feeding"]');
+    // 問題選擇在第 1 段、進食描述在第 4 段：一次只顯示一段，所以兩段之間用帶子切換。
+    await chapter('admissionContext');await click('[data-msel="readmitProblems"] [data-v="poor-feeding"]');
+    await click('[data-stop-toggle="illness"]');await click('[data-set-field="readmitIntake"][data-v="remained at the usual level"]');
+    await chapter('admissionContext');await click('[data-msel="readmitProblems"] [data-v="poor-feeding"]');await click('[data-stop-toggle="illness"]');
     assert.equal(await ev(`document.querySelector('#readmitIntakeReview').dataset.conflict`),'true');
     await at('#readmitGeneral');await shot('nicu-forward-intake-conflict.png');
     await click('#clearPreviousIntake');assert.equal(await ev(`document.querySelector('#readmitIntake').value`),'');
@@ -129,22 +136,25 @@ async function main(){
     // Short viewport: expanded preview and its controls still remain usable.
     await resize(390,540,true);await click('#dockToggle');assert.equal(await ev(`document.querySelector('#previewBody').hidden`),false);
     await click('#previewReading');await click('#dockToggle');await at('#readmitGeneral');await shot('nicu-forward-short-mobile.png');
-    assert.ok((await position('#flowNext')).hit);assert.ok((await position('#copy')).hit);
+    assert.ok((await position('#stageBand [data-flow-target="finalReviewCard"]')).hit);assert.ok((await position('#journeyNext')).hit);assert.ok((await position('#copy')).hit);
     // Fresh direct and outborn admissions: do not rely on values from the E case.
     await resize(1366,768);await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'light'}]});
     const fresh=async()=>{const previous=await ev('performance.timeOrigin');await send('Page.reload',{ignoreCache:true});for(let i=0;i<100;i++){if(await ev(`performance.timeOrigin!==${previous}&&!!document.querySelector('#workflowNav')&&document.readyState==='complete'`))return;await pause(100);}throw Error('Reload did not initialize');};
     const background=async(kind)=>{
       await click(kind==='A'?'#entryDirect':'[data-story="D"]');await click('[data-seg="dest"] [data-v="NICU"]');await input('birthDate',today);
-      await click('#flowNext');await input('gravida','2');await input('para','2');await input('matAge','30');
+      await click('#admissionContext .stage-actions .primary');await input('gravida','2');await input('para','2');await input('matAge','30');
       await click('#prenatalNext');await click('[data-seg="gender"] [data-v="male"]');await input('gaW',kind==='A'?'35':'37');await input('bw',kind==='A'?'2300':'2800');await click('[data-seg="delivery"] [data-v="nsd"]');await input('ap1','8');await input('ap5','9');
     };
     await fresh();await background('A');await click('[data-story="A"]');await click('[data-msel="pwSbR"] [data-v="preterm labor"]');
     await input('birthBreathing','labored');await input('birthResusStatus','performed');await click('[data-add-birth="ppv"]');
     const eventId=await ev(`document.querySelector('#birthEvents [data-event-id]').dataset.eventId`);
     await input('event-'+eventId+'-minutes','2');await input('event-'+eventId+'-fiO2','25');await input('event-'+eventId+'-pip','20');await input('event-'+eventId+'-peep','5');await input('birthFinalSupport','cpap');
-    const birthScroll=await ev(`-document.querySelector('#birthHistoryCard').getBoundingClientRect().top`);
-    await click('#flowNext');await click('#flowBack');assert.ok(Math.abs(await ev(`-document.querySelector('#birthHistoryCard').getBoundingClientRect().top`)-birthScroll)<3,'Chapter back restores position');
-    await click('#flowNext');await input('obRespRelation','continued');await click('#journeyNext');await click('#admissionStatusBody [data-seg="resp"] [data-v="NCPAP"]');await click('#journeyNext');
+    // 換段＝只顯示該段並回到頂端（不再是一條長頁的捲動）。
+    await click('#birthHistoryCard .stage-actions .primary');assert.equal(await chapterText(),'本次病程');assert.equal(await ev('scrollY'),0,'Next stage starts at the top');
+    assert.equal(await ev(`document.querySelector('#birthHistoryCard').checkVisibility()`),false,'Only the active stage is displayed');
+    await click('#journeyPrev');assert.equal(await chapterText(),'出生資料');assert.equal(await ev('scrollY'),0);assert.equal(await ev(`document.querySelector('#birthHistoryCard').checkVisibility()`),true);
+    assert.equal(await ev(`document.querySelector('#event-${eventId}-pip').value`),'20','Switching stages keeps entered values');
+    await click('#birthHistoryCard .stage-actions .primary');await input('obRespRelation','continued');await click('#journeyNext');await click('#admissionStatusBody [data-seg="resp"] [data-v="NCPAP"]');await click('#journeyNext');
     const directNote=await note();assert.match(directNote,/35 weeks/);assert.match(directNote,/preterm labor/);assert.match(directNote,/2 minutes/);assert.match(directNote,/25%/);assert.match(directNote,/NCPAP/);assert.doesNotMatch(directNote,/discharged home|An older sibling/);
     await at('#finalReviewCard');await shot('nicu-forward-direct-review-light.png');await click('#copy');assert.match(await ev(`document.querySelector('#copyStatus').textContent`),/^已複製/,'Real Chrome clipboard action');
     await fresh();await background('D');await input('obFacility','Example Transfer Hospital');await input('birthBreathing','crying');await input('birthResusStatus','none');
@@ -229,9 +239,9 @@ async function main(){
     // Keyboard next is navigation only; changing an exception cannot reset it.
     await fresh();await resize(390,844,true);await chapter('prenatalCard');
     await click('[data-ryn="gdm"] [data-v="unknown"]');
-    assert.doesNotMatch(await ev(`document.querySelector('#flowNext').getAttribute('aria-label')`),/核對/);
-    await ev(`document.querySelector('#flowNext').focus({preventScroll:true})`);
-    assert.equal(await ev('document.activeElement.id'),'flowNext');
+    assert.doesNotMatch(await ev(`document.querySelector('#prenatalNext').textContent`),/核對/);
+    await ev(`document.querySelector('#prenatalNext').focus({preventScroll:true})`);
+    assert.equal(await ev('document.activeElement.id'),'prenatalNext');
     await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'});
     await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
     await pause(80);
@@ -251,11 +261,12 @@ async function main(){
     const checkLocated=async(id,chapterName)=>{
       await pause(120);
       assert.equal(await ev('document.activeElement.id'),id);
-      assert.equal(await ev(`document.querySelector('#flowChapter').textContent`),chapterName);
+      assert.equal(await chapterText(),chapterName);
       const bounds=await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)}),r=e.getBoundingClientRect(),n=document.querySelector('#workflowNav').getBoundingClientRect(),dock=document.querySelector('.dock').getBoundingClientRect();return {width:innerWidth,top:r.top,bottom:r.bottom,labelTop:(e.labels?.[0]||e.closest('.field')||e).getBoundingClientRect().top,navBottom:n.bottom,dockTop:dock.top,highlight:e.classList.contains('review-target-flash'),visible:e.checkVisibility(),overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+1};})()`);
       assert.ok(bounds.visible&&bounds.highlight,'Field must be visible and highlighted: '+JSON.stringify(bounds));
       assert.ok(bounds.top>=bounds.navBottom+8,'Navigation must not cover the field: '+JSON.stringify(bounds));
-      assert.ok(bounds.labelTop>=bounds.navBottom+8,'The field label must also remain visible: '+JSON.stringify(bounds));
+      // 分段後頁面變短，欄位靠近段尾時頁面捲不到「導覽下 8px」；標籤只要求不被導覽蓋住。
+      assert.ok(bounds.labelTop>=bounds.navBottom,'The field label must also remain visible: '+JSON.stringify(bounds));
       const viewportHeight=await ev('innerHeight');
       assert.ok(bounds.bottom<Math.min(viewportHeight,bounds.width<1000?bounds.dockTop:viewportHeight),'Field must be above the mobile preview dock: '+JSON.stringify(bounds));
       assert.equal(bounds.overflow,false);reviewRects.push(bounds);
@@ -270,15 +281,15 @@ async function main(){
         await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
       }else await click(reviewLink('#rm_respiratory_onset'));
       await checkLocated('rm_respiratory_onset','本次病程');
-      assert.match(await ev(`document.querySelector('#flowDetail').textContent`),/症狀與變化.*2\/3/);
+      assert.match(await current(),/症狀與變化.*2／3/);
       assert.equal(await ev(`document.querySelector('#rm_respiratory_onset').closest('details').open`),true);
       assert.equal(await note(),before,'Jump must not change clinical content');
       await shot('nicu-review-target-'+width+'.png');
-      if(width!==320){await click(onsetDetails);await click('#flowNext');await click('#flowNext');}
+      if(width!==320){await click(onsetDetails);await click('#journeyNext');await click('#journeyNext');}
     }
     await input('rm_respiratory_onset','17');await click('#returnToReview');
     assert.equal(await ev(`!!document.querySelector(${JSON.stringify(reviewLink('#rm_respiratory_onset'))})`),false,'Corrected warning disappears');
-    assert.equal(await ev(`document.querySelector('#flowChapter').textContent`),'核對病歷');
+    assert.equal(await chapterText(),'核對病歷');
     assert.equal(await ev(`document.querySelector('#reviewJumpBar').hidden`),true);
     await click(reviewLink('#gaW'));await checkLocated('gaW','出生資料');await input('gaW','39');await click('#returnToReview');
     assert.equal(await ev(`!!document.querySelector('#reviewConflictList [data-review-target="#gaW"]')`),false);

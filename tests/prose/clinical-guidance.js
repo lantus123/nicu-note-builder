@@ -7,9 +7,10 @@ const test=(name,run)=>tests.push([name,()=>{
  const W=dom.window,d=W.document,get=s=>{const e=d.querySelector(s);assert.ok(e,'Missing '+s);return e;},click=s=>get(s).click();
  const input=(id,v)=>{const e=get('#'+id);e.value=v;e.dispatchEvent(new W.Event(e.tagName==='SELECT'?'change':'input',{bubbles:true}));};
  const story=s=>click(`[data-story="${s}"]`),seg=(k,v)=>click(`[data-seg="${k}"] [data-v="${v}"]`),phase=p=>click(`[data-phase-target="${p}"]`),choose=(f,v)=>click(`#${f}-choice-${v}`),note=()=>get('#note').textContent;
+ const chapter=()=>get('#stageBand .band-head[aria-current="step"] .t').textContent,current=()=>d.querySelector('#stageBand .band-node[aria-current="step"] .nm')?.textContent||'';
  const facts=()=>JSON.stringify(W.guidanceTest.S,(key,value)=>['journeyStep','journeyOpen'].includes(key)?undefined:value);
  const add=(stage,kind)=>{phase('course:'+({outside:'obCare',arrival:'obArrive',transport:'route'}[stage]));click(stage==='transport'?`[data-add-course="${kind}"]`:`[data-event-phase="${stage}"][data-add-stage-event="${kind}"]`);return W.guidanceTest.S.courseEvents.at(-1).id;};
- try{run({W,d,get,click,input,story,seg,phase,choose,note,facts,add});assert.deepEqual(errors,[],'Page exceptions');}finally{W.close();}
+ try{run({W,d,get,click,input,story,seg,phase,choose,note,facts,add,chapter,current});assert.deepEqual(errors,[],'Page exceptions');}finally{W.close();}
 }]);
 test('single selections and the D route survive a second click; clear is explicit',({story,seg,click,get,note,facts})=>{
  story('D');seg('dest','NICU');seg('gender','male');const text=note(),state=facts();story('D');seg('dest','NICU');seg('gender','male');assert.equal(note(),text);assert.equal(facts(),state);
@@ -37,7 +38,7 @@ test('transport symptom labels and narrative agree on timing and follow the on-s
 });
 test('five chart chapters and unique fields remain, relation controls have visual alternatives',({d,get,story})=>{
  story('D');const ids=[...d.querySelectorAll('[id]')].map(e=>e.id);assert.equal(ids.length,new Set(ids).size);
- assert.equal(d.querySelectorAll('#flowMenu [data-flow-target]').length,5);
+ assert.equal(d.querySelectorAll('#stageBand .band-head[data-flow-target]').length,5);
  assert.ok(get('#obM1Relation').closest('[hidden]'));assert.equal(get('#obM1RelationChoices').getAttribute('role'),'group');
  assert.match(get('#entryPathSummary').textContent,/產前資料.*出生經過.*外院照護.*外院聯繫.*我方抵達.*轉送途中.*核對/);
 });
@@ -69,17 +70,19 @@ test('recorded events remain outside the add-event disclosure in every transfer 
   click(`[data-event-id="${id}"] [data-event-action="remove"]`);assert.ok(events.contains(get('[data-undo-event="course"]')));click('[data-undo-event="course"]');assert.ok(events.contains(get('#event-'+id+'-minutes')));assert.equal(palette.open,false);assert.equal(note(),text);
  }
 });
-test('phase highlighting keeps menu controls stable, including focus and scroll',({story,phase,get,click,W,d,note})=>{
- story('D');phase('birth:birth');const selector='#flowSubsteps [data-phase-target="course:adm"]',button=get(selector);phase('birth:dr');assert.equal(get(selector),button);
- click('#phaseMenu > summary');button.focus();const menu=get('#flowSubsteps');menu.scrollTop=125;const text=note();W.guidanceTest.render();assert.equal(get(selector),button);assert.equal(d.activeElement,button);assert.equal(menu.scrollTop,125);assert.equal(note(),text);
+test('phase highlighting keeps band nodes stable, including focus and band scroll',({story,phase,get,W,d,note})=>{
+ story('D');phase('birth:birth');const selector='#stageBand [data-phase-target="course:adm"]',button=get(selector);phase('birth:dr');assert.equal(get(selector),button);
+ button.focus();const scroller=get('#bandScroll');scroller.scrollLeft=125;const text=note();W.guidanceTest.render();assert.equal(get(selector),button);assert.equal(d.activeElement,button);assert.equal(scroller.scrollLeft,125);assert.equal(note(),text);
 });
-test('birth rail follows the actual delivery setting and does not modify any clinical facts',({story,seg,phase,note,facts,get})=>{
+test('birth rail follows the actual delivery setting and does not modify any clinical facts',({story,seg,phase,note,facts,get,current})=>{
  story('A');seg('delivery','cs');const text=note(),state=facts();
  for(const key of ['birth:info','birth:standby','birth:birth','birth:dr','birth:drEnd','course:route','course:adm']){phase(key);assert.equal(note(),text);assert.equal(facts(),state);}
- phase('birth:dr');assert.match(get('#flowDetail').textContent,/刀房處置/);assert.match(get('#context-birth-dr').textContent,/刀房/);
+ phase('birth:dr');assert.match(current(),/刀房處置/);assert.match(get('#context-birth-dr').textContent,/刀房/);
 });
-test('birth next navigation advances stages without collapsing or creating NRP events',({story,phase,click,get,W})=>{
- story('B');phase('birth:birth');click('#flowNext');assert.match(get('#flowDetail').textContent,/出生後會診/);click('#flowNext');assert.match(get('#flowDetail').textContent,/處置/);click('#flowNext');assert.match(get('#flowDetail').textContent,/離開/);click('#flowNext');assert.match(get('#flowDetail').textContent,/入院前處置/);assert.equal(W.guidanceTest.S.birthEvents.length,0);
+test('birth nodes reach every B stage and next leads to the course without creating NRP events',({story,phase,click,get,W,current,chapter})=>{
+ story('B');phase('birth:birth');assert.match(current(),/出生當下/);phase('birth:consult');assert.match(current(),/出生後會診/);phase('birth:dr');assert.match(current(),/處置/);phase('birth:drEnd');assert.match(current(),/離開/);
+ for(const id of ['birthStage-birth','birthStage-consult','birthStage-dr','birthStage-drEnd'])assert.equal(get('#'+id).closest('[hidden],[data-stage-off]'),null,'All birth phases share the one visible stage');
+ click('#birthHistoryCard .stage-actions .primary');assert.equal(chapter(),'本次病程');assert.match(current(),/入院前處置/);assert.equal(W.guidanceTest.S.birthEvents.length,0);
 });
 test('E retains historical birth records and three complaint-driven admission stages',({story,seg,phase,get,input,note,d})=>{
  story('E');seg('dest','NBC');clickProblem(d,'respiratory');phase('birth:dr');input('birthResusStatus','none');assert.match(note(),/No resuscitation was required at birth/);
@@ -109,9 +112,9 @@ test('reconfirming a changed predecessor does not silently reuse settings from t
  story('A');input('birthFinalSupport','cpap');choose('obRespRelation','continued');input('obPEEP','6');input('obFiO2','30');input('birthFinalSupport','ett');choose('obRespRelation','continued');assert.equal(get('#obPEEP').value,'');assert.equal(get('#obFiO2').value,'');assert.doesNotMatch(note(),/30%|6 cmH2O/);
  input('birthFinalSupport','cpap');choose('obRespRelation','continued');assert.equal(get('#obPEEP').value,'6');assert.equal(get('#obFiO2').value,'30');
 });
-test('editing the source invalidates a previous confirmation and review targets the visual choices',({story,input,choose,note,get,click,d})=>{
+test('editing the source invalidates a previous confirmation and review targets the visual choices',({story,input,choose,note,get,click,d,current})=>{
  story('D');input('birthFinalSupport','cpap');choose('obM1Relation','continued');input('birthFinalSupport','ppv');assert.doesNotMatch(note(),/was continued at the referring hospital/);
- const link=[...d.querySelectorAll('#reviewConflictList [data-review-target]')].find(e=>e.dataset.reviewTarget==='#obM1RelationChoices');assert.ok(link);click('[data-flow-target="finalReviewCard"]');link.click();assert.equal(d.activeElement,get('#obM1RelationChoices'));assert.match(get('#flowDetail').textContent,/外院照護/);
+ const link=[...d.querySelectorAll('#reviewConflictList [data-review-target]')].find(e=>e.dataset.reviewTarget==='#obM1RelationChoices');assert.ok(link);click('[data-flow-target="finalReviewCard"]');link.click();assert.equal(d.activeElement,get('#obM1RelationChoices'));assert.match(current(),/外院照護/);
 });
 test('outside, on-site and transport events keep one record each and render in chronological stage order',({story,add,input,W,get,note,click})=>{
  story('D');const outside=add('outside','cpap'),arrival=add('arrival','intubation'),transport=add('transport','epinephrine');
@@ -142,8 +145,8 @@ test('changing from D NICU to E NBC never leaves a stale NICU location in admiss
 test('legacy events are not reclassified or given a fictitious phase in narrative',({story,W,get,note})=>{
  story('D');W.guidanceTest.S.courseEvents.push({id:501,kind:'cpap',location:'Example location'});W.guidanceTest.drawEvents('course');W.guidanceTest.render();assert.equal(get('#event-501-phase').value,'');assert.ok(get('#courseEvents').contains(get('#event-501-phase')));assert.match(note(),/At Example location, CPAP was provided/);assert.match(get('#event-501-phase').closest('.clinical-event').textContent,/尚未指定/);
 });
-test('review links follow moved events, keep phase selection, and return to review',({story,add,input,get,click,note,facts,d})=>{
- story('D');const id=add('arrival','epinephrine');input('event-'+id+'-minutes','30');click('[data-flow-target="finalReviewCard"]');const n=note(),s=facts();const link=[...d.querySelectorAll('#reviewPendingList [data-review-target]')].find(e=>e.dataset.reviewTarget===`#event-${id}-drugDose`);assert.ok(link);link.click();assert.equal(d.activeElement.id,`event-${id}-drugDose`);assert.match(get('#flowDetail').textContent,/我方抵達外院/);assert.equal(get('#event-'+id+'-drugDose').closest('details'),null);assert.equal(note(),n);assert.equal(facts(),s);click('#returnToReview');assert.equal(get('#flowChapter').textContent,'核對病歷');
+test('review links follow moved events, keep phase selection, and return to review',({story,add,input,get,click,note,facts,d,current,chapter})=>{
+ story('D');const id=add('arrival','epinephrine');input('event-'+id+'-minutes','30');click('[data-flow-target="finalReviewCard"]');const n=note(),s=facts();const link=[...d.querySelectorAll('#reviewPendingList [data-review-target]')].find(e=>e.dataset.reviewTarget===`#event-${id}-drugDose`);assert.ok(link);link.click();assert.equal(d.activeElement.id,`event-${id}-drugDose`);assert.match(current(),/我方抵達外院/);assert.equal(get('#event-'+id+'-drugDose').closest('details'),null);assert.equal(note(),n);assert.equal(facts(),s);click('#returnToReview');assert.equal(chapter(),'核對病歷');
 });
 test('phase changes preserve all route drafts and keep E free of outside events',({story,add,input,note,W,get})=>{
  story('D');const id=add('arrival','cpap');input('event-'+id+'-note','Synthetic on-site observation.');const before=note();story('E');assert.doesNotMatch(note(),/Synthetic on-site/);story('D');assert.equal(note(),before);assert.equal(W.guidanceTest.S.courseEvents[0].phase,'arrival');assert.ok(get('#obArriveEvents').contains(get('#event-'+id+'-minutes')));

@@ -18,8 +18,9 @@ async function main(){
   for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,x:p.x,y:p.y});await pause(80);
  };
  const input=async(id,value)=>{await click('#'+id);await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event(e.tagName==='SELECT'||e.type==='date'?'change':'input',{bubbles:true}));})()`);};
- const phase=async key=>{if(!await ev("document.getElementById('phaseMenu').open"))await click('#phaseMenu > summary');await click(`#flowSubsteps [data-phase-target="${key}"]`);};
- const chapter=async key=>{if(!await ev("document.getElementById('flowMenu').open"))await click('#flowMenu > summary');await click(`#flowMenu [data-flow-target="${key}"]`);};
+ // 時序帶取代原章節／階段選單：段＝帶子標頭，病程站點＝帶子節點（窄螢幕帶子自己橫向捲動）。
+ const phase=async key=>click(`#stageBand [data-phase-target="${key}"]`);
+ const chapter=async key=>click(`#stageBand [data-flow-target="${key}"]`);
  const resize=async(width,height=900,scale=1)=>{await send('Emulation.setDeviceMetricsOverride',{width,height,screenWidth:width,screenHeight:height,deviceScaleFactor:scale,mobile:width<600});await send('Emulation.setPageScaleFactor',{pageScaleFactor:1});await pause(120);};
  const align=async selector=>{await ev(`document.querySelector(${JSON.stringify(selector)}).scrollIntoView({block:'start',behavior:'instant'})`);await pause(100);};
  const shot=async name=>{const r=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync('/private/tmp/nicu-clarity-'+name+'.png',Buffer.from(r.data,'base64'));};
@@ -27,15 +28,17 @@ async function main(){
  const geometry=selector=>ev(`(()=>{const g=document.querySelector(${JSON.stringify(selector)}),r=g.getBoundingClientRect();return [...g.querySelectorAll('button')].filter(b=>b.checkVisibility()).map(b=>{const a=b.getBoundingClientRect();return [b.dataset.v||b.dataset.clearSeg,a.x-r.x,a.y-r.y,a.width,a.height];});})()`);
  const layout=async label=>{
   const result=await ev(`(()=>{
-   const visible=e=>e.checkVisibility()&&e.getBoundingClientRect().width>0,rect=e=>e.getBoundingClientRect(),rail=document.getElementById('clinicalRail'),form=document.querySelector('.wrap'),preview=document.querySelector('.dock');
+   const visible=e=>e.checkVisibility()&&e.getBoundingClientRect().width>0,rect=e=>e.getBoundingClientRect(),scroller=document.getElementById('bandScroll'),form=document.querySelector('.wrap'),preview=document.querySelector('.dock');
    const controls=[...document.querySelectorAll('input,select,textarea,button')].filter(visible),bad=[];
    for(const e of controls){const box=e.closest('.card,.clinical-event');if(!box)continue;const r=rect(e),b=rect(box);if(r.left<b.left-1||r.right>b.right+1)bad.push(e.id||e.textContent.slice(0,45));if(e.tagName==='BUTTON'&&e.scrollWidth>e.clientWidth+2)bad.push('clipped '+e.textContent);}
-   const railClips=[...rail.querySelectorAll('button')].filter(visible).filter(b=>rect(b).left<rect(rail).left-1||rect(b).right>rect(rail).right+1).map(b=>b.textContent);
-   const nav=document.getElementById('workflowNav');return {width:innerWidth,overflow:document.documentElement.scrollWidth-innerWidth,bad,railClips,railVisible:visible(rail),previewCollapsed:preview.classList.contains('collapsed'),gap:rect(preview).left-rect(form).right,navHeight:rect(nav).height,navBackground:getComputedStyle(nav).backgroundColor};
+   const railClips=rect(scroller).right>innerWidth+1||rect(scroller).left<-1?['band outside viewport']:[],bandScrolls=scroller.scrollWidth>scroller.clientWidth+1,current=document.querySelector('#stageBand .band-seg.cur'),currentClipped=!!current&&scroller.checkVisibility()&&(rect(current).left<rect(scroller).left-1||rect(current).left>rect(scroller).right-40||rect(current).width<=rect(scroller).width&&rect(current).right>rect(scroller).right+1);
+   const nav=document.getElementById('workflowNav');return {width:innerWidth,overflow:document.documentElement.scrollWidth-innerWidth,bad,railClips,bandScrolls,currentClipped,previewCollapsed:preview.classList.contains('collapsed'),gap:rect(preview).left-rect(form).right,navHeight:rect(nav).height,navBackground:getComputedStyle(nav).backgroundColor};
   })()`);
   checks.push({label,...result});assert.ok(result.overflow<=1,label+' document overflow '+JSON.stringify(result));assert.deepEqual(result.bad,[],label+' controls overflow');assert.deepEqual(result.railClips,[],label+' rail clips');
   if(result.width>=1180){assert.equal(result.previewCollapsed,false);assert.ok(Math.abs(result.gap-24)<1,'Shared grid gap: '+JSON.stringify(result));}
-  else{assert.equal(result.railVisible,false);assert.equal(result.previewCollapsed,true);}
+  else assert.equal(result.previewCollapsed,true);
+  if(result.width>=1440)assert.equal(result.bandScrolls,false,label+' band fits without scrolling at '+result.width);
+  assert.equal(result.currentClipped,false,label+' current stage must be scrolled into the band view');
   assert.doesNotMatch(result.navBackground,/rgba\(.*0\)$/,'Navigation must be opaque');
  };
  try{

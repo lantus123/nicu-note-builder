@@ -215,23 +215,26 @@ test('review separates missing keys, unconfirmed actions, conflicts and neutral 
   assert.doesNotMatch(get('#reviewConflictList').textContent,/實際處置/);
   get('#reviewOptional').open=true;input('rm_respiratory_onset','17');assert.equal(get('#reviewOptional').open,true,'Input must not close optional review');
 });
-test('combined navigation identifies the exact E substage and copy only becomes primary at review',({story,click,get,note})=>{
-  assert.equal(get('#flowMenu > summary').getAttribute('aria-label'),'切換病歷章節','Chapter switching is separate from the current clinical stage');
+const chapter=d=>d.querySelector('#stageBand .band-head[aria-current="step"] .t').textContent;
+const currentNode=d=>d.querySelector('#stageBand .band-node[aria-current="step"] .nm')?.textContent||'';
+test('combined navigation identifies the exact E substage and copy only becomes primary at review',({d,story,click,get,note})=>{
+  assert.equal(d.querySelectorAll('#stageBand .band-head[data-flow-target]').length,5,'Five chart stages are always reachable from the band');
   assert.equal(get('#copy').disabled,false);assert.equal(get('#copy').dataset.primary,'false');assert.equal(get('#copy').textContent,'複製草稿');
-  story('E');click('#birthHistoryCard [data-flow-target="pathwayCard"]');assert.match(get('#flowChapter').textContent,/本次病程/);assert.match(get('#flowDetail').textContent,/出院與返家基準.*1\/3/);
-  click('#flowNext');assert.match(get('#flowDetail').textContent,/症狀與變化.*2\/3/);
-  const before=note();click('#flowNext');assert.match(get('#flowDetail').textContent,/評估與收治.*3\/3/);click('#flowNext');
-  assert.equal(get('#copy').dataset.primary,'true');assert.equal(get('#copy').textContent,'複製病歷');assert.equal(get('#flowNext').hidden,true);assert.equal(note(),before);
-  click('#flowBack');assert.equal(get('#copy').dataset.primary,'false');assert.match(get('#flowDetail').textContent,/3\/3/);
+  story('E');click('#birthHistoryCard [data-flow-target="pathwayCard"]');assert.equal(chapter(d),'本次病程');assert.match(currentNode(d),/出院與返家基準/);assert.match(get('#journeyCounter').textContent,/1／3/);
+  click('#journeyNext');assert.match(currentNode(d),/症狀與變化/);assert.match(get('#journeyCounter').textContent,/2／3/);
+  const before=note();click('#journeyNext');assert.match(currentNode(d),/評估與收治/);assert.match(get('#journeyCounter').textContent,/3／3/);click('#journeyNext');
+  assert.equal(chapter(d),'核對病歷');assert.equal(get('#copy').dataset.primary,'true');assert.equal(get('#copy').textContent,'複製病歷');assert.equal(d.querySelector('#finalReviewCard .stage-actions .primary'),null,'Review is the last stage');assert.equal(note(),before);
+  click('#finalReviewCard .stage-actions .secondary');assert.equal(chapter(d),'本次病程');assert.equal(get('#copy').dataset.primary,'false');assert.match(get('#journeyCounter').textContent,/3／3/);
 });
-test('first and last substage controls connect to the adjacent chart chapters',({story,click,get})=>{
-  story('E');click('[data-stop-toggle="prior"]');click('#journeyPrev');assert.equal(get('#flowChapter').textContent,'出生資料');
-  click('[data-stop-toggle="evaluation"]');assert.equal(get('#journeyNext').disabled,false);click('#journeyNext');assert.equal(get('#flowChapter').textContent,'核對病歷');
+test('first and last substage controls connect to the adjacent chart chapters',({d,story,click,get})=>{
+  story('E');click('[data-stop-toggle="prior"]');click('#journeyPrev');assert.equal(chapter(d),'出生資料');
+  click('[data-stop-toggle="evaluation"]');assert.equal(get('#journeyNext').disabled,false);click('#journeyNext');assert.equal(chapter(d),'核對病歷');
 });
-test('navigation menu closes on selection and Escape; navigation never edits clinical facts',({W,story,click,get,input,note})=>{
-  story('E');input('readmitCourse','The symptoms persisted.');const before=note();get('#flowMenu').open=true;
-  click('#flowSubsteps [data-phase-target="course:illness"]');assert.equal(get('#flowMenu').open,false);assert.equal(note(),before);
-  get('#flowMenu').open=true;get('#flowMenu').dispatchEvent(new W.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(get('#flowMenu').open,false);assert.equal(note(),before);
+test('band nodes and stage headers navigate without editing clinical facts',({d,story,click,get,input,note})=>{
+  story('E');input('readmitCourse','The symptoms persisted.');const before=note();
+  click('#stageBand [data-band-node="course:illness"]');assert.equal(chapter(d),'本次病程');assert.match(currentNode(d),/症狀與變化/);assert.equal(note(),before);
+  click('#stageBand [data-flow-target="admissionContext"]');assert.equal(chapter(d),'入院設定');assert.equal(get('#pathwayCard').hasAttribute('data-stage-off'),true);assert.equal(note(),before);
+  click('#stageBand [data-flow-target="pathwayCard"]');assert.match(currentNode(d),/症狀與變化/,'Returning to the stage keeps the last journey step');assert.equal(get('#readmitCourse').value,'The symptoms persisted.');
 });
 test('confirmed support reuse is a read-only mode summary, not an unanswered second question',({story,seg,input,get,note,click})=>{
   story('D');input('birthFinalSupport','cpap');input('obM1Relation','continued');

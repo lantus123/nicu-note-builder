@@ -18,7 +18,7 @@ PICU 專用 NI plan 尚未建立，顯示說明但不自動套用 NICU 醫囑；
 
 initializeAdmissionWorkflow 只搬動既有 DOM 控制項，保留 ID；各事實只有一份可編輯來源。renderAdmissionWorkflow 管理來源摘要、條件欄位與時點引用。renderJourney 保留固定工作區，輸入不自動換段；切換階段保留當次開頁資料及可恢復的焦點／相對位置。
 
-workflowNav 是唯一固定列，分頁不固定。章節與全部階段使用不同選單；中間顯示目前階段與地點／團隊，前後鈕顯示目的段落名稱。桌面可點完整階段軸，窄畫面收起軸，保留命名的前／中／後導覽。workflowViews／journeyViews 僅存本次頁面的焦點及相對位置；視窗寬度改變後不套用舊寬度的病程捲動偏移，離開可視區的章節不覆寫有效記憶。導覽高度在定位前同步量測，ResizeObserver 處理後續尺寸變化。填寫中可複製草稿，核對階段才強調複製病歷。
+workflowNav 是唯一固定列（時序帶，2026-10-06 取代原 flow-nav），分頁不固定。五段一次只顯示一段：`applyStageVisibility` 以 `data-stage-off`（不是 `hidden`）切換卡片，`hidden` 仍只代表「資料條件不適用」，所以核對清單的數值檢查與跳轉判斷不受換段影響。段標頭帶 `data-flow-target`、病程節點帶 `data-phase-target`；`renderStageBand` 只在節點組成改變時重建節點，其餘只換 class／文字。段狀態與節點警示由 `stageReviewGroups` 依核對清單既有結果（`lastReviewLists`＋`reviewTargets`）以目標欄位所在段／`phaseForElement` 分組，不另寫檢查規則。換段回頂端；journeyViews 仍只存本次頁面病程站點的焦點及相對位置；視窗寬度改變後不套用舊寬度的病程捲動偏移。導覽高度在定位前同步量測，ResizeObserver 處理後續尺寸變化。填寫中可複製草稿，核對階段才強調複製病歷。
 
 單選重點不取消；允許空值的群組有獨立清除。資料只由既有狀態／欄位管理，圓形或方形標記不建立另一份臨床來源。單選方向鍵移動焦點，Enter／Space 才選定；多選仍可再點取消。
 

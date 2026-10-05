@@ -20,6 +20,9 @@ const test=(name,check)=>tests.push([name,()=>{
   const story=key=>click(`[data-story="${key}"]`);
   const stage=key=>click(`[data-stop-toggle="${key}"]`);
   const note=()=>get('#note').textContent;
+  // 時序帶取代原 flow-nav：目前段＝帶子上 aria-current 的段標頭；病程站點＝目前節點＋第 n／N 階段。
+  const chapter=()=>get('#stageBand .band-head[aria-current="step"] .t').textContent;
+  const where=()=>{const node=d.querySelector('#stageBand .band-node[aria-current="step"] .nm');return `${node?node.textContent:''} ${chapter()==='本次病程'?get('#journeyCounter').textContent:''}`;};
   const state=()=>JSON.stringify(W.reviewTest.S,(key,value)=>['journeyStep','journeyOpen'].includes(key)?undefined:value);
   const link=(selector,host='#workflowReview')=>{
     const button=[...get(host).querySelectorAll('[data-review-target]')].find(b=>b.dataset.reviewTarget===selector);
@@ -30,6 +33,7 @@ const test=(name,check)=>tests.push([name,()=>{
     const before=note(),facts=state();link(selector,host).click();
     assert.equal(d.activeElement,get(expected),'Focus the exact field, not a section heading');
     assert.equal(get(expected).closest('[hidden]'),null,'No hidden ancestor');
+    assert.equal(get(expected).closest('[data-stage-off]'),null,'Target stage is the one shown');
     for(let p=get(expected).parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')assert.equal(p.open,true,'Open enclosing details');
     assert.equal(get(expected).classList.contains('review-target-flash'),true);
     assert.equal(get('#reviewJumpBar').hidden,false);
@@ -41,7 +45,7 @@ const test=(name,check)=>tests.push([name,()=>{
     input('birthDate','2026-09-15');input('admissionDate','2026-10-02');
     for(const value of problems)click(`[data-msel="readmitProblems"] [data-v="${value}"]`);
   };
-  try{check({W,d,get,click,input,seg,story,stage,note,state,link,jump,readmit});assert.deepEqual(errors,[],'No page errors');}
+  try{check({W,d,get,click,input,seg,story,stage,note,state,link,jump,readmit,chapter,where});assert.deepEqual(errors,[],'No page errors');}
   finally{W.close();}
 }]);
 
@@ -53,18 +57,18 @@ test('every fresh review item has an accessible, valid target without forcing ch
   assert.equal(d.querySelector('#entryRoutes [aria-checked="true"]'),null);
 });
 
-test('GA range warning names GA and navigates to the actual week input',({get,input,jump})=>{
+test('GA range warning names GA and navigates to the actual week input',({get,input,jump,chapter})=>{
   input('gaW','99');assert.match(get('#reviewConflictList').textContent,/妊娠週數 GA（週）：數值/);
-  jump('#gaW');assert.equal(get('#flowChapter').textContent,'出生資料');
+  jump('#gaW');assert.equal(chapter(),'出生資料');
   input('gaW','39');assert.doesNotMatch(get('#reviewConflictList').textContent,/GA（週）：數值/);
 });
 
-test('admission date and time expand closed date details, including inline hints',({get,input,jump,click})=>{
+test('admission date and time expand closed date details, including inline hints',({get,input,jump,click,chapter})=>{
   input('birthDate','2026-10-02');input('admissionDate','2026-10-01');
   assert.equal(get('#admissionDateDetails').open,false);jump('#admissionDate');
   input('admissionDate','2026-10-02');input('birthTime','13:00');input('admissionTime','12:00');
   get('#admissionDateDetails').open=false;jump('#admissionTime',{host:'#contextReview'});
-  input('admissionTime','14:00');click('#returnToReview');assert.equal(get('#flowChapter').textContent,'核對病歷');
+  input('admissionTime','14:00');click('#returnToReview');assert.equal(chapter(),'核對病歷');
   assert.equal(get('#reviewJumpBar').hidden,true);assert.doesNotMatch(get('#reviewConflictList').textContent,/早於/);
 });
 
@@ -74,21 +78,21 @@ test('manual DOL conflict focuses the manual value without enabling automatic mo
   jump('#dolOther');assert.match(get('#reviewConflictList').textContent,/手動 DOL 8.*DOL 18/);
 });
 
-test('E symptom onset mounts the parked illness stage and clears old markers when navigating away',({get,readmit,input,stage,jump,click})=>{
+test('E symptom onset mounts the parked illness stage and clears old markers when navigating away',({get,readmit,input,stage,jump,click,where})=>{
   readmit();input('rm_respiratory_onset','25');stage('evaluation');
   assert.equal(get('#rm_respiratory_onset').closest('details').open,false);
-  jump('#rm_respiratory_onset');assert.match(get('#flowDetail').textContent,/症狀與變化.*2\/3/);
+  jump('#rm_respiratory_onset');assert.match(where(),/症狀與變化.*2／3/);
   assert.ok(get('#journeyWorkspace').contains(get('#rm_respiratory_onset')));
   stage('evaluation');assert.equal(get('#reviewJumpBar').hidden,true);assert.equal(get('#rm_respiratory_onset').classList.contains('review-target-flash'),false);
   jump('#rm_respiratory_onset');click('[data-tab="acc"]');click('[data-tab="adm"]');assert.equal(get('#reviewJumpBar').hidden,true);
 });
 
-test('E prior discharge, common onset, evaluation weight and support land in the right stages',({get,readmit,input,stage,jump})=>{
+test('E prior discharge, common onset, evaluation weight and support land in the right stages',({get,readmit,input,stage,jump,where})=>{
   readmit();input('readmitDischargeDate','2026-09-14');input('readmitOnsetDOL','25');stage('evaluation');
-  jump('#readmitDischargeDate');assert.match(get('#flowDetail').textContent,/出院與返家基準/);
-  jump('#readmitOnsetDOL');assert.match(get('#flowDetail').textContent,/症狀與變化/);
-  jump('#readmitCurrentWeight');assert.match(get('#flowDetail').textContent,/評估與收治/);
-  jump('[data-seg="resp"]');assert.match(get('#flowDetail').textContent,/評估與收治/);
+  jump('#readmitDischargeDate');assert.match(where(),/出院與返家基準/);
+  jump('#readmitOnsetDOL');assert.match(where(),/症狀與變化/);
+  jump('#readmitCurrentWeight');assert.match(where(),/評估與收治/);
+  jump('[data-seg="resp"]');assert.match(where(),/評估與收治/);
 });
 
 test('E fever and screening warnings navigate to their own modules, not bilirubin',({get,readmit,input,stage,jump})=>{
@@ -97,10 +101,10 @@ test('E fever and screening warnings navigate to their own modules, not bilirubi
   assert.equal(get('#readmitBiliWrap').hidden,true);
 });
 
-test('E jaundice optional results and legacy conflicting signs have concrete targets',({W,get,readmit,jump})=>{
+test('E jaundice optional results and legacy conflicting signs have concrete targets',({W,get,readmit,jump,where})=>{
   readmit(['jaundice']);W.reviewTest.S.readmitJaundiceSigns=['no dark urine','dark urine'];W.reviewTest.render();
   jump('[data-msel="readmitJaundiceSigns"]');jump('#readmitTSB');
-  assert.match(get('#flowDetail').textContent,/評估與收治/);
+  assert.match(where(),/評估與收治/);
 });
 
 test('missing performed actions focuses the add-action group without adding a procedure',({get,story,input,jump})=>{
@@ -130,32 +134,32 @@ test('PPV pending link does not accept suggested settings or reorder resuscitati
   input('birthInitialNote','No resuscitation was required.');jump('#birthInitialNote');
 });
 
-test('C missing findings mounts the nursery evaluation without claiming normal results',({get,story,click,stage,jump})=>{
+test('C missing findings mounts the nursery evaluation without claiming normal results',({get,story,click,stage,jump,where})=>{
   story('C');click('[data-msel="brWorkup"] button');stage('adm');
-  jump('[data-msel="brFindings"]');assert.match(get('#flowDetail').textContent,/兒科評估/);
+  jump('[data-msel="brFindings"]');assert.match(where(),/兒科評估/);
   assert.equal(get('[data-msel="brFindings"]').querySelector('[aria-pressed="true"]'),null);
 });
 
-test('D origin and unconfirmed continued support mount the correct stage',({get,story,input,stage,jump})=>{
+test('D origin and unconfirmed continued support mount the correct stage',({get,story,input,stage,jump,where})=>{
   story('D');input('obTransferFrom',get('#homeHosp').value);input('obM1Relation','continued');stage('adm');
-  jump('#obTransferFrom');assert.match(get('#flowDetail').textContent,/外院照護/);
-  jump('#obM1RelationChoices');assert.match(get('#flowDetail').textContent,/外院照護/);
+  jump('#obTransferFrom');assert.match(where(),/外院照護/);
+  jump('#obM1RelationChoices');assert.match(where(),/外院照護/);
 });
 
-test('legacy missing screening opens the collapsed screening card without marking a result',({W,get,click,jump})=>{
+test('legacy missing screening opens the collapsed screening card without marking a result',({W,get,click,jump,chapter})=>{
   W.reviewTest.S.scr.hiv='na';W.reviewTest.render();
   const section=get('#screen').closest('.section-content'),toggle=get('#'+section.getAttribute('aria-labelledby'));
   if(!section.hidden)toggle.click();
   jump('.scr-row[data-scr="hiv"]');assert.equal(section.hidden,false);assert.equal(toggle.getAttribute('aria-expanded'),'true');
-  assert.equal(W.reviewTest.S.scr.hiv,'na');assert.equal(get('#flowChapter').textContent,'產前資料');
+  assert.equal(W.reviewTest.S.scr.hiv,'na');assert.equal(chapter(),'產前資料');
 });
 
-test('review buttons remain unique and preserve focus while another item is resolved',({d,get,input,link,click})=>{
+test('review buttons remain unique and preserve focus while another item is resolved',({d,get,input,link,click,chapter})=>{
   const id=link('#bw').id;link('#bw').focus();input('gaW','39');
   assert.equal(link('#bw').id,id);assert.equal(d.activeElement.id,id);
   const ids=[...d.querySelectorAll('[id]')].map(e=>e.id);assert.equal(ids.length,new Set(ids).size);
   click('#'+id);input('bw','3100');click('#returnToReview');
-  assert.equal(get('#flowChapter').textContent,'核對病歷');assert.equal(d.activeElement,get('#finalReviewCard .sec-h'));
+  assert.equal(chapter(),'核對病歷');assert.equal(d.activeElement,get('#finalReviewCard .sec-h'));
 });
 
 test('stale hidden or removed targets do not enable modules, restore deleted events or switch routes',({W,get,story,readmit,input,click,note,state})=>{

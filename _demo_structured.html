@@ -442,21 +442,6 @@
   #entryReadmit{border-top:1px solid var(--line);padding-top:18px}
   #entryReadmit [data-msel="readmitProblems"]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
   #entryReadmit [data-msel="readmitProblems"] button{min-width:0;font-size:13px}
-  .flow-nav{position:sticky;top:var(--flow-top,68px);z-index:12;display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
-  .flow-nav button{border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink-2);font:inherit;font-size:13px;min-height:44px;padding:8px 11px;cursor:pointer}
-  #flowBack{flex:0 0 44px;padding:8px}
-  #flowNext{flex:0 0 auto;white-space:nowrap;background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
-  #flowMenu{flex:1;min-width:0}
-  #flowMenu>summary{display:grid;grid-template-columns:minmax(0,1fr) auto;align-content:center;gap:1px 6px;min-height:44px;padding:2px 5px;cursor:pointer;list-style:none;color:var(--ink)}
-  #flowMenu>summary::-webkit-details-marker{display:none}
-  #flowMenu>summary::after{content:"▾";grid-column:2;grid-row:1/3;align-self:center;color:var(--ink-3)}
-  #flowChapter{font-size:13px;font-weight:700;line-height:1.4}
-  #flowDetail{font-size:12px;color:var(--ink-2);line-height:1.4;overflow-wrap:anywhere}
-  .flow-menu-items{position:absolute;top:calc(100% + 5px);left:0;right:0;display:grid;gap:5px;max-height:50vh;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:0 8px 24px rgba(0,0,0,.15)}
-  .flow-menu-items button{text-align:left}
-  .flow-menu-items button[aria-current="step"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
-  .flow-substeps{display:grid;gap:4px;padding-left:18px}
-  .flow-substeps button{font-size:12px}
   #admSections>.card,.birth-stage,#journeyWorkspace{scroll-margin-top:var(--workflow-offset,140px)}
   #pathwayCard #journeyWorkspace,#admSections .problem-details,#admSections .field{scroll-margin-top:var(--workflow-offset,140px)}
   #pathwayCard .journey-progress{position:static;flex-direction:row;align-items:center;background:var(--surface);box-shadow:none}
@@ -510,13 +495,8 @@
   #returnToReview{flex:0 0 auto;font-size:12px}
   #pathwayCard .tl.stepper li.has .hd::before{content:"•"}
   @media(max-width:799px){#journeyProgress{display:none!important}}
-  @media(max-width:420px){.readmit-module .seg button{font-size:13px}.flow-nav{gap:3px;padding:5px}.flow-nav button{padding-inline:8px;font-size:12px}#flowChapter{font-size:12px}#flowDetail{font-size:11.5px}}
+  @media(max-width:420px){.readmit-module .seg button{font-size:13px}}
   /* 病程定位共用原導覽，不增加手機固定列；以下摘要只讀既有資料。 */
-  .phase-rail{display:flex;gap:5px;flex:1 0 100%;min-width:0;max-width:100%;overflow-x:auto;border-top:1px solid var(--line);padding-top:6px;scrollbar-width:thin}
-  .phase-rail button{flex:1 0 92px;min-width:0;max-width:160px;border-color:transparent;background:transparent;text-align:center;font-size:12px;padding:6px;line-height:1.5}
-  .phase-rail button+button:before{content:'›';float:left;color:var(--ink-3)}
-  .phase-rail button[aria-current=step]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
-  .phase-rail small{display:block;font-size:10px;color:var(--ink-3);font-weight:400}
   #pathwayCard #journey,#pathwayCard #journeyProgress{display:none!important}
   .phase-context{border:0;border-radius:0;background:transparent;padding:0;margin:0 0 24px;overflow-wrap:anywhere}
   .phase-context .phase-kicker{font-size:12px;color:var(--accent-ink);margin-bottom:5px}
@@ -532,7 +512,7 @@
   .support-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .support-choices button{border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:10px;text-align:left;color:var(--ink);min-height:44px;font:inherit;font-size:13px;cursor:pointer;overflow-wrap:anywhere}
   .support-choices button[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
-  .support-choices button:focus-visible,.phase-rail button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .support-choices button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   .support-choices button:disabled{opacity:.5;cursor:default}
   .support-choices button.support-aux{min-height:44px;padding:7px 9px;background:transparent;font-size:12px;border-color:transparent;color:var(--ink-2)}
   #obM1Wrap>.lab,#ladderALab{display:none}
@@ -544,7 +524,7 @@
   .event-phase-label{font-size:12px;color:var(--accent-ink);margin:5px 0 10px}
   #courseEvents:empty,#obCareEvents:empty,#obArriveEvents:empty{display:none}
   #journeyWorkspace>.body>.stop-plain,.birth-stage>.body>.stop-plain,#admissionStatusBody>.stop-plain,#readmitSelectedSummary{display:none}
-  @media(max-width:799px){.phase-rail{display:none}.phase-context h3{font-size:17px}.phase-context p{font-size:12px}.support-question{font-size:14px}}
+  @media(max-width:799px){.phase-context h3{font-size:17px}.phase-context p{font-size:12px}.support-question{font-size:14px}}
 
   /* 穩定的選取位置：圓形為單選、方形為多選，標記永遠預留空間。 */
   .seg button.choice-button,.yn button.choice-button,.support-choices button.choice-button{position:relative;padding-left:34px;font-weight:500;transform:none}
@@ -587,47 +567,75 @@
   /* 一個不透底的固定導覽；分頁不再與階段爭取注意力。 */
   .tabs{position:static;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:0 0 6px;margin-bottom:18px;backdrop-filter:none;-webkit-backdrop-filter:none}
   .tabs button[aria-selected="true"]{background:var(--surface-2);color:var(--accent-ink);box-shadow:inset 0 -3px var(--accent);border-radius:6px 6px 0 0}
-  .flow-nav{top:0;display:block;border:0;border-bottom:1px solid var(--line);border-radius:0;background:var(--bg);box-shadow:none;padding:6px 0 10px;margin:0 0 20px;isolation:isolate}
-  .flow-nav::before{content:"";position:absolute;inset:0 -2px;background:var(--bg);z-index:-1}
-  .flow-metadata{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
-  #flowMenu,#phaseMenu{flex:0 1 auto;min-width:0}
-  #flowMenu>summary,#phaseMenu>summary{display:flex;align-items:center;gap:6px;list-style:none;min-height:36px;padding:4px 0;font-size:12px;color:var(--ink-2);cursor:pointer}
-  #flowMenu>summary::after,#phaseMenu>summary::after{content:"▾";color:var(--ink-3)}
-  #phaseMenu>summary::-webkit-details-marker{display:none}
-  #flowChapter{font-weight:500;font-size:12px}
-  .flow-step-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);align-items:center;gap:8px}
-  .flow-current{text-align:center;min-width:0}
-  #flowDetail{display:block;font-size:18px;font-weight:700;line-height:1.4;color:var(--ink)}
-  #flowWhere{display:block;font-size:12px;line-height:1.5;color:var(--ink-2);margin-top:3px;overflow-wrap:anywhere}
-  #flowBack,#flowNext{min-height:52px;max-width:100%;padding:8px 10px;white-space:normal;overflow-wrap:anywhere;border:1px solid var(--line);border-radius:8px;line-height:1.4;background:var(--surface);color:var(--ink);font-size:13px;font-weight:500}
-  #flowBack{text-align:left}
-  #flowNext{text-align:right;background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
-  .flow-direction{display:block;font-size:11px;font-weight:400;opacity:.85;margin-bottom:3px}
-  .flow-menu-items{top:calc(100% + 2px);z-index:5;max-height:min(55vh,440px)}
-  .flow-substeps{padding:0;gap:4px}
-  .phase-menu-heading{margin:8px 4px 2px;font-size:12px;color:var(--ink-3)}
-  .phase-rail{display:grid;grid-template-columns:repeat(var(--phase-count,6),minmax(0,1fr));gap:4px;overflow:visible;border:0;padding-top:10px;margin-top:4px}
-  .phase-rail button{position:relative;min-width:0;max-width:none;padding:7px 3px 5px;min-height:48px;font-size:12px;overflow-wrap:anywhere;border:0;line-height:1.5}
-  .phase-rail button+button::before{content:none}
-  .phase-rail .phase-dot{display:block;width:8px;height:8px;border-radius:50%;margin:0 auto 6px;background:var(--line);position:relative;z-index:1}
-  .phase-rail button:not(:last-child)::after{content:"";position:absolute;top:10px;left:calc(50% + 7px);width:calc(100% - 10px);height:1px;background:var(--line)}
-  .phase-rail button[aria-current="step"]{background:var(--accent-soft);border:0;border-radius:7px;color:var(--accent-ink)}
-  .phase-rail button[aria-current="step"] .phase-dot{background:var(--accent)}
-  .phase-rail small{display:none}
   .phase-context{margin-bottom:22px}
   #journeyContext .phase-kicker{display:none}
   .phase-context h3{font-size:20px}
   .phase-context .phase-inherit{border-left:2px solid var(--line);padding-left:10px;margin-top:12px}
   .birth-stage>h3{display:none}
-  .note .note-scope[data-active="true"]{background:var(--accent-soft);box-decoration-break:clone;-webkit-box-decoration-break:clone;border-radius:3px}
   #previewStage{min-height:44px;border:1px solid var(--doc-line);border-radius:8px;padding:8px 10px;background:var(--doc-bg);color:var(--doc-ink);font:inherit;font-size:12px;cursor:pointer;max-width:100%}
   .preview-tools{gap:8px}
   .preview-tools label{margin-left:0}
-  @media(max-width:1179px){.phase-rail{display:none}.flow-nav{margin-bottom:16px}.wrap{padding-top:16px}.flow-metadata>details>summary{min-height:44px}}
+  @media(max-width:1179px){.wrap{padding-top:16px}}
   #entryRoutes .k{position:relative;padding-right:23px}
   #entryRoutes [aria-checked="true"] .k::after{position:absolute;right:6px;top:50%;transform:translateY(-50%);margin:0}
-  @media(min-width:1180px){.flow-step-row{grid-template-columns:minmax(100px,1fr) minmax(0,2fr) minmax(100px,1fr)}}
-  @media(max-width:599px){.row2,#birthHistoryCard .event-fields,#pathwayCard .event-fields{grid-template-columns:minmax(0,1fr)}[data-msel="obSx"]{grid-template-columns:repeat(2,minmax(0,1fr))}.event-fields>.field>.lab{min-height:0}.phase-context h3{font-size:18px}#flowDetail{font-size:16px}#flowWhere{font-size:11px}.flow-step-row{gap:6px;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,1fr)}#flowBack,#flowNext{font-size:12px;padding:7px 8px}#flowChapter{font-size:12px}}
+  @media(max-width:599px){.row2,#birthHistoryCard .event-fields,#pathwayCard .event-fields{grid-template-columns:minmax(0,1fr)}[data-msel="obSx"]{grid-template-columns:repeat(2,minmax(0,1fr))}.event-fields>.field>.lab{min-height:0}.phase-context h3{font-size:18px}}
+
+  /* 時序帶（取代原 flow-nav）：五段連成一條，中間三段是事件節點。accent＝現在位置，risk＝需要處理。 */
+  #admSections>.card[data-stage-off]{display:none!important}
+  #admSections>.card.stage-enter{animation:stageRise .32s both}
+  @keyframes stageRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .flow-band{position:sticky;top:0;z-index:12;padding:6px 0 10px;margin:0 0 18px;isolation:isolate;background:var(--bg)}
+  .flow-band::before{content:"";position:absolute;inset:0 -2px;background:var(--bg);z-index:-1}
+  .band-scroll{overflow-x:auto;scrollbar-width:thin;border-radius:14px}
+  .band{display:flex;min-width:min-content;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .band-seg{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px;padding:7px 0 6px;border-left:1px solid var(--line);position:relative;transition:background-color .3s}
+  .band-seg:first-child{border-left:0}
+  .band-seg::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--accent);transform:scaleX(0);transition:transform .3s}
+  .band-seg.cur{background:var(--accent-soft)}
+  .band-seg.cur::after{transform:scaleX(1)}
+  .band-seg.cap{flex:0 0 auto;width:112px}
+  .band-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px;min-height:28px;padding:3px 10px;margin:0;text-align:left;border:0;background:none;font:inherit;color:var(--ink);cursor:pointer;border-radius:8px}
+  .band-head .n{font-size:12px;font-weight:700;color:var(--ink-3)}
+  .band-head .t{font-size:14px;font-weight:650;white-space:nowrap}
+  .band-head .s{font-size:12px;color:var(--ink-3);margin-left:auto;white-space:nowrap}
+  .band-seg.cap .band-head .s{margin-left:0;flex-basis:100%}
+  .band-head .s[data-risk="true"]{color:var(--risk);font-weight:600}
+  .band-seg.cur .band-head .n{color:var(--accent-ink)}
+  .band-one{padding:0 10px;font-size:12px;line-height:1.45;color:var(--ink-3)}
+  .band-places{display:flex;padding:0 4px;font-size:11px;line-height:1.4;color:var(--ink-3)}
+  .band-places[hidden]{display:none}
+  .band-places span{margin:0 6px;padding-bottom:2px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .band-nodes{display:flex;padding:0 4px}
+  .band-node{flex:1 1 0;min-width:60px;position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:15px 3px 2px;margin:0;border:0;background:none;font:inherit;color:var(--ink);text-align:center;cursor:pointer;border-radius:8px}
+  .band-node::before{content:"";position:absolute;top:6px;left:0;right:0;height:2px;background:var(--line)}
+  .band-node:first-child::before{left:50%}
+  .band-node:last-child::before{right:50%}
+  .band-node:only-child::before{content:none}
+  .band-node .dot{position:absolute;top:1px;left:50%;width:12px;height:12px;margin-left:-6px;border-radius:50%;border:2px solid var(--ink-3);background:var(--surface);box-sizing:border-box;transition:transform .2s}
+  .band-node.has .dot{background:var(--accent);border-color:var(--accent)}
+  .band-node.warn .dot{background:var(--risk);border-color:var(--risk)}
+  .band-node[aria-current="step"] .dot{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--accent)}
+  .band-node:hover .dot{transform:scale(1.25)}
+  .band-node .nm{font-size:12px;font-weight:600;line-height:1.3;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+  .band-node:not(.has) .nm{color:var(--ink-3);font-weight:500}
+  .band-node .tm{font-size:11px;line-height:1.35;color:var(--ink-3);font-family:var(--mono);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .band-node.warn .nm,.band-node.warn .tm{color:var(--risk)}
+  .band-empty{margin:0;padding:6px 12px 2px;font-size:12px;color:var(--ink-3)}
+  .band-head:focus-visible,.band-node:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .flow-band .review-jump-bar{margin-top:8px;padding-top:6px}
+  .band-pulse{box-shadow:0 0 0 6px var(--accent-soft);border-radius:10px;transition:box-shadow .5s}
+  .stage-missing{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;flex:1 1 220px;min-width:0;font-size:13px;color:var(--risk)}
+  .stage-missing[hidden]{display:none}
+  .stage-missing-label{font-weight:600}
+  .stage-missing-link{min-height:36px;padding:4px 2px;border:0;background:none;font:inherit;font-size:13px;color:var(--risk);text-decoration:underline;text-underline-offset:3px;cursor:pointer;text-align:left}
+  #pathwayCard>.stage-missing{margin-top:14px}
+  .stage-actions{flex-wrap:wrap;align-items:center}
+  /* 預覽跟著段落：其他段的句子變淡 */
+  .note[data-stage-focus]{color:var(--doc-dim);color:color-mix(in srgb,var(--doc-ink) 42%,var(--doc-bg))}
+  .note .note-scope{transition:color .35s}
+  .note[data-stage-focus] .note-scope[data-current="true"]{color:var(--doc-ink)}
+  .note[data-stage-focus] .note-scope[data-current="false"] *{color:inherit}
+  @media(max-width:1179px){.flow-band{margin-bottom:14px}}
 </style>
 
 <div class="app-layout">
@@ -1971,7 +1979,7 @@
   });
   document.querySelector(".tabs").addEventListener("keydown",e=>{
     const index=tabButtons.indexOf(e.target);
-    if(index<0||!["ArrowLeft","ArrowRight","Home","End"].includes(e.key))return;
+    if(index<0||e.altKey||!["ArrowLeft","ArrowRight","Home","End"].includes(e.key))return;
     e.preventDefault();
     const next=e.key==="Home"?0:e.key==="End"?tabButtons.length-1
       :(index+(e.key==="ArrowRight"?1:-1)+tabButtons.length)%tabButtons.length;
@@ -2168,7 +2176,7 @@
   }
   document.addEventListener('keydown',e=>{
     const button=e.target.closest('button[data-choice-kind="single"]');
-    if(!button||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
+    if(!button||e.altKey||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
     const group=button.closest('.seg,.yn,.support-choices');if(!group)return;
     const buttons=[...group.querySelectorAll('button[data-choice-kind="single"]')].filter(b=>!b.disabled&&!b.hidden&&!b.closest('[hidden]'));
     const index=buttons.indexOf(button);if(index<0)return;e.preventDefault();
@@ -2984,7 +2992,8 @@
     document.getElementById('reviewJumpStatus').textContent='此欄位已隨資料變更而隱藏或移除，請依目前的檢核提示選擇。';
     document.getElementById('reviewJumpBar').hidden=false;
   }
-  function goToReviewTarget(selector,label){
+  // bar=false：段落結尾「本段還缺」的連結只定位，不顯示「返回核對」。
+  function goToReviewTarget(selector,label,{bar=true}={}){
     clearReviewLocation();
     if(S.mode!=='adm')document.querySelector('.tabs [data-tab="adm"]').click();
     const serial=reviewJumpSerial;
@@ -2996,15 +3005,15 @@
     }
     const section=target.closest('.section-content');if(section?.hidden){const toggle=document.getElementById(section.getAttribute('aria-labelledby'));if(toggle)toggleSection(toggle);}
     for(let p=target.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;
-    navigateWorkflow(context.chapter,{restore:false,fromReview:true});
+    navigateWorkflow(context.chapter,{fromReview:true,scroll:false});
     if(context.phase?.startsWith('birth:'))birthPhase=context.phase.slice(6);
     if(context.step&&selector!=='#entryRoutes')selectJourneyStep(context.step,{fromReview:true});
     target=document.querySelector(selector);
     if(!target||target.closest('[hidden]')){unavailableReviewTarget();return;}
-    document.getElementById('reviewJumpStatus').textContent=`已定位：${label}`;document.getElementById('reviewJumpBar').hidden=false;
+    if(bar){document.getElementById('reviewJumpStatus').textContent=`已定位：${label}`;document.getElementById('reviewJumpBar').hidden=false;}
     if(!target.matches('input:not([type="hidden"]),select,textarea,button,a[href]'))target.setAttribute('tabindex','-1');
     target.focus({preventScroll:true});target.classList.add('review-target-flash');reviewHighlight=target;
-    const place=()=>{if(serial!==reviewJumpSerial||!target.isConnected)return;measureWorkflowNavigation();const offset=workflowOffset(),anchor=target.labels?.[0]||target.closest('.field')||target;window.scrollTo({top:Math.max(0,window.scrollY+anchor.getBoundingClientRect().top-offset),left:0,behavior:'instant'});syncWorkflowNavigation(false);};
+    const place=()=>{if(serial!==reviewJumpSerial||!target.isConnected)return;measureWorkflowNavigation();const offset=workflowOffset(),anchor=target.labels?.[0]||target.closest('.field')||target;window.scrollTo({top:Math.max(0,window.scrollY+anchor.getBoundingClientRect().top-offset),left:0,behavior:'instant'});syncWorkflowNavigation();};
     place();requestAnimationFrame(place);
     reviewHighlightTimer=setTimeout(()=>{target.classList.remove('review-target-flash');},4000);
   }
@@ -3143,6 +3152,7 @@
       document.getElementById('reviewOptionalSummary').textContent=`其他選填未記錄（${optional.length} 項） · 展開查看`;
     }
     S.copyWarnings=all.length+basicMissing.length;
+    lastReviewLists={missing:basicMissing,pending:uniquePending,conflicts};
     const bridge=document.getElementById("birthBridge");
     if(bridge){const initial=readAssessment("birth"),parts=[];
       if(initial.breathing)parts.push(`出生：${document.getElementById("birthBreathing").selectedOptions[0].textContent}`);
@@ -3203,8 +3213,27 @@
   let journeyLastPathway=null,mountedJourneyStop="";
   const journeyViews={};
   let workflowStages=[],workflowActive='admissionContext';
-  const workflowViews={};
   let birthPhase='info';
+  const stageContextMarkup=new WeakMap();
+  // 分段顯示：一次只顯示目前這段的卡片；段落是導覽狀態，不用 hidden（hidden 留給「資料條件不適用」）。
+  const stageVisited=new Set(['admissionContext']);
+  let lastReviewLists={missing:[],pending:[],conflicts:[]},lastBandStage=-1;
+  const activeStageIndex=()=>workflowStages.findIndex(s=>s[0].id===workflowActive);
+  function stageOfElement(el){
+    if(!el||!workflowStages.length)return -1;
+    const cards=[...document.querySelectorAll('#admSections > .card')],host=cards.find(c=>c===el||c.contains(el));if(!host)return -1;
+    let index=-1;workflowStages.forEach(([card],i)=>{if(cards.indexOf(card)<=cards.indexOf(host))index=i;});return index;
+  }
+  function applyStageVisibility(){
+    if(!workflowStages.length)return;
+    const active=Math.max(0,activeStageIndex());
+    for(const card of document.querySelectorAll('#admSections > .card')){
+      const off=stageOfElement(card)!==active;if(card.hasAttribute('data-stage-off')===off)continue;
+      card.toggleAttribute('data-stage-off',off);
+      if(!off){card.classList.remove('stage-enter');void card.offsetWidth;card.classList.add('stage-enter');}
+    }
+    stageVisited.add(workflowStages[active][0].id);
+  }
   const supportChoiceDrafts=new Map();
   const supportName=mode=>({room:'Room air（未用氧氣）',o2:'氧氣',cpap:'CPAP',ppv:'PPV',ett:'氣管內管呼吸支持'}[mode]||'這個時點尚無資料');
   function birthPhaseDefinitions(){
@@ -3230,14 +3259,15 @@
     const phase=clinicalPhases().find(p=>p.key===key);if(!phase)return;
     if(phase.chapter==='pathwayCard'){
       openSectionFor(document.querySelector('#pathwayCard .section-content')?.firstElementChild);
-      if(workflowActive!=='pathwayCard')navigateWorkflow('pathwayCard',{restore:false,fromReview});
+      if(workflowActive!=='pathwayCard')navigateWorkflow('pathwayCard',{fromReview,scroll:false});
       selectJourneyStep(phase.id,{fromReview});return;
     }
     if(!fromReview)clearReviewLocation();
     if(workflowActive==='pathwayCard')rememberJourneyView();
-    birthPhase=phase.id;workflowActive='birthHistoryCard';closeWorkflowMenus();
-    const target=document.getElementById(phase.target);openSectionFor(target);const heading=target.querySelector('.phase-context h3,.sec-h')||target;
-    heading.setAttribute('tabindex','-1');heading.focus({preventScroll:true});syncWorkflowNavigation(false);
+    birthPhase=phase.id;workflowActive='birthHistoryCard';applyStageVisibility();
+    const target=document.getElementById(phase.target);openSectionFor(target);syncWorkflowNavigation();
+    // 先同步（會重寫階段說明），再聚焦標題，避免聚焦的元素被換掉。
+    const heading=target.querySelector('.phase-context h3,.sec-h')||target;heading.setAttribute('tabindex','-1');heading.focus({preventScroll:true});
     window.scrollTo({top:Math.max(0,target.getBoundingClientRect().top+window.scrollY-workflowOffset()),behavior:'instant'});
   }
   function stageContext(id){
@@ -3270,32 +3300,12 @@
   function fillStageContext(el,key){
     if(!el)return;const c=stageContext(key);
     const markup=`<div class="phase-kicker">${htmlEscape(c.where)}</div><h3>${htmlEscape(c.title)}</h3>${c.prompt?`<p>${htmlEscape(c.prompt)}</p>`:''}${c.prior?`<p class="phase-inherit"><strong>${htmlEscape(c.priorLabel)}：</strong>${htmlEscape(c.prior)}</p>`:''}`;
-    if(el.innerHTML!==markup)el.innerHTML=markup;
+    // 以上次寫入的字串比對（聚焦時標題會多 tabindex，不能用 innerHTML 比，否則焦點會被重寫掉）。
+    if(stageContextMarkup.get(el)!==markup){el.innerHTML=markup;stageContextMarkup.set(el,markup);}
   }
-  function syncClinicalNavigation(fromScroll=false){
-    const phases=clinicalPhases(),inBirth=workflowActive==='birthHistoryCard',inCourse=workflowActive==='pathwayCard',rail=document.getElementById('clinicalRail');if(!rail)return;
-    if(fromScroll&&inBirth){birthPhase='info';for(const p of birthPhaseDefinitions().slice(1))if(document.getElementById(p.target)?.getBoundingClientRect().top<=workflowOffset()+32)birthPhase=p.id;}
+  function syncClinicalNavigation(){
+    const inBirth=workflowActive==='birthHistoryCard';
     if(!birthPhaseDefinitions().some(p=>p.id===birthPhase))birthPhase='info';
-    const key=inBirth?'birth:'+birthPhase:inCourse?'course:'+S.journeyStep:'',active=phases.find(p=>p.key===key);
-    const shown=inBirth?[...birthPhaseDefinitions(),...phases.filter(p=>p.chapter==='pathwayCard').slice(0,1)]:[{...birthPhaseDefinitions()[0],lab:S.pathway==='readmit'?'出生背景':'出生經過'},...phases.filter(p=>p.chapter==='pathwayCard')];
-    rail.hidden=!(inBirth||inCourse)||!S.pathway;
-    rail.style.setProperty('--phase-count',shown.length);
-    const railSignature=JSON.stringify(shown.map(p=>[p.key,p.lab]));
-    if(rail.dataset.phaseSignature!==railSignature){
-      const focus=rail.contains(document.activeElement)?document.activeElement.dataset.phaseTarget:'';
-      rail.innerHTML=shown.map(p=>`<button type="button" data-phase-target="${p.key}" aria-current="${p.key===key?'step':'false'}"><span class="phase-dot" aria-hidden="true"></span><span>${htmlEscape(p.lab)}</span></button>`).join('');
-      rail.dataset.phaseSignature=railSignature;if(focus)rail.querySelector(`[data-phase-target="${focus}"]`)?.focus({preventScroll:true});
-    }else rail.querySelectorAll('[data-phase-target]').forEach(b=>b.setAttribute('aria-current',b.dataset.phaseTarget===key?'step':'false'));
-    const sub=document.getElementById('flowSubsteps'),signature=JSON.stringify(phases.map(p=>[p.key,p.lab]));
-    if(sub.dataset.phaseSignature!==signature){
-      const menu=sub.parentElement,scroll=menu.scrollTop,focused=sub.contains(document.activeElement)?document.activeElement.dataset.phaseTarget:'';
-      sub.innerHTML=phases.map((p,i)=>`${i===0||p.chapter!==phases[i-1].chapter?`<p class="phase-menu-heading">${p.chapter==='birthHistoryCard'?'出生經過':'本次病程'}</p>`:''}<button type="button" data-phase-target="${p.key}" aria-current="${p.key===key?'step':'false'}">${htmlEscape(p.lab)}</button>`).join('');
-      sub.dataset.phaseSignature=signature;menu.scrollTop=scroll;
-      if(focused)sub.querySelector(`[data-phase-target="${focused}"]`)?.focus({preventScroll:true});
-    }else sub.querySelectorAll('[data-phase-target]').forEach(b=>b.setAttribute('aria-current',b.dataset.phaseTarget===key?'step':'false'));
-    document.getElementById('phaseMenu').hidden=!S.pathway;
-    if(inBirth&&active){const births=birthPhaseDefinitions(),index=phases.findIndex(p=>p.key===key);document.getElementById('flowDetail').textContent=`${active.lab}（${births.findIndex(p=>p.key===key)+1}/${births.length}）`;setFlowButtons(phases[index-1]?.lab||'產前資料',phases[index+1]?.lab||'本次病程');}
-    document.getElementById('flowWhere').textContent=active?stageContext(inBirth?key:active.id).where:'';
     document.querySelectorAll('.birth-stage').forEach(el=>el.dataset.current=String(inBirth&&el.id==='birthStage-'+birthPhase));
     for(const p of birthPhaseDefinitions()){
       if(p.id!=='info'){const heading=document.getElementById(p.target)?.querySelector('h3');if(heading)heading.textContent=p.lab;}
@@ -3305,19 +3315,12 @@
     const summary=document.getElementById('entryPathSummary');if(summary){summary.hidden=!S.pathway;summary.textContent=S.pathway?`接下來：產前資料 → ${S.pathway==='readmit'?'出生背景':'出生經過'} → ${journeyDefinitions().filter(s=>s.show).sort((a,b)=>a.order-b.order).map(s=>s.lab).join(' → ')} → 核對病歷`:'';}
     syncPreviewStage();
   }
-  function closeWorkflowMenus(){for(const id of ['flowMenu','phaseMenu']){const el=document.getElementById(id);if(el)el.open=false;}}
-  function setFlowButtons(previous,next){
-    for(const [id,label,direction] of [['flowBack',previous,'← 上一段'],['flowNext',next,'下一段 →']]){
-      const b=document.getElementById(id);b.setAttribute('aria-label',`${id==='flowBack'?'上一段':'下一段'}：${label}`);
-      const markup=`<span class="flow-direction">${direction}</span><span>${htmlEscape(label)}</span>`;if(b.innerHTML!==markup)b.innerHTML=markup;
-    }
-  }
+  function closeWorkflowMenus(){}
   const workflowOffset=()=>parseFloat(document.documentElement.style.getPropertyValue('--workflow-offset'))||140;
   function measureWorkflowNavigation(){
     const height=document.getElementById('workflowNav')?.getBoundingClientRect().height;
     if(height){document.documentElement.style.setProperty('--flow-top','0px');document.documentElement.style.setProperty('--workflow-offset',`${height+12}px`);}
   }
-  const workflowKey=id=>id==='pathwayCard'?`${id}:${S.pathway}`:id;
   function rememberJourneyView(){
     const ws=document.getElementById('journeyWorkspace');if(!ws||ws.hidden||!S.journeyStep)return;
     const key=`${S.pathway}:${S.journeyStep}`;
@@ -3327,49 +3330,164 @@
     // 保留標題下方的空間；負位移也是真實位置，截成 0 會在返回時向上跳。
     journeyViews[key]={...journeyViews[key],offset:workflowOffset()-top,viewportWidth:window.innerWidth};
   }
-  function navigateWorkflow(id,{restore=true,fromReview=false}={}){
+  // 換段＝只顯示該段並回到頂端；段內位置（病程站點）由 selectJourneyStep 自己記。
+  function navigateWorkflow(id,{fromReview=false,scroll=true}={}){
     if(!fromReview)clearReviewLocation();
     const target=document.getElementById(id);if(!target)return;
-    const previous=document.getElementById(workflowActive),key=workflowKey(workflowActive);
-    if(previous)workflowViews[key]={...workflowViews[key],offset:Math.max(0,workflowOffset()-previous.getBoundingClientRect().top)};
     if(workflowActive==='pathwayCard')rememberJourneyView();
-    closeWorkflowMenus();
-    const saved=restore&&workflowViews[workflowKey(id)];
-    const field=saved?.field&&document.getElementById(saved.field);
-    const heading=target.querySelector('.sec-h');heading?.setAttribute('tabindex','-1');
-    (field&&!field.closest('[hidden]')?field:heading)?.focus({preventScroll:true});
-    workflowActive=id;syncWorkflowNavigation(false);
-    window.scrollTo(0,target.getBoundingClientRect().top+window.scrollY-workflowOffset()+(saved?.offset||0));
+    workflowActive=id;applyStageVisibility();
+    const heading=target.querySelector('.sec-h');heading?.setAttribute('tabindex','-1');heading?.focus({preventScroll:true});
+    syncWorkflowNavigation();
+    if(scroll)window.scrollTo(0,0);
   }
   function moveWorkflow(delta){
-    if(workflowActive==='pathwayCard'&&S.pathway){moveJourney(delta);return;}
-    if(workflowActive==='birthHistoryCard'&&S.pathway){const phases=clinicalPhases(),index=phases.findIndex(p=>p.key==='birth:'+birthPhase),next=phases[index+delta];if(next){navigateClinicalPhase(next.key);return;}}
-    const index=workflowStages.findIndex(s=>s[0].id===workflowActive),next=workflowStages[index+delta];
+    const next=workflowStages[Math.max(0,activeStageIndex())+delta];
     if(next)navigateWorkflow(next[0].id);
   }
-  function syncWorkflowNavigation(fromScroll=false){
+  function syncWorkflowNavigation(){
     const nav=document.getElementById('workflowNav');if(!nav)return;
-    if(fromScroll&&S.mode==='adm'){
-      let active=workflowStages[0][0].id;
-      for(const [card] of workflowStages)if(card.getBoundingClientRect().top<=workflowOffset()+10)active=card.id;
-      workflowActive=active;
-    }
-    const index=Math.max(0,workflowStages.findIndex(s=>s[0].id===workflowActive));
-    const stops=journeyDefinitions().filter(s=>s.show).sort((a,b)=>a.order-b.order),step=stops.findIndex(s=>s.id===S.journeyStep),inJourney=workflowActive==='pathwayCard'&&stops.length>0;
-    document.getElementById('flowChapter').textContent=workflowStages[index][1];
-    document.getElementById('flowDetail').textContent=inJourney?`${stops[step]?.lab||'選擇階段'}（${step+1}/${stops.length}）`:`${workflowStages[index][1]}（${index+1}/5）`;
-    const back=document.getElementById('flowBack'),next=document.getElementById('flowNext');back.disabled=index===0;
-    const review=index===workflowStages.length-1;
-    next.hidden=review;
-    setFlowButtons(inJourney&&step>0?stops[step-1].lab:workflowStages[index-1]?.[1]||'已到開頭',inJourney&&step<stops.length-1?stops[step+1].lab:workflowStages[index+1]?.[1]||'核對病歷');
-    nav.querySelectorAll('[data-flow-target]').forEach(b=>b.setAttribute('aria-current',b.dataset.flowTarget===workflowActive?'step':'false'));
-    document.getElementById('flowSubsteps').hidden=!S.pathway;
+    applyStageVisibility();
+    const index=Math.max(0,activeStageIndex()),review=index===workflowStages.length-1;
     const copy=document.getElementById('copy'),primary=S.mode!=='adm'||review;
     copy.dataset.primary=String(primary);copy.textContent=primary?'複製病歷':'複製草稿';
     copy.setAttribute('aria-label',primary?'複製病歷，貼入 HIS 前請核對':'複製目前草稿，可在資料未齊時使用');
-    syncClinicalNavigation(fromScroll);
+    syncClinicalNavigation();
+    renderStageBand();
     measureWorkflowNavigation(); // Measure new labels before restoring a stage's scroll position.
     updateCollapsedDockHeight();
+  }
+  // ── 時序帶：五段一條；節點只讀既有定義（birthPhaseDefinitions／journeyDefinitions／journeySummary）──
+  const shortDate=iso=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(iso||'');return m?`${Number(m[2])}/${Number(m[3])}`:'';};
+  const bandField=selector=>{const el=document.querySelector(selector);return el?.closest('.risk-item,.field')||el;};
+  function bandPlaces(){
+    const birthPlace=S.delivery==='cs'?'刀房':'產房';
+    return {outborn:{birth:'外院',obCare:'外院',obConsult:'外院',obArrive:'外院',route:'轉送途中',adm:'本院'},
+      nursery:{birth:birthPlace,route:'嬰兒室',consult:'嬰兒室',brEval:'嬰兒室',adm:'病房'},
+      readmit:{birth:'出院前',prior:'出院前',home:'家中',illness:'家中',evaluation:'門急診',adm:'門急診'}}[S.pathway]||null;
+  }
+  function bandNodes(stage){
+    const when=(has,specific)=>has?(specific||'已記錄'):'未記錄';
+    if(stage===1){
+      const anc=S.ancReg&&S.ancReg!=='unknown',ancText={regular:'規則',irregular:'不規則',none:'未產檢',unknown:'不詳'}[S.ancReg]||'未記錄';
+      const toco=S.toco&&S.toco!=='none',reason=raw('admReason').trim();
+      const nodes=[{key:'prenatal:anc',name:'產檢',time:ancText,has:anc,block:()=>bandField('[data-seg="ancReg"]')}];
+      if(toco&&S.tocoDischarged)nodes.push({key:'prenatal:tocoStay',name:'安胎住院',time:raw('tocoGaW')?`${raw('tocoGaW')}+${raw('tocoGaD')||0} wk`:'已出院',has:true,block:()=>bandField('[data-seg="toco"]')});
+      nodes.push({key:'prenatal:admit',name:'這次入院',time:reason?(reason.length>14?reason.slice(0,13)+'…':reason):'未記錄',has:!!reason,block:()=>bandField('#admReason')});
+      if(S.r.prom?.on)nodes.push({key:'prenatal:rom',name:'破水',time:raw('promH')?`${raw('promH')} ${S.numUnit?.promH==='days'?'天':'小時'}`:'已記錄',has:true,block:()=>bandField('.risk-item[data-k="prom"]')});
+      if(toco&&!S.tocoDischarged)nodes.push({key:'prenatal:toco',name:'安胎',time:raw('tocoSince')||'已記錄',has:true,block:()=>bandField('[data-seg="toco"]')});
+      if(S.r.steroid?.on)nodes.push({key:'prenatal:steroid',name:'類固醇',time:raw('steroidDates')||'已記錄',has:true,block:()=>bandField('.risk-item[data-k="steroid"]')});
+      if(S.iap&&S.iap!=='none')nodes.push({key:'prenatal:iap',name:'IAP',time:raw('iapSince')||'已記錄',has:true,block:()=>bandField('[data-seg="iap"]')});
+      return nodes;
+    }
+    const places=bandPlaces();
+    if(stage===2)return birthPhaseDefinitions().map(p=>{
+      let has=!!journeySummary(p.id),time='';
+      if(p.id==='info'){has=!!(raw('birthDate')||raw('gaW')||raw('bw'));time=[shortDate(raw('birthDate')),raw('birthTime')].filter(Boolean).join(' ');}
+      if(p.id==='consult'&&raw('pwConsultH'))time=`生後 ${raw('pwConsultH')} 小時`;
+      if(p.id==='dr'){const first=activeBirthEvents().find(e=>e.minutes!==undefined&&e.minutes!=='');if(first)time=`生後 ${first.minutes} 分`;}
+      if(p.id==='drEnd'&&raw('birthFinalMin'))time=`生後 ${raw('birthFinalMin')} 分`;
+      return {key:p.key,name:p.id==='info'?'出生':p.lab,time:when(has,time),has,phase:true,place:places?.birth||''};
+    });
+    if(stage===3){
+      if(!S.pathway)return null;
+      return journeyDefinitions().filter(s=>s.show).sort((a,b)=>a.order-b.order).map(s=>{
+        const has=!!journeySummary(s.id);let time='';
+        if(s.id==='route'&&raw('pwOnsetH'))time=`生後 ${raw('pwOnsetH')} ${raw('pwOnsetUnit')==='minutes'?'分':'小時'}`;
+        if(s.id==='consult'&&raw('pwConsultH'))time=`生後 ${raw('pwConsultH')} 小時`;
+        if(s.id==='prior'&&raw('readmitDischargeDate'))time=`出院 ${shortDate(raw('readmitDischargeDate'))}`;
+        if(s.id==='illness'&&raw('readmitOnsetDOL'))time=`DOL ${raw('readmitOnsetDOL')}`;
+        if(['evaluation','adm'].includes(s.id))time=[shortDate(raw('admissionDate')),raw('admissionTime')].filter(Boolean).join(' ');
+        return {key:'course:'+s.id,name:s.lab,time:when(has,time),has,phase:true,place:places?.[s.id]||''};
+      });
+    }
+    return [];
+  }
+  // 核對清單的結果依「目標欄位所在段／節點」分組；不另寫檢查規則。
+  function stageReviewGroups(){
+    const groups=workflowStages.map(()=>({missing:[],conflicts:[]}));
+    const add=(message,kind)=>{const seen=new Set();for(const t of reviewTargets.get(message)||[]){const el=document.querySelector(t.selector),i=stageOfElement(el);if(i<0||seen.has(i))continue;seen.add(i);groups[i][kind].push({message,selector:t.selector,label:t.label,el});}};
+    [...new Set([...lastReviewLists.missing,...lastReviewLists.pending])].forEach(m=>add(m,'missing'));
+    lastReviewLists.conflicts.forEach(m=>add(m,'conflicts'));
+    return groups;
+  }
+  function nodeHasConflict(node,stage,conflicts){
+    return conflicts.some(c=>{if(!c.el)return false;if(stage===1){const block=node.block();return !!block&&block.contains(c.el);}return phaseForElement(c.el)===node.key;});
+  }
+  function stageStatus(i,group){
+    const n=lastReviewLists.conflicts.length;
+    if(i===4)return n?[`${n} 項待核對`,true]:[stageVisited.has('finalReviewCard')?'完成':'未開始',false];
+    const parts=[];if(group.missing.length)parts.push(`缺 ${group.missing.length} 項`);if(group.conflicts.length)parts.push(`${group.conflicts.length} 項待核對`);
+    if(parts.length)return [parts.join('・'),true];
+    const started=i===0?true:i===1?!!S.prenatalConfirmed:i===2?bandNodes(2).some(n=>n.has):!!S.pathway&&(bandNodes(3)||[]).some(n=>n.has);
+    return [started?'完成':'未開始',false];
+  }
+  function renderStageBand(){
+    const band=document.getElementById('stageBand');if(!band||!workflowStages.length)return;
+    const active=Math.max(0,activeStageIndex()),groups=stageReviewGroups();
+    const phaseKey=workflowActive==='birthHistoryCard'?'birth:'+birthPhase:workflowActive==='pathwayCard'&&S.journeyStep?'course:'+S.journeyStep:'';
+    workflowStages.forEach(([card],i)=>{
+      const seg=band.querySelector(`[data-band-seg="${i+1}"]`),head=seg.querySelector('.band-head'),status=seg.querySelector('.s'),[text,risk]=stageStatus(i,groups[i]);
+      seg.classList.toggle('cur',i===active);
+      if(i===active)head.setAttribute('aria-current','step');else head.removeAttribute('aria-current');
+      if(status.textContent!==text)status.textContent=text;status.dataset.risk=String(risk);
+      head.setAttribute('aria-label',`第 ${i+1} 段 ${workflowStages[i][1]}：${text}`);
+      const host=seg.querySelector('.band-nodes');
+      if(host){
+        const nodes=bandNodes(i),places=seg.querySelector('.band-places');
+        const signature=JSON.stringify(nodes?nodes.map(n=>[n.key,n.name,n.place||'']):null);
+        if(host.dataset.signature!==signature){
+          const focused=host.contains(document.activeElement)?document.activeElement.dataset.bandNode:'';
+          host.innerHTML=nodes?nodes.map(n=>`<button type="button" class="band-node" data-band-node="${n.key}"${n.phase?` data-phase-target="${n.key}"`:''}><span class="dot" aria-hidden="true"></span><span class="nm">${htmlEscape(n.name)}</span><span class="tm"></span></button>`).join(''):'<p class="band-empty">尚未選情境</p>';
+          host.dataset.signature=signature;if(focused)host.querySelector(`[data-band-node="${focused}"]`)?.focus({preventScroll:true});
+          const groupsOfPlace=[];for(const n of nodes||[]){const last=groupsOfPlace.at(-1);if(last&&last.place===n.place)last.count++;else groupsOfPlace.push({place:n.place,count:1});}
+          places.hidden=!groupsOfPlace.some(g=>g.place);
+          places.innerHTML=places.hidden?'':groupsOfPlace.map(g=>`<span style="flex:${g.count} ${g.count} 0;min-width:${g.count*60-12}px">${htmlEscape(g.place)}</span>`).join('');
+        }
+        seg.style.flexGrow=String(Math.max(1,nodes?.length||1));
+        for(const n of nodes||[]){
+          const button=host.querySelector(`[data-band-node="${n.key}"]`);if(!button)continue;
+          const warn=nodeHasConflict(n,i,groups[i].conflicts);
+          button.classList.toggle('has',n.has);button.classList.toggle('warn',warn);
+          const tm=button.querySelector('.tm');if(tm.textContent!==n.time)tm.textContent=n.time;
+          if(n.key===phaseKey)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');
+          button.setAttribute('aria-label',`${n.name}：${n.time}${warn?'（待核對）':''}`);
+        }
+      }
+      const missing=document.getElementById(`stageMissing-${i+1}`);
+      if(missing){
+        const items=groups[i].missing;
+        const markup=items.length?`<span class="stage-missing-label">本段還缺：</span>${items.map(m=>`<button type="button" class="stage-missing-link" data-stage-target="${htmlEscape(m.selector)}" data-stage-label="${htmlEscape(m.label)}">${htmlEscape(m.message)}</button>`).join('')}`:'';
+        if(missing.innerHTML!==markup){const focused=missing.contains(document.activeElement)?document.activeElement.dataset.stageTarget:'';missing.innerHTML=markup;if(focused)[...missing.querySelectorAll('[data-stage-target]')].find(b=>b.dataset.stageTarget===focused)?.focus({preventScroll:true});}
+        missing.hidden=!items.length;
+      }
+    });
+    if(active!==lastBandStage){lastBandStage=active;revealCurrentBandStage();}
+  }
+  // 窄螢幕帶子可橫向捲動：換段或改變視窗寬度時，把目前段捲進可視範圍（使用者自己捲的位置在輸入時不動）。
+  function revealCurrentBandStage(){
+    const scroller=document.getElementById('bandScroll'),seg=scroller?.querySelector('.band-seg.cur');
+    if(!seg||scroller.scrollWidth<=scroller.clientWidth+1)return;
+    const left=seg.offsetLeft,right=left+seg.offsetWidth;
+    if(left<scroller.scrollLeft||right>scroller.scrollLeft+scroller.clientWidth)scroller.scrollLeft=Math.max(0,left-12);
+  }
+  let bandPulseTimer=null;
+  function pulseBlock(el){
+    if(!el)return;document.querySelectorAll('.band-pulse').forEach(x=>x.classList.remove('band-pulse'));
+    void el.offsetWidth;el.classList.add('band-pulse');if(bandPulseTimer!==null)clearTimeout(bandPulseTimer);
+    bandPulseTimer=setTimeout(()=>{el.classList.remove('band-pulse');bandPulseTimer=null;},1100);
+  }
+  function goToBandNode(key){
+    if(key.startsWith('prenatal:')){
+      const node=bandNodes(1).find(n=>n.key===key),block=node?.block();if(!block)return;
+      if(workflowActive!=='prenatalCard')navigateWorkflow('prenatalCard',{scroll:false});else clearReviewLocation();
+      openSectionFor(block);
+      const focusable=block.querySelector('button[aria-pressed="true"]:not([disabled]),input:not([type="hidden"]):not([disabled]),button:not([disabled])');
+      if(focusable&&!focusable.closest('[hidden]'))focusable.focus({preventScroll:true});else{block.setAttribute('tabindex','-1');block.focus({preventScroll:true});}
+      window.scrollTo({top:Math.max(0,block.getBoundingClientRect().top+window.scrollY-workflowOffset()),left:0,behavior:'instant'});
+      pulseBlock(block);return;
+    }
+    const phase=clinicalPhases().find(p=>p.key===key);if(!phase)return;
+    pulseBlock(phase.chapter==='pathwayCard'?document.getElementById('journeyWorkspace'):document.getElementById(phase.target));
   }
   function journeyDefinitions(){
     const place=S.delivery==="cs"?"刀房":"產房",ob=S.pathway==="outborn",nu=S.pathway==="nursery",re=S.pathway==="readmit",dest=admissionDestination();
@@ -3402,13 +3520,12 @@
     const visible=journeyDefinitions().filter(x=>x.show).sort((a,b)=>a.order-b.order);
     if(!visible.some(x=>x.id===id))return;
     const ws=document.getElementById('journeyWorkspace');if(workflowActive==='pathwayCard')rememberJourneyView();
-    closeWorkflowMenus();
-    S.journeyStep=id;workflowActive='pathwayCard';render();
+    S.journeyStep=id;workflowActive='pathwayCard';applyStageVisibility();render();
     const saved=journeyViews[`${S.pathway}:${id}`],field=saved&&document.getElementById(saved.field);
     if(field&&!field.closest('[hidden]'))field.focus({preventScroll:true});
     else{ws.setAttribute('tabindex','-1');ws.focus({preventScroll:true});}
     window.scrollTo(0,ws.getBoundingClientRect().top+window.scrollY-workflowOffset()+(saved?.viewportWidth===window.innerWidth?saved.offset||0:0));
-    workflowActive='pathwayCard';syncWorkflowNavigation(false);
+    workflowActive='pathwayCard';syncWorkflowNavigation();
   }
   function moveJourney(delta){
     const visible=journeyDefinitions().filter(x=>x.show).sort((a,b)=>a.order-b.order),i=Math.max(0,visible.findIndex(x=>x.id===S.journeyStep));
@@ -3789,7 +3906,7 @@
     {const st=deriveStory(); setCsum("pathway",st?[`${st} · `+{direct:"直接入院",nursery:"嬰兒室觀察",outborn:"外接",readmit:"出院後再次就醫"}[S.pathway],S.pwStandby?"standby":"",S.pwConsult?"會診":""].filter(Boolean).join("・"):"尚未選故事",!st);}
     renderJourney();
     timelineReview();
-    syncWorkflowNavigation(false);
+    syncWorkflowNavigation();
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
     const via = S.delivery==="cs" ? "cesarean section (C/S)" : S.delivery==="nsd" ? "vaginal delivery (VD)" : "";
     const homeH = inV("homeHosp")||"TPEMMH";
@@ -4964,13 +5081,18 @@ ${opLine}`);
   const previewMobileQuery=typeof window.matchMedia==="function"?window.matchMedia("(max-width: 1179px)"):null;
   let previewMobileCollapsed=true, previewHighlightTimer=null, lastPreviewWrite=null;
 
+  // 預覽跟著段落：目前段的句子原色、其他變淡（只改螢幕外觀；複製用 innerText，不受影響）。
+  const notePhaseStage=phase=>phase==='prenatal'?1:phase.startsWith('birth:')?2:phase.startsWith('course:')?3:phase==='review'?4:-1;
   function syncPreviewStage(){
     const button=document.getElementById('previewStage');if(!button)return;
     const key=workflowActive==='birthHistoryCard'?'birth:'+birthPhase:workflowActive==='pathwayCard'?'course:'+S.journeyStep:workflowActive==='prenatalCard'?'prenatal':workflowActive==='finalReviewCard'?'review':'birth:info';
-    const active=S.mode==='adm'?[...noteEl.querySelectorAll('.note-scope')].filter(el=>el.dataset.notePhase===key):[];
-    noteEl.querySelectorAll('.note-scope').forEach(el=>{const value=String(active.includes(el));if(el.dataset.active!==value)el.dataset.active=value;});
+    const scopes=[...noteEl.querySelectorAll('.note-scope')],active=S.mode==='adm'?scopes.filter(el=>el.dataset.notePhase===key):[];
+    scopes.forEach(el=>{const value=String(active.includes(el));if(el.dataset.active!==value)el.dataset.active=value;});
+    const stage=Math.max(0,activeStageIndex()),focus=S.mode==='adm'&&workflowStages.length&&stage<workflowStages.length-1;
+    if(focus){if(noteEl.dataset.stageFocus!==String(stage+1))noteEl.dataset.stageFocus=String(stage+1);}else if(noteEl.hasAttribute('data-stage-focus'))noteEl.removeAttribute('data-stage-focus');
+    scopes.forEach(el=>{const value=String(!focus||(stage===0?el.dataset.notePhase==='birth:info':notePhaseStage(el.dataset.notePhase)===stage));if(el.dataset.current!==value)el.dataset.current=value;});
     button.hidden=S.mode!=='adm';button.disabled=!active.length;
-    const label=workflowActive==='admissionContext'?'出生摘要':document.getElementById('flowDetail')?.textContent.replace(/（.*）/,'')||'本段';
+    const label=workflowActive==='admissionContext'?'出生摘要':key.startsWith('birth:')||key.startsWith('course:')?clinicalPhases().find(p=>p.key===key)?.lab||'本段':workflowStages[stage]?.[1]||'本段';
     button.textContent=active.length?'查看：'+label:'本段尚無病歷敘述';
   }
   document.getElementById('previewStage').addEventListener('click',()=>{
@@ -5220,44 +5342,51 @@ ${opLine}`);
     document.querySelector('[data-seg="us"]').closest('.field').insertAdjacentHTML('beforeend','<p class="man-h" id="prenatalNoCareNotice" hidden>已選未產檢，尚未修改的超音波正常預設改為不詳；已明確選過的結果保留，可依實際報告修改。</p>');
     document.querySelector('[data-habit="drug"]').parentElement.insertAdjacentHTML('afterend','<p class="man-h" id="habitDefaultStatus"></p><label class="lab" for="habitStatus">未勾選的母親習慣</label><select class="tin" id="habitStatus"><option value="negative">無（預設）</option><option value="unknown">不詳</option></select>');
     review.querySelector('.sec-h').insertAdjacentHTML('afterend','<div class="workflow-review" id="workflowReview"><p id="reviewSummary" role="status"></p><section class="review-group" id="reviewMissing"><h3>關鍵資料未填</h3><ul id="reviewMissingList"></ul><div id="reviewPending" hidden><p>已帶入／已記錄，但仍待確認：</p><ul id="reviewPendingList"></ul></div></section><section class="review-group" id="reviewConflicts"><h3>前後不一致／格式需核對</h3><ul id="reviewConflictList"></ul></section><details class="review-group" id="reviewOptional"><summary id="reviewOptionalSummary">其他選填未記錄</summary><p class="review-help">僅供通讀時參考，不要求全部補齊；未填不代表正常、陰性或未做。以下為重點選填項目，不是所有空白欄位。</p><ul id="reviewOptionalList"></ul></details></div>');
-    const nav=document.createElement('nav');nav.id='workflowNav';nav.className='flow-nav';nav.setAttribute('aria-label','目前位置與下一段');
+    const nav=document.createElement('nav');nav.id='workflowNav';nav.className='flow-band';nav.setAttribute('aria-label','病歷段落與時序');
     const stages=workflowStages=[[context,'入院設定'],[maternal,'產前資料'],[birth,'出生資料'],[pathway,'本次病程'],[review,'核對病歷']];
-    nav.innerHTML=`<div class="flow-metadata"><details id="flowMenu"><summary aria-label="切換病歷章節"><span id="flowChapter">入院設定</span><span>· 章節</span></summary><div class="flow-menu-items">${stages.map(([card,label],i)=>`<button type="button" data-flow-target="${card.id}">${i+1}. ${label}</button>`).join('')}</div></details><details id="phaseMenu"><summary>全部階段</summary><div class="flow-menu-items flow-substeps" id="flowSubsteps"></div></details></div><div class="flow-step-row"><button type="button" id="flowBack" aria-label="上一段" disabled>←</button><div class="flow-current"><strong id="flowDetail">入院設定（1/5）</strong><span id="flowWhere"></span></div><button type="button" id="flowNext">下一段 →</button></div><div class="phase-rail" id="clinicalRail" aria-label="病程階段，不是急救處置流程" hidden></div><div id="reviewJumpBar" class="review-jump-bar" hidden><span id="reviewJumpStatus" role="status"></span><button type="button" id="returnToReview">返回核對</button></div>`;form.prepend(nav);
+    const capText=['情境 · 去處 · 日期','','','','前後矛盾 · 複製'];
+    nav.innerHTML=`<div class="band-scroll" id="bandScroll"><div class="band" id="stageBand">${stages.map(([card,label],i)=>`<div class="band-seg${capText[i]?' cap':''}" data-band-seg="${i+1}"><button type="button" class="band-head" data-flow-target="${card.id}"><span class="n">${i+1}</span><span class="t">${label}</span><span class="s"></span></button>${capText[i]?`<div class="band-one">${capText[i]}</div>`:`<div class="band-places" aria-hidden="true" hidden></div><div class="band-nodes" role="group" aria-label="${label}時序"></div>`}</div>`).join('')}</div></div><div id="reviewJumpBar" class="review-jump-bar" hidden><span id="reviewJumpStatus" role="status"></span><button type="button" id="returnToReview">返回核對</button></div>`;form.prepend(nav);
     for(let i=0;i<stages.length;i++){
       const host=i===1?medication:stages[i][0];
-      host.insertAdjacentHTML('beforeend',`<div class="stage-actions"${host===pathway?' id="pathwayFallbackActions"':''}>${i>0?`<button type="button" class="secondary" data-flow-target="${stages[i-1][0].id}">← 上一段</button>`:''}${i<stages.length-1?`<button type="button" class="primary" data-flow-target="${stages[i+1][0].id}">下一段：${stages[i+1][1]} →</button>`:''}</div>`);
+      const missing=`<div class="stage-missing" id="stageMissing-${i+1}" hidden></div>`;
+      if(host===pathway)byId('journeyNav').insertAdjacentHTML('afterend',missing);
+      host.insertAdjacentHTML('beforeend',`<div class="stage-actions"${host===pathway?' id="pathwayFallbackActions"':''}>${host===pathway?'':missing}${i>0?`<button type="button" class="secondary" data-flow-target="${stages[i-1][0].id}">← ${stages[i-1][1]}</button>`:''}${i<stages.length-1?`<button type="button" class="primary" data-flow-target="${stages[i+1][0].id}">${i===1?'以上都對，':''}下一段：${stages[i+1][1]} →</button>`:''}</div>`);
     }
     medication.querySelector('.stage-actions .primary').id='prenatalNext';
     const measureNavigation=measureWorkflowNavigation;
-    measureNavigation();window.addEventListener('resize',measureNavigation);
+    measureNavigation();window.addEventListener('resize',()=>{measureNavigation();requestAnimationFrame(revealCurrentBandStage);});
     if(typeof ResizeObserver==='function'){const observer=new ResizeObserver(measureNavigation);observer.observe(nav);observer.observe(document.querySelector('.tabs'));}
-    window.addEventListener('scroll',()=>syncWorkflowNavigation(true),{passive:true});
-    byId('flowBack').addEventListener('click',()=>moveWorkflow(-1));byId('flowNext').addEventListener('click',()=>moveWorkflow(1));
-    for(const id of ['flowMenu','phaseMenu']){
-      byId(id).addEventListener('keydown',e=>{if(e.key==='Escape'){byId(id).open=false;byId(id).querySelector('summary').focus({preventScroll:true});}});
-      byId(id).addEventListener('toggle',()=>{if(window.document&&byId(id).open)byId(id==='flowMenu'?'phaseMenu':'flowMenu').open=false;});
-    }
+    // Alt+→／Alt+← 切段。文字欄位保留系統的 Option／Alt+方向鍵（逐字移動）。
+    document.addEventListener('keydown',e=>{
+      if(!e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||!['ArrowLeft','ArrowRight'].includes(e.key)||S.mode!=='adm')return;
+      if(e.target.closest?.('textarea,[contenteditable="true"],input:not([type="checkbox"]):not([type="radio"]):not([type="button"])'))return;
+      e.preventDefault();moveWorkflow(e.key==='ArrowRight'?1:-1);
+    });
     byId('clearPreviousIntake').addEventListener('click',()=>{clearedReadmitIntake=raw('readmitIntake');byId('readmitIntake').value='';render();byId('restorePreviousIntake').focus({preventScroll:true});});
     byId('restorePreviousIntake').addEventListener('click',()=>{if(!raw('readmitIntake')){byId('readmitIntake').value=clearedReadmitIntake;clearedReadmitIntake='';render();byId('readmitIntake').focus({preventScroll:true});}});
     byId("entryDirect").addEventListener('click',()=>{if(S.pathway==='direct')return;switchPathway('direct');setTog('pwStandby',false);setTog('pwConsult',false);render();});
     byId("clearBirthTeam").addEventListener('click',()=>{setTog('pwStandby',false);setTog('pwConsult',false);render();});
     byId("useAdmissionResp").addEventListener('click',()=>{if(S.resp){S.acceptanceResp=S.resp;render();}});
     document.addEventListener('click',e=>{
+      if(e.target.closest('#prenatalNext'))S.prenatalConfirmed=true;   // 只記錄「已按過以上都對」，不影響病歷輸出。
       const phase=e.target.closest('[data-phase-target]');if(phase)navigateClinicalPhase(phase.dataset.phaseTarget);
+      const node=e.target.closest('[data-band-node]');if(node)goToBandNode(node.dataset.bandNode);
+      const missingLink=e.target.closest('[data-stage-target]');if(missingLink)goToReviewTarget(missingLink.dataset.stageTarget,missingLink.dataset.stageLabel,{bar:false});
       const support=e.target.closest('[data-support-choice]');if(support)chooseSupport(support.dataset.supportField,support.dataset.supportChoice);
       const jump=e.target.closest('[data-flow-target]');if(jump)navigateWorkflow(jump.dataset.flowTarget);
       const stop=e.target.closest('[data-flow-stop]');if(stop)selectJourneyStep(stop.dataset.flowStop,{focus:true});
-      if(!nav.contains(e.target))closeWorkflowMenus();
       const clear=e.target.closest('[data-clear-seg]');if(clear&&!clear.disabled){const key=clear.dataset.clearSeg;S[key]='';if(key==='dest')S.destNotice='';document.querySelectorAll(`[data-seg="${key}"] button[data-v]`).forEach(b=>b.setAttribute('aria-pressed','false'));render();}
       const chip=e.target.closest('[data-rm-chip]');if(chip){const input=byId(chip.dataset.rmChip);let values;try{values=JSON.parse(input.value||'[]');}catch(_){values=[];}values=values.includes(chip.dataset.v)?values.filter(v=>v!==chip.dataset.v):[...values,chip.dataset.v];input.value=JSON.stringify(values);render();}
       const set=e.target.closest('[data-set-field]');if(set){const field=byId(set.dataset.setField);if(field.value===set.dataset.v)return;field.value=set.dataset.v;render();}
     });
     document.addEventListener('focusin',e=>{
-      if(!form.contains(e.target)||e.target.closest('.stage-actions,.flow-nav,#journeyNav,#journey'))return;
-      const phase=phaseForElement(e.target);if(phase.startsWith('birth:')){birthPhase=phase.slice(6);workflowActive='birthHistoryCard';syncWorkflowNavigation(false);}else if(phase){workflowActive='pathwayCard';syncWorkflowNavigation(false);}
+      if(!form.contains(e.target)||e.target.closest('.stage-actions,.flow-band,#journeyNav,#journey,.stage-missing'))return;
+      // 程式聚焦到別段的欄位時先切到那一段（真瀏覽器無法聚焦 display:none 的欄位）。
+      const phase=phaseForElement(e.target),stage=stageOfElement(e.target);
+      if(phase.startsWith('birth:'))birthPhase=phase.slice(6);
+      if(stage>=0&&workflowStages[stage][0].id!==workflowActive){if(workflowActive==='pathwayCard')rememberJourneyView();workflowActive=workflowStages[stage][0].id;syncWorkflowNavigation();}
+      else if(phase)syncWorkflowNavigation();
       if(!e.target.id||!e.target.matches('input,select,textarea,button'))return;
-      const card=stages.find(([c],i)=>c.contains(e.target)||i===1&&(screening.contains(e.target)||medication.contains(e.target)))?.[0];
-      if(card)workflowViews[workflowKey(card.id)]={...workflowViews[workflowKey(card.id)],field:e.target.id};
       if(byId('journeyWorkspace').contains(e.target)){const key=`${S.pathway}:${S.journeyStep}`;journeyViews[key]={...journeyViews[key],field:e.target.id};}
     });
   }

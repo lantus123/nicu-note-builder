@@ -56,8 +56,8 @@ test('repeated normal selections are idempotent and never clear the value',({ris
 });
 test('tabs, chapter jumps, back and forward preserve exceptions',({risk,seg,click,note,selected,get})=>{
   risk('gdm','yes');seg('us','unknown');note('acc');note('plan');note('adm');
-  click('#flowMenu [data-flow-target="prenatalCard"]');assert.doesNotMatch(get('#flowNext').textContent,/核對/);
-  click('#flowNext');click('#flowBack');click('#flowMenu [data-flow-target="birthHistoryCard"]');
+  click('#stageBand [data-flow-target="prenatalCard"]');assert.doesNotMatch(get('#prenatalNext').textContent,/核對/);
+  click('#prenatalNext');click('#birthHistoryCard .stage-actions .secondary');click('#stageBand [data-flow-target="birthHistoryCard"]');
   assert.equal(selected('gdm'),'yes');assert.equal(selected('us'),'unknown');assert.doesNotMatch(note(),/There was no gestational diabetes|ultrasound showed normal/);
 });
 test('no prenatal care withdraws only the untouched normal ultrasound default',({seg,get,note,selected})=>{
