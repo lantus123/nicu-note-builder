@@ -65,14 +65,15 @@ function withPage(check){
   }
   // 其他伴侶的關係（不預選；再點一次回到未選）
   const otherRel=(which,v)=>click(`[data-pedrel="${which}"] [data-v="${v}"]`);
-  // note 只有一棵樹，取 "Pedigree:" 之後到結尾
+  // 圖與中文註記分開驗：圖保持欄位結構，長病史不能擠進圖內。
   function tree(){
     const text=get('#note').textContent;
     const at=text.indexOf('Pedigree:\n');
     assert.ok(at>=0,`Admission note 必須以 Pedigree: 之後接家庭樹\n${text}`);
-    return text.slice(at+'Pedigree:\n'.length);
+    return text.slice(at+'Pedigree:\n'.length).split('\n\n')[0];
   }
-  const api={W,d,get,click,input,seg,toggle,addSib,sibCards,otherRel,tree};
+  const annotations=()=>get('.pedigree-notes').textContent;
+  const api={W,d,get,click,input,seg,toggle,addSib,sibCards,otherRel,tree,annotations};
   try{
     check(api);
     assert.deepEqual(errors,[],'家庭樹操作不得觸發頁面錯誤');
@@ -86,14 +87,16 @@ const noTrailing=lines=>lines.forEach(l=>assert.doesNotMatch(l,/\s$/,`行尾不�
 
 // ── 例 A：本人男、母 30y G1P1、無父親年齡、無手足 ─────────────────────────────
 // 子代只有本人 → 單元中心 10；父 2、junction 10、母 18，橫桿與子代主幹兩列省略。
-test('例 A：最小樹（父母＋本人）逐字相符',({seg,input,tree})=>{
+test('例 A：最小樹（父母＋本人）逐字相符',({seg,input,tree,annotations})=>{
   seg('gender','male');input('matAge','30');input('gravida','1');input('para','1');
   assert.equal(tree(),[
-    '  □───┬───○',
-    '  Father          Mother 30y G1P1',
-    '          │',
-    '        →■',
-    '          NB'].join('\n'));
+    '  □------+-------○',
+    '  父親            母親',
+    '          |',
+    '        ->■',
+    '          本人'].join('\n'));
+  assert.match(annotations(),/母親：30歲；G1P1/);
+  assert.doesNotMatch(annotations(),/父母關係：已婚|父親：.*歲/);
 });
 
 // ── 例 B：父 35、母 32 G3P2A1、手足兩位、本人女 ───────────────────────────────
@@ -104,25 +107,24 @@ test('例 B：兩位手足＋診斷備註逐字相符（本人實心、手足空
   const a=addSib();a.sex('male');a.age('5y');
   const b=addSib();b.sex('female');b.age('3y');b.note('G6PD deficiency');
   assert.equal(tree(),[
-    '          □───┬───○',
-    '          Father 35y      Mother 32y G3P2A1',
-    '                  │',
-    '          ┌───┼───┐',
-    '          │      │      │',
-    '          □      ○    →●',
-    '          5y      3y      NB',
+    '          □------+-------○',
+    '          父親            母親',
+    '                  |',
+    '          +-------+-------+',
+    '          |       |       |',
+    '          □      ○    ->●',
+    '          5y      3y      本人',
     '                  G6PD deficiency'].join('\n'));
   // 同一棵樹再用顯示欄位量一次：精確字串若日後被誤更新，欄位錯位仍會被抓到
   const lines=tree().split('\n');
   assert.deepEqual(colsOf(lines[0],'□○■●◆'),[10,26],'父母符號起始欄');
-  assert.equal(colOf(lines[0],'┬'),18,'父母線中點 ┬ 起始欄');
-  assert.equal(colOf(lines[2],'│'),18,'主幹 │ 起始欄');
+  assert.equal(colOf(lines[0],'+'),18,'父母線中點 + 起始欄');
+  assert.equal(colOf(lines[2],'|'),18,'主幹 | 起始欄');
   // 橫桿：兩端 ┌ ┐、單元中心 ┬；junction 與子代接點重合時用 ┼（例 B 的 18 正好是中間單元）
-  assert.deepEqual(colsOf(lines[3],'┌┬┐┴┼'),[10,18,26],'橫桿接點起始欄');
-  assert.equal([...lines[3]].filter(c=>c==='┼').length,1,'junction 與子代接點重合 → ┼');
-  assert.deepEqual(colsOf(lines[4],'│'),[10,18,26],'子代主幹 │ 起始欄');
+  assert.deepEqual(colsOf(lines[3],'+'),[10,18,26],'橫桿接點起始欄');
+  assert.deepEqual(colsOf(lines[4],'|'),[10,18,26],'子代主幹 | 起始欄');
   assert.deepEqual(colsOf(lines[5],'□●○■◆'),[10,18,26],'子代符號起始欄');
-  assert.equal(colOf(lines[5],'→'),24,'本人箭頭緊貼符號左邊（2 欄）');
+  assert.equal(colOf(lines[5],'>'),25,'本人箭頭緊貼符號左邊');
   noTrailing(lines);
 });
 
@@ -133,16 +135,16 @@ test('例 C：同胎組畫成分叉，成員中心 18／24 對齊',({seg,addSib,
   const a=addSib();a.sex('female');a.age('5y');
   const b=addSib();b.sex('male');b.twin();
   const lines=tree().split('\n');
-  const bar=lines.findIndex(l=>/^\s*┌/.test(l));
+  const bar=lines.findIndex(l=>/^\s*\+/.test(l));
   assert.ok(bar>=0,`必須有橫桿列\n${lines.join('\n')}`);
-  assert.deepEqual(colsOf(lines[bar],'┌┬┐┴┼'),[10,16,20],'橫桿：單元中心 10／同胎組接點 20，父母主幹接點在中點 16');
-  const fork=lines.findIndex((l,i)=>i>bar+1&&/^\s*│\s+┌/.test(l));
+  assert.deepEqual(colsOf(lines[bar],'+'),[10,16,20],'橫桿：單元中心 10／同胎組接點 20，父母主幹接點在中點 16');
+  const fork=lines.findIndex((l,i)=>i>bar+1&&/^\s*\|\s+\+/.test(l));
   assert.ok(fork>=0,`必須有同胎分叉列\n${lines.join('\n')}`);
-  assert.deepEqual(colsOf(lines[fork],'┌┬┐┴┼'),[18,20,24],'分叉列：成員中心 18／24，組接點 20');
-  assert.deepEqual(colsOf(lines[fork],'│'),[10],'非同胎的單元在分叉列仍畫主幹');
+  assert.deepEqual(colsOf(lines[fork],'+'),[18,20,24],'分叉列：成員中心 18／24，組接點 20');
+  assert.deepEqual(colsOf(lines[fork],'|'),[10],'非同胎的單元在分叉列仍畫主幹');
   const syms=lines[lines.length-2];
   assert.deepEqual(colsOf(syms,'□○◇■●◆'),[10,18,24],'符號起始欄＝中心（單元 1 在 10、同胎成員在 18／24）');
-  assert.ok(syms.includes('→■'),`本人在同胎組最後、緊貼箭頭\n${syms}`);
+  assert.ok(syms.includes('->■'),`本人在同胎組最後、緊貼箭頭\n${syms}`);
   noTrailing(lines);
 });
 
@@ -178,16 +180,16 @@ test('手足未選性別畫成 ◇（不預選、不當成男或女）',({seg,ad
 });
 
 // ── 本人與父母的資料來源 ─────────────────────────────────────────────────────
-test('本人性別沿用第 1 區並畫實心；父母家族史只附病名、符號維持空心',({seg,click,input,tree})=>{
+test('本人性別沿用第 1 區並畫實心；父母病史改列圖下中文註記',({seg,click,input,tree,annotations})=>{
   seg('gender','female');input('matAge','32');input('fatherAge','40');
   click('[data-par="g6pd"] [data-v="father"]');
   click('[data-par="thyroid"] [data-v="mother"]');
   const lines=tree().split('\n');
-  assert.equal(lines[0],'  □───┬───○','父母家族史陽性也維持空心（實心只表示本人）');
-  assert.ok(lines[1].includes('Father 40y, G6PD deficiency'),lines[1]);
-  assert.ok(lines[1].includes('Mother 32y, thyroid disease')||lines[2]?.includes('Mother 32y, thyroid disease'),
-    `母親註記要帶病名\n${lines.join('\n')}`);
-  assert.ok(lines[lines.length-2].includes('→●'),'本人性別沿用第 1 區（女）且實心');
+  assert.equal(lines[0],'  □------+-------○','父母家族史陽性也維持空心（實心只表示本人）');
+  assert.match(annotations(),/父親：40歲；病史：蠶豆症 \(G6PD deficiency\)/);
+  assert.match(annotations(),/母親：32歲；病史：甲狀腺疾病 \(thyroid disease\)/);
+  assert.doesNotMatch(tree(),/G6PD|thyroid/);
+  assert.ok(lines[lines.length-2].includes('->●'),'本人性別沿用第 1 區（女）且實心');
 });
 
 // ── 規格鐵則 ─────────────────────────────────────────────────────────────────
@@ -201,78 +203,85 @@ test('樹裡不得出現 __（複製鈕的「尚有 N 空格」會誤算）',({s
 
 test('什麼都沒填也畫最小樹，年齡／GPA 缺就整段省略',({tree})=>{
   assert.equal(tree(),[
-    '  □───┬───○',
-    '  Father          Mother',
-    '          │',
-    '        →◆',
-    '          NB'].join('\n'));
+    '  □------+-------○',
+    '  父親            母親',
+    '          |',
+    '        ->◆',
+    '          本人'].join('\n'));
 });
 
 // ── 例 F：父親前段離婚（有一女）＋父母未婚 ───────────────────────────────────
 // 左組 hw=0、中組 hw=0 → D=16；其他伴侶一啟用，成人列就是四個席位（未啟用的留白），
 // 故父親中心 18（其他伴侶 2、母 34），左 junction 10、中 junction 26。
-test('例 F：離婚前段＋未婚父母，半手足掛在左邊那段',({seg,input,otherRel,addSib,tree})=>{
+test('例 F：離婚前段＋未婚父母，半手足掛在左邊那段',({seg,input,otherRel,addSib,tree,annotations})=>{
   seg('gender','male');input('matAge','30');input('gravida','1');input('para','1');input('fatherAge','36');
   otherRel('fatherOther','divorced');
   const h=addSib('fatherOther');h.sex('female');h.age('8y');
   seg('pedRel','unmarried');
   assert.equal(tree(),[
-    '  ○╱╱─┬───□╌╌╌┬╌╌╌○',
-    '                  Father 36y      Mother 30y G1P1',
-    '          │              │',
-    '          ○            →■',
-    '          8y              NB'].join('\n'));
+    '  ○//----+-------□------+-------○',
+    '  父方伴侶        父親            母親',
+    '          |               |',
+    '          ○            ->■',
+    '          8y              本人'].join('\n'));
+  assert.match(annotations(),/父母關係：未婚/);
+  assert.match(annotations(),/父親的其他伴侶：關係：離婚／分居/);
   const lines=tree().split('\n');
   assert.deepEqual(colsOf(lines[0],'□○■●◆'),[2,18,34],'成人符號起始欄：其他伴侶 2、父 18、母 34');
-  assert.deepEqual(colsOf(lines[0],'┬'),[10,26],'兩段 junction 在各自兩人的中點');
-  assert.deepEqual(colsOf(lines[2],'│'),[10,26],'兩條主幹各自掛在自己的 junction 底下');
+  assert.deepEqual(colsOf(lines[0],'+'),[10,26],'兩段 junction 在各自兩人的中點');
+  assert.deepEqual(colsOf(lines[2],'|'),[10,26],'兩條主幹各自掛在自己的 junction 底下');
   assert.deepEqual(colsOf(lines[3],'□○■●◆'),[10,26],'子代符號起始欄＝各組 junction');
-  assert.equal(colOf(lines[3],'→'),24,'本人箭頭緊貼符號左邊（2 欄）');
+  assert.equal(colOf(lines[3],'>'),25,'本人箭頭緊貼符號左邊');
   noTrailing(lines);
 });
 
 // ── 例 G：只有母親有其他伴侶（未婚），兩個小孩 ───────────────────────────────
 // 中組 hw=0、右組 hw=4 → D=16；左側沒有伴侶不留席位：父 2、母 18、伴侶 34；中 junction 10、右 junction 26，右組單元中心 22／30。
-test('例 G：母親側兩位半手足，橫桿只在右組，中組畫主幹',({seg,input,otherRel,addSib,tree})=>{
+test('例 G：母親側兩位半手足，橫桿只在右組，中組畫主幹',({seg,input,otherRel,addSib,tree,annotations})=>{
   seg('gender','female');input('matAge','35');input('gravida','3');input('para','2');input('fatherAge','40');
   otherRel('motherOther','unmarried');
   const a=addSib('motherOther');a.sex('male');a.age('10y');
   const b=addSib('motherOther');b.sex('female');b.age('7y');
   assert.equal(tree(),[
-    '  □───┬───○╌╌╌┬╌╌╌□',
-    '  Father 40y      Mother 35y G3P2',
-    '          │              │',
-    '          │          ┌─┴─┐',
-    '          │          │      │',
-    '        →●          □      ○',
-    '          NB          10y     7y'].join('\n'));
+    '  □------+-------○------+-------□',
+    '  父親            母親            母方伴侶',
+    '          |               |',
+    '          |           +---+---+',
+    '          |           |       |',
+    '        ->●          □      ○',
+    '          本人        10y     7y'].join('\n'));
+  assert.match(annotations(),/母親的其他伴侶：關係：未婚/);
   const lines=tree().split('\n');
-  assert.deepEqual(colsOf(lines[3],'┌┬┐┴┼'),[22,26,30],'橫桿列在右組 22→30，junction 26 也是接點（左側沒有伴侶就不留席位）');
+  assert.deepEqual(colsOf(lines[3],'+'),[22,26,30],'橫桿列在右組 22→30，junction 26 也是接點（左側沒有伴侶就不留席位）');
   noTrailing(lines);
 });
 
 // ── 例 H：父親不詳 ───────────────────────────────────────────────────────────
-test('例 H：父親不詳畫 ◇ 並寫 Father unknown（不寫年齡）',({seg,input,toggle,d,tree})=>{
+test('例 H：父親不詳畫 ◇ 並加中文註記（不寫年齡）',({seg,input,toggle,d,tree,annotations})=>{
   seg('gender','male');input('matAge','28');input('gravida','1');input('para','1');
   toggle('fatherUnknown');
   assert.equal(d.getElementById('fatherAge').disabled,true,'父親不詳時年齡欄位要停用');
   assert.equal(tree(),[
-    '  ◇───┬───○',
-    '  Father unknown  Mother 28y G1P1',
-    '          │',
-    '        →■',
-    '          NB'].join('\n'));
+    '  ◇------+-------○',
+    '  父親            母親',
+    '          |',
+    '        ->■',
+    '          本人'].join('\n'));
+  assert.match(annotations(),/父親：身分不詳/);
 });
 
 // ── 父母關係三種線型 ─────────────────────────────────────────────────────────
-test('父母關係三種線型',({seg,tree})=>{
+test('父母關係用 ASCII 連線與明確中文，不推定一般等於已婚',({seg,tree,annotations})=>{
   seg('gender','male');
   const first=()=>tree().split('\n')[0];
-  assert.equal(first(),'  □───┬───○','一般＝實線');
+  assert.equal(first(),'  □------+-------○','一般連線');
+  assert.doesNotMatch(annotations(),/父母關係：/);
   seg('pedRel','unmarried');
-  assert.equal(first(),'  □╌╌╌┬╌╌╌○','未婚＝虛線字元');
+  assert.equal(first(),'  □------+-------○','未婚不再使用不相容的特殊虛線');
+  assert.match(annotations(),/父母關係：未婚/);
   seg('pedRel','divorced');
-  assert.equal(first(),'  □╱╱─┬───○','離婚・分居＝兩個 ╱');
+  assert.equal(first(),'  □//----+-------○','離婚・分居使用 ASCII //');
+  assert.match(annotations(),/父母關係：離婚／分居/);
 });
 
 // ── 兩邊都有其他伴侶：D 放大、三組不重疊 ─────────────────────────────────────
@@ -287,7 +296,7 @@ test('兩邊各 3 個半手足＋中間 2 位手足：D 放大成 24，三組符
   const lines=tree().split('\n');
   // 中組 hw=8、兩側 hw=8 → D=max(16,8+8+8)=24；成人中心 2／26／50／74
   assert.deepEqual(colsOf(lines[0],'□○■●◆'),[2,26,50,74],'成人符號起始欄，相鄰成人距離 24');
-  assert.deepEqual(colsOf(lines[0],'┬'),[14,38,62],'三段 junction 各在兩人中點');
+  assert.deepEqual(colsOf(lines[0],'+'),[14,38,62],'三段 junction 各在兩人中點');
   const syms=lines[lines.length-2];
   const cols=colsOf(syms,'□○◇■●◆');
   assert.equal(cols.length,9,`子代符號應有 9 個（3＋3＋3）\n${syms}`);
@@ -300,11 +309,11 @@ test('半手足刪掉後重畫；三個開關都回到未選時與例 A 逐字�
   seg('gender','male');input('matAge','30');input('gravida','1');input('para','1');
   const before=tree();
   assert.equal(before,[
-    '  □───┬───○',
-    '  Father          Mother 30y G1P1',
-    '          │',
-    '        →■',
-    '          NB'].join('\n'),'起點＝例 A');
+    '  □------+-------○',
+    '  父親            母親',
+    '          |',
+    '        ->■',
+    '          本人'].join('\n'),'起點＝例 A');
   otherRel('fatherOther','divorced');
   const h=addSib('fatherOther');h.sex('female');h.age('8y');
   assert.equal(sibCards('fatherOther').length,1,'半手足列在自己的清單裡');
@@ -314,9 +323,96 @@ test('半手足刪掉後重畫；三個開關都回到未選時與例 A 逐字�
   h.remove();
   assert.equal(sibCards('fatherOther').length,0,'刪除後清單要重畫');
   assert.ok(!tree().includes('8y'),`刪掉的半手足不得留在樹上\n${tree()}`);
-  assert.ok(tree().split('\n')[0].includes('╱╱'),'關係還在就照樣畫離婚線');
+  assert.ok(tree().split('\n')[0].includes('//'),'關係還在就照樣畫離婚線');
   otherRel('fatherOther','divorced');   // 再點一次＝回到未選
   assert.equal(tree(),before,'新欄位全部沒啟用時，輸出必須與例 A 逐字元相同');
+});
+
+test('雙親疾病只有家族區一個入口，父親其他病史同步到敘述與圖下',({d,input,click,get,annotations,tree})=>{
+  for(const key of ['thal','g6pd','thyroid']){
+    assert.equal(d.querySelectorAll(`[data-par="${key}"]`).length,1);
+    assert.ok(get(`[data-par="${key}"]`).closest('#familyHistoryFields'));
+  }
+  assert.equal(d.querySelectorAll('#prenatalCard [data-par]').length,0);
+  input('fatherHistory','type 2 diabetes mellitus');
+  click('[data-par="g6pd"] [data-v="father"]');
+  assert.match(get('#note').textContent.split('Pedigree:')[0],/paternal G6PD deficiency and paternal type 2 diabetes mellitus/);
+  assert.match(annotations(),/父親：病史：蠶豆症 \(G6PD deficiency\)、type 2 diabetes mellitus/);
+  assert.doesNotMatch(tree(),/diabetes|G6PD/);
+  click('[data-tab="acc"]');click('[data-tab="adm"]');
+  assert.equal(get('#fatherHistory').value,'type 2 diabetes mellitus');
+});
+
+test('同一父親疾病重填不重複輸出，清空不刪其他選擇',({input,click,get,annotations})=>{
+  click('[data-par="g6pd"] [data-v="father"]');
+  for(const value of ['G6PD deficiency','g6pd deficiency.','蠶豆症']){
+    input('fatherHistory',value);
+    assert.equal((annotations().match(/G6PD deficiency/g)||[]).length,1);
+    assert.equal((get('#note').textContent.split('Pedigree:')[0].match(/paternal G6PD deficiency/g)||[]).length,1);
+  }
+  input('fatherHistory','');
+  assert.match(annotations(),/G6PD deficiency/);
+  assert.equal(get('[data-par="g6pd"] [data-v="father"]').getAttribute('aria-pressed'),'true');
+});
+
+test('父親疾病與無病史衝突時提醒可直達，且不產生相反的否認句',({input,click,d,get,annotations})=>{
+  click('[data-par="g6pd"] [data-v="none"]');input('fatherHistory','G6PD deficiency');
+  assert.doesNotMatch(get('#note').textContent.split('Pedigree:')[0],/denied a history of G6PD deficiency/);
+  const issue=d.querySelector('#reviewConflictList [data-review-target="#fatherHistory"]');assert.ok(issue);
+  issue.click();assert.equal(d.activeElement.id,'fatherHistory');
+  assert.equal(get('#fatherHistory').value,'G6PD deficiency');
+  click('[data-par="g6pd"] [data-v="father"]');
+  assert.equal(d.querySelector('#reviewConflictList [data-review-target="#fatherHistory"]'),null);
+  assert.equal((annotations().match(/G6PD deficiency/g)||[]).length,1);
+  click('[data-par="g6pd"] [data-v="unknown"]');
+  assert.ok(d.querySelector('#reviewConflictList [data-review-target="#fatherHistory"]'));
+  assert.doesNotMatch(get('#note').textContent,/Parental history regarding G6PD deficiency was unavailable/);
+});
+
+test('甲狀腺類型沿用唯一資料，不由病名推定藥物',({click,seg,get,annotations})=>{
+  click('[data-par="thyroid"] [data-v="both"]');seg('thyType','hypo');
+  assert.equal((annotations().match(/hypothyroidism/g)||[]).length,2);
+  assert.match(get('#note').textContent,/parental hypothyroidism/);
+  assert.doesNotMatch(get('#note').textContent,/treated with thyroxine/);
+});
+
+test('長病名不改圖形，自由文字不被當成 HTML 執行',({input,get,tree,annotations,addSib})=>{
+  const before=tree();input('fatherHistory','congenital heart disease with prior repair; <img src=x onerror=alert(1)>');
+  assert.equal(tree(),before);
+  assert.match(annotations(),/<img src=x onerror=alert\(1\)>/);
+  assert.equal(get('#note').querySelector('img'),null);
+  const a=addSib();a.note('<script>bad()</script>');
+  assert.match(tree(),/<script>bad\(\)<\/script>/);
+  assert.equal(get('#note').querySelector('script'),null);
+});
+
+test('中文手足備註按顯示欄寬換列，不互相覆寫',({addSib,tree})=>{
+  const a=addSib();a.note('先天性心臟病');const b=addSib();b.note('蠶豆症');
+  assert.ok(tree().includes('先天性心臟病'));assert.ok(tree().includes('蠶豆症'));
+  const lines=tree().split('\n');assert.ok(lines.findIndex(l=>l.includes('先天性心臟病'))!==lines.findIndex(l=>l.includes('蠶豆症')));
+  noTrailing(lines);
+});
+
+test('未知父親不清空病史草稿、不推定無疾病',({input,toggle,get,annotations})=>{
+  input('fatherAge','35');input('fatherHistory','type 2 diabetes mellitus');toggle('fatherUnknown');
+  assert.match(annotations(),/父親：身分不詳；病史：type 2 diabetes mellitus/);
+  assert.doesNotMatch(annotations(),/35歲|無疾病/);
+  toggle('fatherUnknown');assert.equal(get('#fatherAge').value,'35');assert.match(annotations(),/父親：35歲/);
+});
+
+test('桌機與收合預覽的文字複製保留中文註記及 ASCII 連線',({W,d,click,input,seg,get})=>{
+  const copies=[];Object.defineProperty(W.navigator,'clipboard',{configurable:true,value:{writeText(text){copies.push(text);return Promise.resolve();}}});
+  // DOM contract only: native HIS rendering still requires an in-hospital paste test.
+  Object.defineProperty(W.HTMLElement.prototype,'innerText',{configurable:true,get(){return this.textContent;}});
+  seg('pedRel','unmarried');input('fatherHistory','type 2 diabetes mellitus');
+  for(const width of [1440,390]){
+    W.innerWidth=width;W.dispatchEvent(new W.Event('resize'));const expected=get('#note').textContent;
+    click('#copy');assert.equal(copies.at(-1),expected);
+    assert.match(copies.at(-1),/父母關係：未婚/);
+    assert.match(copies.at(-1),/父親：病史：type 2 diabetes mellitus/);
+    assert.doesNotMatch(copies.at(-1),/[╌╱─│┬┴┼┌┐→]/);
+  }
+  assert.equal(d.querySelectorAll('#fatherHistory').length,1);
 });
 
 let failures=0;

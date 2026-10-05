@@ -54,6 +54,18 @@ if(fails.length){
 }
 
 if(update){
+  if(process.argv.includes('--pedigree-only')){
+    const old=JSON.parse(fs.readFileSync(BASELINE,'utf8')),marker='Pedigree:\n';
+    for(const name of new Set([...Object.keys(old),...Object.keys(out)])){
+      const a=old[name],b=out[name];
+      if(!a||!b||!a.admission?.includes(marker)||!b.admission?.includes(marker)||
+         a.admission.split(marker)[0]!==b.admission.split(marker)[0]||
+         ['acceptance','plan'].some(key=>a[key]!==b[key])){
+        console.error(`✗ ${name}: 家庭樹以外有變更，拒絕更新 baseline`);process.exit(1);
+      }
+    }
+    console.log('✓ 20 份病歷僅家庭樹改變；Admission 正文、Acceptance 與 NI plan 保持逐字相同');
+  }
   if(fs.existsSync(BASELINE)&&!force){
     const old=JSON.parse(fs.readFileSync(BASELINE,'utf8'));
     const drops=[];

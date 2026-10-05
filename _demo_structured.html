@@ -791,17 +791,6 @@
         <input class="tin" id="niptFind" placeholder="高風險項目（如 trisomy 21）"></div></div>
     <p class="man-h" style="margin:16px 0 7px">病史（有 risk 才展開）</p>
     <div id="risks"></div>
-    <p class="man-h" style="margin:15px 0 7px">雙親病史（無／母／父／雙親）</p>
-    <div class="field" style="margin-bottom:9px"><span class="lab">Thalassemia <span class="q">海洋性貧血</span></span>
-      <div class="seg" data-par="thal"><button data-v="none">無</button><button data-v="mother">母</button><button data-v="father">父</button><button data-v="both">雙親</button></div></div>
-    <div class="field" style="margin-bottom:9px"><span class="lab">G6PD deficiency <span class="q">蠶豆症</span></span>
-      <div class="seg" data-par="g6pd"><button data-v="none">無</button><button data-v="mother">母</button><button data-v="father">父</button><button data-v="both">雙親</button></div></div>
-    <div class="field"><span class="lab">Thyroid disease <span class="q">甲狀腺疾病</span></span>
-      <div class="seg" data-par="thyroid"><button data-v="none">無</button><button data-v="mother">母</button><button data-v="father">父</button><button data-v="both">雙親</button></div>
-      <div id="thyWrap" hidden style="margin-top:8px">
-        <div class="seg" data-seg="thyType" style="margin-bottom:7px"><button data-v="hyper">Hyperthyroidism</button><button data-v="hypo">Hypothyroidism</button></div>
-        <div class="seg risk" data-tog="thyMed"><button data-v="1" data-on style="flex:0 1 auto">有用藥</button></div>
-      </div></div>
     <p class="man-h" style="margin:15px 0 7px">母親習慣（有才勾）</p>
     <div style="display:flex;flex-wrap:wrap;gap:6px">
       <div class="seg risk" data-habit="smoking"><button data-v="1" data-on style="flex:0 1 auto">Smoking</button></div>
@@ -1226,11 +1215,24 @@
       </div>
       <input class="tin" id="tentDx" placeholder="respiratory distress"></div>
     <div class="field"><span class="lab">母病歷號</span><input class="tin" id="chartNo" placeholder="00000000"></div>
-    <!-- 家庭樹：HIS 是純文字等寬環境，對齊只能靠空格；符號（□○）與線、接點一律算 2 欄寬 -->
-    <div class="field"><span class="lab">家庭樹（Pedigree） <span class="q">（畫在 note 最後，直接貼進 HIS）</span></span>
+    <!-- 家庭樹：人物符號保留；連線使用 ASCII，關係與病史另列中文註記。 -->
+    <div class="field" id="familyHistoryFields"><span class="lab">家族資料 · 家庭樹 <span class="q">（圖與中文註記附在病歷最後）</span></span>
       <div class="field"><span class="lab">父親年齡 <span class="q">（母親年齡沿用產前區）</span></span>
         <div class="num"><input type="number" id="fatherAge" placeholder="35" min="14" max="80" inputmode="numeric" aria-label="父親年齡"><span class="u">y/o</span></div>
       </div>
+      <p class="man-h">雙親病史：在此填一次，同步帶入英文敘述與家庭樹。</p>
+      <div class="field"><span class="lab">地中海型貧血 <span class="q">Thalassemia</span></span>
+        <div class="seg" data-par="thal"><button data-v="none">無</button><button data-v="mother">母親</button><button data-v="father">父親</button><button data-v="both">雙親</button></div></div>
+      <div class="field"><span class="lab">蠶豆症 <span class="q">G6PD deficiency</span></span>
+        <div class="seg" data-par="g6pd"><button data-v="none">無</button><button data-v="mother">母親</button><button data-v="father">父親</button><button data-v="both">雙親</button></div></div>
+      <div class="field"><span class="lab">甲狀腺疾病 <span class="q">Thyroid disease</span></span>
+        <div class="seg" data-par="thyroid"><button data-v="none">無</button><button data-v="mother">母親</button><button data-v="father">父親</button><button data-v="both">雙親</button></div>
+        <div id="thyWrap" hidden style="margin-top:8px">
+          <div class="seg" data-seg="thyType" style="margin-bottom:7px"><button data-v="hyper">Hyperthyroidism</button><button data-v="hypo">Hypothyroidism</button></div>
+          <div class="seg risk" data-tog="thyMed"><button data-v="1" data-on style="flex:0 1 auto">有用藥</button></div>
+        </div></div>
+      <label class="field" for="fatherHistory"><span class="lab">父親其他病史 <span class="q">（英文疾病名稱，選填；上方已選的不必重填）</span></span>
+        <input class="tin" id="fatherHistory" placeholder="例如 type 2 diabetes mellitus"></label>
       <div class="field"><span class="lab">手足 <span class="q">（依出生序，最年長在前）</span></span>
         <div id="sibList"></div>
         <div class="seg" style="margin-top:12px"><button type="button" id="addSib" style="flex:0 1 auto">＋ 手足</button></div>
@@ -1285,7 +1287,7 @@
         <div id="motherOtherKids" class="ped-kids"></div>
         <div class="seg" style="margin-top:12px"><button type="button" id="addMotherOtherKid" style="flex:0 1 auto">＋ 小孩</button></div>
       </details>
-      <p class="man-h">本人（新生兒）自動放最後，性別沿用出生區。離婚・分居畫 ╱╱，未婚畫虛線；各自其他伴侶的小孩畫在父親左側／母親右側。</p>
+      <p class="man-h">實心符號表示本次新生兒，不代表疾病。關係與病史另列中文註記；其他伴侶的小孩各掛在對應支線。</p>
     </div>
   </section>
   </div><!-- /admSections -->
@@ -2961,6 +2963,8 @@
       if(S.brWorkup.length&&!S.brFindings.length)awaitPath("嬰兒室檢查已勾但結果未填：note 只寫做了檢查，不會寫成正常；無異常請勾「結果無異常（確認）」。",'[data-msel="brFindings"]','嬰兒室檢查結果');
     }
     const di=dolInfo(),checks=[];
+    const fatherKey=fatherHistoryKey();
+    if(fatherKey&&['none','mother','unknown'].includes(S.parent[fatherKey]))path.push(reviewIssue('父親其他病史與上方雙親病史選擇不一致，請核對；原文字保留。','#fatherHistory'));
     if(di.birth!==null&&di.admission!==null&&di.admission<di.birth)path.push(reviewIssue("入院日期早於出生日期，請核對。",'#admissionDate'));
     if(di.conflict&&!S.dolAuto)path.push(reviewIssue(`手動 DOL ${di.manual??"__"} 與日期推算 DOL ${di.calculated} 不一致。`,S.dol==='x'?'#dolOther':'[data-seg="dol"]','手動入院日齡 DOL'));
     if(di.calculated!==null&&!di.conflict)checks.push(`✓ 出生日期、入院日期與 DOL ${di.value} 一致`);
@@ -3373,8 +3377,7 @@
   // ══ 家庭樹（Pedigree）══
   // HIS 是純文字、等寬字型（記事本式），對齊只能靠空格。
   // 作法：先把符號放進「欄位畫布」（col/row），序列化時依顯示寬度補 ASCII 空格、去行尾空白。
-  // 只有一種樣式：□○◇ 與 ─│┬ 在中文等寬字型（細明體等）下算 2 欄，符號、線與接點一律佔 2 欄；
-  // 年齡／備註是 ASCII，每字 1 欄。
+  // 人物符號與中文算 2 欄；連線、接點與箭頭使用 ASCII，避免特殊虛線在 HIS 變成問號。
   const PED_WIDE=/[←-↓■-◿─-╿　-〿぀-ヿ一-鿿＀-｠￠-￦]/;
   const pedCharW=ch=>PED_WIDE.test(ch)?2:1;
   // 預覽用：escape 後把 2 欄寬字元包成固定 2ch 的 inline-block，西文等寬字型（Menlo／Consolas）才會和 HIS 的中文等寬字型排出同樣的欄位；
@@ -3382,10 +3385,18 @@
   const pedigreeHtml=text=>text.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])).replace(new RegExp(PED_WIDE.source,"g"),c=>`<span class="w2${/[─═]/.test(c)?" w2l":""}">${c}</span>`);   // 橫線字元在西文字型只有 1 欄寬，預覽用 scaleX(2) 拉滿 2ch 才不會呈虛線   // 顯示欄寬：符號／CJK 算 2，年齡備註等 ASCII 算 1
   const PED_W=8, PED_L=10, PED_TWIN=6, PED_D=16;   // 子代單元欄距、第一個單元中心、同胎組成員間距、相鄰成人中心距離的下限
   const PED_CW=2;   // 符號／線／接點的顯示欄寬；符號佔「中心欄與其右一欄」，故成員的 x 就是符號左緣
-  // dash＝未婚的虛線字元，slash＝離婚・分居的兩道斜線（打在靠左那位成人符號的右緣）
+  // 關係不只靠線型：未婚／離婚另列中文。一般是未註明，不推定已婚。
   const PED_STYLE={sym:{male:["□","■"],female:["○","●"],unknown:["◇","◆"]},
-                   h:"─",v:"│",tee:"┬",up:"┴",both:"┼",lc:"┌",rc:"┐",arrow:"→",dash:"╌",slash:"╱╱"};
+                   h:"-",v:"|",tee:"+",up:"+",both:"+",lc:"+",rc:"+",arrow:"->",slash:"//"};
   const PED_DX={thal:"thalassemia",g6pd:"G6PD deficiency",thyroid:"thyroid disease"};
+  const PED_DX_ZH={thal:"地中海型貧血",g6pd:"蠶豆症",thyroid:"甲狀腺疾病"};
+  const parentDisease=k=>k==='thyroid'?({hyper:'hyperthyroidism',hypo:'hypothyroidism'}[S.thyType]||PED_DX[k]):PED_DX[k];
+  const fatherHistoryKey=()=>Object.keys(PED_DX).find(k=>[PED_DX[k],PED_DX_ZH[k],...(k==='thyroid'?['hyperthyroidism','hypothyroidism']:[])].some(v=>v.toLowerCase()===raw('fatherHistory').toLowerCase().replace(/[.。]+$/,'')));
+  function fatherHistoryExtra(){
+    const text=raw('fatherHistory').replace(/[.。]+$/,''),key=fatherHistoryKey();
+    if(key&&['father','both'].includes(S.parent[key])&&[parentDisease(key),PED_DX_ZH[key]].some(v=>v.toLowerCase()===text.toLowerCase()))return '';
+    return text;
+  }
   function pedCanvas(){
     const rows=[], CONT=" ";   // CONT＝寬字元佔用的右半欄，序列化時跳過（它已由左半欄輸出）
     return{
@@ -3404,7 +3415,7 @@
   function pedTextRow(cv,y,items){
     let rest=items.filter(it=>it[1]);
     while(rest.length){ let end=-1; const next=[];
-      rest.forEach(it=>{ if(it[0]>end){cv.put(it[0],y,it[1]); end=it[0]+String(it[1]).length;} else next.push(it); });
+      rest.forEach(it=>{ if(it[0]>end){cv.put(it[0],y,it[1]); end=it[0]+[...String(it[1])].reduce((n,ch)=>n+pedCharW(ch),0);} else next.push(it); });
       y++; rest=next; }
     return y;
   }
@@ -3433,7 +3444,7 @@
     // 中組的單元規則不變：一般手足各一個單元；同胎組（twin 手足＋本人）合成一個單元，本人永遠在最後。
     const midUnits=[];
     sibs.filter(s=>!s.twin).forEach(s=>midUnits.push([mkSib(s)]));
-    midUnits.push([...sibs.filter(s=>s.twin).map(mkSib),{sex:S.gender||"",age:"NB",note:"",proband:true,x:0}]);
+    midUnits.push([...sibs.filter(s=>s.twin).map(mkSib),{sex:S.gender||"",age:"本人",note:"",proband:true,x:0}]);
     const groups=[];
     if(hasL)groups.push({key:"L",units:layout((fo.kids||[]).map(k=>[mkSib(k)]))});
     groups.push({key:"M",units:layout(midUnits)});
@@ -3457,30 +3468,35 @@
     }
     groups.forEach(g=>{ g.j=xF+jRel[g.key]; const shift=g.j-g.gc;
       g.units.forEach(u=>{u.forEach(mem=>{mem.x+=shift;}); u.center+=shift;}); });
-    const dxOf=who=>Object.keys(PED_DX).filter(k=>S.parent[k]===who||S.parent[k]==="both").map(k=>PED_DX[k]);
+    const dxOf=who=>Object.keys(PED_DX).filter(k=>S.parent[k]===who||S.parent[k]==="both").map(k=>`${PED_DX_ZH[k]} (${parentDisease(k)})`);
     const fDx=dxOf("father"), mDx=dxOf("mother");
+    if(fatherHistoryExtra())fDx.push(fatherHistoryExtra());
     const cv=pedCanvas(); let y=0;
     // ① 成人列（由左到右）：父親的其他伴侶 — 父 — 母 — 母親的其他伴侶；每兩人之間一段關係線，junction 在中點
     const gpa=(raw("gravida")?"G"+raw("gravida"):"")+(raw("para")?"P"+raw("para"):"")+(raw("abortion")?"A"+raw("abortion"):"");
     // 父親不詳：符號改未知、註記寫 Father unknown（不寫年齡），關係線照畫
-    const fTxt="Father"+(ped.fatherUnknown?" unknown":(raw("fatherAge")?" "+raw("fatherAge")+"y":""))+(fDx.length?", "+fDx.join(", "):"");
-    const mTxt="Mother"+(raw("matAge")?" "+raw("matAge")+"y":"")+(gpa?" "+gpa:"")+(mDx.length?", "+mDx.join(", "):"");
-    const otherTxt=o=>{const a=String(o.age||"").trim(), n=String(o.note||"").trim(); return (a?a+"y":"")+(n?(a?", ":"")+n:"");};
+    const fTxt="父親",mTxt="母親";
+    const notes=[],relationLabel={unmarried:'未婚',divorced:'離婚／分居'};
+    if(relationLabel[ped.rel])notes.push(`父母關係：${relationLabel[ped.rel]}`);
+    const describe=(label,parts)=>{const filled=parts.filter(Boolean);if(filled.length)notes.push(`${label}：${filled.join('；')}`);};
+    describe('父親',[ped.fatherUnknown?'身分不詳':raw('fatherAge')?raw('fatherAge')+'歲':'',fDx.length?'病史：'+fDx.join('、'):'']);
+    describe('母親',[raw('matAge')?raw('matAge')+'歲':'',gpa,mDx.length?'病史：'+mDx.join('、'):'']);
+    const describeOther=(label,o)=>describe(label,[relationLabel[o.rel]?'關係：'+relationLabel[o.rel]:'',String(o.age||'').trim()?String(o.age).trim()+'歲':'',String(o.note||'').trim()]);
+    if(hasL)describeOther('父親的其他伴侶',fo);
+    if(hasR)describeOther('母親的其他伴侶',mo);
+    notes.push('註：實心符號表示本次新生兒，不代表疾病。');
     const adults=[];   // 其他伴侶的性別固定（半手足的另一位生物學父母），不提供選項
-    if(hasL)adults.push({x:xF-D,sym:symOf("female",false),txt:otherTxt(fo)});
+    if(hasL)adults.push({x:xF-D,sym:symOf("female",false),txt:"父方伴侶"});
     // 父母一律空心；家族史只接在註記後面（實心只表示本人）
     adults.push({x:xF,sym:symOf(ped.fatherUnknown?"":"male",false),txt:fTxt});
     adults.push({x:xF+D,sym:symOf("female",false),txt:mTxt});
-    if(hasR)adults.push({x:xF+D*2,sym:symOf("male",false),txt:otherTxt(mo)});
+    if(hasR)adults.push({x:xF+D*2,sym:symOf("male",false),txt:"母方伴侶"});
     adults.forEach(a=>cv.put(a.x,y,a.sym));
-    // 關係線：married 實線、unmarried 虛線字元、divorced 在靠左那位成人右邊兩道斜線
+    // 連線與接點都是單欄 ASCII；人物符號仍為兩欄。
     const relLine=(y2,ax,bx,j,rel)=>{
       const a=ax+PED_CW, b=bx-1;   // 從左邊成人符號右緣畫到右邊成人符號左緣
-      if(rel==="unmarried"){cv.fill(y2,a,j-1,st.dash); cv.fill(y2,j+PED_CW,b,st.dash);}
-      else{
-        cv.fill(y2,a,j-1,st.h); cv.fill(y2,j+PED_CW,b,st.h);
-        if(rel==="divorced")cv.put(a,y2,st.slash);
-      }
+      cv.fill(y2,a,j-1,st.h); cv.fill(y2,j+1,b,st.h);
+      if(rel==="divorced")cv.put(a,y2,st.slash);
       cv.put(j,y2,st.tee);
     };
     if(hasL)relLine(y,xF-D,xF,xF-half,fo.rel);
@@ -3496,7 +3512,7 @@
     const joint=(list,center,y2)=>{
       const all=list.includes(center)?list.slice():list.concat([center]).sort((a,b)=>a-b);
       all.forEach((x,i)=>{const ch=i===0?st.lc:i===all.length-1?st.rc:(x===center?(list.includes(x)?st.both:st.up):st.tee); cv.put(x,y2,ch);});
-      for(let i=0;i+1<all.length;i++)cv.fill(y2,all[i]+PED_CW,all[i+1]-1,st.h);
+      for(let i=0;i+1<all.length;i++)cv.fill(y2,all[i]+1,all[i+1]-1,st.h);
     };
     // ④⑤ 橫桿列＋子代主幹列（單一子代單元的組省略橫桿；但只要有任一組需要，三組都畫出這兩列，單元少的組畫主幹）
     if(groups.some(g=>g.units.length>1)){
@@ -3519,7 +3535,7 @@
     y++;
     y=pedTextRow(cv,y,mems.map(mem=>[mem.x,mem.age]));
     y=pedTextRow(cv,y,mems.map(mem=>[mem.x,mem.note]));
-    return cv.text();
+    return cv.text()+'\n\n'+notes.join('\n');
   }
   // 三個子代清單共用同一套列 UI（動態清單，慣例同 drawEvents）：
   // 手足（可同胎）、父親／母親與其他伴侶的小孩（半手足，沒有同胎）。id 共用 S.nextSibId，故 sib-{id}-age 全域唯一。
@@ -3820,13 +3836,14 @@
     const thyW=document.getElementById("thyWrap"); if(thyW)thyW.hidden=["none","na","unknown"].includes(S.parent.thyroid);
     parSet.forEach(([k,cond])=>{const v=S.parent[k];
       if(v==="na"||v==="unknown")return;
-      if(v==="none"){parNeg.push(cond);return;}
+      if(v==="none"){if(fatherHistoryKey()!==k)parNeg.push(cond);return;}
       const who=v==="mother"?"maternal":v==="father"?"paternal":"parental";
       if(k==="thyroid"){const t={hypo:'hypothyroidism',hyper:'hyperthyroidism'}[S.thyType]||'thyroid disease';
         const med=S.thyMed?(S.thyType==="hypo"?" treated with thyroxine supplementation":S.thyType==='hyper'?" treated with antithyroid medication":" treated with medication"):""; parPos.push(`${who} ${t}${med}`);}
       else parPos.push(`${who} ${cond}`);});
+    if(fatherHistoryExtra())parPos.push(`paternal ${esc(fatherHistoryExtra())}`);
     const habSet=[["smoking","cigarette smoking"],["alcohol","alcohol consumption"],["drug","substance abuse"]];
-    const unknownParent=parSet.filter(([k])=>S.parent[k]==='unknown').map(([,label])=>label);if(unknownParent.length)P1.push(`Parental history regarding ${sl(joinAnd(unknownParent))} was unavailable.`);
+    const unknownParent=parSet.filter(([k])=>S.parent[k]==='unknown'&&fatherHistoryKey()!==k).map(([,label])=>label);if(unknownParent.length)P1.push(`Parental history regarding ${sl(joinAnd(unknownParent))} was unavailable.`);
     const unknownHabits=habSet.filter(([k])=>!S.habit[k]).map(([,label])=>label);
     if(raw('habitStatus')==='unknown'&&unknownHabits.length)P1.push(`Information on maternal ${joinAnd(unknownHabits)} was unavailable.`);
     const habPos=[], habNeg=[];
@@ -3962,10 +3979,11 @@
 
     // 開頭摘要、母體／產前背景、產程與產房處置、入院前經過分段；只有入院結語時併回產程段。
     const courseParts=P2.length-postnatalStart>1?[P2.slice(0,postnatalStart),P2.slice(postnatalStart)]:[P2];
+    const [pedDiagram,pedNotes]=buildPedigree().split('\n\n');
     writeNote([P0.map(t=>noteScope(t,'birth:info')),P1.map(t=>noteScope(t,'prenatal')),...courseParts].filter(p=>p.length).map(p=>p.join(" ")).join("\n\n")
       + "\n\n" + noteScope("Tentative diagnosis:\n" + DX.map(d=>"# "+sl(d.f)).join("\n"),'review')
       + `\n\nMaternal chart number: ${chartNo?sl(chartNo):ph("____")}\nPedigree:`
-      + `\n<span class="pedigree">${pedigreeHtml(buildPedigree())}</span>`,"html");   // 家庭樹一律 escape（手足備註是自由文字）
+      + `\n<span class="pedigree">${pedigreeHtml(pedDiagram)}</span>\n\n<span class="pedigree-notes">${esc(pedNotes)}</span>`,"html");   // 圖保持等寬，圖下註記可換行；自由文字一律 escape。
     // 診斷 chip（與 # 清單同步）
     const dxWrap=document.getElementById("dx");
     dxWrap.innerHTML=`<span class="lbl">暫定診斷</span>`+DX.map(d=>`<span class="tag">${d.s}</span>`).join("");
