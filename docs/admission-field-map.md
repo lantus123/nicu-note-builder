@@ -114,6 +114,7 @@ screen_onset、care_onset 是草稿結構的非臨床佔位，保持隱藏且不
 - tests/prose/review-navigation.js：16 項精確定位檢查，涵蓋日期／DOL、E 模組、C／D 階段、出生事件、收合篩檢、穩定焦點與舊提示；比較跳轉前後病歷及臨床狀態。Chrome 腳本另以滑鼠與 Enter／Space 驗證 1440／390／320 px 跳轉、固定列不遮欄位、返回核對、修正後消失與重複事件定位，截圖使用合成資料。
 - tests/prose/prenatal-defaults.js：正常值直接寫入、移除未記錄／確認門檻、母親習慣預設與例外、導航不重設、無產檢與超音波邊界、篩檢手動結果保護及跨路徑共享。ui-screening.js 驗證 Rubella 有／無抗體、待報、未驗及不詳的獨立語意。Chrome 試填驗證桌面及 320／390 px 全部選項可見、原地展開、鍵盤導覽、即時病歷與選取樣式，並留存合成資料截圖。
 - tests/prose/destination.js：住院去處白名單、E 的 NICU 限制、BR 歷史與本次收治區分、切換路徑草稿、舊值防護及 PICU／未選去處的 plan 邊界。實際 Chrome 試填另驗證 320 px 的去處選項、提示、跨分頁病歷與切回草稿。
+- tests/prose/stage-band.js：分段顯示／隱藏、A–E 節點清單與地點分組、段狀態隨填寫變化、節點點擊切段與聚焦、核對跨段跳轉、預覽變淡且複製文字不變、Alt+方向鍵、產前確認清單（項目全在畫面上、只有異常值帶 data-abn）、段尾缺漏連結、以上都對、核對收合、複製把關，以及時間矛盾反映到節點與段標頭（IAP 開始日、產房事件順序、外接來源；第 5 段顯示全部待核對數）。
 - tests/prose/workflow.js：順向排列、唯一 ID、DOL 邊界、各模組輸出、混合症狀、陰性／未知、草稿隔離、支持／體重時點、E 既往急救隔離。
 - 既有 prose／timeline／downstream／plan／pedigree／navigation／clipboard 等測試繼續執行；變更輸出快照須逐項核對，不能只更新快照掩蓋錯誤。
 - tests/prose/browser-workflow.cjs：獨立 Chrome CDP，1440／1366 px 桌面、320／360／390 px 手機尺寸、短視窗及亮／暗主題；檢查 CSS viewport、遮擋、點擊命中、原生文字輸入與複製。混合 E 假病例從入口走到核對，另重新開頁填直接入院 A 及外院轉入 D；檢查返回相對位置、跨分頁、舊進食描述衝突與復原。截圖需由驗收者目視，不只看程式斷言。

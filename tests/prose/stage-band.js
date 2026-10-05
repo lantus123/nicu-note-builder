@@ -212,6 +212,31 @@ test('review: missing and optional groups fold into one-line counts; conflicts s
   input('gaW','99');assert.match(get('#reviewConflictList').textContent,/GA/);assert.equal(get('#reviewConflictList').closest('details'),null);
 });
 
+// ── 第四階段：帶子標示時間矛盾（只反映既有「前後不一致／格式需核對」結果）──
+test('a conflicting IAP date marks the IAP node and the prenatal header; review counts all conflicts',({d,get,input,seg,status})=>{
+  input('birthDate','2026-10-04');seg('iap','complete');input('iapSince','8/26');
+  assert.match(get('#reviewConflictList').textContent,/IAP開始日期比出生早/);
+  assert.equal(get('[data-band-node="prenatal:iap"]').classList.contains('warn'),true);
+  assert.match(get('[data-band-node="prenatal:iap"]').getAttribute('aria-label'),/待核對/);
+  assert.equal(get('[data-band-node="prenatal:anc"]').classList.contains('warn'),false);
+  assert.equal(status(2).textContent,'1 項待核對');assert.equal(status(2).dataset.risk,'true');
+  const total=d.querySelectorAll('#reviewConflictList .review-item').length;assert.equal(status(5).textContent,`${total} 項待核對`);
+  input('iapSince','10/3');assert.equal(get('[data-band-node="prenatal:iap"]').classList.contains('warn'),false);assert.notEqual(status(2).textContent,'1 項待核對');
+});
+
+test('birth and course conflicts mark only the node whose block holds the target',({get,story,input,click,status,W})=>{
+  story('A');click('#stageBand [data-flow-target="birthHistoryCard"]');input('birthResusStatus','performed');
+  click('[data-add-birth="ppv"]');click('[data-add-birth="assessment"]');
+  const ids=W.bandTest.S.birthEvents.map(e=>e.id);input(`event-${ids[0]}-minutes`,'5');input(`event-${ids[1]}-minutes`,'2');
+  assert.equal(get('[data-band-node="birth:dr"]').classList.contains('warn'),true,'Out-of-order event times mark the delivery-room node');
+  assert.equal(get('[data-band-node="birth:birth"]').classList.contains('warn'),false);
+  assert.match(status(3).textContent,/項待核對/);
+  input(`event-${ids[1]}-minutes`,'7');assert.equal(get('[data-band-node="birth:dr"]').classList.contains('warn'),false);
+  story('D');input('obTransferFrom',get('#homeHosp').value||'TPEMMH');
+  assert.equal(get('[data-band-node="course:obCare"]').classList.contains('warn'),true,'Transfer origin equal to our campus marks outside care');
+  assert.equal(get('[data-band-node="course:route"]').classList.contains('warn'),false);assert.match(status(4).textContent,/1 項待核對/);
+});
+
 test('copy gate: unconfirmed prenatal data adds a reminder but still copies',async({W,get,click})=>{
   const copy=async()=>{click('#copy');await new Promise(r=>setImmediate(r));return get('#copyStatus').textContent;};
   let text=await copy();assert.equal(W.copies.length,1,'Copy is not blocked');assert.match(text,/產前資料仍是預設值，尚未確認/);
