@@ -791,6 +791,17 @@
         <input class="tin" id="niptFind" placeholder="高風險項目（如 trisomy 21）"></div></div>
     <p class="man-h" style="margin:16px 0 7px">病史（有 risk 才展開）</p>
     <div id="risks"></div>
+    <p class="man-h" style="margin:15px 0 7px">雙親病史（無／母／父／雙親）</p>
+    <div class="field"><span class="lab">地中海型貧血 <span class="q">Thalassemia</span></span>
+      <div class="seg" data-par="thal"><button data-v="none">無</button><button data-v="mother">母親</button><button data-v="father">父親</button><button data-v="both">雙親</button></div></div>
+    <div class="field"><span class="lab">蠶豆症 <span class="q">G6PD deficiency</span></span>
+      <div class="seg" data-par="g6pd"><button data-v="none">無</button><button data-v="mother">母親</button><button data-v="father">父親</button><button data-v="both">雙親</button></div></div>
+    <div class="field"><span class="lab">甲狀腺疾病 <span class="q">Thyroid disease</span></span>
+      <div class="seg" data-par="thyroid"><button data-v="none">無</button><button data-v="mother">母親</button><button data-v="father">父親</button><button data-v="both">雙親</button></div>
+      <div id="thyWrap" hidden style="margin-top:8px">
+        <div class="seg" data-seg="thyType" style="margin-bottom:7px"><button data-v="hyper">Hyperthyroidism</button><button data-v="hypo">Hypothyroidism</button></div>
+        <div class="seg risk" data-tog="thyMed"><button data-v="1" data-on style="flex:0 1 auto">有用藥</button></div>
+      </div></div>
     <p class="man-h" style="margin:15px 0 7px">母親習慣（有才勾）</p>
     <div style="display:flex;flex-wrap:wrap;gap:6px">
       <div class="seg risk" data-habit="smoking"><button data-v="1" data-on style="flex:0 1 auto">Smoking</button></div>
@@ -1220,18 +1231,7 @@
       <div class="field"><span class="lab">父親年齡 <span class="q">（母親年齡沿用產前區）</span></span>
         <div class="num"><input type="number" id="fatherAge" placeholder="35" min="14" max="80" inputmode="numeric" aria-label="父親年齡"><span class="u">y/o</span></div>
       </div>
-      <p class="man-h">雙親病史：在此填一次，同步帶入英文敘述與家庭樹。</p>
-      <div class="field"><span class="lab">地中海型貧血 <span class="q">Thalassemia</span></span>
-        <div class="seg" data-par="thal"><button data-v="none">無</button><button data-v="mother">母親</button><button data-v="father">父親</button><button data-v="both">雙親</button></div></div>
-      <div class="field"><span class="lab">蠶豆症 <span class="q">G6PD deficiency</span></span>
-        <div class="seg" data-par="g6pd"><button data-v="none">無</button><button data-v="mother">母親</button><button data-v="father">父親</button><button data-v="both">雙親</button></div></div>
-      <div class="field"><span class="lab">甲狀腺疾病 <span class="q">Thyroid disease</span></span>
-        <div class="seg" data-par="thyroid"><button data-v="none">無</button><button data-v="mother">母親</button><button data-v="father">父親</button><button data-v="both">雙親</button></div>
-        <div id="thyWrap" hidden style="margin-top:8px">
-          <div class="seg" data-seg="thyType" style="margin-bottom:7px"><button data-v="hyper">Hyperthyroidism</button><button data-v="hypo">Hypothyroidism</button></div>
-          <div class="seg risk" data-tog="thyMed"><button data-v="1" data-on style="flex:0 1 auto">有用藥</button></div>
-        </div></div>
-      <label class="field" for="fatherHistory"><span class="lab">父親其他病史 <span class="q">（英文疾病名稱，選填；上方已選的不必重填）</span></span>
+      <label class="field" for="fatherHistory"><span class="lab">父親其他病史 <span class="q">（英文疾病名稱，選填；產前區已填的不必重填）</span></span>
         <input class="tin" id="fatherHistory" placeholder="例如 type 2 diabetes mellitus"></label>
       <div class="field"><span class="lab">手足 <span class="q">（依出生序，最年長在前）</span></span>
         <div id="sibList"></div>
@@ -2964,7 +2964,7 @@
     }
     const di=dolInfo(),checks=[];
     const fatherKey=fatherHistoryKey();
-    if(fatherKey&&['none','unknown'].includes(S.parent[fatherKey]))path.push(reviewIssue('父親其他病史與上方雙親病史的「無／不詳」不一致，請核對；原文字保留。','#fatherHistory'));
+    if(fatherKey&&['none','unknown'].includes(S.parent[fatherKey]))path.push(reviewIssue('父親其他病史與產前區雙親病史的「無／不詳」不一致，請核對；原文字保留。','#fatherHistory'));
     if(di.birth!==null&&di.admission!==null&&di.admission<di.birth)path.push(reviewIssue("入院日期早於出生日期，請核對。",'#admissionDate'));
     if(di.conflict&&!S.dolAuto)path.push(reviewIssue(`手動 DOL ${di.manual??"__"} 與日期推算 DOL ${di.calculated} 不一致。`,S.dol==='x'?'#dolOther':'[data-seg="dol"]','手動入院日齡 DOL'));
     if(di.calculated!==null&&!di.conflict)checks.push(`✓ 出生日期、入院日期與 DOL ${di.value} 一致`);

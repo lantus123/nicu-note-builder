@@ -328,12 +328,17 @@ test('半手足刪掉後重畫；三個開關都回到未選時與例 A 逐字�
   assert.equal(tree(),before,'新欄位全部沒啟用時，輸出必須與例 A 逐字元相同');
 });
 
-test('雙親疾病只有家族區一個入口，父親其他病史同步到敘述與圖下',({d,input,click,get,annotations,tree})=>{
+test('三項雙親病史維持產前原位且只有一個入口，父親其他病史留家族區',({d,input,click,get,annotations,tree})=>{
   for(const key of ['thal','g6pd','thyroid']){
     assert.equal(d.querySelectorAll(`[data-par="${key}"]`).length,1);
-    assert.ok(get(`[data-par="${key}"]`).closest('#familyHistoryFields'));
+    const control=get(`[data-par="${key}"]`);
+    assert.ok(control.closest('#prenatalCard'));
+    assert.ok(get('#risks').compareDocumentPosition(control)&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);
+    assert.ok(control.compareDocumentPosition(get('[data-habit="smoking"]'))&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);
   }
-  assert.equal(d.querySelectorAll('#prenatalCard [data-par]').length,0);
+  assert.equal(d.querySelectorAll('#familyHistoryFields [data-par]').length,0);
+  assert.ok(get('#thyWrap').closest('#prenatalCard'));
+  assert.ok(get('#fatherHistory').closest('#familyHistoryFields'));
   input('fatherHistory','type 2 diabetes mellitus');
   click('[data-par="g6pd"] [data-v="father"]');
   assert.match(get('#note').textContent.split('Pedigree:')[0],/paternal G6PD deficiency and paternal type 2 diabetes mellitus/);
