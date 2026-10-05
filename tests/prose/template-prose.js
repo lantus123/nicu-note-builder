@@ -1,4 +1,4 @@
-// 2026-10-05 院內模板骨架回歸（A：文案回到模板骨架；B：住院醫師手打的洞）。
+// 2026-10-05 院內模板骨架回歸（A：文案回到模板骨架；B：住院醫師手打的洞；C：安胎後出院）。
 // 全部是虛構資料；固定日期 2026-08-30（DOL 1 = 出生當天）。
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -207,6 +207,73 @@ test('B pre-admission symptoms already written at birth are not relisted',({stor
   choose('obRespRelation','new');seg('obRespType','cpap');
   assert.match(body(),/Because grunting persisted, CPAP was initiated before admission\./);
 });
+
+// ── C：安胎後出院 ──
+const toco=({click,input,tog},{reason,gaW,gaD,from,until,discharged,abx}={})=>{
+  click('[data-seg="toco"] [data-v="ritodrine"]');
+  if(reason)click(`[data-fill="tocoReason"] [data-v="${reason}"]`);
+  if(gaW)input('tocoGaW',gaW);if(gaD)input('tocoGaD',gaD);if(from)input('tocoSince',from);if(until)input('tocoUntil',until);
+  if(discharged)tog('tocoDischarged');if(abx)input('tocoAbx',abx);
+};
+test('C discharged tocolysis is a prior hospitalization at the end of the maternal paragraph',page=>{
+  const {story,seg,input,paragraphs,get}=page;
+  story('B');seg('delivery','cs');input('admReason','scheduled C/S');
+  assert.equal(get('#tocoDetailWrap').hidden,true,'details appear only after a tocolytic is chosen');
+  toco(page,{reason:'preterm uterine contractions',gaW:'32',gaD:'3',from:'8/23',until:'8/26',discharged:true,abx:'Ampicillin'});
+  assert.equal(get('#tocoDetailWrap').hidden,false);assert.equal(get('#tocoAbxWrap').hidden,false);
+  const [p1,p2]=paragraphs();
+  assert.ok(p1.endsWith('At 32+3 weeks, the mother was hospitalized for preterm uterine contractions, received ritodrine for tocolysis from 8/23 to 8/26, and was then discharged. Ampicillin was also given during that hospitalization.'),p1);
+  assert.ok(p2.startsWith('The mother was readmitted to our hospital for scheduled C/S.'),p2);
+  assert.doesNotMatch(p2,/tocolysis|Ritodrine/);
+});
+test('C missing tocolysis details are omitted while the sentence stays fluent',page=>{
+  const {story,input,paragraphs,click}=page;
+  story('B');toco(page,{discharged:true});
+  assert.match(paragraphs()[0],/The mother was hospitalized, received ritodrine for tocolysis, and was then discharged\.$/);
+  input('tocoUntil','8/26');assert.match(paragraphs()[0],/received ritodrine for tocolysis until 8\/26, and was then discharged\.$/);
+  input('tocoUntil','');input('tocoSince','8/23');assert.match(paragraphs()[0],/received ritodrine for tocolysis from 8\/23, and was then discharged\.$/);
+  assert.ok(paragraphs()[1].startsWith('The mother was readmitted to our hospital for ____.'));
+  click('[data-seg="toco"] [data-v="atosiban"]');assert.match(paragraphs()[0],/received atosiban for tocolysis from 8\/23/);
+});
+test('C undischarged tocolysis keeps the course sentence and adds the reason',page=>{
+  const {story,input,paragraphs,get,click}=page;
+  story('B');input('admReason','preterm labor');toco(page,{reason:'preterm labor',from:'7/19',abx:'Ampicillin'});
+  const p2=paragraphs()[1];
+  assert.ok(p2.startsWith('The mother was admitted to our hospital for preterm labor. Ritodrine was administered for tocolysis due to preterm labor, starting on 7/19.'),p2);
+  assert.doesNotMatch(paragraphs().join(' '),/discharged|Ampicillin|readmitted/,'antibiotics for a prior stay need the discharge switch');
+  assert.equal(get('#tocoAbxWrap').hidden,true);
+  click('[data-seg="toco"] [data-v="none"]');assert.equal(get('#tocoDetailWrap').hidden,true);
+  assert.doesNotMatch(paragraphs().join(' '),/due to preterm labor/);
+});
+test('C a discharge switch without a tocolytic writes nothing new',page=>{
+  const {story,click,tog,paragraphs}=page;
+  story('B');toco(page,{discharged:true});click('[data-seg="toco"] [data-v="none"]');
+  assert.doesNotMatch(paragraphs().join(' '),/hospitalized|readmitted|tocolysis/);
+});
+
+// ── 規格虛構案例（全部虛構） ──
+const FICTIONAL_ADMISSION=[
+  'This 1-day-old term female newborn was born to a 40-year-old G5P2 mother at a gestational age (GA) of 38+1 weeks with a birth weight (BW) of 3333 g (AGA) at 11:39 on October 5, 2026 at TPEMMH via cesarean section (C/S) due to previous C/S. The expected date of confinement was October 18, 2026. During pregnancy, she received regular prenatal care at ____, and prenatal ultrasound showed normal findings. Neither amniocentesis with array comparative genomic hybridization (aCGH) nor noninvasive prenatal testing (NIPT) was performed. There was no gestational diabetes mellitus (GDM), pregnancy-induced hypertension (PIH), preeclampsia, antepartum hemorrhage (APH), postpartum hemorrhage (PPH), or maternal fever. The mother had a history of Charcot-Marie-Tooth disease with normal function and without medication. Maternal group B streptococcus (GBS) culture, rapid plasma reagin (RPR) testing, hepatitis B surface antigen (HBsAg) screening, and human immunodeficiency virus (HIV) screening were all negative, and rubella IgG was reactive. The mother denied cigarette smoking, alcohol consumption, or substance abuse during pregnancy. At 32+3 weeks, the mother was hospitalized for preterm uterine contractions, received ritodrine for tocolysis from 8/23 to 8/26, and was then discharged.',
+  'The mother was readmitted to our hospital for scheduled C/S. The pediatric team was called to stand by in the operating room for the delivery. The cesarean delivery was uncomplicated. At birth, the infant had labored breathing, with cyanosis. Apgar scores were 8 and 9 at 1 and 5 minutes, respectively. On reassessment in the operating room, labored breathing persisted, with grunting.',
+  'Because labored breathing persisted, positive-pressure ventilation (PPV) was initiated before admission (FiO2 40%, PIP 20 cmH2O, PEEP 5 cmH2O), with stable heart rate and oxygen saturation. Under the tentative diagnosis of respiratory distress, the infant was admitted to our NICU for further evaluation and treatment.'];
+function fillFictionalCase(page){
+  const {story,seg,input,msel,tog,choose}=page;
+  story('A');seg('dest','NICU');seg('gender','female');input('gaW','38');input('gaD','1');input('bw','3333');
+  input('matAge','40');input('gravida','5');input('para','2');input('birthDate','2026-10-05');input('birthTime','11:39');
+  seg('delivery','cs');input('csReason','previous C/S');tog('csUncompl');
+  seg('amnio','none');seg('nipt','none');
+  input('matOtherHx','Charcot-Marie-Tooth disease with normal function and without medication');
+  toco(page,{reason:'preterm uterine contractions',gaW:'32',gaD:'3',from:'8/23',until:'8/26',discharged:true});
+  input('admReason','scheduled C/S');
+  input('birthBreathing','labored');msel('birthSigns','cyanosis');input('ap1','8');input('ap5','9');
+  input('birthFinalBreathing','labored');msel('birthFinalSigns','grunting');
+  choose('obRespRelation','new');seg('obRespType','ppv');input('obFiO2','40');input('obIP','20');input('obPEEP','5');tog('obRespStable');
+}
+test('spec fictional case: admission note follows the template skeleton',page=>{
+  fillFictionalCase(page);
+  assert.deepEqual(page.paragraphs(),FICTIONAL_ADMISSION);
+  assert.match(page.note(),/Tentative diagnosis:\n# Term newborn, GA 38\+1 weeks, BW 3333 g, AGA\n# Respiratory distress/);
+},[2026,9,5,12]);
 
 let failed=0;
 for(const [name,fn] of tests){try{fn();console.log(`✓ ${name}`);}catch(e){failed++;console.error(`✗ ${name}\n  ${e.stack||e.message}`);}}

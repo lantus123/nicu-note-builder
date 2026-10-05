@@ -132,3 +132,4 @@ screen_onset、care_onset 是草稿結構的非臨床佔位，保持隱藏且不
 | 結語 | Under the tentative diagnosis of … | A–D 不寫入院日期；E 不變；Acceptance 入院句不變。 |
 | matOtherHx | `The mother had a history of …`（併發症句之後） | 自由英文；去 `#`／句點；空白不出句；只進 Admission。 |
 | birthSigns、birthFinalSigns | 出生／產房結束評估的 with … 名詞片語；相同者 persisted | 比照 labored：不進 DX／plan 規則；參與入院前症狀去重。 |
+| toco、tocoReason、tocoGaW/D、tocoSince、tocoUntil、tocoDischarged、tocoAbx | 已出院：第一段末的前次住院句（＋抗生素句），第二段改 readmitted；未出院：第二段原句加 due to | 未選安胎藥時細項隱藏且不輸出；日期不正規化。 |

@@ -33,7 +33,7 @@ for(const [name,r] of Object.entries(out)){
   const ss=body.split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(Boolean);
   // 院內模板骨架指定的句首（2026-10-05 Ryan 核准）不計入 The/There 比例：
   // EDC 句、There was no … 併發症句、媽媽住院／再入院句、母親其他病史句。
-  const TEMPLATE=/^(The expected date of confinement was|There was no .+(?:during pregnancy|\(PPH\)[^.]*)\.$|The mother was (?:re)?admitted (?:to our hospital )?for|The mother had a history of)/;
+  const TEMPLATE=/^(The expected date of confinement was|There was no .+(?:during pregnancy|\(PPH\)[^.]*)\.$|The mother was (?:re)?admitted (?:to our hospital )?for|The mother had a history of|The mother was hospitalized)/;
   const tt=ss.map(s=>/^(The|There)\b/.test(s)&&!TEMPLATE.test(s));
   const ratio=tt.filter(Boolean).length/Math.max(1,ss.length);
   if(ratio>0.35)fails.push(`${name}: The/There 開頭 ${(ratio*100).toFixed(0)}% >35%`);

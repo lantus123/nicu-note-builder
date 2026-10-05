@@ -828,7 +828,23 @@
       <div class="seg" data-seg="mgso4"><button data-v="none">無</button><button data-v="neuro">神經保護</button><button data-v="seizure">抽搐／子癇預防</button></div></div>
     <div class="field"><span class="lab">安胎藥 <span class="q">（tocolysis）</span></span>
       <div class="seg" data-seg="toco"><button data-v="none">無</button><button data-v="ritodrine">Ritodrine</button><button data-v="atosiban">Atosiban</button></div>
-      <div class="num" style="margin-top:8px"><span class="u">since</span><input class="tin" id="tocoSince" placeholder="7/19" style="max-width:120px"></div></div>
+      <div class="num" style="margin-top:8px"><span class="u">since</span><input class="tin" id="tocoSince" placeholder="7/19" style="max-width:120px"></div>
+      <div id="tocoDetailWrap" hidden style="margin-top:9px">
+        <span class="lab">安胎原因 <span class="q">（選填；點選帶入，可自填）</span></span>
+        <div class="seg" data-fill="tocoReason" style="flex-wrap:wrap;margin-bottom:7px">
+          <button type="button" data-v="preterm uterine contractions" style="flex:0 1 auto">Preterm uterine contractions</button>
+          <button type="button" data-v="preterm labor" style="flex:0 1 auto">Preterm labor</button>
+          <button type="button" data-v="shortened cervix" style="flex:0 1 auto">Shortened cervix</button>
+        </div>
+        <input class="tin" id="tocoReason" aria-label="安胎原因（英文）" placeholder="或自行輸入…">
+        <div class="row2" style="margin-top:8px">
+          <div class="field" style="margin:0"><span class="lab">當時週數 <span class="q">（選填）</span></span>
+            <div class="num"><input type="number" id="tocoGaW" min="20" max="42" placeholder="週" inputmode="numeric" aria-label="安胎當時週數（週）" style="max-width:64px"><span class="u">+</span><input type="number" id="tocoGaD" min="0" max="6" placeholder="天" inputmode="numeric" aria-label="安胎當時週數（天）" style="max-width:58px"><span class="u">週</span></div></div>
+          <div class="field" style="margin:0"><label class="lab" for="tocoUntil">結束日期 <span class="q">（選填，照填寫原文）</span></label><input class="tin" id="tocoUntil" placeholder="8/26"></div>
+        </div>
+        <div class="seg" data-tog="tocoDischarged" style="margin-top:9px"><button type="button" data-v="1" style="flex:0 1 auto">安胎後已出院（前次住院）</button></div>
+        <div class="field" id="tocoAbxWrap" hidden style="margin:8px 0 0"><label class="lab" for="tocoAbx">該次住院抗生素 <span class="q">（選填，藥名）</span></label><input class="tin" id="tocoAbx" placeholder="例：Ampicillin"></div>
+      </div></div>
     <div class="field"><span class="lab">IAP 抗生素 <span class="q">（請依實際紀錄選擇完整性）</span></span>
       <div class="seg" data-seg="iap"><button data-v="none">不提及</button><button data-v="complete">完整</button><button data-v="incomplete">不完整</button></div>
       <div class="iap-warn" id="iapHint" hidden>GBS 陽性、待報或未驗：請核對 IAP 紀錄。尚未選擇完整性時，相關敘述會標示未記錄；藥名與開始日期會依已填內容呈現，不會自動補上。</div>
@@ -1810,7 +1826,7 @@
            resus:"none",resp:"",acceptanceResp:"",acceptanceWeightMode:"admission",surfactant:false,birthEvents:[],courseEvents:[],nextEventId:1,
            routeDrafts:{},continuitySignatures:{},lastRemoved:null,birthNegConfirmed:false,prenatalEdited:{},
            amnio:"na",nipt:"na",mgso4:"none",toco:"none",iap:"none",us:"normal",ancReg:"regular",
-           fd:false,doic:false,msaf:false,msafGrade:"",birthSigns:[],birthFinalSigns:[],   // 出生當下／產房結束評估的呼吸徵象（多選，空＝不寫）
+           fd:false,doic:false,msaf:false,msafGrade:"",birthSigns:[],birthFinalSigns:[],tocoDischarged:false,   // 出生當下／產房結束評估的呼吸徵象（多選，空＝不寫）；安胎後已出院（前次住院）
            // pathway 不預設：預選「直接入院」＝零點擊就斷言路徑（2026-09-19 住院醫師混亂盤點）
            pathway:"",outborn:false,obRespType:"",obRespStable:false,obSx:[],brEval:[],brWorkup:[],brFindings:[],obO2Dev:"",   // 支持與裝置皆不預設，避免寫成未確認事實。
            readmitPrior:"",readmitFeeding:"",readmitSource:"",readmitBaseline:[],readmitProblems:[],readmitJaundiceSigns:[],
@@ -3710,6 +3726,8 @@
     const cuw=document.getElementById("csUncomplWrap"); if(cuw)cuw.hidden=!S.delivery;   // C/S 與 VD 皆可標記
     {const ih=document.getElementById("iapHint"); if(ih)ih.hidden=!(["pos","pend","nd"].includes(S.scr.gbs)&&S.iap==="none");}   // na=未表態,不知有無風險,不提醒   // GBS 有風險且 IAP 未選 → 顯示提醒
     const usf=document.getElementById("usFindings"); if(usf)usf.hidden=(S.us!=="abnormal");
+    {const w=document.getElementById("tocoDetailWrap"); if(w)w.hidden=S.toco==="none";
+     const a=document.getElementById("tocoAbxWrap"); if(a)a.hidden=!(S.toco!=="none"&&S.tocoDischarged);}
     const acf=document.getElementById("acghFindings"); if(acf)acf.hidden=(S.amnio!=="abnormal");
     const niptW=document.getElementById("niptWrap"); if(niptW)niptW.hidden=(S.nipt!=="high");
     const heRow=document.querySelector('.scr-row[data-scr="hbeag"]'); if(heRow)heRow.hidden=(S.scr.hbsag!=="pos");  // HBeAg 只在 HBsAg+ 顯示
@@ -3945,18 +3963,32 @@
       else if(habNeg.length)P1.push(`The mother denied ${sl(joinOr(habNeg))} during pregnancy.`);
     }
 
+    // ── 安胎：選了安胎藥才有原因／週數／結束日／已出院；已出院＝前次住院，寫在第一段最後 ──
+    const tocoDone=S.toco!=="none"&&S.tocoDischarged;
+    const tocoAgent={ritodrine:"ritodrine",atosiban:"atosiban"}[S.toco]||"";
+    const tocoReason=S.toco!=="none"?clause("tocoReason"):"";
+    const tocoGa=S.toco!=="none"&&V("tocoGaW")?`${V("tocoGaW")}${V("tocoGaD")&&V("tocoGaD")!=="0"?`+${V("tocoGaD")}`:""}`:"";
+    const tocoFrom=inV("tocoSince"),tocoUntil=S.toco!=="none"?inV("tocoUntil"):"";
+    if(tocoDone){
+      const span=tocoFrom&&tocoUntil?` from ${sl(tocoFrom)} to ${sl(tocoUntil)}`:tocoFrom?` from ${sl(tocoFrom)}`:tocoUntil?` until ${sl(tocoUntil)}`:"";
+      P1.push(`${tocoGa?`At ${sl(tocoGa)} weeks, the mother`:"The mother"} was hospitalized${tocoReason?` for ${sl(tocoReason)}`:""}, received ${sl(tocoAgent)} for tocolysis${span}, and was then discharged.`);
+      const abx=clause("tocoAbx");
+      if(abx)P1.push(`${sl(cap(abx))} ${/,|\band\b|\//i.test(abx)?"were":"was"} also given during that hospitalization.`);
+    }
+
     // ── 段落 2：入院原因 + 產程 + 生產 + 出生 + 急救/呼吸 + Apgar +（外接轉入過程）+ 入院 ──
     // 第二段固定以媽媽這次住院開頭；本院出生才寫 to our hospital（外接／E 的出生院所未必是本院）。
     const ourBirth=!S.outborn&&S.pathway!=="readmit";
-    if(admR||ourBirth) P2.push(`The mother was admitted${ourBirth?" to our hospital":""} for ${admR?sl(admR):ph("____")}.`);
+    if(admR||ourBirth) P2.push(`The mother was ${tocoDone?"readmitted":"admitted"}${ourBirth?" to our hospital":""} for ${admR?sl(admR):ph("____")}.`);
     const motherAdmissionIdx=P2.length-1;
     // 產程事件依時序輸出：破水 → 安胎 → 產前類固醇 → MgSO4 → 產程 IAP → 生產
     // （舊順序是 IAP→類固醇→生產→破水，會讓「剖腹順利」出現在「破水發生於生產前」之前）
     const pr=S.r.prom;
     if(pr.on){const t={prom:"premature rupture of membranes (PROM)",pprom:"preterm premature rupture of membranes (PPROM)"}[pr.val]||"premature rupture of membranes (PROM)"; const hr=V("promH"), hu=unitLabel(hr,S.numUnit.promH==="days"?"day":"hour"); P2.push(`${sl(cap(t))} ${hr?`occurred ${sl(hr+" "+hu)} before delivery`:"was noted before delivery"}.`);}
-    {const ts=inV("tocoSince");
-     if(S.toco!=="none")P2.push(`${sl(S.toco==="ritodrine"?"Ritodrine":"Atosiban")} was administered for tocolysis${ts?`, starting on ${sl(ts)}`:""}.`);
-     else if(ts)P2.push(`The recorded start date for tocolysis was ${sl(ts)}; the agent was ${ph("____")}.`);}
+    {const ts=tocoFrom;
+     // 未出院：維持原句，原因有填加 due to；週數／結束日有填也照寫，不靜默丟掉。
+     if(S.toco!=="none"&&!tocoDone)P2.push(`${sl(S.toco==="ritodrine"?"Ritodrine":"Atosiban")} was administered for tocolysis${tocoReason?` due to ${sl(tocoReason)}`:""}${tocoGa?` at ${sl(tocoGa)} weeks`:""}${ts&&tocoUntil?`, from ${sl(ts)} to ${sl(tocoUntil)}`:ts?`, starting on ${sl(ts)}`:tocoUntil?`, until ${sl(tocoUntil)}`:""}.`);
+     else if(S.toco==="none"&&ts)P2.push(`The recorded start date for tocolysis was ${sl(ts)}; the agent was ${ph("____")}.`);}
     const st=S.r.steroid;
     if(st.on){const sd=inV("steroidDates");
       const course=st.extra.includes("incomplete")?"an incomplete course":st.extra.includes("complete")?"a complete course":"";

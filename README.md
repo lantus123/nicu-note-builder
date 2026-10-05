@@ -68,6 +68,7 @@
 - **結語**：`Under the tentative diagnosis of {dx}, the infant was admitted to {去處} for further evaluation and treatment.`；外接寫 `…, the infant was transferred from {來源} to our hospital and admitted to {去處} …`；嬰兒室檢查異常保留 therefore。出生後入院（直接、嬰兒室、外接）不寫入院日期；E 維持原句與日期。診斷空白沿用原本不寫診斷的句型。Acceptance 自己的入院句不變，Acceptance 與 Admission 共用的出生與入院前敘述同步套用上述去重。
 - **母親其他病史**：第 2 區「母親其他病史」選填英文欄，輸出 `The mother had a history of {文字}.`，接在併發症句之後；去頭尾空白、開頭 `#`、結尾句點，只 escape 一次，空白不出句。只進 Admission。
 - **出生當下／產房結束評估的呼吸徵象**（cyanosis、grunting、retractions，可多選）：接在呼吸子句後用名詞形 `At birth, the infant had labored breathing, with grunting and cyanosis.`；沒記錄呼吸時寫 `At birth, grunting and cyanosis were noted.`。產房結束評估與出生當下相同的異常呼吸／徵象寫 `…, labored breathing persisted, with grunting.`，只有新出現或不同的照一般寫法。下游比照 labored 呼吸值：只進敘述（Admission／Acceptance 共用）與階段摘要，不新增 DX、NI plan 或 Acceptance 規則；徵象也參與上方的入院前去重。
+- **安胎後出院**：選了安胎藥才出現原因（chip：preterm uterine contractions／preterm labor／shortened cervix，可自填）、當時週數、結束日期與「安胎後已出院」；打開已出院才出現「該次住院抗生素」。已出院寫在第一段最後：`At 32+3 weeks, the mother was hospitalized for preterm uterine contractions, received ritodrine for tocolysis from 8/23 to 8/26, and was then discharged.`（缺值片段省略），有抗生素另一句 `Ampicillin was also given during that hospitalization.`；第二段不再出安胎句，開頭改 `The mother was readmitted …`。未出院維持原句，原因有填加 `due to …`，週數／結束日有填也照寫不丟。日期照使用者原文。
 - `tests/prose/check.js` 的 The/There 句首比例不計模板指定的句首（EDC、There was no 併發症、媽媽住院／再入院等）；其餘句子照舊受限。驗收在 `tests/prose/template-prose.js`。
 
 ## NI plan 讀 admission 的哪些東西（2026-09-23）
