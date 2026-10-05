@@ -5,7 +5,7 @@ const fs=require('node:fs'),assert=require('node:assert/strict');
 const {pathToFileURL}=require('node:url'),path=require('node:path');
 const url=process.argv[2]||pathToFileURL(path.resolve(__dirname,'../../index.html')).href;
 async function main(){
-  const target=await(await fetch('http://127.0.0.1:9333/json/new?'+encodeURIComponent(url),{method:'PUT'})).json();
+  const target=await(await fetch('http://127.0.0.1:9333/json/new?'+encodeURIComponent(url),{method:'PUT',signal:AbortSignal.timeout(10000)})).json();
   const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((r,j)=>{ws.addEventListener('open',r,{once:true});ws.addEventListener('error',j,{once:true});});
   let seq=0;const pending=new Map(),errors=[];
   ws.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.text);const p=pending.get(m.id);if(!p)return;clearTimeout(p.timer);pending.delete(m.id);m.error?p.reject(Error(m.error.message)):p.resolve(m.result);});

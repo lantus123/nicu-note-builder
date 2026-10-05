@@ -21,8 +21,8 @@ test('single and multiple selections have distinct markers; add-event controls a
 test('arrow navigation moves single-choice focus without selecting a clinical fact',({story,get,W,d,note})=>{
  story('D');const first=get('[data-seg="gender"] [data-v="male"]'),text=note();first.focus();first.dispatchEvent(new W.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));assert.equal(d.activeElement,get('[data-seg="gender"] [data-v="female"]'));assert.equal(note(),text);
 });
-test('transport observation-only recording is secondary and never means continuation',({story,input,get,click,seg,note,phase})=>{
- story('D');input('birthFinalSupport','cpap');click('#obM1Relation-choice-continued');phase('course:route');const observed=get('#obRespRelation-choice-observed');assert.ok(get('#obRespRelationHelp').contains(observed));assert.equal(get('#obRespRelationChoices').contains(observed),false);assert.doesNotMatch(get('#obRespRelationGuide').textContent,/只知道當時/);click('#obRespRelationHelp > summary');observed.click();seg('obRespType','o2');assert.match(note(),/receiving supplemental oxygen during transport/);assert.doesNotMatch(note(),/oxygen was continued during transport/);
+test('direct transport mode recording needs no abstract action and never means continuation',({story,input,get,click,seg,note,phase,d})=>{
+ story('D');input('birthFinalSupport','cpap');click('#obM1Relation-choice-continued');phase('course:route');assert.equal(d.querySelector('#obRespRelation-choice-observed'),null);assert.doesNotMatch(get('#obRespRelationGuide').textContent,/只知道當時|記錄外院使用方式/);seg('obRespType','o2');assert.match(note(),/receiving supplemental oxygen during transport/);assert.doesNotMatch(note(),/oxygen was continued during transport/);
 });
 test('unknown predecessor does not require going back to record current transport support',({story,phase,get,seg,note})=>{
  story('D');phase('course:route');assert.equal(get('#pathwaySupportControls').hidden,false);seg('obRespType','cpap');assert.match(note(),/receiving CPAP during transport/);assert.doesNotMatch(note(),/CPAP was continued|CPAP was initiated/);
@@ -96,8 +96,8 @@ test('continued mode needs an explicit click and never copies previous parameter
  choose('obM1Relation','continued');assert.match(note(),/CPAP was continued at the referring hospital/);assert.equal(get('#obM1Flow').value,'');
  assert.equal(get('[data-seg="obM1Type"]').hidden,true);
 });
-test('unknown prior support offers known observations without inferring continuation',({story,choose,seg,d,note})=>{
- story('D');assert.equal(d.querySelector('#obM1Relation-choice-continued'),null);choose('obM1Relation','observed');seg('obM1Type','cpap');assert.match(note(),/was receiving CPAP at the referring hospital/);assert.doesNotMatch(note(),/CPAP was continued|CPAP was initiated/);
+test('unknown prior support offers direct mode choices without inferring continuation',({story,seg,d,note})=>{
+ story('D');assert.equal(d.querySelector('#obM1Relation-choice-continued'),null);assert.equal(d.querySelector('#obM1Relation-choice-observed'),null);seg('obM1Type','cpap');assert.match(note(),/was receiving CPAP at the referring hospital/);assert.doesNotMatch(note(),/CPAP was continued|CPAP was initiated/);
 });
 test('changing relationship preserves its own draft and does not leak settings or stability',({story,input,choose,seg,note,get})=>{
  story('A');input('birthFinalSupport','cpap');choose('obRespRelation','changed');seg('obRespType','ppv');input('obFiO2','40');get('[data-tog="obRespStable"] button').click();

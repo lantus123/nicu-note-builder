@@ -123,7 +123,7 @@ test('入院與接手呼吸支持分開，明確確認同前才帶入',page=>{
   assert.match(onTab('acc'),/At acceptance, the infant is receiving respiratory support with NCPAP/);
   // 與入院時狀況併成一句
   onTab('adm');admResp('NCPAP');input('obAdmissionStatus','the infant was pink and active');
-  assert.match(note(),/On admission to our NICU, the infant was receiving respiratory support with NCPAP; the infant was pink and active\./);
+  assert.match(note(),/On admission to our NICU, the infant was receiving respiratory support with NCPAP and was pink and active\./);
   assert.equal(get('#planWarn').textContent.includes('BR'),false);
 });
 

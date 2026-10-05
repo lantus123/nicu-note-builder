@@ -132,7 +132,7 @@ const samples=[
   ['fever',{rm_fever_temperature:'38.3',rm_fever_method:'axillary',rm_fever_time:'2026-10-02T10:15'},/38.3 °C.*axillary.*2026-10-02 10:15/],
   ['poor-feeding',{rm_feeding_usual:'90',rm_feeding_current:'45',rm_feeding_frequency:'every 3 hours'},/decreased from 90 to 45 mL per feed/],
   ['weight-loss',{rm_feeding_current:'30'},/Current milk intake was 30 mL/],
-  ['apnea',{rm_apnea_count:'2',rm_apnea_duration:'15',rm_apnea_setting:'during sleep',rm_apnea_recovery:'after tactile stimulation'},/2 episodes were reported during sleep.*duration was approximately 15 seconds/],
+  ['apnea',{rm_apnea_count:'2',rm_apnea_duration:'15',rm_apnea_setting:'during sleep',rm_apnea_recovery:'after tactile stimulation'},/2 episodes of apnea or cyanosis were reported during sleep, each lasting approximately 15 seconds; the infant recovered after tactile stimulation/],
   ['gastrointestinal',{rm_gastrointestinal_character:'nonbilious',rm_gastrointestinal_count:'3'},/3 episodes of vomiting were reported/],
   ['abnormal-screen',{rm_screen_test:'TSH',rm_screen_result:'21 mIU/L',rm_screen_date:'2026-09-17'},/TSH.*September 17, 2026.*21 mIU\/L/],
   ['care',{rm_care_reason:'feeding support',rm_care_needs:'The family requested assistance with feeding.'},/Admission was requested for feeding support/]

@@ -964,7 +964,7 @@
         <button type="button" class="hd" data-stop-toggle="obCare" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
 <div id="outbornWrap" hidden style="margin-top:10px">
-      <div class="field"><label class="lab" for="obFacility">出生院所 <span class="q">（自動＝同產檢地點）</span></label><input class="tin" list="hospList" id="obFacility" autocomplete="off" placeholder="同產檢地點（自動）"></div>
+      <div class="field"><label class="lab" for="obFacility">出生院所</label><input class="tin" list="hospList" id="obFacility" autocomplete="off" placeholder="請填實際出生院所"></div>
       <div class="field"><label class="lab" for="obTransferFrom">轉入來源 <span class="q">（自動＝同出生院所）</span></label><input class="tin" list="hospList" id="obTransferFrom" autocomplete="off" placeholder="同出生院所（自動）"></div>
           </div>
 <div class="field" id="obM1Wrap" hidden><span class="lab">外院後續呼吸支持 <span class="q">（我方抵達前；同一次產房處置不重填）</span></span>
@@ -973,7 +973,13 @@
         <div class="seg" data-seg="obM1Dev" style="margin-bottom:7px"><button type="button" data-v="">未記錄</button><button type="button" data-v="hood">Hood</button><button type="button" data-v="cannula">Nasal cannula</button><button type="button" data-v="mask">Mask</button></div>
         <div class="num"><label class="u" for="obM1Flow">流量</label><input type="number" id="obM1Flow" placeholder="未記錄" min="0" step="0.5" style="max-width:90px"><span class="u">L/min</span></div>
       </div>
-      <div class="support-relation"><label class="lab" for="obM1Relation">外院這段期間的呼吸照護</label><select class="tin" id="obM1Relation"><option value="">只記當時使用方式</option><option value="continued">仍持續使用</option><option value="new">開始使用</option><option value="changed">換了方式／調整設定</option><option value="repeat">停過，後來又開始</option><option value="stopped">已停止前項支持</option></select></div>
+      <div class="row2" id="obM1VentWrap" hidden>
+        <label class="field" for="obM1FiO2"><span class="lab">FiO₂（%，選填）</span><input class="tin" id="obM1FiO2" type="number" min="0" max="100" step="any"></label>
+        <label class="field" id="obM1IPWrap" for="obM1IP"><span class="lab">PIP（cmH₂O，選填）</span><input class="tin" id="obM1IP" type="number" min="0" step="any"></label>
+        <label class="field" for="obM1PEEP"><span class="lab" id="obM1PEEPLabel">PEEP（cmH₂O，選填）</span><input class="tin" id="obM1PEEP" type="number" min="0" step="any"></label>
+        <label class="field" id="obM1RRWrap" for="obM1RR"><span class="lab">呼吸器頻率（/min，選填）</span><input class="tin" id="obM1RR" type="number" min="0" step="any"></label>
+      </div>
+      <div class="support-relation"><label class="lab" for="obM1Relation">外院這段期間的呼吸照護</label><select class="tin" id="obM1Relation"><option value="">本段呼吸方式</option><option value="continued">仍持續使用</option><option value="new">開始使用</option><option value="changed">換了呼吸方式</option><option value="settings">方式不變，調整設定</option><option value="repeat">停過，後來又開始</option><option value="stopped">已停止前項支持</option></select></div>
     </div>
             </div>
       </li>
@@ -1025,7 +1031,7 @@
       <div class="seg" data-seg="pwOnset"><button type="button" data-v="observed">有觀察到，起始未明</button><button type="button" data-v="developed">新出現</button><button type="button" data-v="persisted">持續存在</button><button type="button" data-v="recurrent">再次出現</button></div>
       <div class="num" id="pwOnsetHWrap" style="margin-top:8px"><label class="u" for="pwOnsetH">生後時間（選填）</label><input type="number" id="pwOnsetH" placeholder="未記錄" min="0" step="0.1" style="max-width:90px"><label class="scr-legend" for="pwOnsetUnit">生後時間單位</label><select class="tin" id="pwOnsetUnit" style="flex:0 1 135px;max-width:100%"><option value="">未記錄</option><option value="hours">小時</option><option value="minutes">分鐘</option></select></div></div>
     <div class="field" id="pwLadderWrap" hidden><span class="lab" id="ladderALab">呼吸處置</span>
-      <div class="field"><label class="lab" for="obRespRelation">這段期間的呼吸照護</label><select class="tin" id="obRespRelation"><option value="">只記當時使用方式</option><option value="continued">仍持續使用</option><option value="new">開始使用</option><option value="changed">換了方式／調整設定</option><option value="repeat">停過，後來又開始</option><option value="stopped">已停止前項支持</option></select></div>
+      <div class="field"><label class="lab" for="obRespRelation">這段期間的呼吸照護</label><select class="tin" id="obRespRelation"><option value="">本段呼吸方式</option><option value="continued">仍持續使用</option><option value="new">開始使用</option><option value="changed">換了呼吸方式</option><option value="settings">方式不變，調整設定</option><option value="repeat">停過，後來又開始</option><option value="stopped">已停止前項支持</option></select></div>
       <div id="pathwaySupportControls">
       <div class="seg" data-seg="obRespType"><button type="button" data-v="">未記錄</button><button type="button" data-v="room">Room air</button><button type="button" data-v="o2">O₂</button><button type="button" data-v="cpap">CPAP</button><button type="button" data-v="ppv">Neopuff PPV</button><button type="button" data-v="ett">ETT</button></div>
       <div id="obO2Wrap" hidden style="margin-top:8px">
@@ -2234,6 +2240,8 @@
   const TONE={good:"had good muscle tone",poor:"had poor muscle tone",flaccid:"was flaccid"};
   const SUPPORT={room:"room air",o2:"supplemental oxygen",cpap:"CPAP",ppv:"positive-pressure ventilation (PPV)",ett:"mechanical ventilation via an endotracheal tube"};
   const raw=id=>V(id).trim();
+  const clockTime=value=>{const v=String(value||'').trim(),t=/^\d{3,4}$/.test(v)?v.padStart(4,'0').replace(/(..)(..)/,'$1:$2'):v;return /^([01]?\d|2[0-3]):[0-5]\d$/.test(t)?t.padStart(5,'0'):'';};
+  const pluralFinding=items=>items.length>1||/\b(?:retractions|stools|symptoms)\b/i.test(items[0]||'');
   const localToday=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;};
   const isoDay=v=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(v||""))return null;const [y,m,d]=v.split("-").map(Number),n=Date.UTC(y,m-1,d);return Number.isFinite(n)?n:null;};
   function manualDol(){const v=S.dol==="x"?raw("dolOther"):S.dol;return /^\d+$/.test(v)&&Number(v)>=1?Number(v):null;}
@@ -2327,7 +2335,7 @@
     }
     const settings=eventSettings(e),device=e.device?` using ${e.device}`:"";
     const action={ppv:NRP.phrase.ppv(device,settings),
-      intubation:NRP.phrase.intubation(settings),
+      intubation:e.intubationAction==='repeat'?`endotracheal reintubation was performed${settings?` and ventilation was continued through the endotracheal tube${settings}`:''}`:NRP.phrase.intubation(settings),
       compressions:NRP.phrase.compressions(e.duration?` for ${e.duration} ${unitLabel(e.duration,"minute")}`:""),
       epinephrine:NRP.phrase.epinephrine(e.drugDose?` (${e.drugDose})`:"",e.drugRoute?` via ${e.drugRoute}`:""),
       o2:NRP.phrase.o2(device,settings),
@@ -2426,17 +2434,16 @@
       preterm: gw>0&&gw<37
     };
   }
-  // 我方施作的插管：產房事件、後續事件、或轉送途中新插管（外院已插的不算我方 procedure）。供 Procedure「Intubation」自動勾選。
+  // 只有明確處置事件才連動 Procedure；ETT 支持方式不代表本次做過插管。
   function ourIntubation(){
     if(S.pathway==="readmit")return false; // E 的出生插管屬既往史，不自動建立本次 Procedure。
     return (!S.outborn&&activeBirthEvents().some(e=>e.kind==="intubation"))
-      ||S.courseEvents.some(e=>e.kind==="intubation"&&e.phase!=='outside')
-      ||(S.outborn&&S.obRespType==="ett"&&["new","repeat"].includes(raw("obRespRelation")));
+      ||S.courseEvents.some(e=>e.kind==="intubation"&&(!S.outborn||['arrival','transport'].includes(e.phase)));
   }
   // 暫定診斷：醫師打了就用醫師的，否則依嚴重度依序挑一個；全無問題時回空字串（不替使用者捏一個診斷）。
   function primaryDx(){
     const tent=raw("tentDx").replace(/[.。]+$/,""); if(tent)return tent;
-    if(S.pathway==="readmit")return S.readmitProblems.filter(p=>p!=="care"&&p!=="abnormal-screen").map(p=>READMIT_PROBLEM_LABEL[p]).filter(Boolean).join(" and ");
+    if(S.pathway==="readmit")return joinAnd(S.readmitProblems.filter(p=>p!=="care"&&p!=="abnormal-screen").map(p=>READMIT_PROBLEM_LABEL[p]).filter(Boolean));
     const p=admissionProblems();
     return p.respiratory?"respiratory distress"
       :p.infection?"suspected neonatal sepsis"
@@ -2462,7 +2469,7 @@
   function sourceStamp(field){const e=field==='obRespRelation'&&lastPreTransportSupport();return sourceMode(field)+(e?':'+e.phase+':'+e.id:'');}
   function resolvedSupport(field,selected){
     const relation=raw(field), source=sourceMode(field), stamp=S.continuitySignatures[field];
-    const confirmed=relation==="continued"&&!!source&&stamp===sourceStamp(field)&&(!selected||selected===source);
+    const confirmed=["continued","settings"].includes(relation)&&!!source&&stamp===sourceStamp(field)&&(!selected||selected===source)&&(relation!=='settings'||source!=='room');
     return {mode:relation==="stopped"?"":selected||(confirmed?source:""),relation,source,confirmed};
   }
   function pathwaySupportMode(){return resolvedSupport("obRespRelation",S.obRespType).mode;}
@@ -2470,13 +2477,14 @@
     const {mode,relation,source,confirmed}=resolvedSupport(field,selected);
     if(relation==="stopped")return source&&source!=="room"&&S.continuitySignatures[field]===sourceStamp(field)?`${sentence(SUPPORT[source]).replace(/\.$/,"")} was discontinued ${context}.`:"";
     if(!mode)return "";
-    if(mode==="room")return `The infant ${confirmed?"continued breathing":"was breathing"} room air ${context}.`;
+    if(mode==='room'&&['new','repeat','settings'].includes(relation))return ''; // 舊稿衝突保留於欄位與檢核，不生成虛構處置。
+    if(mode==="room")return relation==='changed'&&source&&source!=='room'&&S.continuitySignatures[field]===sourceStamp(field)?`The infant was switched from ${SUPPORT[source]} to room air ${context}.`:`The infant ${confirmed?"continued breathing":"was breathing"} room air ${context}.`;
     let action;
-    if(confirmed)action=`${SUPPORT[mode]} was continued`;
+    if(confirmed&&relation==='settings')action=`settings for ${SUPPORT[mode]} were adjusted`;
+    else if(confirmed)action=`${SUPPORT[mode]} was continued`;
     else if(relation==="new"||relation==="repeat"){
-      action=mode==="ett"?`the infant was ${relation==="repeat"?"reintubated":"intubated"}`
-        :`${SUPPORT[mode]} was ${relation==="repeat"?"provided again":"initiated"}`;
-    }else if(relation==="changed")action=`respiratory support was changed to ${SUPPORT[mode]}`;
+      action=`${SUPPORT[mode]} was ${relation==="repeat"?"provided again":"initiated"}`;
+    }else if(relation==="changed"&&source&&mode!==source&&S.continuitySignatures[field]===sourceStamp(field))action=`respiratory support was changed to ${SUPPORT[mode]}`;
     else action=`the infant was receiving ${SUPPORT[mode]}`;
     const device=mode==="o2"&&settings.device?` via ${settings.device}`:"";
     const ps=eventSettings({...settings,kind:mode==="ett"?"intubation":mode});
@@ -2539,7 +2547,23 @@
     const stated={decreased:'decreased','remained at the usual level':'unchanged'}[legacy]||'';
     return {active,usual,current,relation,duplicate:!!relation&&stated===relation,conflict:!!relation&&!!stated&&stated!==relation};
   }
-  const infantSentence=text=>sentence(/^(received|remained|continued|was|had|underwent|developed|required)\b/i.test(text)?`The infant ${text}`:text);
+  // 只補可明確辨認的嬰兒述語，不改寫完整句、否定、不確定性或 pH／iNO 等大小寫。
+  const infantClause=text=>{const s=String(text||'').trim();return /^(received|remained|continued|was|had|underwent|developed|required|appeared|became|did not|could not)\b/i.test(s)?`the infant ${s[0].toLowerCase()+s.slice(1)}`:s.replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase());};
+  const infantSentence=text=>sentence(infantClause(text));
+  function admissionAssessmentSentence(closeAdmission){
+    const status=infantClause(raw('obAdmissionStatus')),resp=closeAdmission&&S.resp?(S.resp==='room air'?'breathing room air':`receiving respiratory support with ${S.resp}`):'';
+    if(!status&&!resp)return '';
+    const predicate=status.startsWith('the infant ')?status.slice(11):'';
+    const observation=resp?`the infant was ${resp}${predicate?' and '+predicate:status?'; '+status:''}`:status;
+    return finish(`On admission to ${destPhrase()}, ${observation}`);
+  }
+  const episodeCount=value=>value!==''&&Number.isInteger(Number(value))&&Number(value)>=0?value:'';
+  function apneaEpisode(labels,onset){
+    const count=episodeCount(rmValue('apnea','count')),duration=rmValue('apnea','duration'),setting=rmValue('apnea','setting'),recovery=rmValue('apnea','recovery');
+    const n=count===''?null:Number(count),finding=joinAnd(labels).replace('apnea or a cyanotic episode','apnea or cyanosis'),subject=n===1?`1 episode of ${finding}`:n!==null?`${count} episodes of ${finding}`:finding;
+    const how=raw('readmitCourseType'),description=`${subject} ${n===1||n===null&&!pluralFinding(labels)?'was':'were'} ${how==='new'?'first ':''}reported${how==='recurrent'?' again':how==='persisted'?' to be ongoing':''}${onset?` on day of life ${onset}`:''}${setting?' '+setting:''}`;
+    return sentence(description+(n!==0&&duration?`, ${n===1?'lasting':n!==null&&n>1?'each lasting':'with a reported duration of'} approximately ${duration} ${unitLabel(duration,'second')}`:'')+(n!==0&&recovery?`; the infant recovered ${recovery}`:''));
+  }
   function readmitEpisodes(){
     const parts=[],how=raw("readmitCourseType"),verb={new:"developed",persisted:"continued to have",recurrent:"had recurrent",observed:"had"}[how]||"had";
     for(const m of activeReadmitModules()){
@@ -2551,6 +2575,7 @@
       if(m.key==="gastrointestinal"&&rmChips(m.key,"symptoms").length)labels=rmChips(m.key,"symptoms");
       if(m.key==="apnea"&&rmChips(m.key,"type").length)labels=rmChips(m.key,"type");
       const onset=rmValue(m.key,"onset")||raw("readmitOnsetDOL"),time=onset?` on day of life ${onset}`:"";
+      if(m.key==='apnea'&&['count','duration','setting','recovery'].some(f=>rmValue('apnea',f))){parts.push({onset:onset?Number(onset):null,line:apneaEpisode(labels,onset)});continue;}
       const line=m.key==="jaundice"?`Jaundice was ${how==="new"?"first ":""}noted${time}.`:`The infant ${verb} ${joinAnd(labels)}${time}.`;
       if(m.key==='jaundice')parts.push({onset:onset?Number(onset):null,line});
       else{
@@ -2581,15 +2606,9 @@
         else if(v("current"))out.push(`Current milk intake was ${v("current")} mL per feed.`);
         if(v("frequency")&&!(v('usual')&&v('current')))out.push(`The infant was fed ${v("frequency")}.`);
       }
-      if(m.key==="apnea"){
-        if(v('count'))out.push(`${v('count')} ${unitLabel(v('count'),'episode')} ${Number(v('count'))===1?'was':'were'} reported${v('setting')?' '+v('setting'):''}.`);
-        else if(v('setting'))out.push(`The events occurred ${v('setting')}.`);
-        if(v('duration'))out.push(`Reported event duration was approximately ${v('duration')} ${unitLabel(v('duration'),'second')}.`);
-        if(v("recovery"))out.push(`The infant recovered ${v("recovery")}.`);
-      }
       if(m.key==="gastrointestinal"&&rmChips(m.key,'symptoms').includes('vomiting')){
         if(v("character"))out.push(`The vomitus was ${v("character")}.`);
-        if(v("count"))out.push(`${v("count")} ${unitLabel(v("count"),"episode")} of vomiting ${Number(v("count"))===1?"was":"were"} reported in the preceding 24 hours.`);
+        if(episodeCount(v("count"))!=='')out.push(`${v("count")} ${unitLabel(v("count"),"episode")} of vomiting ${Number(v("count"))===1?"was":"were"} reported in the preceding 24 hours.`);
       }
       if(m.key==="screen")out.push(`The infant was referred for evaluation of ${v("test")||"an abnormal screening or laboratory result"}${v("date")?` from a sample obtained on ${fmtDate(v("date"))}`:""}${v("result")?`; the reported result was ${v("result")}`:""}.`);
       if(m.key==="care"){
@@ -2605,10 +2624,10 @@
     if(S.readmitPrior==="uneventful")out.push("The initial postnatal course was uneventful.");
     else if(S.readmitPrior==="treated"){
       const unit=raw("readmitPriorUnit");if(unit)out.push(`The infant was initially cared for in the ${unit}.`);
-      if(priorCourse)out.push(infantSentence(priorCourse));
     }
     const episodes=readmitEpisodes();
     episodes.filter(p=>dischargeDol&&p.onset&&p.onset<dischargeDol).forEach(p=>out.push(p.line));
+    if(S.readmitPrior==='treated'&&priorCourse)out.push(infantSentence(priorCourse));
     if(dischargeDate||dischargeWeight){
       const when=dischargeDol?` on day of life ${dischargeDol}`:dischargeDate?` on ${fmtDate(dischargeDate)}`:"";
       out.push(`The infant was discharged home${when}${dischargeWeight?` at a weight of ${dischargeWeight} g`:""}${S.readmitFeeding?`, receiving ${S.readmitFeeding==='mixed feeding'?'both breast milk and formula':S.readmitFeeding}`:''}.`);
@@ -2624,8 +2643,8 @@
     if(details.jaundice){
     const negatives=[];if(S.readmitJaundiceSigns.includes("no dark urine"))negatives.push("dark urine");if(S.readmitJaundiceSigns.includes("no pale stools"))negatives.push("pale stools");
     const positives=[];if(S.readmitJaundiceSigns.includes("dark urine"))positives.push("dark urine");if(S.readmitJaundiceSigns.includes("pale stools"))positives.push("pale stools");
-    if(negatives.length===1)out.push(`No ${negatives[0]} was reported.`);else if(negatives.length===2)out.push(`Neither ${negatives[0]} nor ${negatives[1]} was reported.`);
-    if(positives.length)out.push(`${joinAnd(positives).replace(/^./,c=>c.toUpperCase())} ${positives.length===1?"was":"were"} reported.`);
+    if(negatives.length===1)out.push(`No ${negatives[0]} ${pluralFinding(negatives)?'were':'was'} reported.`);else if(negatives.length===2)out.push(`Neither ${negatives[0]} nor ${negatives[1]} ${pluralFinding([negatives[1]])?'were':'was'} reported.`);
+    if(positives.length)out.push(`${joinAnd(positives).replace(/^./,c=>c.toUpperCase())} ${pluralFinding(positives)?"were":"was"} reported.`);
     }
     if(details.general){
     if(raw("readmitIntake")&&!feedingIntakeState().duplicate)out.push(sentence(`Oral intake ${raw("readmitIntake")}`));
@@ -2642,12 +2661,11 @@
     if(details.jaundice){const bili=[];if(raw("readmitTSB"))bili.push(`a total bilirubin level of ${raw("readmitTSB")} mg/dL`);if(raw("readmitDB"))bili.push(`a direct bilirubin level of ${raw("readmitDB")} mg/dL`);if(bili.length)out.push(`Serum testing showed ${joinAnd(bili)}.`);}
     if(raw("readmitEvaluation"))out.push(sentence(raw("readmitEvaluation")));if(raw("readmitTreatment"))out.push(sentence(raw("readmitTreatment")));
     if(closeAdmission)out.push(`The infant was subsequently admitted to ${destPhrase()}${admissionWhen()} for ${S.readmitProblems.length===1&&S.readmitProblems[0]==="care"?"the requested care":"further evaluation and management"}${diagnosis?`, with a tentative diagnosis of ${diagnosis.replace(/[.。]+$/,"")}`:""}.`);
-    const admStatus=raw("obAdmissionStatus").replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase()),admResp=closeAdmission&&S.resp?(S.resp==="room air"?"breathing room air":`receiving respiratory support with ${S.resp}`):"";
-    if(admResp&&admStatus)out.push(finish(`On admission to ${destPhrase()}, the infant was ${admResp}; ${admStatus}`));else if(admResp)out.push(finish(`On admission to ${destPhrase()}, the infant was ${admResp}`));else if(admStatus)out.push(finish(`On admission to ${destPhrase()}, ${admStatus}`));
+    const assessment=admissionAssessmentSentence(closeAdmission);if(assessment)out.push(assessment);
     recordNoteScope(scopes,out,'course:evaluation',evaluationStart);
     return out;
   }
-  function admissionWhen(){const date=raw("admissionDate"),time=raw("admissionTime");return `${date?` on ${fmtDate(date)}`:""}${/^([01]\d|2[0-3]):[0-5]\d$/.test(time)?` at ${time}`:""}`;}
+  function admissionWhen(){const date=raw("admissionDate"),time=clockTime(raw("admissionTime"));return `${date?` on ${fmtDate(date)}`:""}${time?` at ${time}`:""}`;}
   function postnatalNarrative({transferSource="",diagnosis="",closeAdmission=true,scopes}={}){
     if(S.pathway==="readmit")return readmissionNarrative({diagnosis,closeAdmission,scopes});
     diagnosis=diagnosis.replace(/[.。]+$/,"");
@@ -2660,7 +2678,7 @@
       const timing=h&&u?` at ${h} ${unitLabel(h,u==="minutes"?"minute":"hour")} of age`:"";
       const verb={developed:"developed",persisted:"persisted",recurrent:"recurred",observed:"were noted"}[S.pwOnset]||"were noted";
       const observed=S.pwOnset==="observed"||!S.pwOnset;
-      (S.outborn?transportIntro:out).push(`${context}, ${sx} ${observed?(S.obSx.length===1?"was noted":"were noted"):verb}${timing}.`);
+      (S.outborn?transportIntro:out).push(`${context}, ${sx} ${observed?(pluralFinding(S.obSx)?"were noted":"was noted"):verb}${timing}.`);
     }
     mark('route');
     // 故事 C（2026-09-20 Ryan）：嬰兒室有狀況或有母體風險 → 兒科去看（不是會診）→ 在嬰兒室抽血 → 結果異常才收。
@@ -2692,8 +2710,10 @@
     if(raw("obCourse"))(S.outborn?transportIntro:out).push(sentence(raw("obCourse")));
     mark('route');
     if(S.outborn){
+      const outsideMode=resolvedSupport('obM1Relation',S.obM1Type).mode;
       const outside=supportSentence("obM1Relation",S.obM1Type,"at the referring hospital",{
-        device:({hood:"an oxygen hood",cannula:"a nasal cannula",mask:"a face mask"})[S.obM1Dev],flow:resolvedSupport("obM1Relation",S.obM1Type).mode==="o2"?raw("obM1Flow"):""});
+        device:outsideMode==='o2'?({hood:"an oxygen hood",cannula:"a nasal cannula",mask:"a face mask"})[S.obM1Dev]:'',flow:outsideMode==="o2"?raw("obM1Flow"):"",
+        fiO2:['cpap','ppv','ett'].includes(outsideMode)?raw('obM1FiO2'):'',pip:['ppv','ett'].includes(outsideMode)?raw('obM1IP'):'',peep:['cpap','ppv','ett'].includes(outsideMode)?raw('obM1PEEP'):'',rr:outsideMode==='ett'?raw('obM1RR'):''});
       if(outside)out.push(outside);
       S.courseEvents.filter(e=>e.phase==='outside').forEach(e=>out.push(...eventNarrative(e,'course')));
       mark('obCare');
@@ -2701,7 +2721,7 @@
       out.push(`Our neonatal transport team was consulted for transfer${reason?` because of ${reason}`:""}.`);
       mark('obConsult');
       const arrival=raw("obArrival");
-      if(arrival)out.push(finish(`On our team's arrival at the referring hospital, ${arrival.replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase())}`));
+      if(arrival)out.push(finish(`On our team's arrival at the referring hospital, ${infantClause(arrival)}`));
       S.courseEvents.filter(e=>e.phase==='arrival').forEach(e=>out.push(...eventNarrative(e,'course')));
       mark('obArrive');
     }
@@ -2719,17 +2739,13 @@
     else if(closeAdmission)out.push(`${brAbnormal?"The infant was therefore admitted":"Subsequently, the infant was admitted"} to ${destPhrase()}${admissionWhen()} for further evaluation and management${diagnosis?`, with a tentative diagnosis of ${diagnosis}`:""}.`);
     // 入院時呼吸支持＋入院時狀況合併成一句。closeAdmission===false（Acceptance 呼叫）時不寫呼吸支持：
     // Acceptance 自己有「At acceptance, the infant is receiving…」句，且靠 startsWith(`On admission to X, `) 把這句 pop 走。
-    const admStatus=raw("obAdmissionStatus").replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase());
-    const admResp=closeAdmission&&S.resp?(S.resp==="room air"?"breathing room air":`receiving respiratory support with ${S.resp}`):"";
-    if(admResp&&admStatus)out.push(finish(`On admission to ${destPhrase()}, the infant was ${admResp}; ${admStatus}`));
-    else if(admResp)out.push(finish(`On admission to ${destPhrase()}, the infant was ${admResp}`));
-    else if(admStatus)out.push(finish(`On admission to ${destPhrase()}, ${admStatus}`));
+    const assessment=admissionAssessmentSentence(closeAdmission);if(assessment)out.push(assessment);
     mark('adm');
     return out;
   }
   const ROUTE_KEYS=["obRespType","obRespStable","obSx","brEval","brWorkup","brFindings","obO2Dev","pwOnset","obM1Type","obM1Dev","pwConsult","courseEvents","continuitySignatures",
     "readmitPrior","readmitFeeding","readmitSource","readmitBaseline","readmitProblems","readmitJaundiceSigns"];
-  const ROUTE_FIELDS=["obFacility","obTransferFrom","obReason","obM1Flow","obArrival","obO2Flow","obFiO2","obIP","obPEEP","obRR","obCourse","pwOnsetH","pwOnsetUnit","pwConsultReason","pwConsultH","obAdmissionStatus","obRespRelation","obM1Relation","brEvalIn","brCrp","brGlu","brFindIn",
+  const ROUTE_FIELDS=["obFacility","obTransferFrom","obReason","obM1Flow","obM1FiO2","obM1IP","obM1PEEP","obM1RR","obArrival","obO2Flow","obFiO2","obIP","obPEEP","obRR","obCourse","pwOnsetH","pwOnsetUnit","pwConsultReason","pwConsultH","obAdmissionStatus","obRespRelation","obM1Relation","brEvalIn","brCrp","brGlu","brFindIn",
     "readmitPriorUnit","readmitPriorCourse","readmitDischargeDate","readmitDischargeWeight","readmitHomeNote","readmitOnsetDOL","readmitComplaint","readmitCourse","readmitCourseType","readmitIntake","readmitFeedingNote","readmitUrine","readmitActivity","readmitSickContact","readmitCurrentWeight","readmitSpO2","readmitTSB","readmitDB","readmitEvaluation","readmitTreatment","tentDx",...rmFields()];
   function switchPathway(next){
     clearReviewLocation();
@@ -2766,7 +2782,7 @@
       if(["ppv","intubation","cpap","o2"].includes(e.kind))fields+=number(e,"fiO2","FiO₂","%","100");
       if(["ppv","intubation"].includes(e.kind))fields+=number(e,"pip","PIP","cmH₂O");
       if(["ppv","intubation","cpap"].includes(e.kind))fields+=number(e,"peep",e.kind==="cpap"?"Pressure":"PEEP","cmH₂O");
-      if(e.kind==="intubation")fields+=number(e,"rr","呼吸器頻率","/min");
+      if(e.kind==="intubation")fields+=`<label class="field" for="event-${e.id}-intubationAction"><span class="lab">實際插管處置</span><select class="tin" id="event-${e.id}-intubationAction" data-event-field="intubationAction"><option value="initial" ${e.intubationAction!=='repeat'?'selected':''}>插管</option><option value="repeat" ${e.intubationAction==='repeat'?'selected':''}>重新插管</option></select></label>`+number(e,"rr","呼吸器頻率","/min");
       if(e.kind==="o2")fields+=number(e,"flow","氧氣流量","L/min");
       if(["ppv","o2","cpap"].includes(e.kind))fields+=textField(e,"device","實際使用裝置（選填，英文）");
       if(e.kind==="compressions")fields+=number(e,"duration","按壓持續時間","分鐘");
@@ -2917,10 +2933,15 @@
     if(raw("birthResusStatus")==="none"&&["apnea","gasping","ineffective"].includes(raw("birthBreathing")))birth.push(reviewIssue("出生呼吸紀錄與「無需急救」並存，請確認記錄的時點與內容。",'#birthResusStatus'));
     if(raw("pwOnsetH")&&!raw("pwOnsetUnit"))awaitPath("症狀時間缺少單位，確認前不會寫成小時或分鐘。",'#pwOnsetUnit');
     if(S.outborn&&raw("obTransferFrom")===(raw("homeHosp")||"TPEMMH"))path.push(reviewIssue("轉入來源與收治院區相同，請核對是否為院內轉送或院所選擇。",'#obTransferFrom'));
+    if(S.outborn&&raw('obFacility')===(raw('homeHosp')||'TPEMMH'))path.push(reviewIssue('外院出生院所與收治院區相同，請核對出生地或入院情境。','#obFacility'));
     ["obM1Relation","obRespRelation"].forEach(field=>{
       if(field==="obM1Relation"&&!S.outborn)return;
       const r=resolvedSupport(field,field==="obM1Relation"?S.obM1Type:S.obRespType);
       if(r.relation==="continued"&&!r.confirmed)path.push(reviewIssue(`${field==="obM1Relation"?"外院":"本段"}先前對照的呼吸支持已改變、未填或與這段不同；請重新確認是否仍持續使用。`,'#'+field+'Choices','這段的呼吸照護選擇'));
+      if(r.relation==='settings'&&!r.confirmed)path.push(reviewIssue('調整設定所對照的支持方式已改變或未填；請重新確認。','#'+field+'Choices','方式不變，調整設定'));
+      if(r.relation==='changed'&&(!r.source||r.mode===r.source||S.continuitySignatures[field]!==sourceStamp(field)))path.push(reviewIssue(r.mode===r.source?'前後呼吸方式相同；若只有參數不同，請改選「方式不變，調整設定」。':'換方式所對照的前段支持已改變或未填，請重新確認。','#'+field+'Choices','換了呼吸方式'));
+      if(r.mode==='room'&&['new','repeat','settings'].includes(r.relation))path.push(reviewIssue('Room air 不能同時記為開始／重新開始呼吸支持或調整支持設定；原值保留，請修正選擇。','#'+field+'Choices','這段的呼吸照護選擇'));
+      if(['new','repeat','changed'].includes(r.relation)&&!r.mode)awaitPath('已選呼吸支持變化；請選擇本段使用的呼吸方式。','[data-seg="'+(field==='obM1Relation'?'obM1Type':'obRespType')+'"]','本段呼吸方式');
       if(r.relation==="stopped"&&(!r.source||r.source==="room"||S.continuitySignatures[field]!==sourceStamp(field)))path.push(reviewIssue("先前對照的呼吸支持已改變或未填；請重新確認停止了哪項支持。",'#'+field+'Choices','這段停止的呼吸支持'));
     });
     if(birthHasAction())for(const field of ['birthInitialNote','birthFinalNote','obCourse'])if(/\bno resuscitation\b/i.test(raw(field)))path.push(reviewIssue("自由文字提及 no resuscitation，但已有急救事件，請確認是否為不同時點。",'#'+field));
@@ -2955,12 +2976,17 @@
       for(const m of activeReadmitModules()){
         const onset=rmValue(m.key,'onset');
         if(onset&&(!Number.isInteger(Number(onset))||Number(onset)<1||di.value!==null&&Number(onset)>di.value))path.push(reviewIssue(`${m.title}的起始 DOL 不在出生至本次入院範圍內，請核對。`,'#'+rmId(m.key,'onset')));
+        const count=rmValue(m.key,'count');
+        if(['apnea','gastrointestinal'].includes(m.key)&&count!==''&&(m.key!=='gastrointestinal'||rmChips(m.key,'symptoms').includes('vomiting'))&&episodeCount(count)==='')path.push(reviewIssue(`${m.title}的發作次數必須是非負整數；請核對，不會自動四捨五入。`,'#'+rmId(m.key,'count')));
       }
+      const dischargeDol=dolOnDate(raw('readmitDischargeDate'));
+      if(S.readmitPrior==='uneventful'&&dischargeDol&&readmitEpisodes().some(p=>p.onset&&p.onset<dischargeDol))path.push(reviewIssue('前次過程選為順利，但已記錄出院前的症狀；請核對前次病程或症狀起始日齡。','[data-seg="readmitPrior"]','前次住院經過'));
+      if(S.readmitProblems.includes('apnea')&&rmValue('apnea','count')==='0'&&['duration','setting','recovery'].some(f=>rmValue('apnea',f)))path.push(reviewIssue('發作次數為 0，但仍填有發作經過；請核對，原資料保留。','#'+rmId('apnea','count')));
       if(raw('readmitOnsetDOL')&&(!Number.isInteger(Number(raw('readmitOnsetDOL')))||Number(raw('readmitOnsetDOL'))<1))path.push(reviewIssue('症狀開始 DOL 必須是至少 1 的整數。','#readmitOnsetDOL'));
       const testDay=isoDay(rmValue('screen','date'));
       if(S.readmitProblems.includes('abnormal-screen')&&testDay!==null&&((di.birth!==null&&testDay<di.birth)||(di.admission!==null&&testDay>di.admission)))path.push(reviewIssue('採檢日期不在出生至本次入院範圍內，請核對。','#'+rmId('screen','date')));
       const feverTime=rmValue('fever','time'),feverDay=isoDay(feverTime.slice(0,10));
-      if(S.readmitProblems.includes('fever')&&feverDay!==null&&((di.birth!==null&&feverDay<di.birth)||(di.admission!==null&&feverDay>di.admission)||(feverDay===di.admission&&raw('admissionTime')&&feverTime.slice(11)>raw('admissionTime'))||(feverDay===di.birth&&raw('birthTime')&&feverTime.slice(11)<raw('birthTime'))))path.push(reviewIssue('體溫測量時間不在出生至本次入院範圍內，請核對是否屬於入院後病程。','#'+rmId('fever','time')));
+      if(S.readmitProblems.includes('fever')&&feverDay!==null&&((di.birth!==null&&feverDay<di.birth)||(di.admission!==null&&feverDay>di.admission)||(feverDay===di.admission&&clockTime(raw('admissionTime'))&&feverTime.slice(11)>clockTime(raw('admissionTime')))||(feverDay===di.birth&&clockTime(raw('birthTime'))&&feverTime.slice(11)<clockTime(raw('birthTime')))))path.push(reviewIssue('體溫測量時間不在出生至本次入院範圍內，請核對是否屬於入院後病程。','#'+rmId('fever','time')));
       if(raw('tentDx')&&/jaundice|hyperbilirubin/i.test(raw('tentDx'))&&!readmitDetails().jaundice)path.push(reviewIssue('手填暫定診斷包含黃疸，但本次問題未選黃疸；請確認是否為共存問題。','#tentDx'));
       if(S.readmitJaundiceSigns.includes("no dark urine")&&S.readmitJaundiceSigns.includes("dark urine"))path.push(reviewIssue("尿色同時記錄為無深色尿與深色尿，請保留正確項目。",'[data-msel="readmitJaundiceSigns"]','尿色／糞便顏色'));
       if(S.readmitJaundiceSigns.includes("no pale stools")&&S.readmitJaundiceSigns.includes("pale stools"))path.push(reviewIssue("糞便顏色同時記錄為無淡色便與淡色便，請保留正確項目。",'[data-msel="readmitJaundiceSigns"]','尿色／糞便顏色'));
@@ -2970,13 +2996,14 @@
     }else if(S.pathway)checks.push(`✓ 目前只輸出情境 ${deriveStory()} 的入院路徑資料`);
     const c=document.getElementById("consistencySummary");if(c)c.textContent=checks.join("\n");
     const contextIssues=[];
-    if(raw('admissionTime')&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(raw('admissionTime')))contextIssues.push(reviewIssue('入院時間請用 24 小時 HH:MM；未核對的時間不寫入病歷。','#admissionTime'));
-    if(di.birth!==null&&di.admission!==null&&di.admission===di.birth&&/^\d\d:\d\d$/.test(raw('birthTime'))&&raw('admissionTime')&&raw('admissionTime')<raw('birthTime'))contextIssues.push(reviewIssue('同一天的入院時間早於出生時間，請核對。','#admissionTime'));
+    for(const [field,label] of [['birthTime','出生'],['admissionTime','入院']])if(raw(field)&&!clockTime(raw(field)))contextIssues.push(reviewIssue(`${label}時間請用有效的 24 小時 HH:MM；未核對的時間不寫入病歷。`,'#'+field));
+    if(di.birth!==null&&di.admission!==null&&di.admission===di.birth&&clockTime(raw('birthTime'))&&clockTime(raw('admissionTime'))&&clockTime(raw('admissionTime'))<clockTime(raw('birthTime')))contextIssues.push(reviewIssue('同一天的入院時間早於出生時間，請核對。','#admissionTime'));
     if(di.birth!==null&&di.admission!==null&&di.admission<di.birth)contextIssues.push(reviewIssue('入院日期早於出生日期，請核對。','#admissionDate'));
     const basicMissing=[
       [!S.pathway,'入院路徑','#entryRoutes','入院情境'],[!admissionDestination(),'收治單位','[data-seg="dest"]','收治單位'],
       [!raw('birthDate'),'出生日期','#birthDate'],[!raw('gaW'),'GA','#gaW'],[!raw('bw'),'出生體重','#bw'],
       [!S.gender,'性別','[data-seg="gender"]','性別'],[!S.delivery,'生產方式','[data-seg="delivery"]','生產方式'],
+      [S.outborn&&!raw('obFacility'),'外院出生院所（不沿用產檢院所）','#obFacility'],
       [S.pathway==='readmit'&&!S.readmitSource,'入院來源','[data-seg="readmitSource"]','本次入院來源'],
       [S.pathway==='readmit'&&!S.readmitProblems.length&&!raw('readmitComplaint'),'主要問題','[data-msel="readmitProblems"]','本次主要問題']
     ].filter(([missing])=>missing).map(([,message,selector,label])=>reviewIssue(message,selector,label));
@@ -3618,6 +3645,7 @@
     sh("pwSxWrap",pwSx);
     sh("pwOnsetWrap",S.obSx.length>0); sh("pwOnsetHWrap",true);
     sh("obM1Wrap",S.outborn); sh("obM1O2Wrap",resolvedSupport("obM1Relation",S.obM1Type).mode==="o2");
+    {const mode=resolvedSupport('obM1Relation',S.obM1Type).mode;sh('obM1VentWrap',['cpap','ppv','ett'].includes(mode));sh('obM1IPWrap',['ppv','ett'].includes(mode));sh('obM1RRWrap',mode==='ett');document.getElementById('obM1PEEPLabel').textContent=(mode==='cpap'?'Pressure':'PEEP')+'（cmH₂O，選填）';}
     sh("obArrWrap",S.outborn);
     sh("pwLadderWrap",pwSx);
     const supportMode=pathwaySupportMode();
@@ -3647,14 +3675,13 @@
     // ── 段落 1：出生 + 產檢 + 母體病史 + 篩檢 ──
     const via = S.delivery==="cs" ? "cesarean section (C/S)" : S.delivery==="nsd" ? "vaginal delivery (VD)" : "";
     const homeH = inV("homeHosp")||"TPEMMH";
-    let obFac = inV("obFacility")||inV("ancPlace");   // 外接:出生院所空 → 繼承產檢地點
-    if(S.outborn&&obFac===homeH)obFac="";   // 外接時繼承到本院=矛盾(transferred from 本院)→視為未填
+    let obFac = inV("obFacility");   // 產檢院所不是出生或轉出院所。
+    if(S.outborn&&obFac===homeH)obFac="";   // 保留原欄位並提示衝突，不以本院冒充外院。
     // 非外接時出生地不再寫死 TPEMMH：其他院區也在用這套系統，且寶寶未必在本院區出生
     const bHosp = inV("birthHosp")||(S.pathway==='readmit'?'':homeH);
     const birthPlace = S.outborn ? (obFac?sl(obFac):ph("____")) : bHosp?sl(bHosp):ph('____');
     const bDate=inV("birthDate"), bTimeRaw=inV("birthTime"); let bornWhen="";
-    let bt=bTimeRaw.replace(/[^\d:]/g,"");
-    if(/^\d{3,4}$/.test(bt))bt=bt.length===3?bt[0]+":"+bt.slice(1):bt.slice(0,2)+":"+bt.slice(2);   // 1430 → 14:30（24h）
+    const bt=clockTime(bTimeRaw);
     const bds=bDate?fmtDate(bDate):"";
     {const wp=[]; if(bt)wp.push(`at ${bt}`); if(bds)wp.push(`on ${bds}`); if(wp.length)bornWhen=wp.join(" ");}
     // 改法6：was delivered 消 newborn-was-born 同根重複;成熟度詞純 GA 推導(WHO 分帶),GA 空→無詞
@@ -3932,7 +3959,7 @@
     // 同一組後續事件供 Admission / Acceptance 共用，前段事件只引用一次。
     const postnatalStart=P2.length;
     const closingDx=primaryDx();   // 與 DX chip、Acceptance 入院原因同源（primaryDx 內已優先取 tentDx）
-    const inheritedSource=raw("obFacility")||raw("ancPlace");
+    const inheritedSource=raw("obFacility");
     const source=raw("obTransferFrom")||(inheritedSource===(raw("homeHosp")||"TPEMMH")?"":inheritedSource);
     const courseScopes=[];P2.push(...postnatalNarrative({transferSource:source,diagnosis:closingDx,scopes:courseScopes}).map((text,i)=>noteScope(esc(text),courseScopes[i])));
 
@@ -4514,10 +4541,9 @@ ${opLine}`);
     const via=S.delivery==="cs"?"cesarean section (C/S)":S.delivery==="nsd"?"vaginal delivery (VD)":"";
     const maternalReason=clause("admReason"), maternalAge=inV("matAge"), csReason=clause("csReason");
     const accHome=inV("homeHosp")||"TPEMMH";
-    let accObFac=inV("obFacility")||inV("ancPlace"); if(S.outborn&&accObFac===accHome)accObFac="";  // 外接繼承到本院=矛盾→未填
+    let accObFac=inV("obFacility"); if(S.outborn&&accObFac===accHome)accObFac="";
     const birthPlace=S.outborn?(accObFac||"____"):(inV("birthHosp")||(S.pathway==='readmit'?"____":accHome));
-    const birthDate=inV("birthDate"); let birthTime=inV("birthTime").replace(/[^\d:]/g,"");
-    if(/^\d{3,4}$/.test(birthTime))birthTime=birthTime.length===3?birthTime[0]+":"+birthTime.slice(1):birthTime.slice(0,2)+":"+birthTime.slice(2);
+    const birthDate=inV("birthDate"),birthTime=clockTime(inV("birthTime"));
     const bornWhen=[birthTime?`at ${sl(esc(birthTime))}`:"",birthDate?`on ${sl(esc(fmtDate(birthDate)))}`:""].filter(Boolean).join(" ");
     // admReason 是媽媽的入院原因；嬰兒的診斷沿用 Admission 的暫定診斷。
     // 原本自己算一套 respConcern，與 DX chip／入院結語不同源；改讀 primaryDx()（外接轉入原因的優先順序維持現狀）。
@@ -4597,7 +4623,9 @@ ${opLine}`);
     // 共用組稿器的末段入院評估接在 Acceptance 自己的入院結語之後。
     const admissionAssessment=inV("obAdmissionStatus")&&postnatal.at(-1)?.startsWith(`On admission to ${destPhrase()}, `)?postnatal.pop():"";   // 必須與 postnatalNarrative 的那句同源，否則 Acceptance 認不出來會重複印
     const presentation=postnatal.map(sentence=>sl(esc(sentence)));
-    if(S.outborn&&transferReason&&!tentativeDiagnosis)
+    if(S.pathway==='readmit'&&!admissionReason&&S.readmitProblems.length)
+      presentation.push(`The infant was admitted to ${destPhrase(ph("____"))}${esc(admissionWhen())} for ${S.readmitProblems.every(p=>p==='care')?'the requested care':'further evaluation and management'}.`);
+    else if(S.outborn&&transferReason&&!tentativeDiagnosis)
       presentation.push(`The infant was admitted to ${destPhrase(ph("____"))}${esc(admissionWhen())} for further evaluation and treatment.`);
     else presentation.push(`The infant was admitted to ${destPhrase(ph("____"))}${esc(admissionWhen())} with ${admissionReason?sl(esc(admissionReason)):ph("____")} for further evaluation and treatment.`);
     if(admissionAssessment)presentation.push(sl(esc(admissionAssessment)));
@@ -4989,7 +5017,7 @@ ${opLine}`);
       const panel=document.createElement("section");panel.className="readmit-module";panel.dataset.rmModule=m.key;panel.hidden=true;
       panel.innerHTML=`<h3>${m.title}</h3><div class="row2">${m.fields.map(([f,label,type,opts])=>{
         const id=rmId(m.key,f),options=(opts||[]).map(([value,text])=>`<option value="${value}">${text}</option>`).join('');
-        const control=type==="select"?`<select class="tin" id="${id}"><option value="">未記錄</option>${options}</select>`:type==="chips"?`<input type="hidden" id="${id}" value="[]"><div class="seg" role="group" aria-labelledby="label-${id}">${opts.map(([v,t])=>`<button type="button" data-rm-chip="${id}" data-v="${v}" aria-pressed="false">${t}</button>`).join('')}</div>`:`<input class="tin" id="${id}" type="${type}" ${type==="number"?'min="0" step="any"':''}>`;
+        const control=type==="select"?`<select class="tin" id="${id}"><option value="">未記錄</option>${options}</select>`:type==="chips"?`<input type="hidden" id="${id}" value="[]"><div class="seg" role="group" aria-labelledby="label-${id}">${opts.map(([v,t])=>`<button type="button" data-rm-chip="${id}" data-v="${v}" aria-pressed="false">${t}</button>`).join('')}</div>`:`<input class="tin" id="${id}" type="${type}" ${type==="number"?`min="0" step="${f==='count'?'1':'any'}"`:''}>`;
         return `<div class="field"><label class="lab" id="label-${id}" for="${id}">${label}（選填）</label>${control}</div>`;
       }).join('')}</div>`;
       if(!["care","screen"].includes(m.key))panel.insertAdjacentHTML("beforeend",`<details><summary id="${rmId(m.key,"onsetSummary")}">起始時間沿用共用時間；不同時再補</summary><label class="lab" for="${rmId(m.key,"onset")}">只有此問題起始不同時才填 DOL</label><input class="tin" type="number" min="1" step="1" id="${rmId(m.key,"onset")}"></details>`);
@@ -5009,12 +5037,15 @@ ${opLine}`);
     const statusLabel=status.querySelector('.lab');statusLabel.textContent="入院時呼吸支持（只描述本次入院當時）";
     const outside=byId('obM1Wrap'),outsideControls=document.createElement('div');outsideControls.id='outsideSupportControls';
     outside.appendChild(outsideControls);
-    outsideControls.appendChild(outside.querySelector('[data-seg="obM1Type"]'));outsideControls.appendChild(byId('obM1O2Wrap'));
+    outsideControls.appendChild(outside.querySelector('[data-seg="obM1Type"]'));outsideControls.appendChild(byId('obM1O2Wrap'));outsideControls.appendChild(byId('obM1VentWrap'));
     for(const [field,control] of [['obM1Relation',outsideControls],['obRespRelation',byId('pathwaySupportControls')]]){
       control.insertAdjacentHTML('beforebegin',`<details class="support-extra" id="${field}Details" hidden><summary>裝置／參數（選填）</summary><p class="inherited-summary" id="${field}Summary" hidden></p></details>`);
       const native=byId(field),holder=native.parentElement;holder.hidden=true;
-      holder.insertAdjacentHTML('beforebegin',`<div class="support-guide" id="${field}Guide"><div class="support-before" id="${field}Before"></div><div><p class="support-question" id="${field}Question"></p><div class="support-choices" id="${field}Choices" role="group" aria-labelledby="${field}Question" tabindex="-1"></div><div class="support-tools" id="${field}Tools"></div><details class="support-help" id="${field}Help"><summary>其他記錄與說明</summary><div id="${field}Exceptions"></div><p>持續使用：只沿用支持方式，裝置／參數另填。</p><p>已停止：不代表已改為 Room air。</p><p>僅記錄本段方式時，不推定開始或持續時間。</p></details></div></div>`);
+      holder.insertAdjacentHTML('beforebegin',`<div class="support-guide" id="${field}Guide"><div class="support-before" id="${field}Before"></div><p class="support-question" id="${field}Question"></p><div class="support-choices" id="${field}Choices" role="group" aria-labelledby="${field}Question" tabindex="-1"></div></div>`);
+      control.insertAdjacentHTML('afterend',`<div class="support-tools" id="${field}Tools"></div><details class="support-help" id="${field}Help"><summary>補記開始／重啟與選項說明</summary><div class="support-choices" id="${field}Exceptions"></div><p>持續使用只沿用方式；參數另填。已停止不代表已改為 Room air。</p><p>直接選方式只描述本段狀態。插管／重新插管請在本階段新增一次實際處置。</p></details>`);
+      control.insertAdjacentHTML('afterbegin',`<p class="lab" id="${field}ModeLabel">本段呼吸方式</p>`);
     }
+    byId('obAdmissionStatus').placeholder='例如：The infant had mild retractions.';
     const accSeg=document.querySelector('#accForm [data-seg="resp"]');accSeg.dataset.seg="acceptanceResp";
     const accCard=accSeg.closest('.card');accCard.querySelector('.man-h').textContent="接手當時是獨立時點，不會改寫入院紀錄。確認未變時可按「與入院時相同」。";
     accSeg.insertAdjacentHTML('beforebegin','<p class="inherited-summary" id="admissionRespSummary"></p><button type="button" id="useAdmissionResp">已確認接手時與入院時相同</button>');
@@ -5136,54 +5167,55 @@ ${opLine}`);
     if(field==='obM1Relation'||!S.outborn)return `離開${S.pathway==='outborn'?'外院':''}${S.delivery==='cs'?'刀房':S.delivery?'產房':'出生場所'}前`;
     return lastArrivalSupport()?'我方在外院最後記錄的支持':lastSupportAt('outside')?'外院團隊最後記錄的支持':'外院照護時';
   }
-  function supportConfig(field){return field==='obM1Relation'?{key:'obM1Type',device:'obM1Dev',fields:['obM1Flow']}:{key:'obRespType',device:'obO2Dev',fields:['obO2Flow','obFiO2','obIP','obPEEP','obRR']};}
+  function supportConfig(field){return field==='obM1Relation'?{key:'obM1Type',device:'obM1Dev',fields:['obM1Flow','obM1FiO2','obM1IP','obM1PEEP','obM1RR']}:{key:'obRespType',device:'obO2Dev',fields:['obO2Flow','obFiO2','obIP','obPEEP','obRR']};}
   function chooseSupport(field,choice){
     const cfg=supportConfig(field),select=document.getElementById(field),old=raw(field),key=`${S.pathway}:${field}:`,value=['clear','observed'].includes(choice)?'':choice;
     if(choice!=='clear'&&supportChoiceDrafts.get(key+'active')===choice&&S.continuitySignatures[field]===sourceStamp(field))return;
-    const draftKey=(relation,source)=>key+relation+(['continued','stopped'].includes(relation)?':'+(source||''):'');
+    const draftKey=(relation,source)=>key+relation+(['continued','settings','changed','stopped'].includes(relation)?':'+(source||''):'');
     supportChoiceDrafts.set(draftKey(old,S.continuitySignatures[field]),{mode:S[cfg.key],device:S[cfg.device],stable:field==='obRespRelation'&&S.obRespStable,values:Object.fromEntries(cfg.fields.map(id=>[id,raw(id)]))});
     const saved=choice==='clear'?null:supportChoiceDrafts.get(draftKey(value,sourceStamp(field)));
     supportChoiceDrafts.set(key+'active',choice);
-    S[cfg.key]=value==='continued'?'':saved?.mode||'';S[cfg.device]=saved?.device||'';
+    S[cfg.key]=['continued','settings'].includes(value)?'':saved?.mode||'';S[cfg.device]=saved?.device||'';
     if(field==='obRespRelation'){S.obRespStable=!!saved?.stable;document.querySelectorAll('[data-tog="obRespStable"] button').forEach(b=>b.setAttribute('aria-pressed',String(S.obRespStable)));}
     cfg.fields.forEach(id=>document.getElementById(id).value=saved?.values[id]||'');
     select.value=value;S.continuitySignatures[field]=sourceStamp(field);
     for(const name of [cfg.key,cfg.device])document.querySelectorAll(`[data-seg="${name}"] button`).forEach(b=>b.setAttribute('aria-pressed',String(!!S[name]&&b.dataset.v===S[name])));
-    render();document.getElementById(`${field}-choice-${choice}`)?.focus({preventScroll:true});
+    render();if(value==='settings')document.getElementById(field+'Details').open=true;document.getElementById(`${field}-choice-${choice}`)?.focus({preventScroll:true});
   }
   function renderSupportGuide(field){
     const cfg=supportConfig(field),r=resolvedSupport(field,S[cfg.key]),before=document.getElementById(field+'Before'),choices=document.getElementById(field+'Choices');if(!before)return;
-    before.innerHTML=r.source?`${htmlEscape(supportSourceLabel(field))}：<strong>${htmlEscape(supportName(r.source))}</strong>`:'前段未記錄支持方式；可直接選擇本段使用方式。';
+    before.innerHTML=r.source?`${htmlEscape(supportSourceLabel(field))}：<strong>${htmlEscape(supportName(r.source))}</strong>`:'';before.hidden=!r.source;
     document.getElementById(field+'Question').textContent=field==='obM1Relation'?'我方到場前，外院怎麼協助寶寶呼吸？':S.outborn?'轉送途中，呼吸支持有什麼變化？':S.pathway==='nursery'?'在 BR 這段期間，呼吸支持有什麼變化？':'入院前這段期間，呼吸支持有什麼變化？';
+    if(!r.source)document.getElementById(field+'Question').textContent=(field==='obM1Relation'?'我方到場前，外院':S.outborn?'轉送途中':S.pathway==='nursery'?'在 BR 這段期間':'入院前這段期間')+'使用哪種呼吸方式？';
     const entries=[];
     if(r.source||r.relation==='continued')entries.push(['continued',r.source==='room'?'仍未用氧氣／呼吸支持':r.source?'仍持續用 '+supportName(r.source):'先前選擇持續使用，待核對',!r.source]);
-    if(r.source&&r.source!=='room')entries.push(['changed','換了方式／調整設定'],['stopped','已停止 '+supportName(r.source)]);
-    else entries.push(['new','開始呼吸支持']);
-    entries.push(['repeat','停過，後來又開始']);
-    if(field==='obM1Relation')entries.push(['observed','記錄外院使用方式']);
+    if(r.source&&r.source!=='room')entries.push(['settings','方式不變，調整設定'],['changed','換了呼吸方式'],['stopped','已停止 '+supportName(r.source)],['repeat','停過，後來又開始']);
+    else if(r.source==='room')entries.push(['new','開始呼吸支持'],['repeat','停過，後來又開始']);
     if(r.relation&&!entries.some(([v])=>v===r.relation))entries.push([r.relation,document.getElementById(field).selectedOptions[0]?.textContent||'原選擇']);
-    const observed=!r.relation&&(!!S[cfg.key]||supportChoiceDrafts.get(`${S.pathway}:${field}:active`)==='observed');
-    const button=([value,label,disabled])=>`<button type="button" id="${field}-choice-${value}" class="choice-button" data-choice-kind="single" data-support-field="${field}" data-support-choice="${value}" aria-pressed="${value==='observed'?observed:r.relation===value}" ${disabled?'disabled':''}>${htmlEscape(label)}</button>`;
-    for(const [id,markup] of [[field+'Choices',entries.map(button).join('')],[field+'Exceptions',field==='obM1Relation'?'':button(['observed','僅記錄本段使用方式'])],[field+'Tools',`<button type="button" id="${field}-choice-clear" data-support-field="${field}" data-support-choice="clear" ${!r.relation&&!S[cfg.key]&&!observed?'disabled':''}>清除此段選擇</button>`]]){
+    const button=([value,label,disabled])=>`<button type="button" id="${field}-choice-${value}" class="choice-button" data-choice-kind="single" data-support-field="${field}" data-support-choice="${value}" aria-pressed="${r.relation===value}" ${disabled?'disabled':''}>${htmlEscape(label)}</button>`;
+    const extra=[['new','本段開始呼吸支持'],['repeat','本段停過，後來又開始']].filter(([v])=>!entries.some(([e])=>e===v));
+    for(const [id,markup] of [[field+'Choices',entries.map(button).join('')],[field+'Exceptions',extra.map(button).join('')],[field+'Tools',`<button type="button" id="${field}-choice-clear" data-support-field="${field}" data-support-choice="clear" ${!r.relation&&!S[cfg.key]?'disabled':''}>清除此段選擇</button>`]]){
       const host=document.getElementById(id);if(host.innerHTML!==markup){const focused=host.contains(document.activeElement)?document.activeElement.id:'';host.innerHTML=markup;if(focused)document.getElementById(focused)?.focus({preventScroll:true});}
     }
   }
   function renderSupportReuse(){
     for(const [field,controlId,selected,fields,device] of [
-      ['obM1Relation','outsideSupportControls',S.obM1Type,['obM1Flow'],S.obM1Dev],
+      ['obM1Relation','outsideSupportControls',S.obM1Type,supportConfig('obM1Relation').fields,S.obM1Dev],
       ['obRespRelation','pathwaySupportControls',S.obRespType,['obO2Flow','obFiO2','obIP','obPEEP','obRR'],S.obO2Dev]
     ]){
       const control=document.getElementById(controlId),details=document.getElementById(field+'Details'),summary=document.getElementById(field+'Summary');if(!details)return;
       const r=resolvedSupport(field,selected),hasSettings=!!device||fields.some(id=>raw(id));
-      renderSupportGuide(field);control.hidden=r.relation==='stopped'||!!r.source&&!r.relation&&!selected&&supportChoiceDrafts.get(`${S.pathway}:${field}:active`)!=='observed';
+      renderSupportGuide(field);control.hidden=r.relation==='stopped';
       const reset=control.querySelector('[data-v=""]');if(reset){reset.textContent='清除方式';reset.hidden=!selected;reset.setAttribute('aria-pressed','false');}
-      control.querySelector(`[data-seg="${field==='obM1Relation'?'obM1Type':'obRespType'}"]`).hidden=r.confirmed;
+      const modeGroup=control.querySelector(`[data-seg="${field==='obM1Relation'?'obM1Type':'obRespType'}"]`);modeGroup.hidden=r.confirmed;
+      for(const b of modeGroup.querySelectorAll('button[data-v]')){b.disabled=b.dataset.v==='room'&&['new','repeat','settings'].includes(r.relation)||!!b.dataset.v&&r.relation==='changed'&&b.dataset.v===r.source;b.title=b.disabled?(b.dataset.v==='room'?'Room air 不是開始或重啟呼吸支持':'方式相同請選「方式不變，調整設定」'):'';}
+      const modeLabel=document.getElementById(field+'ModeLabel');modeLabel.hidden=r.confirmed||!r.source&&!r.relation;modeLabel.textContent=r.relation==='changed'?'選擇新的呼吸方式':'本段呼吸方式';
       summary.hidden=!r.confirmed;details.hidden=!r.confirmed;
       if(r.confirmed){
         const source=supportSourceLabel(field);
-        summary.textContent=`已確認：${supportName(r.mode)}（同${source}）。裝置／參數另填。`;
+        summary.textContent=`已確認：${supportName(r.mode)}（同${source}）${r.relation==='settings'?'；本段調整設定。':'。裝置／參數另填。'}`;
         details.querySelector('summary').textContent=hasSettings?'裝置／參數已填（原值保留）':'裝置／參數（選填）';
-        if(control.parentElement!==details){details.open=hasSettings||control.contains(document.activeElement);details.appendChild(control);}
+        if(control.parentElement!==details){details.open=r.relation==='settings'||hasSettings||control.contains(document.activeElement);details.appendChild(control);}
       }else if(control.parentElement===details)details.after(control);
     }
   }
