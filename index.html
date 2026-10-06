@@ -1951,7 +1951,7 @@
            // pathway 不預設：預選「直接入院」＝零點擊就斷言路徑（2026-09-19 住院醫師混亂盤點）
            pathway:"",outborn:false,obRespType:"",obRespStable:false,obSx:[],brEval:[],brWorkup:[],brFindings:[],obO2Dev:"",   // 支持與裝置皆不預設，避免寫成未確認事實。
            readmitPrior:"",readmitFeeding:"",readmitSource:"",readmitBaseline:[],readmitProblems:[],readmitJaundiceSigns:[],
-           pwSbR:[],pwStandby:false,pwConsult:false,pwBrEval:false,pwTransport:false,leaveSpo2:"",pwOnset:"observed",obM1Type:"",obM1Dev:"",
+           pwSbR:[],pwStandby:false,pwConsult:false,pwNoticed:false,pwBrEval:false,pwTransport:false,leaveSpo2:"",pwOnset:"observed",obM1Type:"",obM1Dev:"",
            parent:{thal:"na",g6pd:"na",thyroid:"na"},thyType:"",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},habitReviewed:true,
            sibs:[],nextSibId:1,   // 家庭樹：手足清單（本人自動補在最後）
            // 家庭樹第二批：父母關係線型、父親不詳、父／母各自與其他伴侶的小孩（半手足；kids 與 S.sibs 同形，共用 nextSibId）
@@ -2883,7 +2883,11 @@
     let scopeStart=0;const mark=key=>{recordNoteScope(scopes,out,'course:'+key,scopeStart);scopeStart=out.length;};
     let brAbnormal=false;   // 嬰兒室檢查有異常 ⇒ 結語用 therefore（收入的理由就是它）
     if(S.pathway==="nursery")out.push("The infant was initially cared for in the baby room.");
-    const context=S.outborn?"During transport":S.pathway==="nursery"?"During observation in the baby room":"Before admission";
+    // 出生後才發現（Ryan 2026-10-06）：出生時還好、之後才有狀況；沒真的入住 BR 所以不提嬰兒室。
+    // 出生觀察正常或沒記、且沒急救時才寫 initially stable；否則只用 After birth 接。
+    const noticed=S.pathway==="direct"&&S.pwNoticed&&!S.pwStandby&&!S.pwConsult;
+    const initiallyStable=noticed&&!birthHasAction()&&!birthRecordedFindings().length&&!["apnea","gasping","ineffective","labored"].includes(raw("birthBreathing"));
+    const context=S.outborn?"During transport":S.pathway==="nursery"?"During observation in the baby room":noticed?(initiallyStable?"The infant was initially stable after birth; however":"After birth"):"Before admission";
     // 2026-10-05 去重：出生觀察／產房再評估已寫過的同一所見（起始未明或持續）不再重列；同段時間片語只寫一次。
     const sxTiming=h&&u?` at ${h} ${unitLabel(h,u==="minutes"?"minute":"hour")} of age`:"";
     const repeatedSx=(!S.pwOnset||["observed","persisted"].includes(S.pwOnset))?S.obSx.filter(x=>birthRecordedFindings().includes(x)):[];
@@ -2894,7 +2898,7 @@
       const observed=S.pwOnset==="observed"||!S.pwOnset;
       sxText=`${context}, ${joinAnd(newSx)} ${observed?(pluralFinding(newSx)?"were noted":"was noted"):verb}${sxTiming}.`;
       (S.outborn?transportIntro:out).push(sxText);contextUsed=true;
-    }
+    }else if(noticed&&initiallyStable)out.push(`The infant was initially stable after birth${sxTiming?`; however, a problem was noted${sxTiming}`:""}.`);
     mark('route');
     // 故事 C（2026-09-20 Ryan）：嬰兒室有狀況或有母體風險 → 兒科去看（不是會診）→ 在嬰兒室抽血 → 結果異常才收。
     if(S.pathway==="nursery"){
@@ -3351,7 +3355,7 @@
   function applyStory(k){
     if(deriveStory()===k)return;
     clearReviewLocation();
-    const st=STORY[k]; if(S.pathway!==st.pathway)switchPathway(st.pathway); setTog("pwStandby",st.standby); setTog("pwConsult",st.consult);
+    const st=STORY[k]; if(S.pathway!==st.pathway)switchPathway(st.pathway); setTog("pwStandby",st.standby); setTog("pwConsult",st.consult); if(st.standby||st.consult)S.pwNoticed=false;
     document.querySelectorAll('[data-seg="pathway"] button').forEach(b=>b.setAttribute("aria-pressed",String(!!S.pathway&&b.dataset.v===S.pathway)));
     S.journeyOpen={};S.journeyStep=""; render();
     // 選情境只調整欄位，不把使用者從入口跳到頁面下方。
@@ -3852,6 +3856,7 @@
   function renderJourney(){
     const story=deriveStory();
     document.querySelectorAll("[data-story]").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.story===story)));
+    {const n=document.getElementById("teamNoticed");if(n)n.setAttribute("aria-checked",String(S.pathway==="direct"&&S.pwNoticed&&!S.pwStandby&&!S.pwConsult));}
     const ol=document.getElementById("journey"),ws=document.getElementById("journeyWorkspace"),nav=document.getElementById("journeyNav"),progress=document.getElementById("journeyProgress"); if(!ol||!ws)return;
     if(journeyLastPathway!==S.pathway){returnMountedJourneyBody();S.journeyOpen={};S.journeyStep="";journeyLastPathway=S.pathway;}
     if(!S.pathway){returnMountedJourneyBody();ol.hidden=true;ws.hidden=true;if(nav)nav.hidden=true;if(progress)progress.hidden=true;return;}
@@ -4235,7 +4240,7 @@
     {const ladLab=document.getElementById("ladderALab");ladLab.textContent=S.outborn?"轉送途中呼吸支持":S.pathway==="nursery"?"嬰兒室呼吸支持":"入院前呼吸支持";
      const source=sourceMode('obRespRelation'),before=document.getElementById('routeSupportBefore');
      before.hidden=!source;before.textContent=source?`前一站（${S.outborn?(lastArrivalSupport()?'我方現場最後一筆':S.obM1Type?'到場時':'外院最後一筆'):'離開'+(S.delivery==='cs'?'刀房':'產房')+'時'}）：${supportName(source)}。選一樣的會寫「持續」，不一樣寫「改變」。`:'';}
-    {const st=deriveStory(); setCsum("pathway",st?[`${st} · `+{direct:"直接入院",nursery:"嬰兒室觀察",outborn:"外接",readmit:"出院後再次就醫"}[S.pathway],S.pwStandby?"standby":"",S.pwConsult?"會診":""].filter(Boolean).join("・"):"尚未選故事",!st);}
+    {const st=deriveStory(); setCsum("pathway",st?[`${st} · `+{direct:"直接入院",nursery:"嬰兒室觀察",outborn:"外接",readmit:"出院後再次就醫"}[S.pathway],S.pwStandby?"standby":"",S.pwConsult?"會診":"",S.pathway==="direct"&&S.pwNoticed&&!S.pwStandby&&!S.pwConsult?"出生後才發現":""].filter(Boolean).join("・"):"尚未選故事",!st);}
     renderJourney();
     timelineReview();
     syncWorkflowNavigation();
@@ -5641,7 +5646,8 @@ ${opLine}`);
     const storyDescriptions={A:"兒科在寶寶出生前已到產房／刀房待命。",B:"寶寶出生後，才請兒科到產房／刀房評估。",C:"出生後先在 BR 嬰兒室照護，再因症狀或評估結果收入 NBC／NICU／PICU。",D:"外院照護後跨院轉入，填寫外院處置、外接與轉送經過。",E:"出生後已返家，這次由本院門診、急診或預約收入 NBC／PICU；不論出生院所都適用。"};
     const storyPaths={C:"出生 → 嬰兒室觀察／評估 → 入院",D:"外院照護 → 外接／轉送 → 入院",E:"出院與返家基準 → 本次病程 → 評估與收治"};
     const team=document.createElement("div");team.id="birthTeamChoices";team.className="seg";team.setAttribute('role','radiogroup');team.setAttribute('aria-label','團隊介入時間');
-    team.innerHTML='<button type="button" id="clearBirthTeam">未記錄介入時間</button>';
+    // A/B 之外的第三種直入：寶寶已到嬰兒室但尚未辦住院，兒科自己看到有狀況決定收（沒有會診）——Ryan 2026-10-06
+    team.innerHTML='<button type="button" id="teamNoticed" role="radio" aria-checked="false"><span class="k">N</span><span class="t">出生後才發現</span><span class="d">出生時還好，之後才發現有狀況（例如喘）而直接收住院；沒有 standby，也沒有會診。</span></button>';
     for(const button of document.querySelectorAll("[data-story]")){
       button.querySelector(".t").textContent=storyLabels[button.dataset.story];
       button.querySelector(".d").textContent=storyDescriptions[button.dataset.story];
@@ -5819,7 +5825,7 @@ ${opLine}`);
     byId('clearPreviousIntake').addEventListener('click',()=>{clearedReadmitIntake=raw('readmitIntake');byId('readmitIntake').value='';render();byId('restorePreviousIntake').focus({preventScroll:true});});
     byId('restorePreviousIntake').addEventListener('click',()=>{if(!raw('readmitIntake')){byId('readmitIntake').value=clearedReadmitIntake;clearedReadmitIntake='';render();byId('readmitIntake').focus({preventScroll:true});}});
     byId("entryDirect").addEventListener('click',()=>{if(S.pathway==='direct')return;switchPathway('direct');setTog('pwStandby',false);setTog('pwConsult',false);render();});
-    byId("clearBirthTeam").addEventListener('click',()=>{setTog('pwStandby',false);setTog('pwConsult',false);render();});
+    byId("teamNoticed").addEventListener('click',()=>{if(S.pathway!=='direct')switchPathway('direct');setTog('pwStandby',false);setTog('pwConsult',false);S.pwNoticed=true;render();});
     byId("useAdmissionResp").addEventListener('click',()=>{if(S.resp){S.acceptanceResp=S.resp;render();}});
     document.addEventListener('click',e=>{
       // 故事線：可選站加入／移除、急救階梯與降階確認；處理完就結束，不再當成節點導覽。
@@ -5896,6 +5902,7 @@ ${opLine}`);
     el('birthStage-standby').hidden=!S.pwStandby||re;el('birthStage-consult').hidden=!S.pwConsult||re;
     el('outsideBirthFacility').hidden=S.pathway!=='outborn';
     document.querySelectorAll('[data-story]').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.story===deriveStory())));
+    {const n=document.getElementById("teamNoticed");if(n)n.setAttribute("aria-checked",String(S.pathway==="direct"&&S.pwNoticed&&!S.pwStandby&&!S.pwConsult));}
     document.querySelectorAll('[data-seg="acceptanceResp"] button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===S.acceptanceResp)));
     el('admissionRespSummary').textContent=`入院時紀錄：${S.resp||'未記錄'}（不會自動當成接手時現況）`;el('useAdmissionResp').disabled=!S.resp;
     const status=el('admissionStatusBody'),evaluation=el('readmitEvaluationBody');

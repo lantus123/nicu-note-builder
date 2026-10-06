@@ -199,6 +199,22 @@ test('outborn PPV from the ladder carries no NRP defaults (the referring hospita
   assert.doesNotMatch(note(),/FiO2 21%|IP\/PEEP 25\/5/);
 });
 
+// 直入的第三種：出生後才發現（Ryan 2026-10-06）——沒有「未記錄介入時間」，A/B 之外只有這一個；不提嬰兒室（沒真的入住）
+test('direct admission team choices are standby, consult or noticed-later; noticed writes initially stable + symptoms',({d,get,click,input,note,S})=>{
+  click('#entryDirect');
+  assert.equal(d.querySelector('#clearBirthTeam'),null,'no "unrecorded" option');
+  click('#teamNoticed');assert.equal(get('#teamNoticed').getAttribute('aria-checked'),'true');assert.equal(S.pwNoticed,true);
+  click('[data-seg="dest"] [data-v="NBC"]');click('[data-ladder-v="none"]');
+  click('[data-msel="obSx"] [data-v="tachypnea"]');input('pwOnsetH','2');input('pwOnsetUnit','hours');
+  assert.match(note(),/The infant was initially stable after birth; however, tachypnea was noted at 2 hours of age\./);
+  assert.doesNotMatch(note(),/baby room|Before admission, tachypnea|was consulted/);
+  // 出生觀察已異常 → 不寫 initially stable，改 After birth
+  input('birthBreathing','labored');assert.match(note(),/After birth, tachypnea was noted at 2 hours of age\./);assert.doesNotMatch(note(),/initially stable/);
+  input('birthBreathing','');
+  click('[data-story="B"]');assert.equal(S.pwNoticed,false);assert.equal(get('#teamNoticed').getAttribute('aria-checked'),'false');
+  assert.match(note(),/The pediatric team was consulted/);
+});
+
 // ── 附加：看範例、清空、核對總覽 ──
 test('the example case fills all five stages with a fictional story; reloading asks first',({W,d,get,click,note,status,S})=>{
   click('#loadExample');assert.equal(get('#exampleConfirm').hidden,true,'An empty page loads directly');
