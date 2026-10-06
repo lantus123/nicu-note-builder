@@ -757,9 +757,30 @@
   .band-seg:not(.cur) .band-nodes{padding:0 10px}
   .dock[data-reading="false"] .note .note-scope{cursor:pointer;border-radius:3px}
   .dock[data-reading="false"] .note .note-scope:hover{background:var(--accent-soft)}
-  /* 看範例／清空重填 */
+  /* 看範例／清空重填、核對總覽 */
   .example-tools{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:-4px 0 12px;font-size:13px;color:var(--ink-3)}
   .example-tools .q{font-size:12.5px;color:var(--accent-ink)}
+  .review-overview{margin:0 0 18px}
+  .review-overview h3{font-size:15px;margin:0 0 10px}
+  .ov-strip{display:flex;flex-wrap:wrap;gap:2px 0;margin:0 0 12px;padding:8px 6px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  .ov-dot{position:relative;flex:1 1 64px;min-width:56px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 2px 2px;border:0;background:none;font:inherit;font-size:11.5px;color:var(--ink-2);cursor:pointer;border-radius:8px}
+  .ov-dot::before{content:"";position:absolute;top:5px;left:0;right:0;height:2px;background:var(--line)}
+  .ov-dot:first-child::before{left:50%}.ov-dot:last-child::before{right:50%}
+  :is(.ov-dot,.ov-name) .dot{position:relative;display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid var(--ink-3);background:var(--surface);box-sizing:border-box;flex:0 0 12px}
+  .ov-dot .dot{position:absolute;top:0;left:50%;margin-left:-6px}
+  :is(.ov-dot,.ov-row)[data-state="done"] .dot{background:var(--accent);border-color:var(--accent)}
+  :is(.ov-dot,.ov-row)[data-state="part"] .dot{border-color:var(--accent);background:linear-gradient(90deg,var(--accent) 50%,var(--surface) 50%)}
+  :is(.ov-dot,.ov-row)[data-state="warn"] .dot{background:var(--risk);border-color:var(--risk)}
+  .ov-dot[data-state="warn"] .nm,.ov-row[data-state="warn"] .ov-name{color:var(--risk)}
+  .ov-list{list-style:none;margin:0;padding:0}
+  .ov-row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 14px;padding:8px 0;border-top:1px solid var(--line);font-size:13px;line-height:1.55}
+  .ov-name{display:flex;align-items:center;gap:8px;min-height:30px;padding:0;border:0;background:none;font:inherit;font-weight:650;color:var(--ink);text-align:left;cursor:pointer}
+  .ov-sum{color:var(--ink-2);overflow-wrap:anywhere;padding-top:5px}
+  .ov-row[data-state="empty"] .ov-sum{color:var(--ink-3)}
+  .ov-issues{grid-column:2;display:flex;flex-direction:column;gap:4px}
+  .ov-issue{min-height:32px;padding:4px 10px;border:0;border-left:3px solid var(--risk);background:var(--risk-soft);color:var(--risk);font:inherit;font-size:12.5px;text-align:left;cursor:pointer}
+  .ov-issue[data-kind="missing"]{border-left-color:var(--risk-line)}
+  @media(max-width:640px){.ov-row{grid-template-columns:minmax(0,1fr)}.ov-issues{grid-column:1}}
   .guide{margin:0 0 18px;padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent-ink);font-size:13px;line-height:1.6}
   .guide b{font-weight:700}
 </style>
@@ -3746,6 +3767,7 @@
         missing.hidden=!items.length;
       }
     });
+    renderReviewOverview();
     if(active!==lastBandStage){lastBandStage=active;revealCurrentBandStage();}
   }
   // 窄螢幕帶子可橫向捲動：換段或改變視窗寬度時，把目前段捲進可視範圍（使用者自己捲的位置在輸入時不動）。
@@ -5563,6 +5585,48 @@ ${opLine}`);
     if(pageHasData()){examplePending=kind;render();document.getElementById('exampleConfirmNo')?.focus({preventScroll:true});return;}
     if(kind==='example')loadExample();else resetPage();
   }
+  // ── 第 5 段核對總覽：整條帶子＋每站一行摘要，缺漏與矛盾標在對應的站（不另寫檢查規則）──
+  function eventSummary(e){
+    const parts=[EVENT_ROW_LABEL[e.kind]];
+    const v=k=>e[k]!==undefined&&e[k]!=='';
+    if(v('fiO2'))parts.push(`FiO₂ ${e.fiO2}%`);if(v('pip')||v('peep'))parts.push(`IP/PEEP ${e.pip||'—'}/${e.peep||'—'}`);
+    if(v('ratio'))parts.push(e.ratio);if(v('drugDose'))parts.push(e.drugDose);if(v('drugRoute'))parts.push(e.drugRoute);
+    if(e.kind==='assessment'&&e.breathing)parts.push({crying:'哭聲',spontaneous:'自主呼吸',labored:'呼吸費力',apnea:'Apnea',gasping:'Gasping',ineffective:'呼吸無效'}[e.breathing]);
+    if(v('hr'))parts.push(`HR ${e.hr}`);if(v('minutes'))parts.push(`生後 ${e.minutes} 分`);
+    if(e.response)parts.push({improved:'→ 心跳血氧回升',partial:'→ 改善但仍喘',none:'→ 未改善'}[e.response]);
+    return parts.join(' · ');
+  }
+  function overviewRows(){
+    const rows=[{key:'stage:0',name:'入院設定',stage:0,summary:[deriveStory()&&`情境 ${deriveStory()}`,admissionDestination()&&`入 ${admissionDestination()}`,raw('birthDate')&&`出生 ${shortDate(raw('birthDate'))}`].filter(Boolean).join(' · '),has:!!S.pathway},
+      {key:'stage:1',name:'產前資料',stage:1,summary:S.prenatalConfirmed?'已按「以上都對」':'正常預設（尚未按「以上都對」）',has:S.prenatalConfirmed}];
+    for(const stage of [2,3])for(const n of (stage===3&&!S.pathway?[]:bandNodes(stage)||[]).filter(n=>!n.opt)){
+      const id=n.key.split(':')[1],ev=n.event&&S.birthEvents.find(e=>e.id===n.event);
+      const summary=ev?eventSummary(ev):id==='info'?[raw('gaW')&&`GA ${raw('gaW')}${raw('gaD')&&raw('gaD')!=='0'?'+'+raw('gaD'):''} 週`,raw('bw')&&`BW ${raw('bw')} g`,{male:'男',female:'女'}[S.gender],{nsd:'NSD',cs:'C/S'}[S.delivery],raw('ap1')&&`Apgar ${raw('ap1')}/${raw('ap5')||'—'}`].filter(Boolean).join(' · ')
+        :id==='drEnd'?[optTxt('birthFinalSupport'),S.leaveSpo2&&`SpO₂ ${S.leaveSpo2}%`,journeySummary('drEnd').replace(optTxt('birthFinalSupport'),'').replace(/^ · /,'')].filter(Boolean).join(' · '):journeySummary(id);
+      rows.push({key:n.key,name:n.name,stage,summary,has:n.has,part:n.part,target:n.target||n.key,event:n.event});
+    }
+    const keyOf=el=>{const stage=stageOfElement(el);return stage<2?'stage:'+stage:nodeKeyForElement(el);};
+    for(const r of rows){r.missing=[];r.conflicts=[];}
+    const attach=(message,kind)=>{const seen=new Set();for(const t of reviewTargets.get(message)||[]){const el=document.querySelector(t.selector);if(!el)continue;const row=rows.find(r=>r.key===keyOf(el));if(!row||seen.has(row.key))continue;seen.add(row.key);row[kind].push({message,selector:t.selector,label:t.label});}};
+    [...new Set([...lastReviewLists.missing,...lastReviewLists.pending])].forEach(m=>attach(m,'missing'));
+    lastReviewLists.conflicts.forEach(m=>attach(m,'conflicts'));
+    return rows;
+  }
+  function renderReviewOverview(){
+    const host=document.getElementById('reviewOverview');if(!host||S.mode!=='adm')return;
+    const rows=overviewRows(),state=r=>r.conflicts.length?'warn':r.missing.length?'part':r.has?'done':'empty';
+    const issue=(i,kind)=>`<button type="button" class="ov-issue" data-kind="${kind}" data-review-target="${htmlEscape(i.selector)}" data-review-label="${htmlEscape(i.label)}">${htmlEscape(i.message)}</button>`;
+    const strip=rows.map(r=>`<button type="button" class="ov-dot" data-state="${state(r)}" data-ov-target="${r.key}" title="${htmlEscape(r.name)}"><span class="dot" aria-hidden="true"></span><span class="nm">${htmlEscape(r.name)}</span></button>`).join('');
+    const list=rows.map(r=>`<li class="ov-row" data-state="${state(r)}" data-ov-key="${r.key}"><button type="button" class="ov-name" data-ov-target="${r.key}"><span class="dot" aria-hidden="true"></span>${htmlEscape(r.name)}</button><span class="ov-sum">${htmlEscape(r.summary||'未記錄')}</span>${r.conflicts.length||r.missing.length?`<span class="ov-issues">${r.conflicts.map(i=>issue(i,'conflict')).join('')}${r.missing.map(i=>issue(i,'missing')).join('')}</span>`:''}</li>`).join('');
+    const markup=`<h3>整條故事線</h3><div class="ov-strip" role="group" aria-label="故事線各站狀態">${strip}</div><ol class="ov-list">${list}</ol><p class="review-help">橘色＝這一站有前後不一致或缺漏，點了直接跳到欄位；下方「前後不一致」保留完整明細。</p>`;
+    if(host.dataset.sig!==markup){const focused=host.contains(document.activeElement)?document.activeElement:null,key=focused?.dataset.ovTarget||focused?.dataset.reviewTarget||'';host.innerHTML=markup;host.dataset.sig=markup;if(key)host.querySelector(`[data-ov-target="${key}"],[data-review-target="${CSS.escape?CSS.escape(key):key}"]`)?.focus({preventScroll:true});}
+  }
+  function goToOverviewRow(key){
+    if(key==='stage:0')return navigateWorkflow('admissionContext');
+    if(key==='stage:1')return navigateWorkflow('prenatalCard');
+    if(key.startsWith('birth:dr:')){navigateClinicalPhase('birth:dr');goToBandNode(key);return;}
+    navigateClinicalPhase(key);goToBandNode(key);
+  }
   function initializeAdmissionWorkflow(){
     const byId=id=>document.getElementById(id),form=byId("admSections"),cards=[...form.querySelectorAll(":scope > .card")];
     const [birth,maternal,screening,medication,pathway,review]=cards;
@@ -5694,7 +5758,7 @@ ${opLine}`);
     }
     document.querySelector('[data-seg="us"]').closest('.field').insertAdjacentHTML('beforeend','<p class="man-h" id="prenatalNoCareNotice" hidden>已選未產檢，尚未修改的超音波正常預設改為不詳；已明確選過的結果保留，可依實際報告修改。</p>');
     document.querySelector('[data-habit="drug"]').parentElement.insertAdjacentHTML('afterend','<p class="man-h" id="habitDefaultStatus"></p><label class="lab" for="habitStatus">未勾選的母親習慣</label><select class="tin" id="habitStatus"><option value="negative">無（預設）</option><option value="unknown">不詳</option></select>');
-    review.querySelector('.sec-h').insertAdjacentHTML('afterend','<div class="workflow-review" id="workflowReview"><p id="reviewSummary" role="status"></p><details class="review-group" id="reviewMissing"><summary id="reviewMissingSummary">關鍵資料未填</summary><ul id="reviewMissingList"></ul><div id="reviewPending" hidden><p>已帶入／已記錄，但仍待確認：</p><ul id="reviewPendingList"></ul></div></details><section class="review-group" id="reviewConflicts"><h3>前後不一致／格式需核對</h3><ul id="reviewConflictList"></ul></section><details class="review-group" id="reviewOptional"><summary id="reviewOptionalSummary">其他選填未記錄</summary><p class="review-help">僅供通讀時參考，不要求全部補齊；未填不代表正常、陰性或未做。以下為重點選填項目，不是所有空白欄位。</p><ul id="reviewOptionalList"></ul></details></div>');
+    review.querySelector('.sec-h').insertAdjacentHTML('afterend','<section class="review-overview" id="reviewOverview" aria-label="核對總覽"></section><div class="workflow-review" id="workflowReview"><p id="reviewSummary" role="status"></p><details class="review-group" id="reviewMissing"><summary id="reviewMissingSummary">關鍵資料未填</summary><ul id="reviewMissingList"></ul><div id="reviewPending" hidden><p>已帶入／已記錄，但仍待確認：</p><ul id="reviewPendingList"></ul></div></details><section class="review-group" id="reviewConflicts"><h3>前後不一致／格式需核對</h3><ul id="reviewConflictList"></ul></section><details class="review-group" id="reviewOptional"><summary id="reviewOptionalSummary">其他選填未記錄</summary><p class="review-help">僅供通讀時參考，不要求全部補齊；未填不代表正常、陰性或未做。以下為重點選填項目，不是所有空白欄位。</p><ul id="reviewOptionalList"></ul></details></div>');
     // 第 2 段＝確認清單：每個項目一列（左項目名、右選項鈕），寬螢幕 2–3 欄；所有項目留在畫面上。
     // 選中的正常／預設值用中性樣式，選中的異常值（data-abn）才用 risk。純版面：id、data 屬性、state、事件不變。
     {
@@ -5767,6 +5831,7 @@ ${opLine}`);
       if(e.target.closest('#resetAll')){exampleAction('reset');return;}
       if(e.target.closest('#exampleConfirmYes')){const kind=examplePending;examplePending='';resetPage(kind==='example'?'example':'');render();return;}
       if(e.target.closest('#exampleConfirmNo')){examplePending='';render();return;}
+      const ov=e.target.closest('[data-ov-target]');if(ov){goToOverviewRow(ov.dataset.ovTarget);return;}
       if(e.target.closest('#prenatalNext'))S.prenatalConfirmed=true;   // 只記錄「已按過以上都對」，不影響病歷輸出。
       const phase=e.target.closest('[data-phase-target]');if(phase)navigateClinicalPhase(phase.dataset.phaseTarget);
       const node=e.target.closest('[data-band-node]');if(node)goToBandNode(node.dataset.bandNode);

@@ -203,6 +203,18 @@ test('the example case fills all five stages with a fictional story; reloading a
   click('#resetAll');click('#exampleConfirmYes');assert.deepEqual(W.resets,['example',''],'Clear without loading');
 });
 test('after a confirmed reload the example loads by itself',({note})=>{assert.match(note(),/34\+2 weeks/);},);
+test('review stage is an overview: the story strip plus one line per station, issues marked on their station',({d,get,click,input,chapter})=>{
+  click('#loadExample');click('#stageBand [data-flow-target="finalReviewCard"]');
+  const rows=()=>[...d.querySelectorAll('#reviewOverview .ov-row')];
+  assert.deepEqual(rows().map(r=>r.querySelector('.ov-name').textContent),['入院設定','產前資料','出生','刀房待命','出生當下','PPV','離開刀房前','入院前處置','入 NICU']);
+  assert.ok(rows().every(r=>['done','empty'].includes(r.dataset.state)));
+  assert.equal(d.querySelectorAll('#reviewOverview .ov-dot').length,rows().length);
+  input('birthFinalMin','0.5');input(`event-${d.defaultView.storyTest.S.birthEvents[0].id}-minutes`,'2');
+  const warn=rows().find(r=>r.dataset.state==='warn');assert.ok(warn,'A timing conflict marks a station');
+  assert.match(get('#reviewConflictList').textContent,/最後評估時間早於/,'The text list stays below as the detail');
+  warn.querySelector('.ov-issue').click();assert.equal(chapter(),'出生資料');assert.equal(d.activeElement.id,'birthFinalMin');
+  click('#stageBand [data-flow-target="finalReviewCard"]');click('#reviewOverview [data-ov-target="stage:1"]');assert.equal(chapter(),'產前資料');
+});
 
 (async()=>{
 let failed=0;
