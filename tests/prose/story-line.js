@@ -187,6 +187,16 @@ test('non-current band segments collapse to dots; names stay available as titles
   assert.equal(grow(3),'0');assert.notEqual(grow(4),'0');
   for(const n of d.querySelectorAll('[data-band-seg="3"] .band-node'))assert.ok(n.title,'Collapsed nodes keep a title');
   click('#stageBand [data-flow-target="birthHistoryCard"]');assert.notEqual(grow(3),'0');assert.equal(grow(4),'0');
+  // 第 1 區（故事線建立）與第 5 區要看整條骨架：全部展開、節點名字都在
+  click('#stageBand [data-flow-target="admissionContext"]');
+  assert.ok(d.querySelector('#stageBand').classList.contains('all'));assert.notEqual(grow(3),'0');assert.notEqual(grow(4),'0');
+  click('#stageBand [data-flow-target="finalReviewCard"]');assert.ok(d.querySelector('#stageBand').classList.contains('all'));
+});
+test('outborn PPV from the ladder carries no NRP defaults (the referring hospital settings are unknown)',({story,ladder,ev,note})=>{
+  story('D');ladder('ppv');
+  const e=ev('ppv')[0];assert.ok(e,'ladder creates the PPV event');
+  assert.ok(!e.nrp&&!e.fiO2&&!e.pip,'no NRP preset on outborn');
+  assert.doesNotMatch(note(),/FiO2 21%|IP\/PEEP 25\/5/);
 });
 
 // ── 附加：看範例、清空、核對總覽 ──

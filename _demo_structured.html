@@ -729,6 +729,7 @@
   .place-tag[hidden]{display:none}
   #routeSupportBefore{margin:0}
   #ladderWrap .seg button{min-height:38px}
+  #ladderWrap{margin:4px 0 18px;padding-bottom:14px;border-bottom:1px solid var(--line)}   /* 階梯是故事骨架的一部分，和下面的去處／日期分開 */
   @media(max-width:799px){
     :is(#birthHistoryCard,#pathwayCard) :is(.step,.adders) .seg button,.add,:is(#birthHistoryCard,#pathwayCard) .step .num input,:is(#birthHistoryCard,#pathwayCard) .step .tin:not(textarea){min-height:44px;height:auto}
     .ev-head .event-tools button,.nrp-hint .nrp-accept,.link-btn,.row-more>summary,.undo-row button{min-height:44px;min-width:44px}
@@ -748,10 +749,10 @@
   .band-node[aria-current="step"] .nm{color:var(--accent-ink);font-weight:750}
   .band-seg{flex:0 1 auto;transition:flex-grow .35s ease,background-color .3s}
   .band-seg.cur{flex-grow:1}
-  .band-seg:not(.cur) .band-node{flex:0 0 18px;min-width:18px;padding:15px 0 2px}
-  .band-seg:not(.cur) .band-node .nm,.band-seg:not(.cur) .band-node .tm,.band-seg:not(.cur) .band-x,.band-seg:not(.cur) .band-places{display:none}
-  .band-seg:not(.cur) .band-node.opt-on .band-hit{padding:15px 0 2px}
-  .band-seg:not(.cur) .band-nodes{padding:0 10px}
+  .band:not(.all) .band-seg:not(.cur) .band-node{flex:0 0 18px;min-width:18px;padding:15px 0 2px}
+  .band:not(.all) .band-seg:not(.cur) .band-node .nm,.band:not(.all) .band-seg:not(.cur) .band-node .tm,.band:not(.all) .band-seg:not(.cur) .band-x,.band:not(.all) .band-seg:not(.cur) .band-places{display:none}
+  .band:not(.all) .band-seg:not(.cur) .band-node.opt-on .band-hit{padding:15px 0 2px}
+  .band:not(.all) .band-seg:not(.cur) .band-nodes{padding:0 10px}
   .dock[data-reading="false"] .note .note-scope{cursor:pointer;border-radius:3px}
   .dock[data-reading="false"] .note .note-scope:hover{background:var(--accent-soft)}
   /* 看範例／清空重填、核對總覽 */
@@ -3080,7 +3081,7 @@
     if(scope&&EVENT_NAMES[kind]){
       const event={id:S.nextEventId++,kind};S[scope+"Events"].push(event);
       if(scope==='course'&&S.outborn)event.phase=b.dataset.eventPhase||'transport';
-      if(scope==="birth"&&kind==="ppv"){   // 產房急救 PPV 帶 NRP 第 9 版初始設定（依 GA），標示為預設直到醫師改過任一值
+      if(scope==="birth"&&kind==="ppv"&&!S.outborn){   // 本院產房急救 PPV 帶 NRP 第 9 版初始設定（依 GA），標示為預設直到醫師改過任一值；外院的設定不知道，不預填
         const ga=V("gaW"); Object.assign(event,{fiO2:String(NRP.ventilation.fio2(ga)),pip:String(NRP.ventilation.pip(ga)),peep:String(NRP.ventilation.peep),nrp:true});
       }
       if(scope==="birth"&&kind!=="assessment")document.getElementById("birthResusStatus").value="performed";
@@ -3371,7 +3372,7 @@
   }
   function newBirthEvent(kind){
     const event={id:S.nextEventId++,kind};
-    if(kind==='ppv'){const ga=V('gaW');Object.assign(event,{fiO2:String(NRP.ventilation.fio2(ga)),pip:String(NRP.ventilation.pip(ga)),peep:String(NRP.ventilation.peep),nrp:true});}
+    if(kind==='ppv'&&!S.outborn){const ga=V('gaW');Object.assign(event,{fiO2:String(NRP.ventilation.fio2(ga)),pip:String(NRP.ventilation.pip(ga)),peep:String(NRP.ventilation.peep),nrp:true});}   // 外院的 PPV 設定不知道，不預填
     return event;
   }
   let ladderPending=null;
@@ -3721,6 +3722,8 @@
   function renderStageBand(){
     const band=document.getElementById('stageBand');if(!band||!workflowStages.length)return;
     const active=Math.max(0,activeStageIndex()),groups=stageReviewGroups();
+    // 第 1 區（故事線建立）與第 5 區（核對）要看整條骨架，不收合其他段；中間三段才把非目前段縮成小點
+    band.classList.toggle('all',active===0||active===workflowStages.length-1);
     const phaseKey=workflowActive==='birthHistoryCard'?'birth:'+birthPhase:workflowActive==='pathwayCard'&&S.journeyStep?'course:'+S.journeyStep:'';
     workflowStages.forEach(([card],i)=>{
       const seg=band.querySelector(`[data-band-seg="${i+1}"]`),head=seg.querySelector('.band-head'),status=seg.querySelector('.s'),[text,risk]=stageStatus(i,groups[i]);
@@ -3744,7 +3747,7 @@
           places.innerHTML=places.hidden?'':groupsOfPlace.map(g=>`<span style="flex:${g.count} ${g.count} 0;min-width:${g.count*60-12}px">${htmlEscape(g.place)}</span>`).join('');
         }
         // 帶子收合：只有目前段展開名字與時間，其他段縮成一排小點（hover 看 title）。
-        seg.style.flexGrow=i===active?String(Math.max(1,nodes?.length||1)):'0';
+        seg.style.flexGrow=(i===active||band.classList.contains('all'))?String(Math.max(1,nodes?.length||1)):'0';   // 第 1／5 區整條展開時各段依節點數分寬
         for(const n of nodes||[]){
           const button=host.querySelector(`[data-band-node="${n.key}"]`);if(!button)continue;
           const hit=button.matches('button')?button:button.querySelector('.band-hit'),warn=!n.opt&&nodeHasConflict(n,i,groups[i].conflicts);
