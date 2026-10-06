@@ -4270,7 +4270,8 @@
     if(S.scr.gbs==="pos")DX.push({s:"GBS colonization",f:`Maternal GBS colonization${iapPhrase}`});
     if(S.scr.gbs==="pend"||S.scr.gbs==="nd")DX.push({s:"GBS unknown",f:`Unknown maternal GBS status${iapPhrase}`});
     }
-    if(tentDx)DX.splice(1,DX.length-1,{s:tentDx,f:esc(tentDx)}); // 手填診斷是正式結語的單一來源；症狀仍保留在病程，不另重複列為診斷。
+    // 手填診斷是正式結語的單一來源；症狀仍保留在病程，不另重複列為診斷。# 清單首字大寫（句中 Under the tentative diagnosis of … 維持原樣）
+    if(tentDx){const t=tentDx.replace(/^\s*([a-z])/,(m,c)=>c.toUpperCase());DX.splice(1,DX.length-1,{s:t,f:esc(t)});}
 
     // 同一組後續事件供 Admission / Acceptance 共用，前段事件只引用一次。
     const postnatalStart=P2.length;
