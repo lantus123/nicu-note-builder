@@ -157,6 +157,39 @@ test('pre-admission treatment starts with zero rows; rows appear only after "＋
 });
 
 // ── 第 3 步：三態、同步、預覽反向、收合 ──
+test('node states: hollow until filled, half while required items are missing, solid when complete',({d,S,story,ladder,get,input,click,ev})=>{
+  story('A');ladder('cpr');
+  const node=kind=>get(`[data-band-node="birth:dr:${ev(kind)[0].id}"]`);
+  assert.equal(node('ppv').classList.contains('has'),false,'Untouched NRP defaults are not a completed node');
+  click(`[data-nrp-accept="${ev('ppv')[0].id}"]`);assert.equal(node('ppv').classList.contains('has'),true);
+  input(`event-${ev('epinephrine')[0].id}-minutes`,'4');assert.equal(node('epinephrine').classList.contains('part'),true,'Dose/route still missing');
+  input(`event-${ev('epinephrine')[0].id}-drugDose`,'0.1 mL/kg');input(`event-${ev('epinephrine')[0].id}-drugRoute`,'UVC');
+  assert.equal(node('epinephrine').classList.contains('has'),true);assert.equal(node('epinephrine').classList.contains('part'),false);
+  input('gaW','34');assert.equal(get('[data-band-node="birth:info"]').classList.contains('part'),true,'Info has data but BW/sex/delivery are missing');
+});
+test('focusing a row or a station lights the matching band node',({d,story,ladder,get,ev,current,click})=>{
+  story('A');ladder('ett');click('#stageBand [data-flow-target="birthHistoryCard"]');
+  get(`#event-${ev('intubation')[0].id}-fiO2`).focus();assert.equal(current(),`birth:dr:${ev('intubation')[0].id}`);
+  get('#birthHR').focus();assert.equal(current(),'birth:birth');
+  click(`[data-band-node="birth:dr:${ev('ppv')[0].id}"]`);assert.ok(get(`[data-event-id="${ev('ppv')[0].id}"]`).contains(d.activeElement));
+});
+test('clicking a preview sentence in review mode jumps to its stage; reading mode keeps text selection',({d,story,ladder,get,chapter,current,click})=>{
+  story('A');ladder('ppv');click('#stageBand [data-flow-target="prenatalCard"]');
+  const scope=()=>get('#note .note-scope[data-note-phase="birth:dr"]');
+  scope().click();assert.equal(chapter(),'產前資料','Reading mode does not intercept clicks');
+  click('#previewReading');assert.equal(get('.dock').dataset.reading,'false');
+  scope().click();assert.equal(chapter(),'出生資料');assert.match(current(),/^birth:dr/);
+  get('#note .note-scope[data-note-phase="prenatal"]').click();assert.equal(chapter(),'產前資料');
+});
+test('non-current band segments collapse to dots; names stay available as titles',({d,story,ladder,click})=>{
+  story('D');ladder('ett');click('#stageBand [data-flow-target="pathwayCard"]');
+  const grow=i=>d.querySelector(`[data-band-seg="${i}"]`).style.flexGrow;
+  assert.equal(grow(3),'0');assert.notEqual(grow(4),'0');
+  for(const n of d.querySelectorAll('[data-band-seg="3"] .band-node'))assert.ok(n.title,'Collapsed nodes keep a title');
+  click('#stageBand [data-flow-target="birthHistoryCard"]');assert.notEqual(grow(3),'0');assert.equal(grow(4),'0');
+});
+
+// ── 附加：看範例、清空、核對總覽 ──
 
 (async()=>{
 let failed=0;

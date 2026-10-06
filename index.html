@@ -744,6 +744,19 @@
     :is(#birthHistoryCard,#pathwayCard) .ev-row{margin-left:-2px;padding-left:10px}
     .ev-text{display:flex;flex-wrap:wrap;width:100%}.ev-text select.tin,.ev-text input.tin{width:100%!important;flex:1 1 100%}
   }
+  /* 帶子三態與收合（2026-10-06）：空心＝未填、半實心＝有資料但必填未齊、實心＝必填都齊；目前這站光暈＋名字加粗青色。
+     非目前段縮成一排小點，只有目前段展開名字與時間。 */
+  .band-node.part .dot{border-color:var(--accent);background:linear-gradient(90deg,var(--accent) 50%,var(--surface) 50%)}
+  .band-node[aria-current="step"] .dot{box-shadow:0 0 0 3px var(--surface),0 0 0 6px color-mix(in srgb,var(--accent) 45%,transparent),0 0 12px 4px color-mix(in srgb,var(--accent) 35%,transparent)}
+  .band-node[aria-current="step"] .nm{color:var(--accent-ink);font-weight:750}
+  .band-seg{flex:0 1 auto;transition:flex-grow .35s ease,background-color .3s}
+  .band-seg.cur{flex-grow:1}
+  .band-seg:not(.cur) .band-node{flex:0 0 18px;min-width:18px;padding:15px 0 2px}
+  .band-seg:not(.cur) .band-node .nm,.band-seg:not(.cur) .band-node .tm,.band-seg:not(.cur) .band-x,.band-seg:not(.cur) .band-places{display:none}
+  .band-seg:not(.cur) .band-node.opt-on .band-hit{padding:15px 0 2px}
+  .band-seg:not(.cur) .band-nodes{padding:0 10px}
+  .dock[data-reading="false"] .note .note-scope{cursor:pointer;border-radius:3px}
+  .dock[data-reading="false"] .note .note-scope:hover{background:var(--accent-soft)}
   .guide{margin:0 0 18px;padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent-ink);font-size:13px;line-height:1.6}
   .guide b{font-weight:700}
 </style>
@@ -3560,6 +3573,12 @@
     syncWorkflowNavigation();
     if(scroll)window.scrollTo(0,0);
   }
+  function goToNotePhase(key){
+    if(key==='prenatal')navigateWorkflow('prenatalCard');
+    else if(key==='review')navigateWorkflow('finalReviewCard');
+    else if(clinicalPhases().some(p=>p.key===key))navigateClinicalPhase(key);
+    else if(key?.startsWith('birth:'))navigateClinicalPhase('birth:info');
+  }
   function moveWorkflow(delta){
     const next=workflowStages[Math.max(0,activeStageIndex())+delta];
     if(next)navigateWorkflow(next[0].id);
@@ -3602,6 +3621,8 @@
     const places=bandPlaces();
     // 可選站沒在故事裡時是空心虛線點（點一下加入）；在故事裡的可選站多一顆「移除」。
     const optionalNode=(id,place)=>{const o=OPTIONAL_STATIONS[id];return {key:o.phase,name:o.lab(),time:'點一下加入',has:false,opt:id,place};};
+    // 節點三態：實心＝該站必填都齊（有資料、且核對清單沒有落在這站的缺漏／待確認）；有資料但還缺＝半實心；空心＝未填。
+    const settle=nodes=>{const miss=missingNodeKeys();for(const n of nodes||[])if(!n.opt&&n.has&&miss.has(n.key)){n.has=false;n.part=true;}return nodes;};
     if(stage===2){
       const defs=birthPhaseDefinitions(),nodes=[],place=places?.birth||'';
       for(const id of ['info','standby','birth','consult','dr','drEnd']){
@@ -3625,11 +3646,11 @@
         if(p.id==='drEnd'){const leave={room:'Room air',o2:'O₂',ppv:'PPV 持續',ett:'插管',cpap:'CPAP'}[raw('birthFinalSupport')];if(leave)time=leave;else if(raw('birthFinalMin'))time=`生後 ${raw('birthFinalMin')} 分`;}
         nodes.push({key:p.key,name:p.id==='info'?'出生':p.lab,time:when(has,time),has,phase:true,place,optOn:OPTIONAL_STATIONS[id]?id:''});
       }
-      return nodes;
+      return settle(nodes);
     }
     if(stage===3){
       if(!S.pathway)return null;
-      return journeyDefinitions().filter(s=>s.show||s.optional&&OPTIONAL_STATIONS[s.id]?.avail()).sort((a,b)=>a.order-b.order).map(s=>{
+      return settle(journeyDefinitions().filter(s=>s.show||s.optional&&OPTIONAL_STATIONS[s.id]?.avail()).sort((a,b)=>a.order-b.order).map(s=>{
         if(!s.show)return optionalNode(s.id,places?.[s.id]||'');
         const has=!!journeySummary(s.id);let time='';
         if(s.id==='route'&&raw('pwOnsetH'))time=`生後 ${raw('pwOnsetH')} ${raw('pwOnsetUnit')==='minutes'?'分':'小時'}`;
@@ -3639,7 +3660,7 @@
         if(['evaluation','adm'].includes(s.id))time=[shortDate(raw('admissionDate')),raw('admissionTime')].filter(Boolean).join(' ');
         // 可略過的站（入院前處置、我方抵達、入院狀況等）沒填不算缺，也不計入「已記錄 x／y」。
         return {key:'course:'+s.id,name:s.lab,time:has?time||'已記錄':s.opt?'可略過':'未記錄',has,skip:!!s.opt&&!has,phase:true,place:places?.[s.id]||'',optOn:s.optional?s.id:''};
-      });
+      }));
     }
     return [];
   }
@@ -3653,6 +3674,11 @@
   }
   // 出生事件列對應到自己的節點（birth:dr:<id>）；其他欄位對應所在的站。
   let currentBandEvent=null;
+  function missingNodeKeys(){
+    const keys=new Set();
+    for(const m of new Set([...lastReviewLists.missing,...lastReviewLists.pending]))for(const t of reviewTargets.get(m)||[]){const el=document.querySelector(t.selector);if(el)keys.add(nodeKeyForElement(el));}
+    return keys;
+  }
   function nodeKeyForElement(el){
     const row=el?.closest?.('.clinical-event[data-event-scope="birth"]');
     if(row&&activeBirthEvents().length)return 'birth:dr:'+row.dataset.eventId;
@@ -3696,11 +3722,12 @@
           places.hidden=!groupsOfPlace.some(g=>g.place);
           places.innerHTML=places.hidden?'':groupsOfPlace.map(g=>`<span style="flex:${g.count} ${g.count} 0;min-width:${g.count*60-12}px">${htmlEscape(g.place)}</span>`).join('');
         }
-        seg.style.flexGrow=String(Math.max(1,nodes?.length||1));
+        // 帶子收合：只有目前段展開名字與時間，其他段縮成一排小點（hover 看 title）。
+        seg.style.flexGrow=i===active?String(Math.max(1,nodes?.length||1)):'0';
         for(const n of nodes||[]){
           const button=host.querySelector(`[data-band-node="${n.key}"]`);if(!button)continue;
           const hit=button.matches('button')?button:button.querySelector('.band-hit'),warn=!n.opt&&nodeHasConflict(n,i,groups[i].conflicts);
-          button.classList.toggle('has',n.has);button.classList.toggle('warn',warn);
+          button.classList.toggle('has',n.has);button.classList.toggle('part',!!n.part);button.classList.toggle('warn',warn);
           const tm=button.querySelector('.tm');if(tm.textContent!==n.time)tm.textContent=n.time;
           const current=n.key===phaseKey||!!n.event&&phaseKey==='birth:dr'&&(n.event===currentBandEvent||!nodes.some(x=>x.event===currentBandEvent)&&n===nodes.find(x=>x.event));
           if(current)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');
@@ -5699,11 +5726,29 @@ ${opLine}`);
       if(!form.contains(e.target)||e.target.closest('.stage-actions,.flow-band,#journeyNav,#journey,.stage-missing'))return;
       // 程式聚焦到別段的欄位時先切到那一段（真瀏覽器無法聚焦 display:none 的欄位）。
       const phase=phaseForElement(e.target),stage=stageOfElement(e.target);
+      const row=e.target.closest?.('.clinical-event[data-event-scope="birth"]');currentBandEvent=row?Number(row.dataset.eventId):null;
       if(phase.startsWith('birth:'))birthPhase=phase.slice(6);
       if(stage>=0&&workflowStages[stage][0].id!==workflowActive){if(workflowActive==='pathwayCard')rememberJourneyView();workflowActive=workflowStages[stage][0].id;syncWorkflowNavigation();}
       else if(phase)syncWorkflowNavigation();
       if(!e.target.id||!e.target.matches('input,select,textarea,button'))return;
       if(byId('journeyWorkspace').contains(e.target)){const key=`${S.pathway}:${S.journeyStep}`;journeyViews[key]={...journeyViews[key],field:e.target.id};}
+    });
+    // 雙向同步：出生資料段捲到哪一站／哪一筆處置，帶子上那個點就亮（只改導覽狀態，不動病歷）。
+    let scrollFrame=0;
+    window.addEventListener('scroll',()=>{
+      if(scrollFrame||workflowActive!=='birthHistoryCard'||S.mode!=='adm')return;
+      scrollFrame=requestAnimationFrame(()=>{
+        scrollFrame=0;const line=workflowOffset()+40;let phase='info',event=null;
+        for(const p of birthPhaseDefinitions()){if(p.id==='info')continue;const el=byId(p.target);if(el&&!el.hidden&&el.getBoundingClientRect().top<=line)phase=p.id;}
+        if(phase==='dr')for(const row of document.querySelectorAll('#birthEvents .clinical-event:not([hidden])'))if(row.getBoundingClientRect().top<=line)event=Number(row.dataset.eventId);
+        if(phase!==birthPhase||event!==currentBandEvent){birthPhase=phase;currentBandEvent=event;syncWorkflowNavigation();}
+      });
+    },{passive:true});
+    // 預覽反向連動：校閱模式下點句子，切到產生它的段與站；閱讀模式不攔截（保留選字）。
+    noteEl.addEventListener('click',e=>{
+      if(S.mode!=='adm'||previewDock.dataset.reading==='true')return;
+      const selection=window.getSelection?.();if(selection&&!selection.isCollapsed&&String(selection).trim())return;
+      const scope=e.target.closest('.note-scope');if(scope)goToNotePhase(scope.dataset.notePhase);
     });
   }
   function renderAdmissionWorkflow(){

@@ -49,6 +49,8 @@ Ryan 拍板的原則：**路徑和有沒有這一站，在開始前定；一站�
 - **站內同一個形狀**：第 3、4 段每一題左 112px 標籤欄（說明在標籤下方）、右控制項；按鈕與數字欄 38px（手機 44px），所有控制項左緣同一條線。處置列只用左側一條青線標示「這是一筆」，不包卡、不加底色。
 - **離開產房收成一題**：`Room air／O₂／PPV 持續（Neopuff）／插管`（外接多 CPAP）＋選填 SpO₂ 維持值（`S.leaveSpo2`），寫入既有 `birthFinalSupport`；呼吸／張力／心率／時間收在「補充評估」。敘事：`PPV was continued via Neopuff, with SpO2 maintained at 95%.`／`The infant was then weaned to room air`／`Supplemental oxygen was continued`／`The infant remained intubated`。
 - **入院前處置預設零筆**：「沒有新的處置就不用填；有才按＋」。A/B/C 的入院前不出現 CPAP（NBC 入院時呼吸支持另限 Room air／O₂ hood／HFNC）。
+- **進度視覺化**：節點三態——空心＝未填、半實心＝有資料但該站還有缺漏／待確認（沿用核對清單的判斷）、實心＝必填都齊；目前這站光暈＋名字加粗青色。可略過的站（入院前處置、我方抵達、入院狀況）沒填不算缺。表單聚焦或捲到哪一站／哪一筆處置，帶子上那個點就亮。非目前段縮成一排小點（hover 看名稱），外接全節點在 1440 寬不橫捲。
+- **預覽反向連動**：校閱模式下點預覽的句子，切到產生它的段與站；閱讀模式不攔截，照常選字複製。
 
 ## Admission 出生經過與入院路徑
 
@@ -166,7 +168,7 @@ Admission note 結尾的 `Pedigree:` 之後接一棵純文字家庭樹，直接�
 
 ### 新版流程驗收
 
-`story-line.js`（JSDOM）驗故事線骨架（五路徑節點、可選站、階梯升降階與已填參數提示）、站內格線結構、反應子句與離開產房句、支持關係推導、入院前零筆；`browser-story.cjs`（真 Chrome）量站內控制項的左緣座標集合、38px 高度與 1440 寬外接全節點時帶子的 scrollWidth／clientWidth。
+`story-line.js`（JSDOM）驗故事線骨架（五路徑節點、可選站、階梯升降階與已填參數提示）、站內格線結構、反應子句與離開產房句、支持關係推導、入院前零筆、節點三態、預覽反向跳轉與帶子收合；`browser-story.cjs`（真 Chrome）量站內控制項的左緣座標集合、38px 高度與 1440 寬外接全節點時帶子的 scrollWidth／clientWidth。
 
 `npm test` 包含 E 模組、日期／DOL 邊界、欄位輸出、路徑草稿、未知與陰性、Admission／Acceptance 時點隔離，以及原有功能回歸。`review-navigation.js` 另驗證檢核提示的精確欄位、收合展開、跨階段、重複事件、舊提示防護及導航不改事實。完整對照見 [Admission 欄位對照](docs/admission-field-map.md)。
 

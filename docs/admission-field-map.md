@@ -146,3 +146,4 @@ screen_onset、care_onset 是草稿結構的非臨床佔位，保持隱藏且不
 | 事件 ratio（壓胸） | `at a 3:1 compression-to-ventilation ratio` | 只寫使用者填的文字。 |
 | birthFinalSupport＋S.leaveSpo2 | 離開產房一句（continued via Neopuff／weaned to room air／remained intubated…）＋`with SpO2 maintained at N%` | 呼吸／張力／心率／時間在「補充評估」，有填才寫。 |
 | obM1Type（改到「我方到場」）＋obArriveSpo2 | `On our team's arrival at the referring hospital, the infant was receiving …, with SpO2 N%.` | 只描述到場當時，不推延續；外院處置走 outside 事件。 |
+| 節點三態 | 帶子與第 5 段總覽 | 實心＝有資料且核對清單沒有落在該站的缺漏／待確認；可略過的站沒填不計。 |
