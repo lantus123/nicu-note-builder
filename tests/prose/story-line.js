@@ -190,6 +190,19 @@ test('non-current band segments collapse to dots; names stay available as titles
 });
 
 // ── 附加：看範例、清空、核對總覽 ──
+test('the example case fills all five stages with a fictional story; reloading asks first',({W,d,get,click,note,status,S})=>{
+  click('#loadExample');assert.equal(get('#exampleConfirm').hidden,true,'An empty page loads directly');
+  const n=note();
+  for(const re of [/34\+2 weeks/,/cesarean section/,/pregnancy-induced hypertension/,/positive-pressure ventilation \(PPV\) was given via Neopuff/i,/PPV was continued via Neopuff, with SpO2 maintained at 95%\./,/admitted to our NICU/,/Maternal chart number: 00000000/])assert.match(n,re);
+  assert.doesNotMatch(n,/____/,'Every required blank is filled');
+  for(const i of [1,2,3,4])assert.equal(status(i),'完成',`stage ${i}`);
+  assert.match(get('#storyLine').textContent,/產前 standby → 出生 → 刀房 PPV → 離開刀房 → 入 NICU/);
+  click('#loadExample');assert.equal(get('#exampleConfirm').hidden,false,'Existing data asks inside the page');assert.deepEqual(W.resets,[]);
+  click('#exampleConfirmNo');assert.equal(get('#exampleConfirm').hidden,true);
+  click('#loadExample');click('#exampleConfirmYes');assert.deepEqual(W.resets,['example'],'Clear by reopening the page, then load');
+  click('#resetAll');click('#exampleConfirmYes');assert.deepEqual(W.resets,['example',''],'Clear without loading');
+});
+test('after a confirmed reload the example loads by itself',({note})=>{assert.match(note(),/34\+2 weeks/);},);
 
 (async()=>{
 let failed=0;

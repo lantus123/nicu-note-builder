@@ -754,6 +754,9 @@
   .band-seg:not(.cur) .band-nodes{padding:0 10px}
   .dock[data-reading="false"] .note .note-scope{cursor:pointer;border-radius:3px}
   .dock[data-reading="false"] .note .note-scope:hover{background:var(--accent-soft)}
+  /* 看範例／清空重填 */
+  .example-tools{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:-4px 0 12px;font-size:13px;color:var(--ink-3)}
+  .example-tools .q{font-size:12.5px;color:var(--accent-ink)}
   .guide{margin:0 0 18px;padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent-ink);font-size:13px;line-height:1.6}
   .guide b{font-weight:700}
 </style>
@@ -5509,12 +5512,60 @@ ${opLine}`);
     // 同步恢復位置；分頁自己的捲動記憶可在 render() 後接續套用。
     previewBody.scrollTop=scrollTop; previewBody.scrollLeft=scrollLeft;
   }
+  // ── 看範例（虛構完整案例，供新手看整條故事；不含任何真實個案資料）──
+  // 走與使用者相同的控制項，不另寫一份狀態；載入前若已有資料，先頁內確認，再重新開頁（清空）後載入。
+  function pageHasData(){
+    if(S.pathway||S.gender||S.delivery||S.birthEvents.length)return true;
+    return [...document.querySelectorAll('#admSections input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),#admSections textarea')].some(el=>el.value&&!['admissionDate','homeHosp'].includes(el.id));
+  }
+  function exampleSteps(){
+    const today=localToday();
+    return [
+      ['click','#entryDirect'],['click','[data-story="A"]'],['click','[data-seg="dest"] [data-v="NICU"]'],
+      ['set','birthDate',today],['set','birthTime','08:42'],
+      ['click','[data-seg="gender"] [data-v="male"]'],['set','gaW','34'],['set','gaD','2'],['set','bw','2150'],
+      ['click','[data-seg="delivery"] [data-v="cs"]'],['click','[data-fill="csReason"] [data-v="non-reassuring fetal heart rate"]'],['click','[data-tog="csUncompl"] button'],
+      ['set','matAge','31'],['set','gravida','2'],['set','para','1'],['set','ap1','6'],['set','ap5','8'],
+      ['set','admReason','pregnancy-induced hypertension with worsening blood pressure'],['set','ancPlace',raw('homeHosp')||'TPEMMH'],
+      ['click','[data-ryn="pih"] [data-v="yes"]'],['click','[data-ryn="steroid"] [data-v="yes"]'],
+      ['click','[data-msel="pwSbR"] [data-v="preterm labor"]'],
+      ['click','[data-select-chips="birthBreathing"] [data-v="labored"]'],['click','[data-select-chips="birthTone"] [data-v="good"]'],['set','birthHR','110'],
+      ['click','[data-msel="birthSigns"] [data-v="grunting"]'],['click','[data-msel="birthSigns"] [data-v="retractions"]'],['click','[data-tog="birthNegConfirmed"] button'],
+      ['ladder','ppv'],['event','ppv','minutes','1'],['nrp','ppv'],['response','ppv','improved'],
+      ['click','[data-select-chips="birthFinalSupport"] [data-v="ppv"]'],['set','leaveSpo2','95'],
+      ['click','#admissionStatusBody [data-seg="resp"] [data-v="bubble CPAP"]'],['set','obAdmissionStatus','The infant had mild subcostal retractions.'],
+      ['set','tentDx','respiratory distress'],['set','chartNo','00000000'],['set','fatherAge','33']
+    ];
+  }
+  function loadExample(){
+    const byId=id=>document.getElementById(id),event=kind=>S.birthEvents.find(e=>e.kind===kind);
+    for(const [op,a,b,c] of exampleSteps()){
+      if(op==='click')document.querySelector(a)?.click();
+      else if(op==='set'){const el=byId(a);if(el){el.value=b;el.dispatchEvent(new Event('input',{bubbles:true}));}}
+      else if(op==='ladder')applyLadder(a,{force:true});
+      else if(op==='event'){const e=event(a),el=e&&byId(`event-${e.id}-${b}`);if(el){el.value=c;el.dispatchEvent(new Event('input',{bubbles:true}));}}
+      else if(op==='nrp'){const e=event(a);if(e)document.querySelector(`[data-nrp-accept="${e.id}"]`)?.click();}
+      else if(op==='response'){const e=event(a);if(e)document.querySelector(`[data-event-id="${e.id}"] [data-event-choice="response"] [data-v="${b}"]`)?.click();}
+    }
+    S.prenatalConfirmed=true;
+    navigateWorkflow('admissionContext');
+    byId('exampleStatus').textContent='已載入範例（虛構資料）：五段都有內容，可點時序帶看每一站。';
+  }
+  let examplePending='';
+  function resetPage(after=''){
+    try{if(after)sessionStorage.setItem('nicu_after_reset',after);else sessionStorage.removeItem('nicu_after_reset');}catch(_){}
+    (window.nicuReset||(()=>location.reload()))();
+  }
+  function exampleAction(kind){
+    if(pageHasData()){examplePending=kind;render();document.getElementById('exampleConfirmNo')?.focus({preventScroll:true});return;}
+    if(kind==='example')loadExample();else resetPage();
+  }
   function initializeAdmissionWorkflow(){
     const byId=id=>document.getElementById(id),form=byId("admSections"),cards=[...form.querySelectorAll(":scope > .card")];
     const [birth,maternal,screening,medication,pathway,review]=cards;
     birth.id="birthHistoryCard";maternal.id="prenatalCard";review.id="finalReviewCard";
     const context=document.createElement("section");context.className="card";context.id="admissionContext";
-    context.innerHTML=`<h2 class="sec-h"><span class="n">1</span>本次入院設定</h2><p class="man-h">先選情境，再依 chart 往下填。預設今天入院；填出生日期即可自動計算日齡。</p><div class="entry-routes" id="entryRoutes" role="radiogroup" aria-label="本次入院情境"><button type="button" id="entryDirect" role="radio" aria-checked="false"><span class="k">A/B</span><span class="t">出生後直接入院</span><span class="d">出生後即入院，未先至嬰兒室。A＝產前 standby；B＝出生後會診，於出生區選擇。</span><span class="p">出生觀察／處置 → 直接入院</span></button></div><div class="entry-fields" id="entryFields"></div><details id="entryPreferences"><summary>本院區與日期顯示偏好</summary></details><div id="entryReadmit" hidden></div><p class="local-review" id="contextReview" role="status"></p>`;
+    context.innerHTML=`<h2 class="sec-h"><span class="n">1</span>本次入院設定</h2><p class="man-h">先選情境，再依 chart 往下填。預設今天入院；填出生日期即可自動計算日齡。</p><div class="example-tools"><button type="button" class="link-btn" id="loadExample">看範例</button><span aria-hidden="true">·</span><button type="button" class="link-btn" id="resetAll">清空重填</button><span class="q" id="exampleStatus" role="status"></span></div><div class="inline-confirm" id="exampleConfirm" role="alertdialog" aria-labelledby="exampleConfirmText" hidden><p id="exampleConfirmText"></p><button type="button" id="exampleConfirmYes">確定</button><button type="button" id="exampleConfirmNo">取消</button></div><div class="entry-routes" id="entryRoutes" role="radiogroup" aria-label="本次入院情境"><button type="button" id="entryDirect" role="radio" aria-checked="false"><span class="k">A/B</span><span class="t">出生後直接入院</span><span class="d">出生後即入院，未先至嬰兒室。A＝產前 standby；B＝出生後會診，於出生區選擇。</span><span class="p">出生觀察／處置 → 直接入院</span></button></div><div class="entry-fields" id="entryFields"></div><details id="entryPreferences"><summary>本院區與日期顯示偏好</summary></details><div id="entryReadmit" hidden></div><p class="local-review" id="contextReview" role="status"></p>`;
     form.prepend(context);
     const storyLabels={A:"產前 standby",B:"出生後會診",C:"嬰兒室轉入",D:"外院轉入／外接",E:"返家後再次就醫"};
     const storyDescriptions={A:"兒科在寶寶出生前已到產房／刀房待命。",B:"寶寶出生後，才請兒科到產房／刀房評估。",C:"出生後先在 BR 嬰兒室照護，再因症狀或評估結果收入 NBC／NICU／PICU。",D:"外院照護後跨院轉入，填寫外院處置、外接與轉送經過。",E:"出生後已返家，這次由本院門診、急診或預約收入 NBC／PICU；不論出生院所都適用。"};
@@ -5709,6 +5760,10 @@ ${opLine}`);
       const ladder=e.target.closest('[data-ladder-v]');if(ladder){applyLadder(ladder.dataset.ladderV);return;}
       if(e.target.closest('#ladderConfirmYes')){applyLadder(ladderPending,{force:true});return;}
       if(e.target.closest('#ladderConfirmNo')){ladderPending=null;render();document.querySelector('#ladderChoices [aria-checked="true"],#ladderChoices button')?.focus({preventScroll:true});return;}
+      if(e.target.closest('#loadExample')){exampleAction('example');return;}
+      if(e.target.closest('#resetAll')){exampleAction('reset');return;}
+      if(e.target.closest('#exampleConfirmYes')){const kind=examplePending;examplePending='';resetPage(kind==='example'?'example':'');render();return;}
+      if(e.target.closest('#exampleConfirmNo')){examplePending='';render();return;}
       if(e.target.closest('#prenatalNext'))S.prenatalConfirmed=true;   // 只記錄「已按過以上都對」，不影響病歷輸出。
       const phase=e.target.closest('[data-phase-target]');if(phase)navigateClinicalPhase(phase.dataset.phaseTarget);
       const node=e.target.closest('[data-band-node]');if(node)goToBandNode(node.dataset.bandNode);
@@ -5761,6 +5816,7 @@ ${opLine}`);
     el('birthHospWrap').querySelector('.lab').textContent=re?'出生院所（實際出生地；不推定同收治院區）':'出生院所（未填沿用本院區）';
     el('birthTeamWrap').hidden=S.pathway!=='direct';
     el('ladderWrap').hidden=!S.pathway;
+    el('exampleConfirm').hidden=!examplePending;el('exampleConfirmText').textContent=examplePending==='example'?'目前已有填寫的資料。載入範例會先清空整頁（重新開頁），再填入虛構的示範案例。確定嗎？':examplePending?'清空會重新開頁，目前填寫的資料都會消失（本工具不儲存病人資料）。確定嗎？':'';
     el('ladderTitle').textContent=S.pathway==='outborn'?'外院處置到哪一階':S.pathway==='readmit'?'出生時急救到哪一階（病史）':`${S.delivery==='cs'?'刀房':'產房'}急救到哪一階`;
     {const level=ladderLevel();el('ladderChoices').querySelectorAll('[data-ladder-v]').forEach(b=>{const on=b.dataset.ladderV===level;b.setAttribute('aria-checked',String(on));b.setAttribute('aria-pressed',String(on));});}
     el('ladderConfirm').hidden=!ladderPending;el('ladderConfirmText').textContent=ladderPendingText();
@@ -5841,5 +5897,6 @@ ${opLine}`);
   });
   initializeAdmissionWorkflow();
   render();
+  try{const after=sessionStorage.getItem('nicu_after_reset');if(after){sessionStorage.removeItem('nicu_after_reset');if(after==='example')loadExample();}}catch(_){}
 })();
 </script>
