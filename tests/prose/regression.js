@@ -412,12 +412,17 @@ test('vaginal delivery is expressed without duplicated delivery nouns',()=>{
   assert.match(admission,/3500 g\b/);
 });
 
-test('plan keeps family counseling as a selected completed event',()=>{
-  const initial=notes([seg('dest','NICU'),tab('plan')]).plan;
-  assert.doesNotMatch(initial,/was explained to the family/);
-  const explained=notes([seg('dest','NICU'),tab('plan'),toggle('planExplained')]).plan;
-  includes(explained,'The plan was explained to the family.');
-  assert.doesNotMatch(explained,/On (?:incubator|open warmer|EKG)|Explained to family fully/);
+// 向家屬解釋是固定會做的事（Ryan 2026-10-06）：plan 一律寫，沒有開關
+test('plan always records that the plan was explained to the family',()=>{
+  const plan=notes([seg('dest','NICU'),tab('plan')]).plan;
+  includes(plan,'The plan was explained to the family.');
+  assert.doesNotMatch(plan,/On (?:incubator|open warmer|EKG)|Explained to family fully/);
+});
+test('NBC plan: sepsis dose uses gentamicin, O2 hood is phrased as supplemental oxygen, no OG tube',()=>{
+  const plan=notes([seg('dest','NBC'),seg('resp','O2 hood'),tab('plan'),seg('planAbx','sepsis')]).plan;
+  includes(plan,'Ampicillin (200 mg/kg/day, Q12H) and Gentamicin (4 mg/kg/dose QD)');
+  includes(plan,'Provide supplemental oxygen via an oxygen hood');
+  assert.doesNotMatch(plan,/OG tube|OG decompression|Cefotaxime|milk bank/);
 });
 
 test('plan wording does not prescribe repeating a documented procedure or surfactant dose',()=>{

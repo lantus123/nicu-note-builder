@@ -673,11 +673,9 @@
   .pn-compact .seg button,.pn-compact .yn button{flex:0 0 auto;min-height:34px;min-width:0;padding:4px 10px;font-size:13px;border-radius:7px}
   .pn-compact .seg button.choice-button,.pn-compact .yn button.choice-button{padding-left:26px}
   .pn-compact .choice-button[data-choice-kind]::before{left:8px;width:12px;height:12px;margin-top:-6px}
-  .pn-compact .seg button[aria-pressed="true"],.pn-compact .yn button[aria-pressed="true"],.pn-compact .seg.risk button[aria-pressed="true"][data-on]{background:var(--surface-2);border-color:var(--ink-3);color:var(--ink);font-weight:650}
-  .pn-compact .choice-button[data-choice-kind][aria-pressed="true"]::before{border-color:var(--ink-2);background:var(--ink-2)}
+  /* 選中的正常值沿用全站青色（Ryan 2026-10-06：中性灰看不出選了哪個）；異常值才用 risk 橘 */
   .pn-compact .seg button[data-abn][aria-pressed="true"],.pn-compact .yn button[data-abn][aria-pressed="true"],.pn-compact .seg.risk button[data-abn][aria-pressed="true"][data-on]{background:var(--risk-soft);border-color:var(--risk-line);color:var(--risk)}
   .pn-compact .choice-button[data-abn][aria-pressed="true"]::before{border-color:var(--risk);background:var(--risk)}
-  .pn-compact .seg[data-fill] button[aria-pressed="true"]{background:var(--surface-2);border-color:var(--ink-3);color:var(--ink)}
   #risks.pn-grid .risk-item{padding:4px 0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;min-height:42px}
   #risks.pn-grid .risk-item.active{background:transparent;border-color:var(--line)}
   #risks.pn-grid .risk-top{gap:4px 10px}
@@ -844,6 +842,7 @@
       <div class="seg" data-seg="ancReg"><button data-v="regular">規則</button><button data-v="irregular">不規則</button><button data-v="none">未產檢</button><button data-v="unknown">不詳</button></div></div>
     <div class="field"><span class="lab">產前超音波</span>
       <div class="seg" data-seg="us"><button data-v="normal">正常</button><button data-v="abnormal">異常</button><button data-v="unknown">不詳</button></div>
+      <div class="seg" data-tog="usLevel2" style="margin-top:7px"><button type="button" data-v="1" style="flex:0 1 auto">含 level II 超音波</button></div>
       <input class="tin" id="usFindings" placeholder="異常所見…" hidden style="margin-top:7px"></div>
     <div class="field"><span class="lab">羊膜穿刺 aCGH</span>
       <div class="seg" data-seg="amnio"><button data-v="none">未做</button><button data-v="normal">正常</button><button data-v="abnormal">異常</button></div>
@@ -1259,7 +1258,7 @@
         <div class="body"><p class="man-h stop-plain"></p>
 <div class="field"><span class="lab">入院時呼吸支持 <span class="q">（同時供 NI plan 與 Acceptance 使用；Acceptance A 區改的是同一個值）</span></span>
   <div class="seg" data-seg="resp" style="flex-wrap:wrap">
-    <button type="button" data-v="room air" style="flex:0 1 auto">Room air</button><button type="button" data-v="NC" style="flex:0 1 auto">NC</button><button type="button" data-v="HFNC" style="flex:0 1 auto">HFNC</button>
+    <button type="button" data-v="room air" style="flex:0 1 auto">Room air</button><button type="button" data-v="O2 hood" style="flex:0 1 auto">O₂ hood</button><button type="button" data-v="NC" style="flex:0 1 auto">NC</button><button type="button" data-v="HFNC" style="flex:0 1 auto">HFNC</button>
     <button type="button" data-v="bubble CPAP" style="flex:0 1 auto">bubble CPAP</button><button type="button" data-v="NCPAP" style="flex:0 1 auto">NCPAP</button>
     <button type="button" data-v="NSIMV+PS" style="flex:0 1 auto">NSIMV+PS</button><button type="button" data-v="NIVPC" style="flex:0 1 auto">NIVPC</button>
     <button type="button" data-v="ETT+SIMV+PS" style="flex:0 1 auto">ETT+SIMV+PS</button><button type="button" data-v="ETT+HFOV" style="flex:0 1 auto">ETT+HFOV</button>
@@ -1408,8 +1407,6 @@
           <button data-v="echo" style="flex:0 1 auto">心臟超音波</button>
         </div>
         <button type="button" class="mini-add" id="planOnReset" style="margin-top:7px" hidden>↻ 全部回自動</button></div>
-      <div class="field"><span class="lab">已向家屬解釋 <span class="q">（未勾則不寫入，這句是告知義務的舉證）</span></span>
-        <div class="seg" data-tog="planExplained"><button data-v="1" style="flex:0 1 auto">Plan explained to the family</button></div></div>
       <p class="man-h" style="margin-top:4px">診斷／治療／預後三段依 GA、SGA/LGA、IDM、fetal distress/DOIC、呼吸支持、surfactant 等自動組出。複製後可再改。</p>
       </div><!-- /planControls -->
     </section>
@@ -1420,7 +1417,7 @@
     <section class="card">
       <h2 class="sec-h"><span class="n">A</span>接手時呼吸支持 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">寫入 Brief history 敘述</span></h2>
       <div class="seg" data-seg="resp" style="flex-wrap:wrap">
-        <button data-v="room air" style="flex:0 1 auto">Room air</button><button data-v="NC" style="flex:0 1 auto">NC</button><button data-v="HFNC" style="flex:0 1 auto">HFNC</button>
+        <button data-v="room air" style="flex:0 1 auto">Room air</button><button data-v="O2 hood" style="flex:0 1 auto">O₂ hood</button><button data-v="NC" style="flex:0 1 auto">NC</button><button data-v="HFNC" style="flex:0 1 auto">HFNC</button>
         <button data-v="bubble CPAP" style="flex:0 1 auto">bubble CPAP</button><button data-v="NCPAP" style="flex:0 1 auto">NCPAP</button>
         <button data-v="NSIMV+PS" style="flex:0 1 auto">NSIMV+PS</button><button data-v="NIVPC" style="flex:0 1 auto">NIVPC</button>
         <button data-v="ETT+SIMV+PS" style="flex:0 1 auto">ETT+SIMV+PS</button><button data-v="ETT+HFOV" style="flex:0 1 auto">ETT+HFOV</button>
@@ -1885,7 +1882,7 @@
   // 正常值直接初始化至病歷狀態；來源標示只用於 UI，不設第二次確認。
   const PRENATAL_NORMAL={...Object.fromEntries(RISKS.filter(r=>r.k!=="steroid").map(r=>[r.k,r.type==="choice3"?"neg":"no"])),ancReg:"regular",us:"normal"};
   // planOn[k]: undefined=依規則自動, true/false=醫師手動覆寫
-  const S={gender:"",dest:"",destNotice:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,r:{},   // 住院去處 NBC/NICU/PICU；E 僅 NBC/PICU，不預設。BR 是健康新生兒照護。性別/生產方式亦不預設。
+  const S={gender:"",dest:"",destNotice:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,usLevel2:false,r:{},   // usLevel2：有做 level II 超音波（院內模板用語 including level II ultrasound）   // 住院去處 NBC/NICU/PICU；E 僅 NBC/PICU，不預設。BR 是健康新生兒照護。性別/生產方式亦不預設。
            scr:{hbsag:"neg",hbeag:"neg",syphilis:"neg",rubella:"pos",hiv:"neg",gbs:"neg"},scrEdited:{},scrBatch:{},
            resus:"none",resp:"",acceptanceResp:"",acceptanceWeightMode:"admission",surfactant:false,birthEvents:[],courseEvents:[],nextEventId:1,
            routeDrafts:{},continuitySignatures:{},lastRemoved:null,birthNegConfirmed:false,prenatalEdited:{},prenatalConfirmed:false,   // prenatalConfirmed：按過第 2 段「以上都對」；只給複製提醒用，不進病歷
@@ -2523,9 +2520,10 @@
   function deliveryPlace(){return S.delivery==="cs"?"the operating room":"the delivery room";}
   // 去處決定 NI plan 的配置。PICU 尚無經確認的院內模板，不推定等同 NICU。
   // ⚠ NBC 細項待 Ryan 校正——這張表是單一真相，要改配置只改這裡，不要在 renderPlan 裡另開判斷。
+  const NBC_RESP=["room air","O2 hood","HFNC"];   // NBC 入院時呼吸支持只會有這三種
   const DEST_PLAN={
-    NICU:{giraffe:true, minimalHandling:true, alineRule:true},
-    NBC:{giraffe:false, minimalHandling:false, alineRule:false},
+    NICU:{giraffe:true, minimalHandling:true, alineRule:true, og:true},
+    NBC:{giraffe:false, minimalHandling:false, alineRule:false, og:false},   // NBC 通常不用 OG（Ryan 2026-10-06）
     PICU:null
   };
   const destPlan=()=>DEST_PLAN[admissionDestination()]||null;   // 未選或不相容，不回退成 NICU 醫囑。
@@ -2672,7 +2670,7 @@
   const infantClause=text=>{const s=String(text||'').trim();return /^(received|remained|continued|was|had|underwent|developed|required|appeared|became|did not|could not)\b/i.test(s)?`the infant ${s[0].toLowerCase()+s.slice(1)}`:s.replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase());};
   const infantSentence=text=>sentence(infantClause(text));
   function admissionAssessmentSentence(closeAdmission){
-    const status=infantClause(raw('obAdmissionStatus')),resp=closeAdmission&&S.resp?(S.resp==='room air'?'breathing room air':`receiving respiratory support with ${S.resp}`):'';
+    const status=infantClause(raw('obAdmissionStatus')),resp=closeAdmission&&S.resp?(S.resp==='room air'?'breathing room air':S.resp==='O2 hood'?'receiving supplemental oxygen via an oxygen hood':`receiving respiratory support with ${S.resp}`):'';
     if(!status&&!resp)return '';
     const predicate=status.startsWith('the infant ')?status.slice(11):'';
     const observation=resp?`the infant was ${resp}${predicate?' and '+predicate:status?'; '+status:''}`:status;
@@ -3633,6 +3631,8 @@
     // 入院時呼吸支持有兩組按鈕（Admission 最後一站＋Acceptance A 區）共用 S.resp；
     // segPick 只會更新被點的那一組，所以每次 render 都把兩組的 aria-pressed 重新對齊。
     document.querySelectorAll('[data-seg="resp"] button').forEach(b=>b.setAttribute("aria-pressed",String(!!S.resp&&b.dataset.v===S.resp)));
+    // NBC 只會有 room air／O₂ hood／HFNC（Ryan 2026-10-06）；其他模式藏起來，但已選到的照樣顯示，不靜默清掉
+    {const nbc=admissionDestination()==="NBC";document.querySelectorAll('[data-seg="resp"] button').forEach(b=>{b.hidden=nbc&&!NBC_RESP.includes(b.dataset.v)&&b.dataset.v!==S.resp;});}
     // 相容既有 Plan 規則的粗分類；敘述永遠使用獨立事件，不由此反推下層處置。
     const kinds=S.pathway==="readmit"?[]:activeBirthEvents().map(e=>e.kind);
     S.resus=kinds.includes("compressions")?"cpr":kinds.includes("intubation")?"intubation":kinds.includes("ppv")?"ppv":"none";
@@ -3696,7 +3696,8 @@
   function pedTextRow(cv,y,items){
     let rest=items.filter(it=>it[1]);
     while(rest.length){ let end=-1; const next=[];
-      rest.forEach(it=>{ if(it[0]>end){cv.put(it[0],y,it[1]); end=it[0]+[...String(it[1])].reduce((n,ch)=>n+pedCharW(ch),0);} else next.push(it); });
+      // 同一列至少隔 2 欄，否則相鄰兩人的病名會讀成同一串（2026-10-06）
+      rest.forEach(it=>{ if(it[0]>end+1){cv.put(it[0],y,it[1]); end=it[0]+[...String(it[1])].reduce((n,ch)=>n+pedCharW(ch),0);} else next.push(it); });
       y++; rest=next; }
     return y;
   }
@@ -3725,7 +3726,7 @@
     // 中組的單元規則不變：一般手足各一個單元；同胎組（twin 手足＋本人）合成一個單元，本人永遠在最後。
     const midUnits=[];
     sibs.filter(s=>!s.twin).forEach(s=>midUnits.push([mkSib(s)]));
-    midUnits.push([...sibs.filter(s=>s.twin).map(mkSib),{sex:S.gender||"",age:"本人",note:"",proband:true,x:0}]);
+    midUnits.push([...sibs.filter(s=>s.twin).map(mkSib),{sex:S.gender||"",age:"",note:"",proband:true,x:0}]);
     const groups=[];
     if(hasL)groups.push({key:"L",units:layout((fo.kids||[]).map(k=>[mkSib(k)]))});
     groups.push({key:"M",units:layout(midUnits)});
@@ -3749,34 +3750,27 @@
     }
     groups.forEach(g=>{ g.j=xF+jRel[g.key]; const shift=g.j-g.gc;
       g.units.forEach(u=>{u.forEach(mem=>{mem.x+=shift;}); u.center+=shift;}); });
-    const dxOf=who=>Object.keys(PED_DX).filter(k=>S.parent[k]===who||S.parent[k]==="both").map(k=>`${PED_DX_ZH[k]} (${parentDisease(k)})`);
+    const dxOf=who=>Object.keys(PED_DX).filter(k=>S.parent[k]===who||S.parent[k]==="both").map(k=>parentDisease(k));   // 疾病直接標在符號旁（英文，Ryan 2026-10-06）
     const fDx=dxOf("father"), mDx=dxOf("mother");
     if(fatherHistoryExtra())fDx.push(fatherHistoryExtra());
     const cv=pedCanvas(); let y=0;
     // ① 成人列（由左到右）：父親的其他伴侶 — 父 — 母 — 母親的其他伴侶；每兩人之間一段關係線，junction 在中點
-    const gpa=(raw("gravida")?"G"+raw("gravida"):"")+(raw("para")?"P"+raw("para"):"")+(raw("abortion")?"A"+raw("abortion"):"");
-    // 父親不詳：符號改未知、註記寫 Father unknown（不寫年齡），關係線照畫
-    const fTxt="父親",mTxt="母親";
-    const notes=[],relationLabel={unmarried:'未婚',divorced:'離婚／分居'};
-    if(relationLabel[ped.rel])notes.push(`父母關係：${relationLabel[ped.rel]}`);
-    const describe=(label,parts)=>{const filled=parts.filter(Boolean);if(filled.length)notes.push(`${label}：${filled.join('；')}`);};
-    describe('父親',[ped.fatherUnknown?'身分不詳':raw('fatherAge')?raw('fatherAge')+'歲':'',fDx.length?'病史：'+fDx.join('、'):'']);
-    describe('母親',[raw('matAge')?raw('matAge')+'歲':'',gpa,mDx.length?'病史：'+mDx.join('、'):'']);
-    const describeOther=(label,o)=>describe(label,[relationLabel[o.rel]?'關係：'+relationLabel[o.rel]:'',String(o.age||'').trim()?String(o.age).trim()+'歲':'',String(o.note||'').trim()]);
-    if(hasL)describeOther('父親的其他伴侶',fo);
-    if(hasR)describeOther('母親的其他伴侶',mo);
-    notes.push('註：實心符號表示本次新生兒，不代表疾病。');
+    // 父親不詳：符號改未知、年齡列寫 ?；年齡與疾病直接標在符號下（Ryan 2026-10-06：不寫父親／母親／本人字樣、不寫 G/P、不加註腳）
+    const fTxt=ped.fatherUnknown?"?":raw('fatherAge')||"", mTxt=raw('matAge')||"";
+    const otherAge=o=>String(o.age||'').trim(), otherNote=o=>String(o.note||'').trim();
     const adults=[];   // 其他伴侶的性別固定（半手足的另一位生物學父母），不提供選項
-    if(hasL)adults.push({x:xF-D,sym:symOf("female",false),txt:"父方伴侶"});
-    // 父母一律空心；家族史只接在註記後面（實心只表示本人）
-    adults.push({x:xF,sym:symOf(ped.fatherUnknown?"":"male",false),txt:fTxt});
-    adults.push({x:xF+D,sym:symOf("female",false),txt:mTxt});
-    if(hasR)adults.push({x:xF+D*2,sym:symOf("male",false),txt:"母方伴侶"});
+    if(hasL)adults.push({x:xF-D,sym:symOf("female",false),txt:otherAge(fo),dx:otherNote(fo)});
+    // 父母一律空心；疾病寫在年齡下一列（實心只表示本人）
+    adults.push({x:xF,sym:symOf(ped.fatherUnknown?"":"male",false),txt:fTxt,dx:fDx.join(', ')});
+    adults.push({x:xF+D,sym:symOf("female",false),txt:mTxt,dx:mDx.join(', ')});
+    if(hasR)adults.push({x:xF+D*2,sym:symOf("male",false),txt:otherAge(mo),dx:otherNote(mo)});
     adults.forEach(a=>cv.put(a.x,y,a.sym));
     // 連線與接點都是單欄 ASCII；人物符號仍為兩欄。
     const relLine=(y2,ax,bx,j,rel)=>{
       const a=ax+PED_CW, b=bx-1;   // 從左邊成人符號右緣畫到右邊成人符號左緣
       cv.fill(y2,a,j-1,st.h); cv.fill(y2,j+1,b,st.h);
+      // 未婚畫成虛線 - - -（圖下已無註記，關係只能靠線型看出；2026-10-06）
+      if(rel==="unmarried")for(let x=a+1;x<=b;x+=2)if(x!==j)cv.put(x,y2," ");
       if(rel==="divorced")cv.put(a,y2,st.slash);
       cv.put(j,y2,st.tee);
     };
@@ -3784,8 +3778,9 @@
     relLine(y,xF,xF+D,xF+half,ped.rel);
     if(hasR)relLine(y,xF+D,xF+D*2,xF+half*3,mo.rel);
     y++;
-    // ② 成人註記列：左緣對齊各自符號左緣；缺的資訊整段省略，不留佔位；撞在一起就自動往下拆行
+    // ② 成人年齡列＋疾病列：左緣對齊各自符號左緣；缺的資訊整段省略，不留佔位；撞在一起就自動往下拆行
     y=pedTextRow(cv,y,adults.map(a=>[a.x,a.txt]));
+    y=pedTextRow(cv,y,adults.map(a=>[a.x,a.dx]));
     // ③ 主幹列（有小孩的組才畫）
     groups.forEach(g=>{if(g.units.length)cv.put(g.j,y,st.v);});
     y++;
@@ -3816,7 +3811,7 @@
     y++;
     y=pedTextRow(cv,y,mems.map(mem=>[mem.x,mem.age]));
     y=pedTextRow(cv,y,mems.map(mem=>[mem.x,mem.note]));
-    return cv.text()+'\n\n'+notes.join('\n');
+    return cv.text();
   }
   // 三個子代清單共用同一套列 UI（動態清單，慣例同 drawEvents）：
   // 手足（可同胎）、父親／母親與其他伴侶的小孩（半手足，沒有同胎）。id 共用 S.nextSibId，故 sib-{id}-age 全域唯一。
@@ -4005,7 +4000,7 @@
         ? `During pregnancy, the mother had ${sl("not received prenatal care",true)}`
         : `The mother received ${sl(S.ancReg==="irregular"?"irregular":"regular", S.ancReg==="irregular")} prenatal care at ${anc?sl(anc+(isMMH?"":" OBGYN clinic")):ph("____")}`;
     const usTxt = S.us==="abnormal" ? (usFind?`showed ${sl(usFind,true)}`:`showed ${sl("abnormal findings",true)}`) : `showed ${sl("normal findings")}`;
-    const usPart = S.us==="na" ? "" : S.us==="unknown" ? "prenatal ultrasound findings were unavailable" : `prenatal ultrasound ${usTxt}`;   // 一般超音波結果不證明做過 level II。
+    const usPart = S.us==="na" ? "" : S.us==="unknown" ? "prenatal ultrasound findings were unavailable" : `prenatal ultrasound${S.usLevel2?`, including ${sl("level II ultrasound")},`:""} ${usTxt}`;   // 一般超音波結果不證明做過 level II。
     if(ancPart&&usPart)P1.push(`${ancPart}, and ${usPart}.`);
     else if(ancPart)P1.push(`${ancPart}.`);
     else if(usPart)P1.push(`${usPart.charAt(0).toUpperCase()+usPart.slice(1)}.`);
@@ -4286,12 +4281,12 @@
 
     // 開頭摘要、母體／產前背景、產程與產房處置、入院前經過分段；入院前經過只有一句加結語時併回產程段（院內模板是兩段）。
     const courseParts=P2.length-postnatalStart>2?[P2.slice(0,postnatalStart),P2.slice(postnatalStart)]:[P2];
-    const [pedDiagram,pedNotes]=buildPedigree().split('\n\n');
+    const pedDiagram=buildPedigree();
     // 院內模板：出生摘要與母體／產前背景同一段（開場句已帶出 mother，後句的 she 才有先行詞）。
     writeNote([[...P0.map(t=>noteScope(t,'birth:info')),...P1.map(t=>noteScope(t,'prenatal'))],...courseParts].filter(p=>p.length).map(p=>p.join(" ")).join("\n\n")
       + "\n\n" + noteScope("Tentative diagnosis:\n" + DX.map(d=>"# "+sl(d.f)).join("\n"),'review')
       + `\n\nMaternal chart number: ${chartNo?sl(chartNo):ph("____")}\nPedigree:`
-      + `\n<span class="pedigree">${pedigreeHtml(pedDiagram)}</span>\n\n<span class="pedigree-notes">${esc(pedNotes)}</span>`,"html");   // 圖保持等寬，圖下註記可換行；自由文字一律 escape。
+      + `\n<span class="pedigree">${pedigreeHtml(pedDiagram)}</span>`,"html");   // 圖保持等寬；年齡／疾病都畫在圖內，圖下不再有註記。
     // 診斷 chip（與 # 清單同步）
     const dxWrap=document.getElementById("dx");
     dxWrap.innerHTML=`<span class="lbl">暫定診斷</span>`+DX.map(d=>`<span class="tag">${d.s}</span>`).join("");
@@ -4737,7 +4732,7 @@ ${opLine}`);
     const RULE={sepsis:infRisk||preterm||respSupport||S.fd||S.doic||pr.respiratory, csf:false,
                 biogram:S.fd||S.doic, sga:SGA, aline:S.hc.aline||(cfg.alineRule&&invasive),
                 pn:(gw>0&&gw<PLAN_GA.pn.ga)||(bwN>0&&bwN<PLAN_GA.pn.bw)||invasive,
-                minimal:veryPreterm||invasive, og:respSupport,
+                minimal:veryPreterm||invasive, og:respSupport&&cfg.og!==false,
                 rop:(gw>0&&gw<=PLAN_GA.rop.ga)||(bwN>0&&bwN<=PLAN_GA.rop.bw),
                 brainUS:(gw>0&&gw<PLAN_GA.brainUS.ga)||(bwN>0&&bwN<PLAN_GA.brainUS.bw),
                 echo:gw>0&&gw<PLAN_GA.echo.ga,
@@ -4775,7 +4770,7 @@ ${opLine}`);
     T.push("Monitor EKG and SpO2");
     T.push("Record the body weight daily");
     const rmode=S.resp&&S.resp!=="room air"?S.resp:"";   // 不把出生或住院歷程中的模式當成目前應持續的模式。
-    if(rmode)T.push(`Provide respiratory support with ${rmode}`);
+    if(rmode)T.push(rmode==="O2 hood"?"Provide supplemental oxygen via an oxygen hood":`Provide respiratory support with ${rmode}`);
     // Caffeine 屬於呼吸支持的一部分，排在呼吸模式之後、surfactant 之前；門檻見 PLAN_GA.caffeine
     if(ON("caffeine")){const d34=pmaDate(PLAN_GA.caffeine.ga);
       T.push(`Start caffeine citrate for apnea of prematurity (loading dose 20 mg/kg, then 5–10 mg/kg/day); continue until at least a PMA of ${PLAN_GA.caffeine.ga} weeks${d34?` (${d34})`:""} and 5–7 days without apnea`);}
@@ -4785,7 +4780,7 @@ ${opLine}`);
     const abxKey = S.planAbxAuto ? (infRisk?"empirical":"none") : S.planAbx;
     document.querySelectorAll('[data-seg="planAbx"] button').forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===abxKey?"true":"false"));
     const abxLine={empirical:"Administer empirical antibiotics: Ampicillin (100 mg/kg/day) and Gentamicin (4 mg/kg/dose QD)",
-      sepsis:"Administer Ampicillin (200 mg/kg/day, Q12H) and Cefotaxime (50 mg/kg/dose Q12H) at sepsis doses",
+      sepsis:"Administer Ampicillin (200 mg/kg/day, Q12H) and Gentamicin (4 mg/kg/dose QD) at sepsis doses",   // Ryan 2026-10-06：sepsis dose 是 Ampicillin 200＋Gentamicin 4
       meningitic:"Administer Ampicillin (300 mg/kg/day, Q8H) and Cefotaxime (100 mg/kg/dose Q12H) at meningitic doses"}[abxKey];
     if(abxLine)T.push(abxLine);
     // 母親 HBsAg 陽性 → HBIG 有出生 12 小時內時限，計畫端必須反應（原本只在 acceptance 的括號裡提一句）
@@ -4798,15 +4793,15 @@ ${opLine}`);
     // 早產維持原本兩句；足月掛呼吸支持只寫 OG；足月 room air 就是親餵／擠出母乳；配方奶依 SGA 與否選 PDF 或一般足月配方。
     if(preterm){
       T.push("Initiate early enteral trophic feeding with breast milk once the infant's general condition and breathing pattern stabilize; encourage exclusive breast milk feeding");
-      T.push("For enteral feeding, use an OG tube and prioritize the mother's own breast milk, followed by donor human milk from the human milk bank, and then preterm infant formula or preterm special care formula");
+      T.push(`For enteral feeding, ${cfg.og===false?"prioritize":"use an OG tube and prioritize"} the mother's own breast milk, followed by donor human milk from the human milk bank, and then preterm infant formula or preterm special care formula`);
     }else{
       const formula=SGA?"consider a post-discharge formula (PDF) for catch-up growth if breast milk is insufficient (SGA)":"use term infant formula only if breast milk is unavailable";
-      if(respSupport)T.push(`Initiate enteral feeding with breast milk via an OG tube once the breathing pattern stabilizes; encourage exclusive breast milk feeding, and ${formula}`);
+      if(respSupport)T.push(`Initiate enteral feeding with breast milk${cfg.og===false?"":" via an OG tube"} once the breathing pattern stabilizes; encourage exclusive breast milk feeding, and ${formula}`);
       // 住院中無法親餵，媽媽提供擠出母乳由病房瓶餵（Ryan 2026-09-23）
       else T.push(`Bottle-feed with the mother's expressed breast milk and encourage exclusive breast milk feeding; ${formula}`);
     }
 
-    const Pr=[]; if(S.planExplained)Pr.push("The plan was explained to the family.");   // 告知家屬是已發生的事件,不可預設斷言
+    const Pr=["The plan was explained to the family."];   // 向家屬解釋是固定會做的事（Ryan 2026-10-06），固定寫
     // 併發症監測依出生週數分層（<32／32–33+6／34–36+6），門檻見 PLAN_GA.tiers；足月不列
     if(gw>0&&gw<PLAN_GA.tiers.very)Pr.push("Monitor for complications of prematurity: RDS, CLD, ROP, oxidative stress, NEC, PDA, IVH, etc.");
     else if(gw>0&&gw<PLAN_GA.tiers.moderate)Pr.push("Monitor for complications of moderate prematurity: RDS, apnea of prematurity, feeding intolerance, hypoglycemia, and hyperbilirubinemia");

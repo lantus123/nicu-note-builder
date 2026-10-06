@@ -177,8 +177,13 @@ test('餵食計畫分流：足月 room air 不寫母乳庫／早產兒配方／O
   assert.match(term,/Bottle-feed with the mother's expressed breast milk/);
   assert.doesNotMatch(term,/direct breastfeeding/);
   assert.doesNotMatch(term,/human milk bank|preterm infant formula|OG tube|trophic/);
-  // 足月但入院時掛 NCPAP → 只寫 OG，仍不寫母乳庫／早產兒配方
-  seg('resp','NCPAP');
+  // NBC 掛 HFNC → 不用 OG（Ryan 2026-10-06：NBC 通常不用 OG），其餘同足月
+  seg('resp','HFNC');
+  const nbcSupport=onTab('plan');
+  assert.match(nbcSupport,/Initiate enteral feeding with breast milk once the breathing pattern stabilizes/);
+  assert.doesNotMatch(nbcSupport,/OG tube|OG decompression|human milk bank|preterm infant formula|trophic/);
+  // 足月入 NICU 掛 NCPAP → 只寫 OG，仍不寫母乳庫／早產兒配方（NCPAP 不是 NBC 的選項，改去處才選得到）
+  seg('dest','NICU');seg('resp','NCPAP');
   const termSupport=onTab('plan');
   assert.match(termSupport,/enteral feeding with breast milk via an OG tube/);
   assert.doesNotMatch(termSupport,/human milk bank|preterm infant formula|trophic/);
