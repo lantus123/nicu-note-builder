@@ -90,15 +90,15 @@ test('A5 all-negative screening absorbs the rubella sentence; other results stay
 });
 test('A3 repeated pre-admission findings are not relisted; persisting ones explain the support',({story,input,msel,seg,choose,tog,body,note})=>{
   story('A');input('birthBreathing','apnea');msel('obSx','apnea');msel('obSx','tachypnea');
-  choose('obRespRelation','new');seg('obRespType','cpap');input('obPEEP','6');
+  input('birthFinalSupport','room');seg('obRespType','ppv');input('obPEEP','6');   // 離開產房 room air → 入院前 PPV＝推導為開始
   const text=body();
-  assert.match(text,/Before admission, tachypnea was noted\. Because apnea persisted, CPAP was initiated \(pressure 6 cmH2O\)\./);
+  assert.match(text,/Before admission, tachypnea was noted\. Because apnea persisted, positive-pressure ventilation \(PPV\) was initiated \(PEEP 6 cmH2O\)\./);
   assert.equal(count(text,/before admission/gi),1,'one time phrase per paragraph');
   assert.doesNotMatch(text,/apnea was noted|apnea and tachypnea/);
-  assert.match(note('acc'),/Because apnea persisted, CPAP was initiated/,'Acceptance reuses the same narrative');
+  assert.match(note('acc'),/Because apnea persisted, positive-pressure ventilation \(PPV\) was initiated/,'Acceptance reuses the same narrative');
 });
 test('A3 persisted symptoms with support merge into one Because sentence',({story,msel,seg,choose,input,body})=>{
-  story('A');msel('obSx','grunting');seg('pwOnset','persisted');choose('obRespRelation','new');seg('obRespType','o2');seg('obO2Dev','hood');
+  story('A');msel('obSx','grunting');seg('pwOnset','persisted');input('birthFinalSupport','room');seg('obRespType','o2');seg('obO2Dev','hood');
   const text=body();
   assert.match(text,/Because grunting persisted, supplemental oxygen was initiated before admission via an oxygen hood\./);
   assert.doesNotMatch(text,/grunting persisted\. /);
@@ -113,7 +113,7 @@ test('A3 new symptoms keep their sentence and passive support never gains a caus
 });
 test('A3 PPV and stable vital signs form one sentence; stability needs the toggle',({story,input,choose,seg,tog,body})=>{
   story('A');input('birthBreathing','labored');input('birthFinalBreathing','labored');
-  choose('obRespRelation','new');seg('obRespType','ppv');input('obFiO2','40');input('obIP','20');input('obPEEP','5');
+  input('birthFinalSupport','room');seg('obRespType','ppv');input('obFiO2','40');input('obIP','20');input('obPEEP','5');
   assert.match(body(),/Therefore, positive-pressure ventilation \(PPV\) was initiated before admission \(FiO2 40%, PIP 20 cmH2O, PEEP 5 cmH2O\)\.(?! with)/);
   tog('obRespStable');
   const text=body();
@@ -122,8 +122,8 @@ test('A3 PPV and stable vital signs form one sentence; stability needs the toggl
 });
 test('A3 no recorded persisting finding means the support sentence stands alone',({story,input,choose,seg,body})=>{
   story('A');input('birthBreathing','labored');input('birthFinalBreathing','spontaneous');
-  choose('obRespRelation','new');seg('obRespType','cpap');
-  assert.match(body(),/(?<!persisted, )CPAP was initiated before admission\./);assert.doesNotMatch(body(),/Because/);
+  input('birthFinalSupport','room');seg('obRespType','ppv');
+  assert.match(body(),/(?<!persisted, )positive-pressure ventilation \(PPV\) was initiated before admission\./i);assert.doesNotMatch(body(),/Because/);
 });
 test('A3 transport time phrase appears once in the outborn course',({story,msel,seg,click,input,W,body})=>{
   story('D');msel('obSx','tachypnea');seg('obRespType','o2');seg('obO2Dev','hood');
@@ -185,9 +185,10 @@ test('B3 the delivery-room end assessment writes persisting findings once',({sto
   assert.match(body(),/On reassessment in the operating room, labored breathing and cyanosis persisted, with grunting\./);
   input('birthFinalBreathing','spontaneous');
   assert.match(body(),/On reassessment in the operating room, cyanosis persisted, and the infant was breathing spontaneously, with grunting\./);
-  msel('birthFinalSigns','cyanosis');msel('birthFinalSigns','grunting');input('birthFinalBreathing','labored');input('birthFinalSupport','cpap');
-  assert.match(body(),/labored breathing persisted, and the infant was receiving CPAP\./);
-  assert.match(note('acc'),/labored breathing persisted, and the infant was receiving CPAP\./,'Acceptance shares the delivery-room narrative');
+  // 2026-10-06：離開產房的支持是獨立一題（產房只有 Neopuff），寫在補充評估之後；兩份 note 共用。
+  msel('birthFinalSigns','cyanosis');msel('birthFinalSigns','grunting');input('birthFinalBreathing','labored');input('birthFinalSupport','ppv');
+  assert.match(body(),/labored breathing persisted\. Positive-pressure ventilation \(PPV\) was provided via Neopuff\./);
+  assert.match(note('acc'),/labored breathing persisted\. Positive-pressure ventilation \(PPV\) was provided via Neopuff\./,'Acceptance shares the delivery-room narrative');
 });
 test('B3 a timed end assessment with only signs is not reported as unspecified',({story,input,msel,body})=>{
   story('A');input('birthFinalMin','10');msel('birthFinalSigns','retractions');
@@ -204,8 +205,8 @@ test('B4 signs follow the labored-breathing precedent downstream: narrative and 
 test('B pre-admission symptoms already written at birth are not relisted',({story,input,msel,choose,seg,body})=>{
   story('A');input('birthFinalBreathing','labored');msel('birthFinalSigns','grunting');msel('obSx','grunting');
   assert.doesNotMatch(body(),/grunting was noted/);
-  choose('obRespRelation','new');seg('obRespType','cpap');
-  assert.match(body(),/Because grunting persisted, CPAP was initiated before admission\./);
+  input('birthFinalSupport','room');seg('obRespType','ppv');
+  assert.match(body(),/Because grunting persisted, positive-pressure ventilation \(PPV\) was initiated before admission\./);
 });
 
 // ── C：安胎後出院 ──
@@ -254,7 +255,7 @@ test('C a discharge switch without a tocolytic writes nothing new',page=>{
 // ── 規格虛構案例（全部虛構） ──
 const FICTIONAL_ADMISSION=[
   'This 1-day-old term female newborn was born to a 40-year-old G5P2 mother at a gestational age (GA) of 38+1 weeks with a birth weight (BW) of 3333 g (AGA) at 11:39 on October 5, 2026 at TPEMMH via cesarean section (C/S) due to previous C/S. The expected date of confinement was October 18, 2026. The mother received regular prenatal care at ____, and prenatal ultrasound showed normal findings. Neither amniocentesis with array comparative genomic hybridization (aCGH) nor noninvasive prenatal testing (NIPT) was performed. There was no gestational diabetes mellitus (GDM), pregnancy-induced hypertension (PIH), preeclampsia, antepartum hemorrhage (APH), postpartum hemorrhage (PPH), or maternal fever. The mother had a history of Charcot-Marie-Tooth disease with normal function and without medication. Maternal group B streptococcus (GBS) culture, rapid plasma reagin (RPR) testing, hepatitis B surface antigen (HBsAg) screening, and human immunodeficiency virus (HIV) screening were all negative, and rubella IgG was reactive. The mother denied cigarette smoking, alcohol consumption, or substance abuse during pregnancy. At 32+3 weeks, the mother was hospitalized for preterm uterine contractions, received ritodrine for tocolysis from 8/23 to 8/26, and was then discharged.',
-  'The mother was readmitted to our hospital for scheduled C/S. The pediatric team was called to stand by in the operating room for the delivery. The cesarean delivery was uncomplicated. At birth, the infant had labored breathing, with cyanosis. Apgar scores were 8 and 9 at 1 and 5 minutes, respectively. On reassessment in the operating room, labored breathing persisted, with grunting. Therefore, positive-pressure ventilation (PPV) was initiated before admission (FiO2 40%, PIP 20 cmH2O, PEEP 5 cmH2O), with stable heart rate and oxygen saturation. Under the tentative diagnosis of respiratory distress, the infant was admitted to our NICU for further evaluation and treatment.'];
+  'The mother was readmitted to our hospital for scheduled C/S. The pediatric team was called to stand by in the operating room for the delivery. The cesarean delivery was uncomplicated. At birth, the infant had labored breathing, with cyanosis. Apgar scores were 8 and 9 at 1 and 5 minutes, respectively. On reassessment in the operating room, labored breathing persisted, with grunting. The infant remained in room air. Therefore, positive-pressure ventilation (PPV) was initiated before admission (FiO2 40%, PIP 20 cmH2O, PEEP 5 cmH2O), with stable heart rate and oxygen saturation. Under the tentative diagnosis of respiratory distress, the infant was admitted to our NICU for further evaluation and treatment.'];
 function fillFictionalCase(page){
   const {story,seg,input,msel,tog,choose}=page;
   story('A');seg('dest','NICU');seg('gender','female');input('gaW','38');input('gaD','1');input('bw','3333');
@@ -266,7 +267,7 @@ function fillFictionalCase(page){
   input('admReason','scheduled C/S');
   input('birthBreathing','labored');msel('birthSigns','cyanosis');input('ap1','8');input('ap5','9');
   input('birthFinalBreathing','labored');msel('birthFinalSigns','grunting');
-  choose('obRespRelation','new');seg('obRespType','ppv');input('obFiO2','40');input('obIP','20');input('obPEEP','5');tog('obRespStable');
+  input('birthFinalSupport','room');seg('obRespType','ppv');input('obFiO2','40');input('obIP','20');input('obPEEP','5');tog('obRespStable');
 }
 test('spec fictional case: admission note follows the template skeleton',page=>{
   fillFictionalCase(page);

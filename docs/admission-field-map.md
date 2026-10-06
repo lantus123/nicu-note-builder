@@ -106,7 +106,7 @@ screen_onset、care_onset 是草稿結構的非臨床佔位，保持隱藏且不
 - A–D 原有出生、嬰兒室、外院處置、外接及轉送事件仍保留。不同時間的同類處置不能以字串去重刪除。
 - D 的 obSx／obCourse 位於轉送途中階段；其敘述在我方到場紀錄之後，症狀以 During transport 定位，不再寫 Before transfer。外院團隊及我方現場處置各由 outside／arrival 事件來源輸出，不與 transport 事件合併。
 - 前段支持未記錄時，允許直接選本段方式，不迫使回填歷史。「僅記錄本段使用方式」置於次要說明，不推定持續、開始、停止時間；同前確認仍按 source stamp 失效，不能沿用已改變的來源或參數。
-- obM1Relation／obRespRelation 確認持續同前時，用唯讀摘要顯示來源模式；模式按鈕暫藏，另外的裝置／參數仍可展開編輯。已填參數保留且繼續輸出，未填參數不從前段猜測；前段模式改變時，原有確認失效並恢復可編輯欄位。
+- （2026-10-06 起）obM1Relation／obRespRelation 兩個關係問題已移除：入院前／轉送途中的關係由 `resolvedSupport` 從前一站與本段的值推導（同＝continued、前段 room air＝new、不同＝changed、前段未記錄＝只描述本段）。前一站以唯讀一行顯示；參數不從前段複製。
 - 切換路徑保存該次開頁的各路徑草稿（包含 E 模組、來源及手填診斷）。不新增病人資訊的 localStorage 或雲端儲存。
 
 ## 驗收與界限
@@ -129,8 +129,20 @@ screen_onset、care_onset 是草稿結構的非臨床佔位，保持隱藏且不
 | complication 陰性清單 | `There was no … during pregnancy.` | 含 PPH 時省略 during pregnancy；陽性仍走 notable for 句。 |
 | 四項篩檢全陰性＋rubella | 併為一句 | 任一項非陰性時 rubella 維持獨立句。 |
 | admReason | 第二段首句 | 本院出生才寫 to our hospital；外接／E 無原因不出句。 |
-| obSx、pwOnset、obRespRelation／obRespType、obRespStable | 入院前段 | 已在出生／產房結束評估寫過的同一所見不重列；Because … persisted 只用於有實際處置動作的支持；時間片語同段一次。 |
+| obSx、pwOnset、obRespType（關係由前後值推導）、obRespStable | 入院前段 | 已在出生／產房結束評估寫過的同一所見不重列；Because … persisted 只用於有實際處置動作的支持；時間片語同段一次。 |
 | 結語 | Under the tentative diagnosis of … | A–D 不寫入院日期；E 不變；Acceptance 入院句不變。 |
 | matOtherHx | `The mother had a history of …`（併發症句之後） | 自由英文；去 `#`／句點；空白不出句；只進 Admission。 |
 | birthSigns、birthFinalSigns | 出生／產房結束評估的 with … 名詞片語；相同者 persisted | 比照 labored：不進 DX／plan 規則；參與入院前症狀去重。 |
 | toco、tocoReason、tocoGaW/D、tocoSince、tocoUntil、tocoDischarged、tocoAbx | 已出院：第一段末的前次住院句（＋抗生素句），第二段改 readmitted；未出院：第二段原句加 due to | 未選安胎藥時細項隱藏且不輸出；日期不正規化。 |
+
+## 故事線與站內填寫（2026-10-06）
+
+| 輸入／狀態 | 輸出或用途 | 邊界 |
+| --- | --- | --- |
+| 急救階梯（第 1 區；無狀態，由 birthResusStatus＋birthEvents 推回） | 依 NRP 順序增刪 S.birthEvents（PPV 帶 NRP 預設與 nrp:true），birthResusStatus 同步（無＝none、其他＝performed） | 降階移除多出來的事件；已填參數（NRP 預設不算）先頁內確認，取消不動。 |
+| pwStandby／pwConsult（既有旗標） | standby 句、出生後會診句 | 帶子可選站；移除時資料留作草稿、不寫入。 |
+| pwBrEval／pwTransport（新旗標，同類型） | 讓嬰兒室抽血評估（C）、轉送途中（D）出現在故事裡 | 有資料就算在故事裡；移除有資料的站先確認並清空該站資料。 |
+| 事件 response（improved／partial／none） | 處置句尾 `, after which heart rate and oxygen saturation improved`／`, with partial improvement`／`, without improvement` | 空＝不寫；再評估沒有這題。 |
+| 事件 ratio（壓胸） | `at a 3:1 compression-to-ventilation ratio` | 只寫使用者填的文字。 |
+| birthFinalSupport＋S.leaveSpo2 | 離開產房一句（continued via Neopuff／weaned to room air／remained intubated…）＋`with SpO2 maintained at N%` | 呼吸／張力／心率／時間在「補充評估」，有填才寫。 |
+| obM1Type（改到「我方到場」）＋obArriveSpo2 | `On our team's arrival at the referring hospital, the infant was receiving …, with SpO2 N%.` | 只描述到場當時，不推延續；外院處置走 outside 事件。 |

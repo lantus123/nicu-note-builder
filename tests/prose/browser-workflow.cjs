@@ -29,7 +29,7 @@ async function main(){
   // Mobile scrollIntoView can move the visual viewport even when scale is 1.
   const click=async s=>{const stop=s.match(/^\[data-stop-toggle="([^"]+)"\]$/);if(stop){await click(`#stageBand [data-phase-target="course:${stop[1]}"]`);return;}const r=await position(s);assert.ok(r.w&&r.h&&r.hit,'Control hidden or covered: '+s);await send('Input.dispatchMouseEvent',{type:'mousePressed',x:r.inputX,y:r.inputY,button:'left',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:r.inputX,y:r.inputY,button:'left',clickCount:1});clicks++;await pause(70);};
   // 「開始呼吸支持」等例外選項放在收合的說明裡（HEAD 時此處已失敗）：先展開再點，不改變選項本身。
-  const input=async(id,value)=>{if(['obM1Relation','obRespRelation'].includes(id)){const choice=`#${id}-choice-${value||'clear'}`;if(await ev(`!!document.querySelector(${JSON.stringify(choice)})?.closest('details:not([open])')`))await click(`#${id}Help > summary`);await click(choice);entries++;return;}const r=await position('#'+id);assert.ok(r.w&&r.h&&r.hit,'Input hidden or covered: '+id);await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.focus({preventScroll:true});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event(e.tagName==='SELECT'||e.type==='date'?'change':'input',{bubbles:true}));})()`);entries++;};
+  const input=async(id,value)=>{const r=await position('#'+id);assert.ok(r.w&&r.h&&r.hit,'Input hidden or covered: '+id);await ev(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.focus({preventScroll:true});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event(e.tagName==='SELECT'||e.type==='date'?'change':'input',{bubbles:true}));})()`);entries++;};
   const typeText=async(id,value)=>{await click('#'+id);await ev(`document.getElementById(${JSON.stringify(id)}).select()`);await send('Input.insertText',{text:value});assert.equal(await ev(`document.getElementById(${JSON.stringify(id)}).value`),value);entries++;};
   // 時序帶取代原章節選單：段＝帶子標頭；目前段／站點讀帶子的 aria-current。
   const chapter=async id=>click(`#stageBand [data-flow-target="${id}"]`);
@@ -62,8 +62,8 @@ async function main(){
     await at('#admissionContext');await shot('nicu-forward-entry-desktop.png');
     await click('#admissionContext [data-flow-target="prenatalCard"]');await input('gravida','2');await input('para','2');await input('matAge','32');
     await click('#prenatalNext');await click('[data-seg="gender"] [data-v="male"]');await input('gaW','39');await input('bw','3200');await click('[data-seg="delivery"] [data-v="nsd"]');
-    await input('birthHosp','Example Birth Clinic');await input('ap1','9');await input('ap5','10');await input('birthBreathing','crying');await input('birthResusStatus','none');
-    await click('#birthHistoryCard [data-flow-target="pathwayCard"]');
+    await input('birthHosp','Example Birth Clinic');await input('ap1','9');await input('ap5','10');await click('[data-select-chips="birthBreathing"] [data-v="crying"]');await chapter('admissionContext');await click('[data-ladder-v="none"]');
+    await chapter('pathwayCard');
     await click('[data-seg="readmitPrior"] [data-v="uneventful"]');await input('readmitDischargeDate','2026-09-17');await input('readmitDischargeWeight','3080');await click('[data-seg="readmitFeeding"] [data-v="breast milk"]');
     await click('[data-msel="readmitBaseline"] [data-v="feeding well"]');await click('[data-msel="readmitBaseline"] [data-v="active"]');
     await click('#journeyNext');await input('readmitOnsetDOL','17');await input('readmitCourseType','new');await click('[data-rm-chip="rm_respiratory_symptoms"][data-v="tachypnea"]');await click('[data-rm-chip="rm_respiratory_symptoms"][data-v="cough"]');
@@ -112,10 +112,9 @@ async function main(){
     // Existing routes must still expose every stage after the birth controls move.
     await resize(1440,1000);
     const routeStages={};
-    for(const [story,expected] of [['A',2],['B',2],['C',3],['D',5]]){
+    for(const [story,expected] of [['A',2],['B',2],['C',2],['D',4]]){   // 2026-10-06：C 的嬰兒室抽血、D 的轉送途中是可選站，預設不在故事裡
       await chapter('admissionContext');if(story==='A')await click('#entryDirect');
-      if(['A','B'].includes(story))await chapter('birthHistoryCard');
-      await click(`[data-story="${story}"]`);
+            await click(`[data-story="${story}"]`);
       const stops=await ev(`[...document.querySelectorAll('#journey > li')].filter(e=>!e.hidden).map(e=>e.dataset.stop)`);
       assert.equal(stops.length,expected,story+' stage count');
       for(const stop of stops){await click(`[data-stop-toggle="${stop}"]`);assert.ok(await ev(`document.querySelector('#journeyWorkspace').children.length>0`));}
@@ -145,27 +144,26 @@ async function main(){
       await click('#admissionContext .stage-actions .primary');await input('gravida','2');await input('para','2');await input('matAge','30');
       await click('#prenatalNext');await click('[data-seg="gender"] [data-v="male"]');await input('gaW',kind==='A'?'35':'37');await input('bw',kind==='A'?'2300':'2800');await click('[data-seg="delivery"] [data-v="nsd"]');await input('ap1','8');await input('ap5','9');
     };
-    await fresh();await background('A');await click('[data-story="A"]');await click('[data-msel="pwSbR"] [data-v="preterm labor"]');
-    await input('birthBreathing','labored');await input('birthResusStatus','performed');await click('[data-add-birth="ppv"]');
+    await fresh();await background('A');await chapter('admissionContext');await click('[data-story="A"]');await chapter('birthHistoryCard');await click('[data-msel="pwSbR"] [data-v="preterm labor"]');
+    await click('[data-select-chips="birthBreathing"] [data-v="labored"]');await chapter('admissionContext');await click('[data-ladder-v="ppv"]');await chapter('birthHistoryCard');
     const eventId=await ev(`document.querySelector('#birthEvents [data-event-id]').dataset.eventId`);
-    await input('event-'+eventId+'-minutes','2');await input('event-'+eventId+'-fiO2','25');await input('event-'+eventId+'-pip','20');await input('event-'+eventId+'-peep','5');await input('birthFinalSupport','cpap');
+    await input('event-'+eventId+'-minutes','2');await input('event-'+eventId+'-fiO2','25');await input('event-'+eventId+'-pip','20');await input('event-'+eventId+'-peep','5');await click('[data-select-chips="birthFinalSupport"] [data-v="ppv"]');
     // 換段＝只顯示該段並回到頂端（不再是一條長頁的捲動）。
     await click('#birthHistoryCard .stage-actions .primary');assert.equal(await chapterText(),'本次病程');assert.equal(await ev('scrollY'),0,'Next stage starts at the top');
     assert.equal(await ev(`document.querySelector('#birthHistoryCard').checkVisibility()`),false,'Only the active stage is displayed');
     await click('#journeyPrev');assert.equal(await chapterText(),'出生資料');assert.equal(await ev('scrollY'),0);assert.equal(await ev(`document.querySelector('#birthHistoryCard').checkVisibility()`),true);
     assert.equal(await ev(`document.querySelector('#event-${eventId}-pip').value`),'20','Switching stages keeps entered values');
-    await click('#birthHistoryCard .stage-actions .primary');await input('obRespRelation','continued');await click('#journeyNext');await click('#admissionStatusBody [data-seg="resp"] [data-v="NCPAP"]');await click('#journeyNext');
+    await click('#birthHistoryCard .stage-actions .primary');await click('#journeyNext');await click('#admissionStatusBody [data-seg="resp"] [data-v="NCPAP"]');await click('#journeyNext');
     const directNote=await note();assert.match(directNote,/35 weeks/);assert.match(directNote,/preterm labor/);assert.match(directNote,/2 minutes/);assert.match(directNote,/25%/);assert.match(directNote,/NCPAP/);assert.doesNotMatch(directNote,/discharged home|An older sibling/);
     await at('#finalReviewCard');await shot('nicu-forward-direct-review-light.png');await click('#copy');assert.match(await ev(`document.querySelector('#copyStatus').textContent`),/^已複製/,'Real Chrome clipboard action');
-    await fresh();await background('D');await input('obFacility','Example Transfer Hospital');await input('birthBreathing','crying');await input('birthResusStatus','none');
-    await click('#birthHistoryCard [data-flow-target="pathwayCard"]');await input('obM1Relation','new');await click('[data-seg="obM1Type"] [data-v="o2"]');await click('[data-seg="obM1Dev"] [data-v="hood"]');await input('obM1Flow','2');
+    await fresh();await background('D');await input('obFacility','Example Transfer Hospital');await click('[data-select-chips="birthBreathing"] [data-v="crying"]');await chapter('admissionContext');await click('[data-ladder-v="none"]');
+    await chapter('pathwayCard');
     await click('#journeyNext');await click('[data-fill="obReason"] [data-v="respiratory distress"]');
-    await click('#journeyNext');await typeText('obArrival','The infant was tachypneic with subcostal retractions.');
-    await click('#journeyNext');await input('obRespRelation','continued');
-    assert.equal(await ev(`document.querySelector('[data-seg="obRespType"]').checkVisibility()`),false,'Do not ask for the inherited mode again');
-    assert.equal(await ev(`document.querySelector('#obRespRelationSummary').checkVisibility()`),false,'Do not repeat the selected mode outside optional parameter details');
-    assert.equal(await ev(`document.querySelector('#obRespRelationDetails').open`),false);
-    const beforeDetails=await note();await click('#obRespRelationDetails > summary');assert.equal(await ev(`document.querySelector('#obRespRelationSummary').checkVisibility()`),true);assert.equal(await note(),beforeDetails);await click('#obRespRelationDetails > summary');
+    // 2026-10-06：到場時掛什麼是一題；轉送途中是可選站，點空心點加入，關係由前後值推導。
+    await click('#journeyNext');await click('[data-seg="obM1Type"] [data-v="o2"]');await click('[data-seg="obM1Dev"] [data-v="hood"]');await input('obM1Flow','2');await typeText('obArrival','The infant was tachypneic with subcostal retractions.');
+    await click('[data-band-opt="route"]');assert.match(await ev(`document.querySelector('#routeSupportBefore').textContent`),/到場時.*氧氣/);
+    await click('[data-seg="obRespType"] [data-v="o2"]');assert.match(await note(),/Supplemental oxygen was continued during transport/);
+    assert.equal(await ev(`!!document.querySelector('#obRespRelationSummary,#obRespRelationDetails,[data-support-choice]')`),false,'No second relation question');
     await at('#journeyWorkspace');await shot('nicu-forward-outborn-desktop-light.png');
     await resize(390,844,true);await at('#journeyWorkspace');await shot('nicu-forward-outborn-mobile-light.png');
     await click('#journeyNext');await click('#admissionStatusBody [data-seg="resp"] [data-v="NC"]');await typeText('obAdmissionStatus','Mild tachypnea persisted.');await click('#journeyNext');
@@ -252,7 +250,7 @@ async function main(){
     await fresh();await resize(1440,1000);await click('[data-story="E"]');await click('[data-seg="dest"] [data-v="NBC"]');
     await click('[data-seg="readmitSource"] [data-v="clinic"]');await click('[data-msel="readmitProblems"] [data-v="respiratory"]');
     await input('birthDate','2026-09-15');await click('#admissionDateDetails > summary');await input('admissionDate','2026-10-02');await click('#admissionDateDetails > summary');
-    await chapter('birthHistoryCard');await input('gaW','99');await input('birthResusStatus','performed');
+    await chapter('birthHistoryCard');await input('gaW','99');await ev(`(()=>{const e=document.getElementById('birthResusStatus');e.value='performed';e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
     await chapter('pathwayCard');await click('#journeyNext');
     const onsetDetails='details:has(#rm_respiratory_onset) > summary';
     await click(onsetDetails);await input('rm_respiratory_onset','25');await click(onsetDetails);await click('#journeyNext');await click('#journeyNext');
@@ -296,14 +294,14 @@ async function main(){
     // Space on the missing-action hint focuses its group; it must never press +PPV.
     // 「關鍵資料未填」預設收合成一行計數（缺漏改在各段結尾處理），先展開。
     if(!await ev(`document.querySelector('#reviewMissing').open`))await click('#reviewMissingSummary');
-    const addHint=reviewLink('#birthActionsWrap .event-add');await position(addHint);
+    const addHint=reviewLink('#ladderChoices');await position(addHint);
     await ev(`document.querySelector(${JSON.stringify(addHint)}).focus({preventScroll:true})`);
     await send('Input.dispatchKeyEvent',{type:'keyDown',key:' ',code:'Space',windowsVirtualKeyCode:32,text:' '});
     await send('Input.dispatchKeyEvent',{type:'keyUp',key:' ',code:'Space',windowsVirtualKeyCode:32});await pause(120);
-    assert.equal(await ev(`document.activeElement===document.querySelector('#birthActionsWrap .event-add')`),true);
+    assert.equal(await ev(`document.activeElement===document.querySelector('#ladderChoices')`),true);
     assert.equal(await ev(`document.querySelectorAll('#birthEvents .clinical-event').length`),0);
-    await click('[data-add-birth="epinephrine"]');await click('[data-add-birth="epinephrine"]');
-    const repeatedIds=await ev(`[...document.querySelectorAll('#birthEvents .clinical-event')].map(e=>e.dataset.eventId)`);
+    await click('[data-ladder-v="cpr"]');await chapter('birthHistoryCard');await click('[data-add-birth="epinephrine"]');
+    const repeatedIds=await ev(`[...document.querySelectorAll('#birthEvents .clinical-event[data-event-kind="epinephrine"]')].map(e=>e.dataset.eventId)`);
     await chapter('finalReviewCard');await click(reviewLink('#event-'+repeatedIds[1]+'-drugRoute'));
     await checkLocated('event-'+repeatedIds[1]+'-drugRoute','出生資料');await shot('nicu-review-repeated-event-mobile.png');
     assert.equal(await ev(`document.activeElement.closest('.clinical-event').dataset.eventId`),repeatedIds[1]);

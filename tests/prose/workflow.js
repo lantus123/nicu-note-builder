@@ -66,9 +66,9 @@ test('unknown dates never fall back to a stale calculated DOL',({seed,input,note
 for(const [birth,admission,dol] of [['2026-10-02','2026-10-02',1],['2026-09-30','2026-10-02',3],['2024-02-28','2024-03-01',3],['2025-12-31','2026-01-01',2]]){
   test(`calendar DOL ${birth} to ${admission}`,({input,note})=>{input('birthDate',birth);input('admissionDate',admission);assert.match(note(),new RegExp('This '+dol+'-day-old '));});
 }
-test('E retains visible birth observations and resuscitation without switching route',({seed,story,visible,input,note})=>{
-  seed();story('E');assert.equal(visible('birthBreathing'),true);assert.equal(visible('birthResusStatus'),true);
-  input('birthBreathing','crying');input('birthResusStatus','none');assert.match(note(),/No resuscitation was required at birth/);
+test('E retains visible birth observations and resuscitation without switching route',({seed,story,visible,input,note,get,click})=>{
+  seed();story('E');assert.equal(visible('ladderChoices'),true);assert.equal(get('[data-select-chips="birthBreathing"]').closest('[hidden]'),null);
+  input('birthBreathing','crying');click('[data-ladder-v="none"]');assert.match(note(),/No resuscitation was required at birth/);
 });
 test('entry selection does not jump; E source and problems live at the entry',({W,story,get})=>{
   let calls=0;W.HTMLElement.prototype.scrollIntoView=()=>calls++;story('E');assert.equal(calls,0);
@@ -121,7 +121,7 @@ test('a confirmed thyroid history does not invent its type',({click,note})=>{
   click('[data-seg="thyType"] [data-v="hypo"]');assert.match(note(),/maternal hypothyroidism/);
 });
 test('E birth resuscitation remains history, not a current diagnosis or procedure',({seed,story,input,click,problem,note,tab,get})=>{
-  seed();story('E');input('birthResusStatus','performed');click('[data-add-birth="intubation"]');input('birthFinalSupport','ett');problem('jaundice');
+  seed();story('E');click('[data-ladder-v="ett"]');input('birthFinalSupport','ett');problem('jaundice');
   assert.match(note(),/intubat/i);assert.doesNotMatch(note().split('Tentative diagnosis:')[1],/Respiratory distress/);
   assert.equal(get('[data-proctog] [data-v="intub"]').getAttribute('aria-pressed'),'false');tab('plan');assert.doesNotMatch(note(),/via an OG tube|respiratory support with ETT/);
 });
@@ -211,7 +211,7 @@ test('review separates missing keys, unconfirmed actions, conflicts and neutral 
   seed();story('E');problem('respiratory');input('rm_respiratory_onset','25');
   assert.match(get('#reviewConflictList').textContent,/起始 DOL/);assert.doesNotMatch(get('#reviewMissingList').textContent,/起始 DOL/);
   assert.doesNotMatch(get('#reviewOptionalList').textContent,/黃疸|bilirubin/);
-  input('birthResusStatus','performed');assert.match(get('#reviewPendingList').textContent,/實際處置/);
+  input('birthResusStatus','performed');assert.match(get('#reviewPendingList').textContent,/急救到哪一階/);
   assert.doesNotMatch(get('#reviewConflictList').textContent,/實際處置/);
   get('#reviewOptional').open=true;input('rm_respiratory_onset','17');assert.equal(get('#reviewOptional').open,true,'Input must not close optional review');
 });
@@ -236,16 +236,13 @@ test('band nodes and stage headers navigate without editing clinical facts',({d,
   click('#stageBand [data-flow-target="admissionContext"]');assert.equal(chapter(d),'入院設定');assert.equal(get('#pathwayCard').hasAttribute('data-stage-off'),true);assert.equal(note(),before);
   click('#stageBand [data-flow-target="pathwayCard"]');assert.match(currentNode(d),/症狀與變化/,'Returning to the stage keeps the last journey step');assert.equal(get('#readmitCourse').value,'The symptoms persisted.');
 });
-test('confirmed support reuse is a read-only mode summary, not an unanswered second question',({story,seg,input,get,note,click})=>{
-  story('D');input('birthFinalSupport','cpap');input('obM1Relation','continued');
-  assert.match(get('#obM1RelationSummary').textContent,/CPAP.*離開外院出生場所前/);assert.equal(get('#obM1RelationDetails').open,false);
-  assert.equal(get('#outsideSupportControls').parentElement.id,'obM1RelationDetails');
-  input('obRespRelation','continued');assert.match(get('#obRespRelationSummary').textContent,/CPAP.*外院照護時/);assert.equal(get('#obRespRelationDetails').open,false);
-  const before=note();get('#obRespRelationDetails').open=true;assert.equal(note(),before);
-  input('obPEEP','6');get('#obRespRelationDetails').open=false;input('obAdmissionStatus','The infant remained tachypneic.');
-  assert.equal(get('#obRespRelationDetails').open,false);assert.match(get('#obRespRelationDetails > summary').textContent,/原值保留/);assert.match(note(),/6 cmH2O/);
-  input('birthFinalSupport','room');assert.equal(get('#obRespRelationSummary').hidden,true);assert.equal(get('#pathwaySupportControls').parentElement.closest('details'),null);
-  assert.match(get('#reviewConflictList').textContent,/重新確認是否仍持續使用/);assert.equal(get('#obPEEP').value,'6');
+test('support continuity is derived from the stations before and after; there is no second question to answer',({story,seg,input,get,note,click,d})=>{
+  // 2026-10-06：拿掉「與前一站的關係」；只顯示前一站是什麼（唯讀），本段直接選方式。
+  story('D');click('[data-phase-target="course:obArrive"]');seg('obM1Type','cpap');
+  click('[data-phase-target="course:route"]');assert.match(get('#routeSupportBefore').textContent,/到場時.*CPAP/);assert.equal(d.querySelector('#obRespRelationSummary,#obRespRelationDetails'),null);
+  seg('obRespType','cpap');input('obPEEP','6');input('obAdmissionStatus','The infant remained tachypneic.');
+  assert.match(note(),/CPAP was continued during transport \(pressure 6 cmH2O\)/);
+  click('[data-phase-target="course:obArrive"]');seg('obM1Type','room');assert.match(note(),/CPAP was initiated during transport/);assert.equal(get('#obPEEP').value,'6');
 });
 test('all module clinical fields have a definition and output tests',({d})=>{
   const inputs=[...d.querySelectorAll('#readmitModules input:not([type="hidden"]),#readmitModules select')];

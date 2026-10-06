@@ -1,43 +1,40 @@
 // Support state semantics, explicit procedures, review navigation, and prose boundaries.
 // All data are synthetic. No network or production writes.
 const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require('jsdom');
-const html=fs.readFileSync(__dirname+'/../../index.html','utf8').replace('function render(){','window.safetyAPI={S,render,drawEvents,supportSentence,sourceStamp,clockTime};function render(){');
+const html=fs.readFileSync(__dirname+'/../../index.html','utf8').replace('function render(){','window.safetyAPI={S,render,drawEvents,supportSentence,resolvedSupport,clockTime};function render(){');
 let passed=0,failed=0,matrix=0;
 function test(name,run){
  const errors=[],dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'https://nicu-safety.test/',beforeParse(W){W.scrollTo=()=>{};W.HTMLElement.prototype.scrollIntoView=()=>{};W.addEventListener('error',e=>errors.push(e.error?.stack||e.message));}}),W=dom.window,d=W.document;
  const get=s=>{const e=d.querySelector(s);assert.ok(e,'Missing '+s);return e;},click=s=>get(s).click();
  const input=(id,v)=>{const e=get('#'+id);e.value=v;e.dispatchEvent(new W.Event(e.tagName==='SELECT'?'change':'input',{bubbles:true}));};
- const seg=(k,v)=>click(`[data-seg="${k}"] [data-v="${v}"]`),story=s=>click(`[data-story="${s}"]`),choose=(f,v)=>click(`#${f}-choice-${v}`),note=()=>get('#note').textContent;
+ const seg=(k,v)=>click(`[data-seg="${k}"] [data-v="${v}"]`),story=s=>click(`[data-story="${s}"]`),note=()=>get('#note').textContent;
  const both=check=>{for(const t of ['adm','acc']){click(`[data-tab="${t}"]`);check(note());}click('[data-tab="adm"]');};
  const warning=(target,word)=>[...d.querySelectorAll('#reviewConflictList [data-review-target]')].find(e=>e.dataset.reviewTarget===target&&(!word||e.textContent.includes(word)));
- try{run({W,d,get,click,input,seg,story,choose,note,both,warning,...W.safetyAPI});assert.deepEqual(errors,[]);passed++;console.log('✓ '+name);}catch(e){failed++;console.error('✗ '+name+'\n'+e.stack);}finally{W.close();}
+ try{run({W,d,get,click,input,seg,story,note,both,warning,...W.safetyAPI});assert.deepEqual(errors,[]);passed++;console.log('✓ '+name);}catch(e){failed++;console.error('✗ '+name+'\n'+e.stack);}finally{W.close();}
 }
-test('1,008 support combinations never imply intubation and respect source confirmation',({S,d,story,sourceStamp,supportSentence})=>{
- story('D');const modes=['','room','o2','cpap','ppv','ett'];
- for(const field of ['obM1Relation','obRespRelation'])for(const source of modes)for(const relation of ['','continued','settings','new','repeat','changed','stopped'])for(const selected of modes)for(const current of [true,false]){
-  S.courseEvents=[];d.getElementById('birthFinalSupport').value=source;
-  d.getElementById('obM1Relation').value='';S.obM1Type=source;
-  d.getElementById(field).value=relation;S.continuitySignatures[field]=current?sourceStamp(field):'stale';
-  const text=supportSentence(field,selected,'during transport',{fiO2:'30',peep:'6'});
-  assert.doesNotMatch(text,/\b(?:reintubated|intubated|intubation|reintubation)\b/i);
-  if(selected==='room'&&['new','repeat','settings'].includes(relation))assert.equal(text,'');
-  const confirmed=current&&source&&(!selected||selected===source);
-  if(relation==='continued'&&!confirmed)assert.doesNotMatch(text,/was continued|continued breathing/);
-  if(relation==='settings'&&(!confirmed||source==='room'))assert.doesNotMatch(text,/were adjusted/);
-  if(relation==='changed'&&(!current||!source||source===selected))assert.doesNotMatch(text,/was changed to/);
-  if(relation==='changed'&&current&&source&&source!=='room'&&selected==='room'){assert.match(text,/was switched from .* to room air/);assert.doesNotMatch(text,/wean|improv|extubat/i);}
-  if(relation==='stopped'){assert.doesNotMatch(text,/room air|improved|30%/);if(!current||!source||source==='room')assert.equal(text,'');}
-  if(selected==='ett'&&['new','repeat'].includes(relation))assert.match(text,/Mechanical ventilation via an endotracheal tube was (initiated|provided again)/);
-  matrix++;
- }
- assert.equal(matrix,1008);
+test('72 derived support combinations never imply intubation and link only what the two stations say',({S,d,story,supportSentence,resolvedSupport})=>{
+ // 2026-10-06：拿掉「與前一站的關係」問題；關係只由前一站（A＝離開產房、D＝我方到場）與本段的值推導。
+ const modes=['','room','o2','cpap','ppv','ett'];
+ for(const s of ['A','D']){story(s);
+  for(const source of modes)for(const selected of modes){
+   S.courseEvents=[];d.getElementById('birthFinalSupport').value=s==='A'?source:'';S.obM1Type=s==='D'?source:'';
+   const {relation}=resolvedSupport('obRespRelation',selected),text=supportSentence('obRespRelation',selected,'during transport',{fiO2:'30',peep:'6'});
+   assert.doesNotMatch(text,/\b(?:reintubated|intubated|intubation|reintubation|discontinued|wean|improv|extubat)\b/i);
+   if(!selected){assert.equal(text,'');assert.equal(relation,'');}
+   else if(!source){assert.equal(relation,'');assert.match(text,/was receiving|was breathing room air/);}
+   else if(selected===source){assert.equal(relation,'continued');assert.match(text,/was continued|continued breathing room air/);}
+   else if(source==='room'){assert.equal(relation,'new');assert.match(text,/was initiated/);}
+   else if(selected==='room'){assert.equal(relation,'changed');assert.match(text,/was switched from .* to room air/);}
+   else {assert.equal(relation,'changed');assert.match(text,/respiratory support was changed to/i);}
+   if(relation!=='continued')assert.doesNotMatch(text,/was continued|continued breathing/);
+   matrix++;
+  }}
+ assert.equal(matrix,72);
 });
-test('same-mode settings have their own draft and stale sources require reconfirmation',({story,input,choose,get,note,warning,seg})=>{
- story('A');input('birthFinalSupport','cpap');choose('obRespRelation','settings');assert.equal(get('#obRespRelationDetails').open,true);input('obFiO2','40');input('obPEEP','6');assert.match(note(),/Settings for CPAP were adjusted/);
- choose('obRespRelation','changed');assert.equal(get('[data-seg="obRespType"] [data-v="cpap"]').disabled,true);seg('obRespType','o2');input('obO2Flow','2');
- choose('obRespRelation','settings');assert.equal(get('#obFiO2').value,'40');assert.equal(get('#obO2Flow').value,'');choose('obRespRelation','continued');get('#obRespRelationDetails').open=false;choose('obRespRelation','settings');assert.equal(get('#obRespRelationDetails').open,true);
- input('birthFinalSupport','ett');assert.ok(warning('#obRespRelationChoices','調整設定'));assert.doesNotMatch(note(),/were adjusted/);choose('obRespRelation','settings');assert.equal(get('#obFiO2').value,'');assert.equal(warning('#obRespRelationChoices','調整設定'),undefined);
- input('birthFinalSupport','cpap');choose('obRespRelation','settings');assert.equal(get('#obFiO2').value,'40');
+test('same mode with entered settings is a continuation carrying only the entered values',({story,input,seg,note,phase,click})=>{
+ story('D');click('[data-phase-target="course:obArrive"]');seg('obM1Type','cpap');click('[data-phase-target="course:route"]');seg('obRespType','cpap');input('obFiO2','40');input('obPEEP','6');
+ assert.match(note(),/CPAP was continued during transport \(FiO2 40%, pressure 6 cmH2O\)/);assert.doesNotMatch(note(),/were adjusted|changed to CPAP/);
+ seg('obM1Type','o2');assert.match(note(),/respiratory support was changed to CPAP during transport \(FiO2 40%, pressure 6 cmH2O\)/i,'Editing the previous station re-derives at once; the entered values stay with this station');
 });
 test('explicit reintubation is recorded once and only our known phase enables Procedure',({story,click,input,both,S,get})=>{
  story('D');click('[data-add-stage-event="intubation"][data-event-phase="arrival"]');const id=S.courseEvents.at(-1).id;
@@ -70,21 +67,24 @@ test('apnea details form one episode sentence without inventing unknown counts o
 test('care and screening together do not fabricate a disease or omit either reason',({story,click,input,both})=>{
  story('E');for(const v of ['care','abnormal-screen'])click(`[data-msel="readmitProblems"] [data-v="${v}"]`);input('rm_care_reason','temporary caregiver unavailability');input('rm_screen_test','newborn screening');input('rm_screen_result','an elevated marker');both(n=>{assert.match(n,/temporary caregiver unavailability/);assert.match(n,/newborn screening/);assert.doesNotMatch(n,/with ____ for further evaluation and treatment/);});
 });
-test('legacy same-mode change is retained and warned about until the doctor resolves it',({story,input,choose,S,render,get,warning,both})=>{
- story('A');input('birthFinalSupport','cpap');choose('obRespRelation','changed');S.obRespType='cpap';input('obFiO2','35');render();assert.equal(S.obRespType,'cpap');both(n=>assert.doesNotMatch(n,/was changed to CPAP/));assert.ok(warning('#obRespRelationChoices','前後呼吸方式相同'));choose('obRespRelation','settings');assert.equal(warning('#obRespRelationChoices','前後呼吸方式相同'),undefined);choose('obRespRelation','changed');assert.equal(get('#obFiO2').value,'35');
+test('the same mode before and after is never written as a change',({story,input,seg,both})=>{
+ story('A');input('birthFinalSupport','o2');seg('obRespType','o2');input('obO2Flow','2');both(n=>{assert.doesNotMatch(n,/was changed to/);assert.match(n,/Supplemental oxygen was continued before admission \(flow 2 L\/min\)/);});
 });
-test('new and restarted support disable room air without deleting imported conflicting data',({story,choose,S,render,get,warning})=>{
- story('D');for(const [field,key] of [['obM1Relation','obM1Type'],['obRespRelation','obRespType']])for(const relation of ['new','repeat']){choose(field,relation);assert.equal(get(`[data-seg="${key}"] [data-v="room"]`).disabled,true);S[key]='room';render();assert.equal(S[key],'room');assert.ok(warning('#'+field+'Choices','Room air'));choose(field,'clear');assert.equal(warning('#'+field+'Choices','Room air'),undefined);}
+test('no relation questions or relation warnings remain; room air keeps its own meaning',({d,story,input,seg,note,warning})=>{
+ story('D');assert.equal(d.querySelector('#obM1Relation,#obRespRelation,[data-support-choice],[id$="RelationChoices"]'),null);
+ story('A');input('birthFinalSupport','room');seg('obRespType','room');assert.match(note(),/The infant continued breathing room air before admission/);
+ input('birthFinalSupport','o2');assert.match(note(),/The infant was switched from supplemental oxygen to room air before admission/);
+ assert.equal([...d.querySelectorAll('#reviewConflictList [data-review-target]')].filter(e=>/Relation/.test(e.dataset.reviewTarget)).length,0);
 });
-test('outside settings have editable parameters, isolated drafts and no transport inheritance',({story,input,choose,get,both,click,d,warning})=>{
- story('D');input('birthFinalSupport','cpap');choose('obM1Relation','settings');input('obM1FiO2','35');input('obM1PEEP','6');assert.equal(get('#obM1IPWrap').hidden,true);assert.equal(get('#obM1RRWrap').hidden,true);both(n=>assert.match(n,/Settings for CPAP were adjusted at the referring hospital \(FiO2 35%, pressure 6 cmH2O\)/));
- choose('obRespRelation','continued');assert.equal(get('#obFiO2').value,'');assert.equal(get('#obPEEP').value,'');
- story('E');both(n=>assert.doesNotMatch(n,/CPAP were adjusted|FiO2 35%/));story('D');assert.equal(get('#obM1FiO2').value,'35');assert.equal(get('#obM1PEEP').value,'6');
+test('arrival settings have editable parameters, isolated drafts and no transport inheritance',({story,input,seg,get,both,click,d,warning})=>{
+ story('D');click('[data-phase-target="course:obArrive"]');seg('obM1Type','cpap');input('obM1FiO2','35');input('obM1PEEP','6');assert.equal(get('#obM1IPWrap').hidden,true);assert.equal(get('#obM1RRWrap').hidden,true);both(n=>assert.match(n,/On our team's arrival at the referring hospital, the infant was receiving CPAP \(FiO2 35%, pressure 6 cmH2O\)/));
+ click('[data-phase-target="course:route"]');seg('obRespType','cpap');assert.equal(get('#obFiO2').value,'');assert.equal(get('#obPEEP').value,'');
+ story('E');both(n=>assert.doesNotMatch(n,/FiO2 35%/));story('D');assert.equal(get('#obM1FiO2').value,'35');assert.equal(get('#obM1PEEP').value,'6');
  input('obM1FiO2','150');click('[data-phase-target="course:route"]');click('[data-flow-target="finalReviewCard"]');const issue=warning('#obM1FiO2');assert.ok(issue);issue.click();assert.equal(d.activeElement.id,'obM1FiO2');input('obM1FiO2','35');assert.equal(warning('#obM1FiO2'),undefined);
 });
-test('direct mode choices precede optional help and keep disclosures flat',({story,get,d,choose,input})=>{
- story('D');for(const [field,key] of [['obM1Relation','obM1Type'],['obRespRelation','obRespType']]){assert.equal(d.querySelector('#'+field+'-choice-observed'),null);assert.ok(get(`[data-seg="${key}"]`).compareDocumentPosition(get('#'+field+'Help'))&d.defaultView.Node.DOCUMENT_POSITION_FOLLOWING);assert.equal(get('#'+field+'ModeLabel').hidden,true);}
- input('birthFinalSupport','cpap');choose('obM1Relation','continued');assert.equal(d.querySelector('#obM1RelationDetails details'),null);assert.equal(d.querySelector('#obM1RelationHelp details'),null);
+test('mode choices are direct, never inside a disclosure',({story,get,d})=>{
+ story('D');for(const key of ['obM1Type','obRespType']){assert.equal(get(`[data-seg="${key}"]`).closest('details'),null,key);}
+ assert.equal(d.querySelector('#obM1RelationHelp,#obRespRelationHelp,#obM1RelationDetails,#obRespRelationDetails'),null);
 });
 test('explicit event automation never overrides a manual Procedure opt-out',({story,click,input,S,get})=>{
  story('D');click('[data-add-stage-event="intubation"][data-event-phase="arrival"]');click('[data-proctog] [data-v="intub"]');assert.equal(get('[data-proctog] [data-v="intub"]').getAttribute('aria-pressed'),'false');const id=S.courseEvents.at(-1).id;input(`event-${id}-intubationAction`,'repeat');assert.equal(get('[data-proctog] [data-v="intub"]').getAttribute('aria-pressed'),'false');

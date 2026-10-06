@@ -122,9 +122,6 @@
   #pathwayCard .support-relation{margin-top:12px}
   #pathwayCard #obIPfield,#pathwayCard #obRRfield{display:inline-flex;align-items:center;gap:7px;max-width:100%;flex-wrap:wrap}
   #pathwayCard #obIPfield[hidden],#pathwayCard #obRRfield[hidden]{display:none}
-  #pathwayCard .optional-events{border:0;border-top:1px solid var(--line);border-radius:0;padding:4px 0 0;margin:18px 0 8px}
-  #pathwayCard .optional-events>summary{min-height:44px;padding:11px 0;cursor:pointer;font-size:14px;font-weight:650;line-height:1.5}
-  #pathwayCard .optional-events[open]{padding-bottom:0}
   @media(max-width:420px){:is(#birthCard,#pathwayCard) .clinical-event{padding:11px}:is(#birthCard,#birthHistoryCard,#pathwayCard) .event-tools{margin-left:0}#pathwayCard .continuity-card{padding:11px}}
   /* 自動判定徽章 */
   .autobox{display:flex;align-items:center;gap:11px;padding:12px;border-radius:9px;flex-wrap:wrap;
@@ -376,11 +373,6 @@
   #pathwayCard .tl .stop-plain:empty{display:none}
   #pathwayCard .tl .clinical-stage{margin:0;padding:0;border:0}
   #pathwayCard .tl .field:last-child{margin-bottom:0}
-  #pathwayCard .journey-adj{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
-  #pathwayCard .journey-adj>summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-3);min-height:34px;display:flex;align-items:center;gap:6px;list-style:none}
-  #pathwayCard .journey-adj>summary::before{content:"▸";transition:transform .15s}
-  #pathwayCard .journey-adj[open]>summary::before{transform:rotate(90deg)}
-  #pathwayCard .journey-adj[open]>summary{margin-bottom:12px}
   /* 病程 stepper 使用固定工作區；目前位置由合併導覽列顯示。
      輸入不觸發自動換站，只有站名與上一／下一段會移動。 */
   #pathwayCard .journey-progress{position:sticky;top:8px;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -473,9 +465,6 @@
   #readmitIntakeReview[data-conflict="true"]{padding:10px;border:1px solid var(--risk-line);border-radius:8px;background:var(--risk-soft);color:var(--risk)}
   #readmitIntakeTools{margin-top:8px}
   #readmitFeedingSummary{margin-bottom:12px}
-  .support-extra{margin-top:10px;border:0;border-radius:0;padding:0}
-  .support-extra>summary{min-height:44px;padding:10px 0;cursor:pointer;font-size:13px;line-height:1.5;color:var(--ink-2)}
-  .support-extra[open]{padding-bottom:12px}
   .workflow-review{font-size:13px;line-height:1.7;color:var(--ink-2);margin:0 0 20px}
   .review-group{padding:12px;border:1px solid var(--line);border-radius:9px;margin-bottom:10px;background:var(--surface-2)}
   .review-group h3{font-size:14px;line-height:1.5;margin:0 0 6px;color:var(--ink)}
@@ -507,23 +496,24 @@
   .phase-context p{font-size:13px;line-height:1.7;margin:4px 0;color:var(--ink-2)}
   .phase-context .phase-inherit{margin-top:8px;white-space:pre-line}
   .birth-stage[data-current=true]{border-top-color:var(--accent)}
-  #entryPathSummary{font-size:13px;color:var(--accent-ink);line-height:1.7;border-left:3px solid var(--accent);padding-left:12px;margin:15px 0}
-  .support-guide{margin-bottom:12px}
+  .story-line{flex:1 1 260px;min-width:0;margin:0;font-size:13px;color:var(--accent-ink);line-height:1.6;border-left:3px solid var(--accent);padding-left:12px;overflow-wrap:anywhere}
+  .story-line[hidden]{display:none}
+  #storyPlan{border-top:1px solid var(--line);padding-top:16px;margin-top:6px}
+  #storyPlan>.field[hidden]{display:none}
+  .inline-confirm{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;padding:10px 12px;border-left:3px solid var(--risk);background:var(--risk-soft);color:var(--risk);font-size:13px;line-height:1.6}
+  .inline-confirm[hidden]{display:none}
+  .inline-confirm p{flex:1 1 220px;margin:0}
+  .inline-confirm button{min-height:38px;padding:0 14px;border:1px solid var(--risk-line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
+  .band-confirm{margin-top:8px}
+  /* 可選站：不在故事裡＝虛線空心點；在故事裡＝一般節點＋移除鈕 */
+  .band-node.opt .dot{border-style:dashed;border-color:var(--accent)}
+  .band-node.opt .nm{color:var(--accent-ink);font-weight:500}
+  .band-node.opt-on{padding:0;display:block}
+  .band-node.opt-on .band-hit{width:100%;display:flex;flex-direction:column;align-items:center;gap:1px;padding:15px 3px 2px;margin:0;border:0;background:none;font:inherit;color:inherit;text-align:center;cursor:pointer;border-radius:8px}
+  .band-x{position:absolute;top:-4px;right:0;width:22px;height:22px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink-3);font:inherit;font-size:13px;line-height:22px;cursor:pointer;opacity:.55}
+  .band-x:hover,.band-x:focus-visible{opacity:1;color:var(--risk);background:var(--risk-soft)}
   .support-before{margin:0 0 12px;padding:0;border:0;background:transparent;font-size:13px;line-height:1.6;color:var(--ink-2);overflow-wrap:anywhere}
   .support-before strong{color:var(--ink);font-size:14px;margin-left:6px}
-  .support-question{font-size:15px;line-height:1.6;margin:0 0 8px;color:var(--ink);font-weight:650}
-  .support-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  .support-choices button{border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:10px;text-align:left;color:var(--ink);min-height:44px;font:inherit;font-size:13px;cursor:pointer;overflow-wrap:anywhere}
-  .support-choices button[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
-  .support-choices button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-  .support-choices button:disabled{opacity:.5;cursor:default}
-  .support-choices button.support-aux{min-height:44px;padding:7px 9px;background:transparent;font-size:12px;border-color:transparent;color:var(--ink-2)}
-  #obM1Wrap>.lab,#ladderALab{display:none}
-  .support-help{font-size:12px;line-height:1.6;margin-top:8px;color:var(--ink-2)}
-  .support-help>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px}
-  .support-help>summary::before{content:'▸'}
-  .support-help[open]>summary::before{content:'▾'}
-  .support-help p{margin:4px 0}
   .event-phase-label{font-size:12px;color:var(--accent-ink);margin:5px 0 10px}
   #courseEvents:empty,#obCareEvents:empty,#obArriveEvents:empty{display:none}
   #journeyWorkspace>.body>.stop-plain,.birth-stage>.body>.stop-plain,#admissionStatusBody>.stop-plain,#readmitSelectedSummary{display:none}
@@ -545,13 +535,6 @@
   .seg[data-msel]>button,.seg:has(>[data-rm-chip])>button{flex:0 1 auto}
   [data-msel="obSx"]{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr))}
   #entryReadmit [data-msel="readmitProblems"]>button{text-align:left}
-  .support-tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
-  .support-tools button,.support-help button{min-height:44px;border:0;background:transparent;color:var(--ink-2);font:inherit;font-size:13px;text-align:left;padding:8px;cursor:pointer}
-  .support-help>summary{font-weight:400}
-  .support-help button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px}
-  .support-help button.choice-button{position:relative;padding-left:34px}
-  .support-observation-label{font-size:13px;color:var(--ink-2);margin:12px 0 8px}
-  .site-support-summary{font-size:13px;line-height:1.6;margin:16px 0 0;color:var(--ink-2);white-space:pre-line}
   .row2{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
   .event-fields>.event-wide{grid-column:1/-1}
   #birthHistoryCard .event-fields,#pathwayCard .event-fields{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -690,6 +673,79 @@
   @media(max-width:799px){.pn-compact .seg button,.pn-compact .yn button,.pn-compact .scr-choice span{min-height:44px}}
   #reviewMissing>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:650;color:var(--ink-2)}
   #reviewMissing[data-issues="true"]>summary{color:var(--risk)}
+  /* 站內格線（2026-10-06）：第 3、4 段每一題同一個形狀——左 112px 標籤欄（說明在標籤下方）、右控制項；
+     按鈕與數字欄 38px，所有控制項左緣在同一條線上。處置列只用左側一條青線標示「這是一筆」，不加底色、不再包卡。 */
+  :is(#birthHistoryCard,#pathwayCard) .step{display:grid;grid-template-columns:112px minmax(0,1fr);gap:8px 16px;align-items:start;margin:0 0 16px}
+  :is(#birthHistoryCard,#pathwayCard) .step>.lab{grid-column:1;margin:0;padding-top:9px;display:flex;flex-direction:column;gap:2px;font-size:13.5px;line-height:1.35;color:var(--ink)}
+  :is(#birthHistoryCard,#pathwayCard) .step>.lab .q{display:block;font-size:12px;font-weight:400;color:var(--ink-3);line-height:1.35}
+  :is(#birthHistoryCard,#pathwayCard) .step>.ctl{grid-column:2;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:8px}
+  :is(#birthHistoryCard,#pathwayCard) .step>.ctl>[hidden]{display:none!important}
+  :is(#birthHistoryCard,#pathwayCard) .row2,:is(#birthHistoryCard,#pathwayCard) .gp-apgar{display:block}
+  :is(#birthHistoryCard,#pathwayCard) .row2>.step{margin-bottom:16px}
+  :is(#birthHistoryCard,#pathwayCard) .ctl>.seg,:is(#birthHistoryCard,#pathwayCard) .ctl>.seg-row{margin:0!important}
+  :is(#birthHistoryCard,#pathwayCard) .seg-row,:is(#birthHistoryCard,#pathwayCard) .step [data-msel="obSx"]{display:flex;flex-wrap:wrap;gap:6px}
+  :is(#birthHistoryCard,#pathwayCard) :is(.step,.adders) .seg{gap:6px}
+  :is(#birthHistoryCard,#pathwayCard) :is(.step,.adders) .seg button{flex:0 1 auto;min-height:38px;min-width:72px;padding-block:0;font-size:13.5px;border-radius:10px}
+  :is(#birthHistoryCard,#pathwayCard) .step .seg button.choice-button{padding-left:32px}
+  :is(#birthHistoryCard,#pathwayCard) .step .seg button.choice-clear{min-width:0}
+  :is(#birthHistoryCard,#pathwayCard) .step .num{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;min-height:38px}
+  :is(#birthHistoryCard,#pathwayCard) .step .num input{min-height:38px;height:38px;width:72px;flex:0 0 72px;padding:0 8px;text-align:center;border-radius:10px}
+  :is(#birthHistoryCard,#pathwayCard) .step .num select.tin{min-height:38px;height:38px;width:auto;flex:0 0 auto;padding-block:0}
+  :is(#birthHistoryCard,#pathwayCard) .step .tin:not(textarea){min-height:38px;height:38px;padding-block:0;border-radius:10px}
+  :is(#birthHistoryCard,#pathwayCard) .step .num .q{font-size:12px;color:var(--ink-3)}
+  :is(#birthHistoryCard,#pathwayCard) .step .sub{font-size:13px;color:var(--ink-2)}
+  .ev-num,.ev-text{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%}
+  .ev-text input.tin{width:150px!important;flex:0 1 150px;min-width:0}
+  .ev-text select.tin{width:auto!important;max-width:100%;min-width:0;flex:0 1 auto}
+  :is(#birthHistoryCard,#pathwayCard) .ev-row{border:0;border-left:2px solid var(--accent);border-radius:0;background:none;padding:2px 0 2px 14px;margin:0 0 14px -16px;display:flex;flex-direction:column;gap:12px}
+  :is(#birthHistoryCard,#pathwayCard) .ev-row>.step{margin:0}
+  :is(#birthHistoryCard,#pathwayCard) .ev-row[hidden]{display:none}
+  .ev-head{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-3);min-height:22px}
+  .ev-head b{color:var(--ink-2)}
+  .ev-head .event-tools{margin-left:auto;display:flex;gap:4px}
+  .ev-head .event-tools button{min-height:38px;min-width:38px;padding:0 8px;border:0;background:none;color:var(--ink-3);font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .ev-head .event-tools button:disabled{opacity:.35;text-decoration:none}
+  :is(#birthHistoryCard,#birthCard,#pathwayCard) .ev-row .event-number{display:none}   /* 序號只給核對清單的欄位名稱用（第 N 筆），畫面上不另佔一格 */
+  .row-more{font-size:13px;color:var(--ink-2);margin-left:128px}
+  .row-more>summary{cursor:pointer;min-height:30px;display:flex;align-items:center}
+  .row-more .sub{margin-top:6px}
+  .nrp-hint{margin:0;font-size:12px;line-height:1.6;color:var(--accent-ink)}
+  .nrp-hint .nrp-accept{margin-left:6px;min-height:38px;padding:0 10px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-soft);color:var(--accent-ink);font:inherit;font-size:12px;cursor:pointer}
+  :is(#birthHistoryCard,#pathwayCard) .ev-row input.nrp-default{border-style:dashed;color:var(--ink-3)}
+  .adders{display:grid;grid-template-columns:112px minmax(0,1fr);gap:6px 16px;align-items:center;margin:4px 0 18px}
+  .adders>.lab{grid-column:1;margin:0;font-size:13.5px}
+  .adders>.lab .q{font-size:12.5px;color:var(--ink-3);font-weight:500}
+  .adders .btns{grid-column:2;display:flex;flex-wrap:wrap;gap:8px}
+  .adders .hint{grid-column:2;margin:0;font-size:12.5px;color:var(--ink-3)}
+  .add{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px;border:1.5px dashed var(--accent);border-radius:10px;background:none;color:var(--accent-ink);font:inherit;font-weight:650;font-size:13.5px;cursor:pointer}
+  .add:hover{background:var(--accent-soft)}
+  .add[hidden]{display:none}
+  .undo-row{margin:0 0 12px 128px}
+  .undo-row button{min-height:32px;border:0;background:none;color:var(--accent-ink);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}
+  .ladder-summary{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0 0 14px;font-size:13px;color:var(--ink-2)}
+  .link-btn{min-height:30px;padding:0;border:0;background:none;color:var(--accent-ink);font:inherit;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  .assess-more{margin:-4px 0 16px}
+  .assess-more>summary{cursor:pointer;min-height:38px;display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:650;color:var(--ink-2);padding-left:128px}
+  .assess-more>summary .q{font-weight:400;font-size:12px;color:var(--ink-3)}
+  .assess-more[open]>summary{margin-bottom:10px}
+  .place-tag{font-size:11.5px;letter-spacing:.06em;color:var(--ink-3);font-weight:650;margin:-12px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .place-tag[hidden]{display:none}
+  #routeSupportBefore{margin:0}
+  #ladderWrap .seg button{min-height:38px}
+  @media(max-width:799px){
+    :is(#birthHistoryCard,#pathwayCard) :is(.step,.adders) .seg button,.add,:is(#birthHistoryCard,#pathwayCard) .step .num input,:is(#birthHistoryCard,#pathwayCard) .step .tin:not(textarea){min-height:44px;height:auto}
+    .ev-head .event-tools button,.nrp-hint .nrp-accept,.link-btn,.row-more>summary,.undo-row button{min-height:44px;min-width:44px}
+  }
+  @media(max-width:640px){
+    :is(#birthHistoryCard,#pathwayCard) .step,.adders{grid-template-columns:minmax(0,1fr)}
+    :is(#birthHistoryCard,#pathwayCard) .step>.lab,:is(#birthHistoryCard,#pathwayCard) .step>.ctl,.adders>.lab,.adders .btns,.adders .hint{grid-column:1}
+    :is(#birthHistoryCard,#pathwayCard) .step>.lab{padding-top:0}
+    .row-more,.undo-row{margin-left:0}.assess-more>summary{padding-left:0}
+    :is(#birthHistoryCard,#pathwayCard) .ev-row{margin-left:-2px;padding-left:10px}
+    .ev-text{display:flex;flex-wrap:wrap;width:100%}.ev-text select.tin,.ev-text input.tin{width:100%!important;flex:1 1 100%}
+  }
+  .guide{margin:0 0 18px;padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent-ink);font-size:13px;line-height:1.6}
+  .guide b{font-weight:700}
 </style>
 
 <div class="app-layout">
@@ -945,197 +1001,178 @@
         <span class="dot" aria-hidden="true"></span>
         <button type="button" class="hd" data-stop-toggle="standby" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
-<div class="field" id="pwSbWrap" hidden><span class="lab">Standby 原因 <span class="q">（多選；產房發生的事在下面的站填，這裡不重填）</span></span>
-      <div class="seg risk" data-msel="pwSbR" style="flex-wrap:wrap;margin-bottom:7px">
-        <button type="button" data-on data-v="fetal distress" style="flex:0 1 auto">Fetal distress</button>
-        <button type="button" data-on data-v="meconium-stained amniotic fluid" style="flex:0 1 auto">MSAF</button>
-        <button type="button" data-on data-v="preterm labor" style="flex:0 1 auto">Preterm labor</button>
-        <button type="button" data-on data-v="multiple gestation" style="flex:0 1 auto">Multiple gestation</button>
-        <button type="button" data-on data-v="breech presentation" style="flex:0 1 auto">Breech</button>
-        <button type="button" data-on data-v="congenital anomaly" style="flex:0 1 auto">Anomaly</button>
+<div class="field" id="pwSbWrap" hidden><span class="lab">Standby 原因<span class="q">多選；產房發生的事在後面的站填</span></span>
+      <div class="seg risk" data-msel="pwSbR">
+        <button type="button" data-on data-v="fetal distress">Fetal distress</button>
+        <button type="button" data-on data-v="meconium-stained amniotic fluid">MSAF</button>
+        <button type="button" data-on data-v="preterm labor">Preterm labor</button>
+        <button type="button" data-on data-v="multiple gestation">Multiple gestation</button>
+        <button type="button" data-on data-v="breech presentation">Breech</button>
+        <button type="button" data-on data-v="congenital anomaly">Anomaly</button>
       </div>
-      <label class="lab" for="pwSbRIn">其他 standby 原因 <span class="q">（選填，英文）</span></label><input class="tin" id="pwSbRIn" placeholder="或自行輸入…"></div>
-            </div>
+      <input class="tin" id="pwSbRIn" aria-label="其他 standby 原因（選填，英文）" placeholder="其他原因（選填，英文）"></div>
+        </div>
       </li>
       <li data-stop="birth" hidden>
         <span class="dot" aria-hidden="true"></span>
         <button type="button" class="hd" data-stop-toggle="birth" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
-<div class="clinical-stage">
-            <div class="clinical-grid">
-        <div class="field"><label class="lab" for="birthBreathing">呼吸情形</label>
-          <select class="tin" id="birthBreathing"><option value="">未記錄</option><option value="crying">有哭聲</option><option value="spontaneous">有自主呼吸</option><option value="apnea">無自主呼吸 / Apnea</option><option value="gasping">喘息樣呼吸 / Gasping</option><option value="labored">呼吸費力</option><option value="ineffective">呼吸無效</option></select></div>
-        <div class="field"><label class="lab" for="birthTone">肌張力</label>
-          <select class="tin" id="birthTone"><option value="">未記錄</option><option value="good">良好</option><option value="poor">低下</option><option value="flaccid">鬆軟 / Flaccid</option></select></div>
-        <div class="field"><label class="lab" for="birthHR">心率 <span class="q">（選填）</span></label>
-          <div class="num"><input type="number" id="birthHR" min="0" placeholder="未記錄"><span class="u">/min</span></div></div>
+<div class="field"><span class="lab" id="birthBreathingLab">呼吸<span class="q">只記實際觀察</span></span>
+      <div class="seg" data-select-chips="birthBreathing" role="group"><button type="button" data-v="crying">有哭聲</button><button type="button" data-v="spontaneous">自主呼吸</button><button type="button" data-v="labored" data-abn>呼吸費力</button><button type="button" data-v="apnea" data-abn>Apnea</button><button type="button" data-v="gasping" data-abn>Gasping</button><button type="button" data-v="ineffective" data-abn>呼吸無效</button></div><select class="tin" id="birthBreathing" aria-label="出生呼吸情形" hidden><option value="">未記錄</option><option value="crying">有哭聲</option><option value="spontaneous">有自主呼吸</option><option value="apnea">無自主呼吸 / Apnea</option><option value="gasping">喘息樣呼吸 / Gasping</option><option value="labored">呼吸費力</option><option value="ineffective">呼吸無效</option></select></div>
+    <div class="field"><span class="lab">肌張力</span>
+      <div class="seg" data-select-chips="birthTone" role="group"><button type="button" data-v="good">良好</button><button type="button" data-v="poor" data-abn>低下</button><button type="button" data-v="flaccid" data-abn>鬆軟 Flaccid</button></div><select class="tin" id="birthTone" aria-label="出生肌張力" hidden><option value="">未記錄</option><option value="good">良好</option><option value="poor">低下</option><option value="flaccid">鬆軟 / Flaccid</option></select></div>
+    <div class="field"><label class="lab" for="birthHR">心率<span class="q">選填</span></label>
+      <div class="num"><input type="number" id="birthHR" min="0" placeholder="—"><span class="u">/min</span></div></div>
+    <div class="field"><span class="lab">呼吸徵象<span class="q">多選，有才勾</span></span>
+      <div class="seg risk" data-msel="birthSigns"><button type="button" data-on data-v="cyanosis">Cyanosis</button><button type="button" data-on data-v="grunting">Grunting</button><button type="button" data-on data-v="retractions">Retractions</button></div></div>
+    <div class="field"><span class="lab">出生事件<span class="q">有才勾</span></span>
+      <div class="seg-row">
+        <div class="seg risk" data-tog="fd"><button type="button" data-v="1" data-on>Fetal distress</button></div>
+        <div class="seg risk" data-tog="doic"><button type="button" data-v="1" data-on>DOIC</button></div>
+        <div class="seg risk" data-tog="msaf"><button type="button" data-v="1" data-on>MSAF</button></div>
       </div>
-      <div class="field"><span class="lab">呼吸徵象 <span class="q">（多選，有才勾）</span></span>
-        <div class="seg risk" data-msel="birthSigns"><button type="button" data-on data-v="cyanosis">Cyanosis</button><button type="button" data-on data-v="grunting">Grunting</button><button type="button" data-on data-v="retractions">Retractions</button></div></div>
-      <div class="field"><label class="lab" for="birthInitialNote">其他出生觀察 <span class="q">（選填，英文）</span></label><input class="tin" id="birthInitialNote" placeholder="補充未涵蓋的實際觀察"></div>
-    </div>
-    <div class="clinical-stage">
-    <span class="lab">出生事件 <span class="q">（有才勾）</span></span>
-    <div style="display:flex;flex-wrap:wrap;gap:6px">
-      <div class="seg risk" data-tog="fd"><button type="button" data-v="1" data-on style="flex:0 1 auto">Fetal distress</button></div>
-      <div class="seg risk" data-tog="doic"><button type="button" data-v="1" data-on style="flex:0 1 auto">DOIC</button></div>
-      <div class="seg risk" data-tog="msaf"><button type="button" data-v="1" data-on style="flex:0 1 auto">MSAF</button></div>
-    </div>
-    <div class="num" id="doicMinWrap" hidden style="margin-top:9px"><label class="u" for="doicMin">DOIC</label>
-      <input type="number" id="doicMin" placeholder="__" min="0"><span class="u">分鐘</span></div>
-    <div class="field" id="msafGradeWrap" hidden style="margin-top:9px"><span class="lab">MSAF 稠度 <span class="q">（選填）</span></span>
-      <div class="seg" data-seg="msafGrade"><button type="button" data-v="thin">Thin 稀</button><button type="button" data-v="moderate">Moderate 中</button><button type="button" data-v="thick">Thick 稠</button></div></div>
-    <div class="seg" data-tog="birthNegConfirmed" style="margin-top:10px"><button type="button" data-v="1" style="flex:0 1 auto">確認未勾選的出生事件均未發生（FD／DOIC／MSAF）</button></div>
-    </div>
-            </div>
+      <div class="num" id="doicMinWrap" hidden><label class="u" for="doicMin">DOIC</label><input type="number" id="doicMin" placeholder="—" min="0"><span class="u">分鐘</span></div>
+      <div class="seg" data-seg="msafGrade" id="msafGradeWrap" hidden aria-label="MSAF 稠度（選填）"><button type="button" data-v="thin">Thin 稀</button><button type="button" data-v="moderate">Moderate 中</button><button type="button" data-v="thick">Thick 稠</button></div>
+      <div class="seg" data-tog="birthNegConfirmed"><button type="button" data-v="1">確認未勾選的出生事件均未發生（FD／DOIC／MSAF）</button></div></div>
+    <div class="field"><label class="lab" for="birthInitialNote">其他觀察<span class="q">選填，英文</span></label><input class="tin" id="birthInitialNote" placeholder="補充未涵蓋的實際觀察"></div>
+        </div>
       </li>
       <li data-stop="consult" hidden>
         <span class="dot" aria-hidden="true"></span>
         <button type="button" class="hd" data-stop-toggle="consult" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
-<div class="field" id="pwConsultWrap" hidden>
-      <div class="row2">
-        <div class="field"><label class="lab" for="pwConsultReason">出生後會診原因 <span class="q">（選填，英文）</span></label><input class="tin" id="pwConsultReason" placeholder="例：respiratory distress"></div>
-        <div class="field"><label class="lab" for="pwConsultH">會診於生後 <span class="q">（選填）</span></label><div class="num"><input type="number" id="pwConsultH" min="0" step="0.1" placeholder="未記錄"><span class="u">小時</span></div></div>
-      </div>
+<div id="pwConsultWrap" hidden>
+        <div class="field"><label class="lab" for="pwConsultReason">會診原因<span class="q">選填，英文</span></label><input class="tin" id="pwConsultReason" placeholder="例：respiratory distress"></div>
+        <div class="field"><label class="lab" for="pwConsultH">會診於生後<span class="q">選填</span></label><div class="num"><input type="number" id="pwConsultH" min="0" step="0.1" placeholder="—"><span class="u">小時</span></div></div>
     </div>
-            </div>
+        </div>
       </li>
       <li data-stop="dr" hidden>
         <span class="dot" aria-hidden="true"></span>
         <button type="button" class="hd" data-stop-toggle="dr" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
-<div class="clinical-stage">
-            <div class="field"><label class="lab" for="birthResusStatus">產房急救紀錄</label>
+<div class="field" id="birthResusField" hidden><label class="lab" for="birthResusStatus">產房急救紀錄</label>
         <select class="tin" id="birthResusStatus"><option value="">未記錄</option><option value="none">已確認無需急救</option><option value="performed">有施作，依發生順序新增</option></select></div>
-      <div id="birthActionsWrap" hidden>
-        <p class="man-h">每次只新增實際施作的項目，不自動包含其他處置；反覆處置或中途評估可再次新增。時間與參數選填。</p>
-        <div class="seg event-add" aria-label="新增產房處置或評估">
-          <button type="button" data-add-birth="ppv">＋ PPV</button><button type="button" data-add-birth="intubation">＋ 插管</button><button type="button" data-add-birth="compressions">＋ 胸外按壓</button><button type="button" data-add-birth="epinephrine">＋ Epinephrine</button><button type="button" data-add-birth="assessment">＋ 再評估</button>
-        </div>
+      <div id="birthActionsWrap">
+        <div class="ladder-summary" id="birthLadderSummary"></div>
         <div id="birthEvents"></div>
+        <div class="adders" id="birthAdders"><div class="lab"><span class="q">還有嗎？</span></div><div class="btns" id="birthAdderButtons"></div><p class="hint" id="birthAdderHint"></p></div>
       </div>
-    </div>
-            </div>
+        </div>
       </li>
       <li data-stop="drEnd" hidden>
         <span class="dot" aria-hidden="true"></span>
         <button type="button" class="hd" data-stop-toggle="drEnd" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
-<div class="clinical-stage">
-            <div class="clinical-grid">
-        <div class="field"><label class="lab" for="birthFinalBreathing">呼吸情形</label>
-          <select class="tin" id="birthFinalBreathing"><option value="">未記錄</option><option value="crying">有哭聲</option><option value="spontaneous">有自主呼吸</option><option value="apnea">無自主呼吸 / Apnea</option><option value="gasping">喘息樣呼吸 / Gasping</option><option value="labored">呼吸費力</option><option value="ineffective">呼吸無效</option></select></div>
-        <div class="field"><label class="lab" for="birthFinalTone">肌張力</label>
-          <select class="tin" id="birthFinalTone"><option value="">未記錄</option><option value="good">良好</option><option value="poor">低下</option><option value="flaccid">鬆軟 / Flaccid</option></select></div>
-        <div class="field"><label class="lab" for="birthFinalHR">心率 <span class="q">（選填）</span></label>
-          <div class="num"><input type="number" id="birthFinalHR" min="0" placeholder="未記錄"><span class="u">/min</span></div></div>
-        <div class="field"><label class="lab" for="birthFinalMin">評估於生後 <span class="q">（選填）</span></label>
-          <div class="num"><input type="number" id="birthFinalMin" min="0" step="0.1" placeholder="未記錄"><span class="u">分鐘</span></div></div>
-        <div class="field"><label class="lab" for="birthFinalSupport">當時呼吸支持</label>
-          <select class="tin" id="birthFinalSupport"><option value="">未記錄</option><option value="room">Room air</option><option value="o2">O₂</option><option value="cpap">CPAP</option><option value="ppv">PPV</option><option value="ett">ETT / Mechanical ventilation</option></select></div>
-      </div>
-      <div class="field"><span class="lab">呼吸徵象 <span class="q">（多選，有才勾；與出生當下相同會寫 persisted）</span></span>
-        <div class="seg risk" data-msel="birthFinalSigns"><button type="button" data-on data-v="cyanosis">Cyanosis</button><button type="button" data-on data-v="grunting">Grunting</button><button type="button" data-on data-v="retractions">Retractions</button></div></div>
-      <div class="field"><label class="lab" for="birthFinalNote">結束時補充 <span class="q">（選填，英文）</span></label><input class="tin" id="birthFinalNote" placeholder="補充當時的實際狀況"></div>
-    </div>
-            </div>
+<div class="field" id="leaveField"><span class="lab"><span id="leaveTitle">離開產房時</span><span class="q">到入院前都沒再變的話就這樣</span></span>
+      <div class="seg" data-select-chips="birthFinalSupport" id="leaveChoices"><button type="button" data-v="room">Room air</button><button type="button" data-v="o2">O₂</button><button type="button" data-v="cpap" data-abn>CPAP</button><button type="button" data-v="ppv" data-abn>PPV 持續（Neopuff）</button><button type="button" data-v="ett" data-abn>插管</button></div>
+      <select class="tin" id="birthFinalSupport" aria-label="離開時呼吸支持" hidden><option value="">未記錄</option><option value="room">Room air</option><option value="o2">O₂</option><option value="cpap">CPAP</option><option value="ppv">PPV</option><option value="ett">ETT / Mechanical ventilation</option></select>
+      <div class="num sub"><label class="u" for="leaveSpo2">SpO₂ 維持</label><input type="number" id="leaveSpo2" min="0" max="100" placeholder="—"><span class="u">%</span><span class="q">選填</span></div></div>
+    <details class="assess-more" id="leaveMore"><summary>補充評估<span class="q">呼吸／張力／心率／時間（選填）</span></summary>
+    <div class="field"><span class="lab">呼吸</span>
+      <div class="seg" data-select-chips="birthFinalBreathing" role="group"><button type="button" data-v="crying">有哭聲</button><button type="button" data-v="spontaneous">自主呼吸</button><button type="button" data-v="labored" data-abn>呼吸費力</button><button type="button" data-v="apnea" data-abn>Apnea</button><button type="button" data-v="gasping" data-abn>Gasping</button><button type="button" data-v="ineffective" data-abn>呼吸無效</button></div><select class="tin" id="birthFinalBreathing" aria-label="離開時呼吸情形" hidden><option value="">未記錄</option><option value="crying">有哭聲</option><option value="spontaneous">有自主呼吸</option><option value="apnea">無自主呼吸 / Apnea</option><option value="gasping">喘息樣呼吸 / Gasping</option><option value="labored">呼吸費力</option><option value="ineffective">呼吸無效</option></select></div>
+    <div class="field"><span class="lab">肌張力</span>
+      <div class="seg" data-select-chips="birthFinalTone" role="group"><button type="button" data-v="good">良好</button><button type="button" data-v="poor" data-abn>低下</button><button type="button" data-v="flaccid" data-abn>鬆軟 Flaccid</button></div><select class="tin" id="birthFinalTone" aria-label="離開時肌張力" hidden><option value="">未記錄</option><option value="good">良好</option><option value="poor">低下</option><option value="flaccid">鬆軟 / Flaccid</option></select></div>
+    <div class="field"><label class="lab" for="birthFinalHR">心率<span class="q">選填</span></label>
+      <div class="num"><input type="number" id="birthFinalHR" min="0" placeholder="—"><span class="u">/min</span></div></div>
+    <div class="field"><label class="lab" for="birthFinalMin">評估於生後<span class="q">選填</span></label>
+      <div class="num"><input type="number" id="birthFinalMin" min="0" step="0.1" placeholder="—"><span class="u">分鐘</span></div></div>
+    <div class="field"><span class="lab">呼吸徵象<span class="q">與出生當下相同會寫 persisted</span></span>
+      <div class="seg risk" data-msel="birthFinalSigns"><button type="button" data-on data-v="cyanosis">Cyanosis</button><button type="button" data-on data-v="grunting">Grunting</button><button type="button" data-on data-v="retractions">Retractions</button></div></div>
+    <div class="field"><label class="lab" for="birthFinalNote">結束時補充<span class="q">選填，英文</span></label><input class="tin" id="birthFinalNote" placeholder="補充當時的實際狀況"></div>
+    </details>
+        </div>
       </li>
       <li data-stop="obCare" hidden>
         <span class="dot" aria-hidden="true"></span>
         <button type="button" class="hd" data-stop-toggle="obCare" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
-<div id="outbornWrap" hidden style="margin-top:10px">
+<div id="outbornWrap" hidden>
       <div class="field"><label class="lab" for="obFacility">出生院所</label><input class="tin" list="hospList" id="obFacility" autocomplete="off" placeholder="請填實際出生院所"></div>
-      <div class="field"><label class="lab" for="obTransferFrom">轉入來源 <span class="q">（自動＝同出生院所）</span></label><input class="tin" list="hospList" id="obTransferFrom" autocomplete="off" placeholder="同出生院所（自動）"></div>
-          </div>
-<div class="field" id="obM1Wrap" hidden><span class="lab">外院後續呼吸支持 <span class="q">（我方抵達前；同一次產房處置不重填）</span></span>
-      <div class="seg" data-seg="obM1Type"><button type="button" data-v="">未記錄</button><button type="button" data-v="room">Room air</button><button type="button" data-v="o2">O₂</button><button type="button" data-v="cpap">CPAP</button><button type="button" data-v="ppv">PPV</button><button type="button" data-v="ett">ETT</button></div>
-      <div id="obM1O2Wrap" hidden style="margin-top:8px">
-        <div class="seg" data-seg="obM1Dev" style="margin-bottom:7px"><button type="button" data-v="">未記錄</button><button type="button" data-v="hood">Hood</button><button type="button" data-v="cannula">Nasal cannula</button><button type="button" data-v="mask">Mask</button></div>
-        <div class="num"><label class="u" for="obM1Flow">流量</label><input type="number" id="obM1Flow" placeholder="未記錄" min="0" step="0.5" style="max-width:90px"><span class="u">L/min</span></div>
-      </div>
-      <div class="row2" id="obM1VentWrap" hidden>
-        <label class="field" for="obM1FiO2"><span class="lab">FiO₂（%，選填）</span><input class="tin" id="obM1FiO2" type="number" min="0" max="100" step="any"></label>
-        <label class="field" id="obM1IPWrap" for="obM1IP"><span class="lab">PIP（cmH₂O，選填）</span><input class="tin" id="obM1IP" type="number" min="0" step="any"></label>
-        <label class="field" for="obM1PEEP"><span class="lab" id="obM1PEEPLabel">PEEP（cmH₂O，選填）</span><input class="tin" id="obM1PEEP" type="number" min="0" step="any"></label>
-        <label class="field" id="obM1RRWrap" for="obM1RR"><span class="lab">呼吸器頻率（/min，選填）</span><input class="tin" id="obM1RR" type="number" min="0" step="any"></label>
-      </div>
-      <div class="support-relation"><label class="lab" for="obM1Relation">外院這段期間的呼吸照護</label><select class="tin" id="obM1Relation"><option value="">本段呼吸方式</option><option value="continued">仍持續使用</option><option value="new">開始使用</option><option value="changed">換了呼吸方式</option><option value="settings">方式不變，調整設定</option><option value="repeat">停過，後來又開始</option><option value="stopped">已停止前項支持</option></select></div>
+      <div class="field"><label class="lab" for="obTransferFrom">轉入來源<span class="q">自動＝同出生院所</span></label><input class="tin" list="hospList" id="obTransferFrom" autocomplete="off" placeholder="同出生院所（自動）"></div>
     </div>
-            </div>
+        </div>
       </li>
       <li data-stop="obConsult" hidden>
         <span class="dot" aria-hidden="true"></span>
         <button type="button" class="hd" data-stop-toggle="obConsult" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
-<div class="field"><span class="lab">轉入原因 <span class="q">(due to…；點選帶入)</span></span>
-        <div class="seg" data-fill="obReason" style="flex-wrap:wrap;margin-bottom:7px">
-          <button type="button" data-v="prematurity" style="flex:0 1 auto">Prematurity</button>
-          <button type="button" data-v="respiratory distress" style="flex:0 1 auto">Resp distress</button>
-          <button type="button" data-v="neonatal hypoglycemia" style="flex:0 1 auto">Hypoglycemia</button>
-          <button type="button" data-v="hyperbilirubinemia" style="flex:0 1 auto">Hyperbili</button>
-          <button type="button" data-v="sepsis work-up" style="flex:0 1 auto">Sepsis w/u</button>
-          <button type="button" data-v="poor feeding" style="flex:0 1 auto">Poor feeding</button>
-          <button type="button" data-v="the need for a higher level of care" style="flex:0 1 auto">Higher care</button>
+<div class="field"><span class="lab">轉入原因<span class="q">due to…；點選帶入</span></span>
+        <div class="seg" data-fill="obReason">
+          <button type="button" data-v="prematurity">Prematurity</button>
+          <button type="button" data-v="respiratory distress">Resp distress</button>
+          <button type="button" data-v="neonatal hypoglycemia">Hypoglycemia</button>
+          <button type="button" data-v="hyperbilirubinemia">Hyperbili</button>
+          <button type="button" data-v="sepsis work-up">Sepsis w/u</button>
+          <button type="button" data-v="poor feeding">Poor feeding</button>
+          <button type="button" data-v="the need for a higher level of care">Higher care</button>
         </div>
-        <label class="scr-legend" for="obReason">轉入原因（英文）</label><input class="tin" id="obReason" placeholder="或自行輸入…"></div>
-            </div>
+        <input class="tin" id="obReason" aria-label="轉入原因（英文）" placeholder="或自行輸入…"></div>
+        </div>
       </li>
       <li data-stop="obArrive" hidden>
         <span class="dot" aria-hidden="true"></span>
         <button type="button" class="hd" data-stop-toggle="obArrive" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
-<div class="field" id="obArrWrap" hidden><label class="lab" for="obArrival">我方抵達外院時狀況 <span class="q">（選填，英文；非抵達本院時）</span></label>
-      <input class="tin" id="obArrival" placeholder="例：the infant was tachypneic with SpO2 88% under an oxygen hood"></div>
-            </div>
+<div class="field" id="obM1Wrap" hidden><span class="lab">到場時寶寶掛什麼<span class="q">外院處置之後、我們接手之前</span></span>
+      <div class="seg" data-seg="obM1Type"><button type="button" data-v="">未記錄</button><button type="button" data-v="room">Room air</button><button type="button" data-v="o2">O₂</button><button type="button" data-v="cpap" data-abn>CPAP</button><button type="button" data-v="ppv" data-abn>PPV</button><button type="button" data-v="ett" data-abn>插管</button></div>
+      <div id="obM1O2Wrap" hidden>
+        <div class="seg" data-seg="obM1Dev"><button type="button" data-v="">未記錄</button><button type="button" data-v="hood">Hood</button><button type="button" data-v="cannula">Nasal cannula</button><button type="button" data-v="mask">Mask</button></div>
+        <div class="num sub"><label class="u" for="obM1Flow">流量</label><input type="number" id="obM1Flow" placeholder="—" min="0" step="0.5"><span class="u">L/min</span></div>
+      </div>
+      <div class="num sub" id="obM1VentWrap" hidden>
+        <label class="u" for="obM1FiO2">FiO₂</label><input id="obM1FiO2" type="number" min="0" max="100" step="any" placeholder="—"><span class="u">%</span>
+        <span id="obM1IPWrap"><label class="u" for="obM1IP">IP</label><input id="obM1IP" type="number" min="0" step="any" placeholder="—"></span>
+        <label class="u" for="obM1PEEP" id="obM1PEEPLabel">PEEP</label><input id="obM1PEEP" type="number" min="0" step="any" placeholder="—"><span class="u">cmH₂O</span>
+        <span id="obM1RRWrap"><label class="u" for="obM1RR">RR</label><input id="obM1RR" type="number" min="0" step="any" placeholder="—"><span class="u">/min</span></span>
+      </div>
+      <div class="num sub"><label class="u" for="obArriveSpo2">SpO₂</label><input type="number" id="obArriveSpo2" min="0" max="100" placeholder="—"><span class="u">%</span><span class="q">選填</span></div></div>
+<div class="field" id="obArrWrap" hidden><label class="lab" for="obArrival">到場所見<span class="q">選填，英文；非抵達本院時</span></label>
+      <input class="tin" id="obArrival" placeholder="例：the infant was tachypneic with subcostal retractions"></div>
+        </div>
       </li>
       <li data-stop="route" hidden>
         <span class="dot" aria-hidden="true"></span>
         <button type="button" class="hd" data-stop-toggle="route" aria-expanded="false"><span class="t"></span><span class="sum"></span><span class="caret" aria-hidden="true">▾</span></button>
         <div class="body"><p class="man-h stop-plain"></p>
-<div class="field" id="pwSxWrap" hidden style="margin-top:10px"><span class="lab">後續症狀 <span class="q">（多選；出生當下已記錄的狀況不必再填，除非需交代後續變化）</span></span>
-      <div class="seg risk" data-msel="obSx" style="flex-wrap:wrap">
-        <button type="button" data-on data-v="tachypnea" style="flex:0 1 auto">Tachypnea</button>
-        <button type="button" data-on data-v="subcostal retractions" style="flex:0 1 auto">Retractions</button>
-        <button type="button" data-on data-v="grunting" style="flex:0 1 auto">Grunting</button>
-        <button type="button" data-on data-v="nasal flaring" style="flex:0 1 auto">Nasal flaring</button>
-        <button type="button" data-on data-v="cyanosis" style="flex:0 1 auto">Cyanosis</button>
-        <button type="button" data-on data-v="desaturation" style="flex:0 1 auto">Desaturation</button>
-        <button type="button" data-on data-v="apnea" style="flex:0 1 auto">Apnea</button>
-        <button type="button" data-on data-v="poor activity" style="flex:0 1 auto">Poor activity</button>
-        <button type="button" data-on data-v="poor feeding" style="flex:0 1 auto">Poor feeding</button>
-        <button type="button" data-on data-v="hypoglycemia" style="flex:0 1 auto">Hypoglycemia</button>
-        <button type="button" data-on data-v="jaundice" style="flex:0 1 auto">Jaundice</button>
-        <button type="button" data-on data-v="fever" style="flex:0 1 auto">Fever</button>
+<div class="field" id="pwSxWrap" hidden><span class="lab">症狀<span class="q">多選；出生當下已記錄的不必再填</span></span>
+      <div class="seg risk" data-msel="obSx">
+        <button type="button" data-on data-v="tachypnea">Tachypnea</button>
+        <button type="button" data-on data-v="subcostal retractions">Retractions</button>
+        <button type="button" data-on data-v="grunting">Grunting</button>
+        <button type="button" data-on data-v="nasal flaring">Nasal flaring</button>
+        <button type="button" data-on data-v="cyanosis">Cyanosis</button>
+        <button type="button" data-on data-v="desaturation">Desaturation</button>
+        <button type="button" data-on data-v="apnea">Apnea</button>
+        <button type="button" data-on data-v="poor activity">Poor activity</button>
+        <button type="button" data-on data-v="poor feeding">Poor feeding</button>
+        <button type="button" data-on data-v="hypoglycemia">Hypoglycemia</button>
+        <button type="button" data-on data-v="jaundice">Jaundice</button>
+        <button type="button" data-on data-v="fever">Fever</button>
       </div></div>
-    <div class="field" id="pwOnsetWrap" hidden><span class="lab">這時的症狀是新出現、一直有，還是又出現？</span>
+    <div class="field" id="pwOnsetWrap" hidden><span class="lab">症狀性質</span>
       <div class="seg" data-seg="pwOnset"><button type="button" data-v="observed">有觀察到，起始未明</button><button type="button" data-v="developed">新出現</button><button type="button" data-v="persisted">持續存在</button><button type="button" data-v="recurrent">再次出現</button></div>
-      <div class="num" id="pwOnsetHWrap" style="margin-top:8px"><label class="u" for="pwOnsetH">生後時間（選填）</label><input type="number" id="pwOnsetH" placeholder="未記錄" min="0" step="0.1" style="max-width:90px"><label class="scr-legend" for="pwOnsetUnit">生後時間單位</label><select class="tin" id="pwOnsetUnit" style="flex:0 1 135px;max-width:100%"><option value="">未記錄</option><option value="hours">小時</option><option value="minutes">分鐘</option></select></div></div>
-    <div class="field" id="pwLadderWrap" hidden><span class="lab" id="ladderALab">呼吸處置</span>
-      <div class="field"><label class="lab" for="obRespRelation">這段期間的呼吸照護</label><select class="tin" id="obRespRelation"><option value="">本段呼吸方式</option><option value="continued">仍持續使用</option><option value="new">開始使用</option><option value="changed">換了呼吸方式</option><option value="settings">方式不變，調整設定</option><option value="repeat">停過，後來又開始</option><option value="stopped">已停止前項支持</option></select></div>
+      <div class="num sub" id="pwOnsetHWrap"><label class="u" for="pwOnsetH">生後</label><input type="number" id="pwOnsetH" placeholder="—" min="0" step="0.1"><label class="scr-legend" for="pwOnsetUnit">生後時間單位</label><select class="tin" id="pwOnsetUnit"><option value="">單位</option><option value="hours">小時</option><option value="minutes">分鐘</option></select><span class="q">選填</span></div></div>
+    <div class="field" id="pwLadderWrap" hidden><span class="lab"><span id="ladderALab">呼吸支持</span><span class="q" id="routeSupportHint">和前一站一樣＝寫持續；不同＝寫改變（自動判斷）</span></span>
+      <p class="support-before" id="routeSupportBefore" hidden></p>
       <div id="pathwaySupportControls">
-      <div class="seg" data-seg="obRespType"><button type="button" data-v="">未記錄</button><button type="button" data-v="room">Room air</button><button type="button" data-v="o2">O₂</button><button type="button" data-v="cpap">CPAP</button><button type="button" data-v="ppv">Neopuff PPV</button><button type="button" data-v="ett">ETT</button></div>
-      <div id="obO2Wrap" hidden style="margin-top:8px">
-        <div class="seg" data-seg="obO2Dev" style="margin-bottom:7px"><button type="button" data-v="">未記錄</button><button type="button" data-v="hood">Hood</button><button type="button" data-v="cannula">Nasal cannula</button><button type="button" data-v="mask">Mask</button></div>
-        <div class="num"><label class="u" for="obO2Flow">流量</label><input type="number" id="obO2Flow" placeholder="未記錄" min="0" step="0.5" style="max-width:90px"><span class="u">L/min</span></div>
+      <div class="seg" data-seg="obRespType"><button type="button" data-v="">未記錄</button><button type="button" data-v="room">Room air</button><button type="button" data-v="o2">O₂</button><button type="button" data-v="cpap" data-abn>CPAP</button><button type="button" data-v="ppv" data-abn>Neopuff PPV</button><button type="button" data-v="ett" data-abn>插管</button></div>
+      <div id="obO2Wrap" hidden>
+        <div class="seg" data-seg="obO2Dev"><button type="button" data-v="">未記錄</button><button type="button" data-v="hood">Hood</button><button type="button" data-v="cannula">Nasal cannula</button><button type="button" data-v="mask">Mask</button></div>
+        <div class="num sub"><label class="u" for="obO2Flow">流量</label><input type="number" id="obO2Flow" placeholder="—" min="0" step="0.5"><span class="u">L/min</span></div>
       </div>
-      <div id="obRespWrap" hidden style="margin-top:8px"><div class="num" style="flex-wrap:wrap">
-        <label class="u" for="obFiO2">FiO₂</label><input type="number" id="obFiO2" placeholder="__" min="21" max="100" style="max-width:64px"><span class="u">%</span>
-        <span id="obIPfield"><label class="u" for="obIP">IP</label><input type="number" id="obIP" placeholder="__" min="0" style="max-width:60px"></span><label class="u" for="obPEEP">PEEP</label>
-        <input type="number" id="obPEEP" placeholder="__" min="0" style="max-width:60px">
-        <span id="obRRfield" hidden><label class="u" for="obRR">RR</label><input type="number" id="obRR" placeholder="__" min="0" style="max-width:60px"><span class="u">/min</span></span></div>
-        <div id="obStableField" hidden style="margin-top:7px">
-          <div class="seg" data-tog="obRespStable"><button type="button" data-v="1" style="flex:0 1 auto">已確認 HR 與 SpO₂ 穩定</button></div></div></div>
+      <div id="obRespWrap" hidden><div class="num sub">
+        <label class="u" for="obFiO2">FiO₂</label><input type="number" id="obFiO2" placeholder="—" min="21" max="100"><span class="u">%</span>
+        <span id="obIPfield"><label class="u" for="obIP">IP</label><input type="number" id="obIP" placeholder="—" min="0"></span><label class="u" for="obPEEP">PEEP</label>
+        <input type="number" id="obPEEP" placeholder="—" min="0"><span class="u">cmH₂O</span>
+        <span id="obRRfield" hidden><label class="u" for="obRR">RR</label><input type="number" id="obRR" placeholder="—" min="0"><span class="u">/min</span></span></div>
+        <div id="obStableField" hidden>
+          <div class="seg" data-tog="obRespStable"><button type="button" data-v="1">已確認 HR 與 SpO₂ 穩定</button></div></div></div>
       </div>
     </div>
-    <details class="optional-events">
-      <summary>新增後續事件或再次處置 <span class="q">（選填）</span></summary>
-      <p class="man-h">需要補充多次變化時，依發生順序新增並註明時點與地點。已在上方記錄的同一次支持不必再新增。</p>
-      <div class="seg event-add" aria-label="新增後續處置或評估"><button type="button" data-add-course="assessment">＋ 評估</button><button type="button" data-add-course="o2">＋ O₂</button><button type="button" data-add-course="cpap">＋ CPAP</button><button type="button" data-add-course="ppv">＋ PPV</button><button type="button" data-add-course="intubation">＋ 插管</button><button type="button" data-add-course="compressions">＋ 胸外按壓</button><button type="button" data-add-course="epinephrine">＋ Epinephrine</button></div>
-    </details>
     <div id="courseEvents"></div>
-    <div class="field" id="pwCourseWrap" hidden><label class="lab" for="obCourse">過程補充 <span class="q">（選填，英文；保留完整內容）</span></label>
+    <div class="adders" id="courseAdders"><div class="lab"><span class="q">處置</span></div><div class="btns" id="courseAdderButtons"></div><p class="hint" id="courseAdderHint">沒有新的處置就不用填；有才按＋。</p></div>
+    <div class="field" id="pwCourseWrap" hidden><label class="lab" for="obCourse">過程補充<span class="q">選填，完整英文句</span></label>
       <textarea class="tarea" id="obCourse" rows="2" placeholder="例：initially cared for in the baby room; the transport team was contacted…"></textarea></div>
             </div>
       </li>
@@ -1277,22 +1314,6 @@
     <p class="clinical-review" id="birthReview" role="status"></p>
     <p class="clinical-review" id="pathwayReview" role="status"></p>
     <div id="consistencySummary" role="status"></div>
-    <details class="journey-adj" id="journeyAdj">
-      <summary>調整細節 <span class="q">（混合情況才需要：故事卡背後的三個開關）</span></summary>
-      <div class="field"><span class="lab">孩子的入院路徑</span>
-    <div class="seg" data-seg="pathway" style="flex-wrap:wrap">
-      <button type="button" data-v="direct" style="flex:0 1 auto">直接入院</button>
-      <button type="button" data-v="nursery" style="flex:0 1 auto">嬰兒室觀察後轉入</button>
-      <button type="button" data-v="outborn" style="flex:0 1 auto">外院轉入 Outborn</button>
-      <button type="button" data-v="readmit" style="flex:0 1 auto">出院後再次就醫</button>
-    </div></div>
-    <div class="field"><span class="lab">團隊介入 <span class="q">（依實際經過，可同時選取）</span></span>
-      <div style="display:flex;flex-wrap:wrap;gap:7px">
-        <div class="seg" data-tog="pwStandby"><button type="button" data-v="1" style="flex:0 1 auto">產前 standby</button></div>
-        <div class="seg" data-tog="pwConsult"><button type="button" data-v="1" style="flex:0 1 auto">出生後會診</button></div>
-      </div>
-    </div>
-        </details>
   </section>
 
   <!-- 7. 填空（自由文字，之後成稿可直接改） -->
@@ -1885,14 +1906,14 @@
   const S={gender:"",dest:"",destNotice:"",growth:"AGA",growthAuto:true,delivery:"",csUncompl:false,usLevel2:false,r:{},   // usLevel2：有做 level II 超音波（院內模板用語 including level II ultrasound）   // 住院去處 NBC/NICU/PICU；E 僅 NBC/PICU，不預設。BR 是健康新生兒照護。性別/生產方式亦不預設。
            scr:{hbsag:"neg",hbeag:"neg",syphilis:"neg",rubella:"pos",hiv:"neg",gbs:"neg"},scrEdited:{},scrBatch:{},
            resus:"none",resp:"",acceptanceResp:"",acceptanceWeightMode:"admission",surfactant:false,birthEvents:[],courseEvents:[],nextEventId:1,
-           routeDrafts:{},continuitySignatures:{},lastRemoved:null,birthNegConfirmed:false,prenatalEdited:{},prenatalConfirmed:false,   // prenatalConfirmed：按過第 2 段「以上都對」；只給複製提醒用，不進病歷
+           routeDrafts:{},lastRemoved:null,birthNegConfirmed:false,prenatalEdited:{},prenatalConfirmed:false,   // prenatalConfirmed：按過第 2 段「以上都對」；只給複製提醒用，不進病歷
            
            amnio:"na",nipt:"na",mgso4:"none",toco:"none",iap:"none",us:"normal",ancReg:"regular",
            fd:false,doic:false,msaf:false,msafGrade:"",birthSigns:[],birthFinalSigns:[],tocoDischarged:false,   // 出生當下／產房結束評估的呼吸徵象（多選，空＝不寫）；安胎後已出院（前次住院）
            // pathway 不預設：預選「直接入院」＝零點擊就斷言路徑（2026-09-19 住院醫師混亂盤點）
            pathway:"",outborn:false,obRespType:"",obRespStable:false,obSx:[],brEval:[],brWorkup:[],brFindings:[],obO2Dev:"",   // 支持與裝置皆不預設，避免寫成未確認事實。
            readmitPrior:"",readmitFeeding:"",readmitSource:"",readmitBaseline:[],readmitProblems:[],readmitJaundiceSigns:[],
-           pwSbR:[],pwStandby:false,pwConsult:false,pwOnset:"observed",obM1Type:"",obM1Dev:"",
+           pwSbR:[],pwStandby:false,pwConsult:false,pwBrEval:false,pwTransport:false,leaveSpo2:"",pwOnset:"observed",obM1Type:"",obM1Dev:"",
            parent:{thal:"na",g6pd:"na",thyroid:"na"},thyType:"",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},habitReviewed:true,
            sibs:[],nextSibId:1,   // 家庭樹：手足清單（本人自動補在最後）
            // 家庭樹第二批：父母關係線型、父親不詳、父／母各自與其他伴侶的小孩（半手足；kids 與 S.sibs 同形，共用 nextSibId）
@@ -2168,6 +2189,7 @@
     if(e.target.matches('.scr-choice input[type="radio"]'))return;   // 篩檢統一由 change 寫入狀態並重繪。
     updateEventField(e.target);
     if(e.target.id==="dolOther")S.dolAuto=false;
+    if(e.target.id==="leaveSpo2")S.leaveSpo2=e.target.value;
     const d=e.target.dataset; if(d&&d.dkey&&S.acc[d.dkey+"Dates"])S.acc[d.dkey+"Dates"][d.ditem]=e.target.value;
     if(e.target.id==="procOperator"){try{localStorage.setItem("nicu_operator",e.target.value);}catch(_){}}
     if(e.target.id==="homeHosp"){try{localStorage.setItem("nicu_home_hosp",e.target.value);}catch(_){}}
@@ -2181,7 +2203,7 @@
   });
   document.addEventListener("change",e=>{
     updateEventField(e.target);
-    if(["obM1Relation","obRespRelation"].includes(e.target.id))S.continuitySignatures[e.target.id]=sourceStamp(e.target.id);
+    if(e.target.id==='leaveSpo2')S.leaveSpo2=e.target.value;
     if(e.target.matches('.scr-choice input[type="radio"], .scr-select')){
       const k=e.target.closest(".scr-row").dataset.scr, v=e.target.value;
       if(selectScreen(k,v)){render(); if(k==="gbs"&&["pos","pend","nd"].includes(v))pulseIap();}
@@ -2211,6 +2233,12 @@
         if(b.dataset.choiceKind!==kind){b.classList.add('choice-button');b.dataset.choiceKind=kind;}
         if(!b.hasAttribute('aria-pressed'))b.setAttribute('aria-pressed','false');
       }
+    });
+    // 單選 chips 代表隱藏的原生 select（測試與舊流程仍可直接改 select）；畫面狀態每次由 select 值推回。
+    document.querySelectorAll('[data-select-chips]').forEach(group=>{
+      const value=document.getElementById(group.dataset.selectChips)?.value||'';
+      if(!group.hasAttribute('role'))group.setAttribute('role','group');
+      group.querySelectorAll('button[data-v]').forEach(b=>{if(!b.dataset.v){b.disabled=!value;return;}if(b.dataset.choiceKind!=='single'){b.classList.add('choice-button');b.dataset.choiceKind='single';}b.setAttribute('aria-pressed',String(b.dataset.v===value));});
     });
     document.querySelectorAll('[data-rm-chip],[data-set-field]').forEach(b=>{if(!b.dataset.choiceKind){b.classList.add('choice-button');b.dataset.choiceKind=b.hasAttribute('data-rm-chip')?'multi':'single';}});
     document.querySelectorAll('[data-fill]').forEach(group=>{
@@ -2423,6 +2451,16 @@
       cpap:(device,settings)=>`CPAP was provided${device}${settings}`,
     },
   };
+  // 處置後的反應（Ryan 2026-10-06）：空＝不寫；只描述使用者選的結果，不推定其他改善。
+  const EVENT_RESPONSE={improved:", after which heart rate and oxygen saturation improved",partial:", with partial improvement",none:", without improvement"};
+  // 產房處置的設定照院內寫法：FiO2、IP/PEEP 成對；產房只有 Neopuff（Ryan 2026-10-06），本院出生的 PPV 未填裝置時寫 via Neopuff。
+  function birthSettings(e){
+    const has=k=>e[k]!==undefined&&e[k]!=="",parts=[];
+    if(has('fiO2'))parts.push(`FiO2 ${e.fiO2}%`);
+    if(has('pip')&&has('peep'))parts.push(`IP/PEEP ${e.pip}/${e.peep} cmH2O`);else{if(has('pip'))parts.push(`IP ${e.pip} cmH2O`);if(has('peep'))parts.push(`PEEP ${e.peep} cmH2O`);}
+    if(has('rr'))parts.push(`rate ${e.rr}/min`);if(has('flow'))parts.push(`flow ${e.flow} L/min`);
+    return parts.length?` (${parts.join(", ")})`:"";
+  }
   function eventNarrative(e,scope){
     const age=e.minutes!==undefined&&e.minutes!==""?`At ${e.minutes} ${unitLabel(e.minutes,"minute")} of age`:"";
     const phasePlace=scope==='course'&&S.outborn?{outside:"At the referring hospital before our team's arrival",arrival:"At the referring hospital after our team's arrival",transport:"During transport"}[e.phase]:'';
@@ -2432,15 +2470,18 @@
       if(!e.breathing&&!e.tone&&!e.hr&&!e.support)return [lead?`${lead}, a reassessment was recorded.`:"A reassessment was recorded.",sentence(e.note||"")].filter(Boolean);
       return assessmentText(e,lead||(scope==="birth"?`On reassessment in ${deliveryPlace()}`:"On subsequent reassessment"));
     }
-    const settings=eventSettings(e),device=e.device?` using ${e.device}`:"";
-    const action={ppv:NRP.phrase.ppv(device,settings),
+    const birth=scope==='birth',settings=birth?birthSettings(e):eventSettings(e),device=e.device?` using ${e.device}`:"";
+    const firstPpv=birth&&activeBirthEvents().find(x=>x.kind==='ppv')===e,ourBirth=['direct','nursery'].includes(S.pathway);
+    const ppv=birth?`${firstPpv?'positive-pressure ventilation (PPV) was given':'PPV was given again'}${e.device?` via ${e.device}`:ourBirth?' via Neopuff':''}${settings}`:NRP.phrase.ppv(device,settings);
+    const action={ppv,
       intubation:e.intubationAction==='repeat'?`endotracheal reintubation was performed${settings?` and ventilation was continued through the endotracheal tube${settings}`:''}`:NRP.phrase.intubation(settings),
-      compressions:NRP.phrase.compressions(e.duration?` for ${e.duration} ${unitLabel(e.duration,"minute")}`:""),
+      compressions:NRP.phrase.compressions((e.ratio?` at a ${e.ratio} compression-to-ventilation ratio`:"")+(e.duration?` for ${e.duration} ${unitLabel(e.duration,"minute")}`:"")),
       epinephrine:NRP.phrase.epinephrine(e.drugDose?` (${e.drugDose})`:"",e.drugRoute?` via ${e.drugRoute}`:""),
       o2:NRP.phrase.o2(device,settings),
       cpap:NRP.phrase.cpap(device,settings)}[e.kind];
     if(!action)return [];
-    return [sentence(lead?`${lead}, ${action}`:action),sentence(e.note||"")].filter(Boolean);
+    const response=EVENT_RESPONSE[e.response]||"";
+    return [sentence(lead?`${lead}, ${action}${response}`:action+response),sentence(e.note||"")].filter(Boolean);
   }
   function consultSentence(){
     const t=raw("pwConsultH"),reason=raw("pwConsultReason").replace(/[.。]+$/,"");
@@ -2449,6 +2490,18 @@
   // 兩份 note 的產房段統一順序：出生觀察 → Apgar → （故事 B 的會診）→ 產房處置 → 再評估。
   // 2026-09-20 順八個情境時發現 Admission 把 Apgar 放在整段之後、Acceptance 放在整段之前，
   // 且故事 B 的會診句寫在急救之後，與時間線站序矛盾 ⇒ 拆成 birthObservation／birthCourse 兩段由呼叫端夾 Apgar。
+  function leaveSentence(lead=""){
+    const s=raw("birthFinalSupport"),spo2=String(S.leaveSpo2||"").trim();if(!s)return "";
+    const acts=activeBirthEvents().filter(e=>e.kind!=="assessment").map(e=>e.kind),had=k=>acts.includes(k),ourBirth=["direct","nursery"].includes(S.pathway);
+    const text={
+      room:acts.length?"the infant was then weaned to room air":"the infant remained in room air",
+      o2:had("o2")&&!had("ppv")&&!had("intubation")?"supplemental oxygen was continued":acts.length?"the infant was then weaned to supplemental oxygen":"supplemental oxygen was administered",
+      cpap:"CPAP was provided",
+      ppv:had("ppv")||had("intubation")?`${had("ppv")?"PPV":"positive-pressure ventilation (PPV)"} was continued${ourBirth?" via Neopuff":""}`:`positive-pressure ventilation (PPV) was provided${ourBirth?" via Neopuff":""}`,
+      ett:had("intubation")?"the infant remained intubated":"the infant was receiving ventilation through an endotracheal tube"
+    }[s];
+    return text?sentence(`${lead}${text}${spo2?`, with SpO2 maintained at ${spo2}%`:""}`):"";
+  }
   function birthObservation(){return assessmentText(readAssessment("birth"),"At birth");}
   function birthNarrative(){return [...birthObservation(),...birthCourse()];}
   function maternalOtherHistory(){return raw("matOtherHx").replace(/^#+\s*/,"").replace(/[.。\s]+$/,"").trim();}
@@ -2482,10 +2535,13 @@
     }
     activeBirthEvents().forEach(e=>out.push(...eventNarrative(e,"birth")));
     recordNoteScope(scopes,out,'birth:dr',actionStart);const reassessmentStart=out.length;
+    // 離開產房：一題呼吸支持＋SpO₂ 維持值（leaveSentence）；呼吸／張力／心率屬「補充評估」，有填才寫在前面。
     const time=raw("birthFinalMin");
-    const final=readAssessment("birthFinal"),findings=assessmentText(final,time?`On reassessment at ${time} ${unitLabel(time,"minute")} of age`:`On reassessment in ${deliveryPlace()}`,readAssessment("birth"));
-    if(time&&!final.breathing&&!final.tone&&!final.hr&&!final.support&&!final.signs.length)out.push(`A delivery-room reassessment was recorded at ${time} ${unitLabel(time,"minute")} of age${final.note?".":"; the findings were not specified."}`);
+    const final=readAssessment("birthFinal"),assess={...final,support:""},assessed=!!(assess.breathing||assess.tone||assess.hr||assess.signs.length);
+    const findings=assessmentText(assess,time?`On reassessment at ${time} ${unitLabel(time,"minute")} of age`:`On reassessment in ${deliveryPlace()}`,readAssessment("birth"));
+    if(time&&!assessed&&!final.support)out.push(`A delivery-room reassessment was recorded at ${time} ${unitLabel(time,"minute")} of age${final.note?".":"; the findings were not specified."}`);
     out.push(...findings);
+    const leave=leaveSentence(time&&!assessed?`At ${time} ${unitLabel(time,"minute")} of age, `:"");if(leave)out.push(leave);
     recordNoteScope(scopes,out,'birth:drEnd',reassessmentStart);
     return out;
   }
@@ -2539,7 +2595,7 @@
       respiratory: (!re&&S.resus!=="none")
         ||(!re&&["o2","cpap","ppv","ett"].includes(raw("birthFinalSupport")))
         ||(pwSx&&(["o2","cpap","ppv","ett"].includes(pathwaySupportMode())||S.obSx.some(x=>RESP_SX.includes(x))))
-        ||(S.outborn&&["o2","cpap","ppv","ett"].includes(resolvedSupport("obM1Relation",S.obM1Type).mode))
+        ||(S.outborn&&["o2","cpap","ppv","ett"].includes(S.obM1Type))
         ||(S.outborn&&/respiratory distress/i.test(raw("obReason")))
         ||(!!S.resp&&S.resp!=="room air")                                      // 入院時呼吸支持
         ||(S.pathway==="nursery"&&S.brFindings.includes("cxr"))||(re&&rp.some(x=>["respiratory","apnea"].includes(x))),
@@ -2580,31 +2636,28 @@
   function lastSupportAt(phase){return S.outborn?S.courseEvents.filter(e=>e.phase===phase&&(['o2','cpap','ppv','intubation'].includes(e.kind)||e.kind==='assessment'&&e.support)).at(-1):null;}
   function lastArrivalSupport(){return lastSupportAt('arrival');}
   function lastPreTransportSupport(){return lastArrivalSupport()||lastSupportAt('outside');}
+  // 前一站的呼吸支持：A/B/C 是離開產房時；外接是我方現場最後一筆、到場時掛的、或外院最後一筆。
   function sourceMode(field){
     if(field==='obM1Relation'||!S.outborn)return raw('birthFinalSupport');
-    const e=lastPreTransportSupport();return e?(e.kind==='assessment'?e.support:e.kind==='intubation'?'ett':e.kind):resolvedSupport('obM1Relation',S.obM1Type).mode;
+    const e=lastArrivalSupport()||(!S.obM1Type&&lastSupportAt('outside'));
+    return e?(e.kind==='assessment'?e.support:e.kind==='intubation'?'ett':e.kind):S.obM1Type;
   }
-  function sourceStamp(field){const e=field==='obRespRelation'&&lastPreTransportSupport();return sourceMode(field)+(e?':'+e.phase+':'+e.id:'');}
+  // 2026-10-06 Ryan：拿掉「與前一站的關係」問題，關係由前後資料推——同＝continued；前段 room air 後段有支持＝new；不同＝changed；
+  // 前一站沒記錄就只描述本段（不推定延續或新開始）。到場時掛什麼（obM1）只描述當時，不推關係。
   function resolvedSupport(field,selected){
-    const relation=raw(field), source=sourceMode(field), stamp=S.continuitySignatures[field];
-    const confirmed=["continued","settings"].includes(relation)&&!!source&&stamp===sourceStamp(field)&&(!selected||selected===source)&&(relation!=='settings'||source!=='room');
-    return {mode:relation==="stopped"?"":selected||(confirmed?source:""),relation,source,confirmed};
+    const mode=selected||'';
+    if(field==='obM1Relation')return {mode,relation:'',source:'',confirmed:false};
+    const source=sourceMode(field);
+    const relation=!mode||!source?'':mode===source?'continued':source==='room'?'new':'changed';
+    return {mode,relation,source,confirmed:relation==='continued'};
   }
   function pathwaySupportMode(){return resolvedSupport("obRespRelation",S.obRespType).mode;}
   function supportSentence(field,selected,context,settings={}){
-    const {mode,relation,source,confirmed}=resolvedSupport(field,selected);
+    const {mode,relation,source}=resolvedSupport(field,selected);
     const at=context?" "+context:"";   // 同段已寫過時間片語時，呼叫端傳空字串
-    if(relation==="stopped")return source&&source!=="room"&&S.continuitySignatures[field]===sourceStamp(field)?`${sentence(SUPPORT[source]).replace(/\.$/,"")} was discontinued${at}.`:"";
     if(!mode)return "";
-    if(mode==='room'&&['new','repeat','settings'].includes(relation))return ''; // 舊稿衝突保留於欄位與檢核，不生成虛構處置。
-    if(mode==="room")return relation==='changed'&&source&&source!=='room'&&S.continuitySignatures[field]===sourceStamp(field)?`The infant was switched from ${SUPPORT[source]} to room air${at}.`:`The infant ${confirmed?"continued breathing":"was breathing"} room air${at}.`;
-    let action;
-    if(confirmed&&relation==='settings')action=`settings for ${SUPPORT[mode]} were adjusted`;
-    else if(confirmed)action=`${SUPPORT[mode]} was continued`;
-    else if(relation==="new"||relation==="repeat"){
-      action=`${SUPPORT[mode]} was ${relation==="repeat"?"provided again":"initiated"}`;
-    }else if(relation==="changed"&&source&&mode!==source&&S.continuitySignatures[field]===sourceStamp(field))action=`respiratory support was changed to ${SUPPORT[mode]}`;
-    else action=`the infant was receiving ${SUPPORT[mode]}`;
+    if(mode==="room")return relation==='changed'?`The infant was switched from ${SUPPORT[source]} to room air${at}.`:`The infant ${relation==='continued'?"continued breathing":"was breathing"} room air${at}.`;
+    const action=relation==='continued'?`${SUPPORT[mode]} was continued`:relation==='new'?`${SUPPORT[mode]} was initiated`:relation==='changed'?`respiratory support was changed to ${SUPPORT[mode]}`:`the infant was receiving ${SUPPORT[mode]}`;
     const device=mode==="o2"&&settings.device?` via ${settings.device}`:"";
     const ps=eventSettings({...settings,kind:mode==="ett"?"intubation":mode});
     return sentence(`${action}${at}${device}${ps}`);
@@ -2834,23 +2887,24 @@
     if(raw("obCourse"))(S.outborn?transportIntro:out).push(sentence(raw("obCourse")));
     mark('route');
     if(S.outborn){
-      const outsideMode=resolvedSupport('obM1Relation',S.obM1Type).mode;
-      const outside=supportSentence("obM1Relation",S.obM1Type,"at the referring hospital",{
-        device:outsideMode==='o2'?({hood:"an oxygen hood",cannula:"a nasal cannula",mask:"a face mask"})[S.obM1Dev]:'',flow:outsideMode==="o2"?raw("obM1Flow"):"",
-        fiO2:['cpap','ppv','ett'].includes(outsideMode)?raw('obM1FiO2'):'',pip:['ppv','ett'].includes(outsideMode)?raw('obM1IP'):'',peep:['cpap','ppv','ett'].includes(outsideMode)?raw('obM1PEEP'):'',rr:outsideMode==='ett'?raw('obM1RR'):''});
-      if(outside)out.push(outside);
       S.courseEvents.filter(e=>e.phase==='outside').forEach(e=>out.push(...eventNarrative(e,'course')));
       mark('obCare');
       const reason=raw("obReason").replace(/[.。]+$/,"");
       out.push(`Our neonatal transport team was consulted for transfer${reason?` because of ${reason}`:""}.`);
       mark('obConsult');
-      const arrival=raw("obArrival");
-      if(arrival)out.push(finish(`On our team's arrival at the referring hospital, ${infantClause(arrival)}`));
+      // 我方到場：一題「到場時掛什麼」＋SpO₂，只描述當時，不推定延續或開始。
+      const m1=S.obM1Type,arriveSpo2=raw('obArriveSpo2'),arrival=raw("obArrival");
+      const ps=eventSettings({kind:m1==='ett'?'intubation':m1,fiO2:['cpap','ppv','ett'].includes(m1)?raw('obM1FiO2'):'',pip:['ppv','ett'].includes(m1)?raw('obM1IP'):'',peep:['cpap','ppv','ett'].includes(m1)?raw('obM1PEEP'):'',rr:m1==='ett'?raw('obM1RR'):'',flow:m1==='o2'?raw('obM1Flow'):''});
+      const dev=m1==='o2'?({hood:" via an oxygen hood",cannula:" via a nasal cannula",mask:" via a face mask"})[S.obM1Dev]||'':'';
+      const onSupport=m1==='room'?'was breathing room air':m1==='ett'?`was intubated and receiving mechanical ventilation${ps}`:SUPPORT[m1]?`was receiving ${SUPPORT[m1]}${dev}${ps}`:'';
+      if(onSupport)out.push(`On our team's arrival at the referring hospital, the infant ${onSupport}${arriveSpo2?`, with SpO2 ${arriveSpo2}%`:''}.`);
+      else if(arriveSpo2)out.push(`On our team's arrival at the referring hospital, the infant's SpO2 was ${arriveSpo2}%.`);
+      if(arrival)out.push(onSupport||arriveSpo2?infantSentence(arrival):finish(`On our team's arrival at the referring hospital, ${infantClause(arrival)}`));
       S.courseEvents.filter(e=>e.phase==='arrival').forEach(e=>out.push(...eventNarrative(e,'course')));
       mark('obArrive');
     }
     out.push(...transportIntro);
-    const mode=pathwaySupportMode(),relation=raw("obRespRelation"),supportContext=S.outborn?"during transport":S.pathway==="nursery"?"in the baby room":"before admission";
+    const mode=pathwaySupportMode(),relation=resolvedSupport("obRespRelation",S.obRespType).relation,supportContext=S.outborn?"during transport":S.pathway==="nursery"?"in the baby room":"before admission";
     const supportSettings={
         device:mode==="o2"?({hood:"an oxygen hood",cannula:"a nasal cannula",mask:"a face mask"})[S.obO2Dev]:"",
         flow:mode==="o2"?raw("obO2Flow"):"",fiO2:["cpap","ppv","ett"].includes(mode)?raw("obFiO2"):"",
@@ -2896,15 +2950,15 @@
     mark('adm');
     return out;
   }
-  const ROUTE_KEYS=["obRespType","obRespStable","obSx","brEval","brWorkup","brFindings","obO2Dev","pwOnset","obM1Type","obM1Dev","pwConsult","courseEvents","continuitySignatures",
+  const ROUTE_KEYS=["obRespType","obRespStable","obSx","brEval","brWorkup","brFindings","obO2Dev","pwOnset","obM1Type","obM1Dev","pwConsult","pwBrEval","pwTransport","courseEvents",
     "readmitPrior","readmitFeeding","readmitSource","readmitBaseline","readmitProblems","readmitJaundiceSigns"];
-  const ROUTE_FIELDS=["obFacility","obTransferFrom","obReason","obM1Flow","obM1FiO2","obM1IP","obM1PEEP","obM1RR","obArrival","obO2Flow","obFiO2","obIP","obPEEP","obRR","obCourse","pwOnsetH","pwOnsetUnit","pwConsultReason","pwConsultH","obAdmissionStatus","obRespRelation","obM1Relation","brEvalIn","brCrp","brGlu","brFindIn",
+  const ROUTE_FIELDS=["obFacility","obTransferFrom","obReason","obM1Flow","obM1FiO2","obM1IP","obM1PEEP","obM1RR","obArrival","obO2Flow","obFiO2","obIP","obPEEP","obRR","obCourse","pwOnsetH","pwOnsetUnit","pwConsultReason","pwConsultH","obAdmissionStatus","obArriveSpo2","brEvalIn","brCrp","brGlu","brFindIn",
     "readmitPriorUnit","readmitPriorCourse","readmitDischargeDate","readmitDischargeWeight","readmitHomeNote","readmitOnsetDOL","readmitComplaint","readmitCourse","readmitCourseType","readmitIntake","readmitFeedingNote","readmitUrine","readmitActivity","readmitSickContact","readmitCurrentWeight","readmitSpO2","readmitTSB","readmitDB","readmitEvaluation","readmitTreatment","tentDx",...rmFields()];
   function switchPathway(next){
     clearReviewLocation();
     if(next===S.pathway)return;
     S.routeDrafts[S.pathway]={destination:S.dest,destNotice:S.destNotice,state:Object.fromEntries(ROUTE_KEYS.map(k=>[k,JSON.parse(JSON.stringify(S[k]))])),fields:Object.fromEntries(ROUTE_FIELDS.map(id=>[id,V(id)]))};
-    const saved=S.routeDrafts[next],defaults={obRespType:"",obRespStable:false,obSx:[],brEval:[],brWorkup:[],brFindings:[],obO2Dev:"",pwOnset:"observed",obM1Type:"",obM1Dev:"",pwConsult:false,courseEvents:[],continuitySignatures:{},
+    const saved=S.routeDrafts[next],defaults={obRespType:"",obRespStable:false,obSx:[],brEval:[],brWorkup:[],brFindings:[],obO2Dev:"",pwOnset:"observed",obM1Type:"",obM1Dev:"",pwConsult:false,pwBrEval:false,pwTransport:false,courseEvents:[],
       readmitPrior:"",readmitFeeding:"",readmitSource:"",readmitBaseline:[],readmitProblems:[],readmitJaundiceSigns:[]};
     ROUTE_KEYS.forEach(k=>S[k]=saved?saved.state[k]:defaults[k]);
     ROUTE_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)el.value=saved?saved.fields[id]||"":"";});
@@ -2918,45 +2972,76 @@
       document.querySelectorAll(`[data-msel="${k}"] button`).forEach(b=>b.setAttribute("aria-pressed",String(S[k].includes(b.dataset.v))));
       document.querySelectorAll(`[data-tog="${k}"] button`).forEach(b=>b.setAttribute("aria-pressed",String(!!S[k])));
     });
-    drawEvents("course");
+    drawEvents("course");drawEvents("birth");   // 出生列的提示依路徑（本院出生才標 Neopuff）
   }
+  // 每筆處置／再評估是一列（左 112px 標籤、右控制項）：節點只剩該填的東西＋一題反應；資料結構不變，只是呈現。
+  // 第 2 筆起（同類重複、再評估、站內新增）才有「第 N 次」與移除；骨架節點的增刪由第 1 區的急救階梯決定。
+  const ourBirthPlace=()=>["direct","nursery"].includes(S.pathway);
+  const EVENT_ROW_LABEL={ppv:"PPV",intubation:"插管",compressions:"胸外按壓",epinephrine:"Epinephrine",assessment:"中途再評估",o2:"O₂",cpap:"CPAP"};
+  const RESPONSE_CHOICES=[["improved","心跳與血氧回升"],["partial","改善但仍喘"],["none","未改善"]];
   function drawEvents(scope){
     const host=document.getElementById(scope+"Events");if(!host)return;
-    const events=S[scope+"Events"];
+    const events=S[scope+"Events"],birth=scope==="birth";
     if(scope==='course')for(const id of ['obCareEvents','obArriveEvents']){const el=document.getElementById(id);if(el)el.innerHTML='';}
-    const number=(e,key,label,unit="",max="")=>`<label class="field" for="event-${e.id}-${key}"><span class="lab">${label}${unit?` · ${unit}`:""}</span><input class="tin" type="number" min="0" step="any" ${max?`max="${max}"`:""} id="event-${e.id}-${key}" data-event-field="${key}" value="${htmlEscape(e[key]||"")}" placeholder="未記錄"></label>`;
-    const textField=(e,key,label)=>`<label class="field${key==='note'?' event-wide':''}" for="event-${e.id}-${key}"><span class="lab">${label}</span><input class="tin" id="event-${e.id}-${key}" data-event-field="${key}" value="${htmlEscape(e[key]||"")}" placeholder="未記錄"></label>`;
-    const select=(e,key,label,options)=>`<label class="field" for="event-${e.id}-${key}"><span class="lab">${label}</span><select class="tin" id="event-${e.id}-${key}" data-event-field="${key}"><option value="">${key==='phase'?'未指定階段（保留原紀錄）':'未記錄'}</option>${Object.entries(options).map(([v,t])=>`<option value="${v}" ${e[key]===v?"selected":""}>${t}</option>`).join("")}</select></label>`;
+    const num=(e,key,label,unit="",max="")=>`<span class="ev-num"><label class="u" for="event-${e.id}-${key}">${label}</label><input type="number" min="0" step="any" ${max?`max="${max}"`:""} id="event-${e.id}-${key}" data-event-field="${key}" value="${htmlEscape(e[key]||"")}" placeholder="—">${unit?`<span class="u">${unit}</span>`:""}</span>`;
+    const text=(e,key,label,ph="")=>`<span class="ev-text"><label class="u" for="event-${e.id}-${key}">${label}</label><input class="tin" id="event-${e.id}-${key}" data-event-field="${key}" value="${htmlEscape(e[key]||"")}" placeholder="${ph||"—"}"></span>`;
+    const select=(e,key,label,options,empty='未記錄')=>`<span class="ev-text"><label class="u" for="event-${e.id}-${key}">${label}</label><select class="tin" id="event-${e.id}-${key}" data-event-field="${key}"><option value="">${empty}</option>${Object.entries(options).map(([v,t])=>`<option value="${v}" ${e[key]===v?"selected":""}>${t}</option>`).join("")}</select></span>`;
+    const chips=(e,key,options,abn=[])=>`<div class="seg" role="group" data-event-choice="${key}">${options.map(([v,t])=>`<button type="button" class="choice-button" data-choice-kind="single" data-v="${v}"${abn.includes(v)?' data-abn':''} aria-pressed="${e[key]===v}">${t}</button>`).join("")}<button type="button" class="choice-clear" data-v="" ${e[key]?"":"disabled"} aria-label="清除這題">清除</button></div>`;
+    const step=(label,q,body)=>`<div class="step"><div class="lab">${label}${q?`<span class="q">${q}</span>`:""}</div><div class="ctl">${body}</div></div>`;
+    const counts={};
     host.innerHTML=events.map((e,i)=>{
-      let fields=number(e,"minutes","生後時間","分鐘");
-      if(scope==='course'&&S.outborn)fields+=select(e,'phase','事件發生階段（新增時帶入，可修改）',{outside:'外院團隊／我方到場前',arrival:'我方抵達外院後／尚未轉送',transport:'轉送途中'});
-      if(scope==="course")fields+=textField(e,"location","事件地點（選填，英文）");
-      if(e.kind==="assessment")fields+=select(e,"breathing","呼吸",{crying:"哭聲",spontaneous:"自主呼吸",apnea:"Apnea",gasping:"Gasping",labored:"呼吸費力",ineffective:"呼吸無效"})+select(e,"tone","肌張力",{good:"良好",poor:"差",flaccid:"鬆軟"})+number(e,"hr","心率","beats/min")+select(e,"support","當時支持",SUPPORT);
-      if(["ppv","intubation","cpap","o2"].includes(e.kind))fields+=number(e,"fiO2","FiO₂","%","100");
-      if(["ppv","intubation"].includes(e.kind))fields+=number(e,"pip","PIP","cmH₂O");
-      if(["ppv","intubation","cpap"].includes(e.kind))fields+=number(e,"peep",e.kind==="cpap"?"Pressure":"PEEP","cmH₂O");
-      if(e.kind==="intubation")fields+=`<label class="field" for="event-${e.id}-intubationAction"><span class="lab">實際插管處置</span><select class="tin" id="event-${e.id}-intubationAction" data-event-field="intubationAction"><option value="initial" ${e.intubationAction!=='repeat'?'selected':''}>插管</option><option value="repeat" ${e.intubationAction==='repeat'?'selected':''}>重新插管</option></select></label>`+number(e,"rr","呼吸器頻率","/min");
-      if(e.kind==="o2")fields+=number(e,"flow","氧氣流量","L/min");
-      if(["ppv","o2","cpap"].includes(e.kind))fields+=textField(e,"device","實際使用裝置（選填，英文）");
-      if(e.kind==="compressions")fields+=number(e,"duration","按壓持續時間","分鐘");
-      if(e.kind==="epinephrine")fields+=textField(e,"drugDose","實際劑量與單位（不自動計算）")+textField(e,"drugRoute","實際給藥途徑");
-      fields+=textField(e,"note","此事件補充（完整英文句，選填）");
+      counts[e.kind]=(counts[e.kind]||0)+1;
+      const nth=counts[e.kind],repeat=e.kind==='assessment'||nth>1||!birth;
       const peers=scope==='course'&&S.outborn?events.filter(x=>(x.phase||'')===(e.phase||'')):events,position=peers.indexOf(e);
-      const phaseLabel=scope==='course'&&S.outborn?`<p class="event-phase-label">${htmlEscape({outside:'外院團隊 · 我方到場前',arrival:'我方在外院現場 · 尚未轉送',transport:'轉送途中'}[e.phase]||'此筆事件尚未指定階段；原資料保留，不自動重新分類。')}</p>`:'';
-      return `<div class="clinical-event" data-event-id="${e.id}" data-event-scope="${scope}" data-event-kind="${e.kind}"><div class="event-head"><strong><span class="event-number">${i+1}</span> ${EVENT_NAMES[e.kind]}</strong><div class="event-tools"><button type="button" data-event-action="up" aria-label="上移第 ${i+1} 個事件" ${position===0?"disabled":""}>↑</button><button type="button" data-event-action="down" aria-label="下移第 ${i+1} 個事件" ${position===peers.length-1?"disabled":""}>↓</button><button type="button" data-event-action="remove" aria-label="移除第 ${i+1} 個事件">移除</button></div></div>${phaseLabel}<div class="event-fields">${fields}</div></div>`;
+      const minutes=num(e,"minutes","生後","分");
+      let main="",hint="";
+      if(e.kind==="assessment"){
+        main=chips(e,"breathing",[["crying","哭聲"],["spontaneous","自主呼吸"],["labored","呼吸費力"],["apnea","Apnea"],["gasping","Gasping"],["ineffective","呼吸無效"]],["labored","apnea","gasping","ineffective"])
+          +`<div class="num sub">${num(e,"hr","心率","/min")}${minutes}${select(e,"tone","肌張力",{good:"良好",poor:"差",flaccid:"鬆軟"})}${birth?"":select(e,"support","當時支持",SUPPORT)}</div>`;
+      }else{
+        const sub=[];
+        if(["ppv","intubation","cpap","o2"].includes(e.kind))sub.push(num(e,"fiO2","FiO₂","%","100"));
+        if(["ppv","intubation"].includes(e.kind))sub.push(num(e,"pip","IP"));
+        if(["ppv","intubation","cpap"].includes(e.kind))sub.push(num(e,"peep",e.kind==="cpap"?"Pressure":"PEEP","cmH₂O"));
+        if(e.kind==="intubation")sub.push(num(e,"rr","通氣頻率","/min"));
+        if(e.kind==="o2")sub.push(num(e,"flow","流量","L/min"));
+        if(e.kind==="compressions")sub.push(text(e,"ratio","比例","3:1"),...(birth?[]:[num(e,"duration","持續","分鐘")]));
+        if(e.kind==="epinephrine")sub.push(text(e,"drugDose","劑量","實際劑量與單位"),text(e,"drugRoute","途徑","例：UVC"));
+        sub.push(minutes);
+        main=`<div class="num sub">${sub.join("")}</div>`;
+        if(e.kind==="intubation")main+=`<div class="num sub">${select(e,"intubationAction","處置",{initial:"插管",repeat:"重新插管"},"插管")}</div>`;
+        if(e.nrp)main+=`<p class="nrp-hint">已帶入 ${NRP.edition} 預設（依 GA；通氣率 ${NRP.ventilation.rate} 不寫入），請依實際核對；改任一值即視為實際紀錄。 <button type="button" class="nrp-accept" data-nrp-accept="${e.id}">值正確，採用</button></p>`;
+        hint=e.kind==='ppv'&&birth?(ourBirthPlace()?"Neopuff":""):e.kind==="epinephrine"?"不自動計算劑量":"";
+      }
+      const extra=`<details class="row-more"${e.note||(!birth&&(e.location||e.device))?' open':''}><summary>補充${birth?"":"・地點／裝置"}（選填）</summary><div class="num sub">${!birth?text(e,"location","地點","英文"):""}${["ppv","o2","cpap"].includes(e.kind)?text(e,"device","裝置","英文"):""}${text(e,"note","此筆補充","完整英文句")}</div></details>`;
+      const phase=scope==='course'&&S.outborn?`<div class="num sub">${select(e,'phase','發生階段',{outside:'外院團隊／我方到場前',arrival:'我方抵達外院後／尚未轉送',transport:'轉送途中'},'未指定階段（保留原紀錄）')}</div>`:'';
+      const head=repeat?`<div class="ev-head"><b>${e.kind==='assessment'?'中途再評估':birth?`第 ${nth} 次`:`第 ${position+1} 筆`}</b><span class="event-tools">${repeat?`<button type="button" data-event-action="up" aria-label="上移第 ${i+1} 個事件" ${position===0?"disabled":""}>↑</button><button type="button" data-event-action="down" aria-label="下移第 ${i+1} 個事件" ${position===peers.length-1?"disabled":""}>↓</button>`:''}<button type="button" class="ev-remove" data-event-action="remove" aria-label="移除第 ${i+1} 個事件">移除</button></span></div>`:'';
+      const label=`<span class="event-number">${i+1}</span>${EVENT_ROW_LABEL[e.kind]}`;
+      const response=e.kind==='assessment'?'':step('反應','',chips(e,"response",RESPONSE_CHOICES,["partial","none"]));
+      const legacy=scope==='course'&&S.outborn&&!e.phase?'<p class="event-phase-label">此筆事件尚未指定階段；原資料保留，不自動重新分類。</p>':'';
+      return `<div class="clinical-event ev-row" data-event-id="${e.id}" data-event-scope="${scope}" data-event-kind="${e.kind}"${e.nrp?' data-nrp="true"':''}>${head}${legacy}${step(label,hint,main+phase)}${response}${extra}</div>`;
     }).join("");
-    events.filter(e=>e.nrp).forEach(e=>{
-      const card=host.querySelector(`[data-event-id="${e.id}"]`); if(!card)return;
-      card.querySelectorAll('[data-event-field="fiO2"],[data-event-field="pip"],[data-event-field="peep"]').forEach(inp=>inp.classList.add("nrp-default"));
-      card.insertAdjacentHTML("beforeend",`<p class="man-h nrp-hint">已帶入 ${NRP.edition} 初始設定（PIP ${e.pip}／PEEP ${e.peep} cmH₂O、FiO₂ ${e.fiO2}%，依 GA；通氣率 ${NRP.ventilation.rate} 不寫入）。請依實際核對；改任一值即視為實際紀錄。 <button type="button" class="nrp-accept" data-nrp-accept="${e.id}">值正確，採用</button></p>`);
-    });
+    events.filter(e=>e.nrp).forEach(e=>host.querySelectorAll(`[data-event-id="${e.id}"] :is([data-event-field="fiO2"],[data-event-field="pip"],[data-event-field="peep"])`).forEach(inp=>inp.classList.add("nrp-default")));
     if(scope==='course'&&S.outborn)for(const e of events){const destination={outside:'obCareEvents',arrival:'obArriveEvents'}[e.phase];if(destination)document.getElementById(destination)?.appendChild(host.querySelector(`[data-event-id="${e.id}"]`));}
     if(S.lastRemoved?.scope===scope&&(scope==="birth"||S.lastRemoved.pathway===S.pathway)){
       const destination=scope==='course'&&S.outborn?document.getElementById({outside:'obCareEvents',arrival:'obArriveEvents'}[S.lastRemoved.event.phase]):null;
-      (destination||host).insertAdjacentHTML("beforeend",`<div class="seg event-add"><button type="button" data-undo-event="${scope}">復原剛移除的事件</button></div>`);
+      (destination||host).insertAdjacentHTML("beforeend",`<div class="undo-row"><button type="button" data-undo-event="${scope}">復原剛移除的事件</button></div>`);
     }
   }
   function eventClick(b){
+    const choice=b.closest('[data-event-choice]');
+    if(choice){
+      const card=b.closest('[data-event-id]'),e=S[card.dataset.eventScope+"Events"].find(x=>String(x.id)===card.dataset.eventId);if(!e)return true;
+      const key=choice.dataset.eventChoice;e[key]=b.dataset.v||"";
+      choice.querySelectorAll('[data-v]').forEach(x=>{if(x.dataset.v)x.setAttribute('aria-pressed',String(x.dataset.v===e[key]));else x.disabled=!e[key];});
+      render();return true;
+    }
+    const chipSet=b.closest('[data-select-chips]');
+    if(chipSet&&b.dataset.v!==undefined){
+      const select=document.getElementById(chipSet.dataset.selectChips);if(!select||b.disabled)return true;
+      if(select.value!==b.dataset.v){select.value=b.dataset.v;select.dispatchEvent(new Event('change',{bubbles:true}));}
+      return true;
+    }
     const scope=b.dataset.addBirth?"birth":b.dataset.addCourse||b.dataset.addStageEvent?"course":"",kind=b.dataset.addBirth||b.dataset.addCourse||b.dataset.addStageEvent;
     if(scope&&EVENT_NAMES[kind]){
       const event={id:S.nextEventId++,kind};S[scope+"Events"].push(event);
@@ -3068,7 +3153,7 @@
     if(bar){document.getElementById('reviewJumpStatus').textContent=`已定位：${label}`;document.getElementById('reviewJumpBar').hidden=false;}
     if(!target.matches('input:not([type="hidden"]),select,textarea,button,a[href]'))target.setAttribute('tabindex','-1');
     target.focus({preventScroll:true});target.classList.add('review-target-flash');reviewHighlight=target;
-    const place=()=>{if(serial!==reviewJumpSerial||!target.isConnected)return;measureWorkflowNavigation();const offset=workflowOffset(),anchor=target.labels?.[0]||target.closest('.field')||target;window.scrollTo({top:Math.max(0,window.scrollY+anchor.getBoundingClientRect().top-offset),left:0,behavior:'instant'});syncWorkflowNavigation();};
+    const place=()=>{if(serial!==reviewJumpSerial||!target.isConnected)return;measureWorkflowNavigation();const offset=workflowOffset(),anchor=target.labels?.[0]||target.closest('.field')||target,top=Math.min(anchor.getBoundingClientRect().top,target.getBoundingClientRect().top);window.scrollTo({top:Math.max(0,window.scrollY+top-offset-8),left:0,behavior:'instant'});syncWorkflowNavigation();};
     place();requestAnimationFrame(place);
     reviewHighlightTimer=setTimeout(()=>{target.classList.remove('review-target-flash');},4000);
   }
@@ -3082,22 +3167,12 @@
       if(["ppv","intubation","cpap"].includes(e.kind)&&!e.fiO2&&!e.pip&&!e.peep)awaitBirth("已記錄呼吸處置；設定尚未填寫，不會使用預設值。",`#event-${e.id}-fiO2`);
       if(e.kind==="ppv"&&e.nrp)awaitBirth(`PPV 設定目前是 ${NRP.edition} 預設帶入、尚未核對：請確認 PIP／PEEP／FiO₂ 與實際相符（改任一值即視為已核對）。`,`#event-${e.id}-pip`);});
     if(raw("birthFinalMin")&&last>Number(raw("birthFinalMin")))birth.push(reviewIssue("最後評估時間早於前面的事件，請核對。",'#birthFinalMin'));
-    if(raw("birthResusStatus")==="performed"&&!birthHasAction())awaitBirth("已選有急救，請補上實際處置。",'#birthActionsWrap .event-add','新增實際出生處置');
-    if(raw("birthResusStatus")!=="performed"&&S.birthEvents.some(e=>e.kind!=="assessment"))awaitBirth("先前處置已保留，目前不寫入；選回「有急救」可恢復。觀察紀錄仍保留於敘述。",'#birthResusStatus');
-    if(raw("birthResusStatus")==="none"&&["apnea","gasping","ineffective"].includes(raw("birthBreathing")))birth.push(reviewIssue("出生呼吸紀錄與「無需急救」並存，請確認記錄的時點與內容。",'#birthResusStatus'));
+    if(raw("birthResusStatus")==="performed"&&!birthHasAction())awaitBirth("已選有急救，請在第 1 區選急救到哪一階。",S.pathway?'#ladderChoices':'#entryRoutes',S.pathway?'急救到哪一階':'請先選擇入院情境');
+    if(raw("birthResusStatus")!=="performed"&&S.birthEvents.some(e=>e.kind!=="assessment"))awaitBirth("先前處置已保留，目前不寫入；在第 1 區選回急救階梯可恢復。觀察紀錄仍保留於敘述。",S.pathway?'#ladderChoices':'#entryRoutes',S.pathway?'急救到哪一階':'請先選擇入院情境');
+    if(raw("birthResusStatus")==="none"&&["apnea","gasping","ineffective"].includes(raw("birthBreathing")))birth.push(reviewIssue("出生呼吸紀錄與「無需急救」並存，請確認記錄的時點與內容。",S.pathway?'#ladderChoices':'#entryRoutes',S.pathway?'急救到哪一階':'請先選擇入院情境'));
     if(raw("pwOnsetH")&&!raw("pwOnsetUnit"))awaitPath("症狀時間缺少單位，確認前不會寫成小時或分鐘。",'#pwOnsetUnit');
     if(S.outborn&&raw("obTransferFrom")===(raw("homeHosp")||"TPEMMH"))path.push(reviewIssue("轉入來源與收治院區相同，請核對是否為院內轉送或院所選擇。",'#obTransferFrom'));
     if(S.outborn&&raw('obFacility')===(raw('homeHosp')||'TPEMMH'))path.push(reviewIssue('外院出生院所與收治院區相同，請核對出生地或入院情境。','#obFacility'));
-    ["obM1Relation","obRespRelation"].forEach(field=>{
-      if(field==="obM1Relation"&&!S.outborn)return;
-      const r=resolvedSupport(field,field==="obM1Relation"?S.obM1Type:S.obRespType);
-      if(r.relation==="continued"&&!r.confirmed)path.push(reviewIssue(`${field==="obM1Relation"?"外院":"本段"}先前對照的呼吸支持已改變、未填或與這段不同；請重新確認是否仍持續使用。`,'#'+field+'Choices','這段的呼吸照護選擇'));
-      if(r.relation==='settings'&&!r.confirmed)path.push(reviewIssue('調整設定所對照的支持方式已改變或未填；請重新確認。','#'+field+'Choices','方式不變，調整設定'));
-      if(r.relation==='changed'&&(!r.source||r.mode===r.source||S.continuitySignatures[field]!==sourceStamp(field)))path.push(reviewIssue(r.mode===r.source?'前後呼吸方式相同；若只有參數不同，請改選「方式不變，調整設定」。':'換方式所對照的前段支持已改變或未填，請重新確認。','#'+field+'Choices','換了呼吸方式'));
-      if(r.mode==='room'&&['new','repeat','settings'].includes(r.relation))path.push(reviewIssue('Room air 不能同時記為開始／重新開始呼吸支持或調整支持設定；原值保留，請修正選擇。','#'+field+'Choices','這段的呼吸照護選擇'));
-      if(['new','repeat','changed'].includes(r.relation)&&!r.mode)awaitPath('已選呼吸支持變化；請選擇本段使用的呼吸方式。','[data-seg="'+(field==='obM1Relation'?'obM1Type':'obRespType')+'"]','本段呼吸方式');
-      if(r.relation==="stopped"&&(!r.source||r.source==="room"||S.continuitySignatures[field]!==sourceStamp(field)))path.push(reviewIssue("先前對照的呼吸支持已改變或未填；請重新確認停止了哪項支持。",'#'+field+'Choices','這段停止的呼吸支持'));
-    });
     if(birthHasAction())for(const field of ['birthInitialNote','birthFinalNote','obCourse'])if(/\bno resuscitation\b/i.test(raw(field)))path.push(reviewIssue("自由文字提及 no resuscitation，但已有急救事件，請確認是否為不同時點。",'#'+field));
     if(S.outborn){
       let previous=-1;
@@ -3111,7 +3186,7 @@
     }
     if(S.pathway==="direct"&&S.pwConsult&&raw("pwConsultH")){
       const mins=active.filter(e=>e.minutes!==undefined&&e.minutes!=="").map(e=>Number(e.minutes));
-      if(mins.length&&Number(raw("pwConsultH"))*60>Math.min(...mins))path.push(reviewIssue("會診時間晚於第一個產房處置：note 依故事 B 把會診寫在處置之前；若處置是在會診前由產科／護理執行，請在事件補充註明，或改用「調整細節」關掉會診。",'#pwConsultH'));
+      if(mins.length&&Number(raw("pwConsultH"))*60>Math.min(...mins))path.push(reviewIssue("會診時間晚於第一個產房處置：note 依故事 B 把會診寫在處置之前；若處置是在會診前由產科／護理執行，請在事件補充註明，或在時序帶上把「出生後會診」站移除。",'#pwConsultH'));
     }
     if(S.pathway==="nursery"){
       if(S.brEval.includes("maternal")&&!maternalRiskPhrases().length)path.push(reviewIssue("勾了「母體風險因子」，但產前區沒有發燒、PROM 或 GBS 陽性的紀錄；note 只會寫 maternal risk factors，請核對來源或修改原因。",'[data-msel="brEval"]','嬰兒室評估原因'));
@@ -3183,7 +3258,7 @@
     const optional=[
       [!raw('birthTime'),'出生時間','#birthTime'],[!raw('gravida'),'母親 G','#gravida'],[!raw('para'),'母親 P','#para'],[!raw('matAge'),'母親年齡','#matAge'],
       [!raw('ap1'),'1／5 分鐘 Apgar','#ap1'],[!raw('ap5'),'1／5 分鐘 Apgar','#ap5'],
-      [!raw('birthBreathing'),'出生呼吸觀察','#birthBreathing'],[!raw('birthResusStatus'),'出生急救紀錄','#birthResusStatus'],
+      [!raw('birthBreathing'),'出生呼吸觀察','[data-select-chips="birthBreathing"]','出生當下呼吸'],[!raw('birthResusStatus'),'出生急救紀錄',S.pathway?'#ladderChoices':'#entryRoutes',S.pathway?'急救到哪一階':'請先選擇入院情境'],
       [!S.resp,'入院時呼吸支持',S.pathway?'[data-seg="resp"]':'#entryRoutes',S.pathway?'入院時呼吸支持':'請先選擇入院情境']
     ].filter(([missing])=>missing).map(([,message,selector,label])=>reviewIssue(message,selector,label)).filter((message,i,a)=>a.indexOf(message)===i);
     const unreviewed=RISKS.filter(r=>r.k!=='steroid'&&!S.r[r.k].reviewed&&!S.r[r.k].on&&S.r[r.k].status!=='unknown');
@@ -3243,6 +3318,96 @@
     S.journeyOpen={};S.journeyStep=""; render();
     // 選情境只調整欄位，不把使用者從入口跳到頁面下方。
   }
+  // ── 故事線骨架（Ryan 2026-10-06）：路徑和有沒有這一站，在開始前定；一站裡發生幾次，在站內用「＋」長。──
+  // 急救階梯是骨架：第 1 區一句話定到哪一階，出生事件依 NRP 順序自動長出（O₂ → PPV → 插管 → 壓胸 → Epinephrine）。
+  // 階梯不另存狀態：由 birthResusStatus＋現有出生事件推回目前階層，選階梯＝增刪 S.birthEvents。
+  const LADDER_LEVELS=[['none','無'],['o2','O₂'],['ppv','PPV'],['ett','插管'],['cpr','壓胸＋Epi']];
+  const LADDER_SKELETON={none:[],o2:['o2'],ppv:['ppv'],ett:['ppv','intubation'],cpr:['ppv','intubation','compressions','epinephrine']};
+  const NRP_RANK={o2:0,ppv:1,intubation:2,compressions:3,epinephrine:4};
+  const LADDER_EVENT_LABEL={o2:'O₂',ppv:'PPV',intubation:'插管',compressions:'壓胸',epinephrine:'Epi',assessment:'再評估'};
+  function ladderLevel(){
+    const status=raw('birthResusStatus');if(status==='none')return 'none';if(status!=='performed')return '';
+    const kinds=S.birthEvents.filter(e=>e.kind!=='assessment').map(e=>e.kind);
+    return kinds.some(k=>k==='compressions'||k==='epinephrine')?'cpr':kinds.includes('intubation')?'ett':kinds.includes('ppv')?'ppv':kinds.includes('o2')?'o2':'';
+  }
+  // 使用者實際填過的參數（NRP 預設值、預設的「插管」不算）；降階時這些事件要先提示再移除。
+  const EVENT_PARAM_FIELDS=['minutes','fiO2','pip','peep','rr','flow','device','duration','ratio','drugDose','drugRoute','note','response','intubationAction'];
+  function eventFilled(e){
+    return EVENT_PARAM_FIELDS.some(k=>{const v=e[k];if(v===undefined||v==='')return false;if(e.nrp&&['fiO2','pip','peep'].includes(k))return false;return !(k==='intubationAction'&&v==='initial');});
+  }
+  function newBirthEvent(kind){
+    const event={id:S.nextEventId++,kind};
+    if(kind==='ppv'){const ga=V('gaW');Object.assign(event,{fiO2:String(NRP.ventilation.fio2(ga)),pip:String(NRP.ventilation.pip(ga)),peep:String(NRP.ventilation.peep),nrp:true});}
+    return event;
+  }
+  let ladderPending=null;
+  const ladderExtras=level=>{const keep=LADDER_SKELETON[level]||[];return S.birthEvents.filter(e=>e.kind!=='assessment'&&!keep.includes(e.kind));};
+  function applyLadder(level,{force=false}={}){
+    if(!Object.hasOwn(LADDER_SKELETON,level))return false;
+    const extras=ladderExtras(level);
+    if(extras.some(eventFilled)&&!force){ladderPending=level;render();document.getElementById('ladderConfirmNo')?.focus({preventScroll:true});return false;}
+    ladderPending=null;
+    S.birthEvents=S.birthEvents.filter(e=>!extras.includes(e));
+    for(const kind of LADDER_SKELETON[level]){
+      if(S.birthEvents.some(e=>e.kind===kind))continue;
+      // 插在第一個更高階的處置之前；沒有更高階就接在最後（升階時，已記的中途再評估留在前面，照時間順序）。
+      const higher=S.birthEvents.findIndex(e=>e.kind!=='assessment'&&NRP_RANK[e.kind]>NRP_RANK[kind]);
+      S.birthEvents.splice(higher<0?S.birthEvents.length:higher,0,newBirthEvent(kind));
+    }
+    document.getElementById('birthResusStatus').value=level==='none'?'none':'performed';
+    if(S.lastRemoved?.scope==='birth')S.lastRemoved=null;
+    drawEvents('birth');render();return true;
+  }
+  function ladderPendingText(){
+    if(!ladderPending)return '';
+    const lost=ladderExtras(ladderPending).filter(eventFilled).map(e=>LADDER_EVENT_LABEL[e.kind]);
+    return `改成「${LADDER_LEVELS.find(([v])=>v===ladderPending)[1]}」會移除已填資料的處置：${[...new Set(lost)].join('、')}。確定要移除嗎？`;
+  }
+  // 可選站：standby／出生後會診沿用既有旗標（取消時資料保留為草稿、不寫入）；
+  // 嬰兒室抽血評估（C）與轉送途中（D）有資料就算在故事裡，移除有資料的站要先確認並清空。
+  const BR_EVAL_FIELDS=['brEvalIn','brCrp','brGlu','brFindIn'],TRANSPORT_FIELDS=['pwOnsetH','pwOnsetUnit','obCourse','obO2Flow','obFiO2','obIP','obPEEP','obRR'];
+  const hasBrEvalData=()=>!!(S.brEval.length||S.brWorkup.length||S.brFindings.length||BR_EVAL_FIELDS.some(id=>raw(id)));
+  const transportEvents=()=>S.courseEvents.filter(e=>!e.phase||e.phase==='transport');
+  const hasTransportData=()=>!!(S.obSx.length||S.obRespType||S.obRespStable||S.obO2Dev||TRANSPORT_FIELDS.some(id=>raw(id))||transportEvents().length);
+  const OPTIONAL_STATIONS={
+    standby:{flag:'pwStandby',phase:'birth:standby',lab:()=>'產前 standby',avail:()=>['direct','nursery'].includes(S.pathway)},
+    consult:{flag:'pwConsult',phase:'birth:consult',lab:()=>'出生後會診',avail:()=>['direct','nursery'].includes(S.pathway)},
+    brEval:{flag:'pwBrEval',phase:'course:brEval',lab:()=>'嬰兒室抽血評估',avail:()=>S.pathway==='nursery',data:hasBrEvalData},
+    route:{flag:'pwTransport',phase:'course:route',lab:()=>'轉送途中處置',avail:()=>S.pathway==='outborn',data:hasTransportData}
+  };
+  const stationOn=key=>{const o=OPTIONAL_STATIONS[key];return !!S[o.flag]||!!o.data?.();};
+  let stationPending=null;
+  function toggleStation(key,{force=false}={}){
+    const o=OPTIONAL_STATIONS[key];if(!o||!o.avail())return;
+    if(!stationOn(key)){setTog(o.flag,true);stationPending=null;render();navigateClinicalPhase(o.phase);goToBandNode(o.phase);return;}
+    if(o.data?.()&&!force){stationPending=key;render();document.getElementById('bandConfirmNo')?.focus({preventScroll:true});return;}
+    stationPending=null;setTog(o.flag,false);
+    if(key==='brEval'){S.brEval=[];S.brWorkup=[];S.brFindings=[];BR_EVAL_FIELDS.forEach(id=>document.getElementById(id).value='');}
+    if(key==='route'){S.obSx=[];S.obRespType='';S.obRespStable=false;S.obO2Dev='';TRANSPORT_FIELDS.forEach(id=>document.getElementById(id).value='');S.courseEvents=S.courseEvents.filter(e=>!transportEvents().includes(e));drawEvents('course');}
+    for(const k of ['brEval','brWorkup','brFindings','obSx'])document.querySelectorAll(`[data-msel="${k}"] button`).forEach(b=>b.setAttribute('aria-pressed',String(S[k].includes(b.dataset.v))));
+    for(const k of ['obRespType','obO2Dev'])document.querySelectorAll(`[data-seg="${k}"] button`).forEach(b=>b.setAttribute('aria-pressed','false'));
+    document.querySelectorAll('[data-tog="obRespStable"] button').forEach(b=>b.setAttribute('aria-pressed','false'));
+    render();
+  }
+  // 故事線文字版：與帶子同源（站點定義＋出生事件），只列在故事裡的站；A/B/C 的入院前處置沒資料就不列。
+  function storyLineParts(){
+    if(!S.pathway)return [];
+    const place=S.pathway==='outborn'?'外院產房':S.delivery==='cs'?'刀房':'產房',parts=[];
+    if(S.pathway!=='readmit'){
+      if(S.pwStandby)parts.push('產前 standby');
+      parts.push('出生');
+      if(S.pwConsult&&S.pathway==='direct')parts.push('出生後會診');
+      const acts=activeBirthEvents().filter(e=>e.kind!=='assessment');
+      if(ladderLevel()==='none')parts.push(`${place}無需急救`);
+      acts.forEach((e,i)=>parts.push(`${i?'':place+' '}${LADDER_EVENT_LABEL[e.kind]}`));
+      parts.push('離開'+place);
+    }else parts.push('出生（病史）');
+    for(const st of journeyDefinitions().filter(s=>s.show).sort((a,b)=>a.order-b.order)){
+      if(st.id==='route'&&S.pathway!=='outborn'&&!journeySummary('route'))continue;
+      parts.push(st.lab);
+    }
+    return parts;
+  }
   const optTxt=id=>{const el=document.getElementById(id);return el&&el.value&&el.selectedOptions&&el.selectedOptions[0]?el.selectedOptions[0].textContent.trim():"";};
   const segTxt=key=>[...document.querySelectorAll(`[data-seg="${key}"] button[aria-pressed="true"]`)].map(b=>b.textContent.trim()).filter(t=>t&&t!=="未記錄").join("・");
   const mselTxt=key=>[...document.querySelectorAll(`[data-msel="${key}"] button[aria-pressed="true"]`)].map(b=>b.textContent.trim()).join("・");
@@ -3254,10 +3419,10 @@
       case "consult":return j([raw("pwConsultReason"),raw("pwConsultH")&&`生後 ${raw("pwConsultH")} 小時`]);
       case "dr":return active.length?active.map(e=>EVENT_NAMES[e.kind]).join(" → "):raw("birthResusStatus")==="none"?"已確認無需急救":raw("birthResusStatus")==="performed"?"有施作（尚未新增項目）":"";
       case "drEnd":return j([optTxt("birthFinalSupport"),raw("birthFinalMin")&&`生後 ${raw("birthFinalMin")} 分`,optTxt("birthFinalBreathing"),optTxt("birthFinalTone"),raw("birthFinalHR")&&`HR ${raw("birthFinalHR")}`,mselTxt("birthFinalSigns"),raw("birthFinalNote")]);
-      case "obCare":return j([raw("obFacility"),raw("obTransferFrom")&&raw("obTransferFrom")!==raw("obFacility")&&`轉自 ${raw("obTransferFrom")}`,segTxt("obM1Type"),optTxt("obM1Relation")]);
+      case "obCare":return j([raw("obFacility"),raw("obTransferFrom")&&raw("obTransferFrom")!==raw("obFacility")&&`轉自 ${raw("obTransferFrom")}`,S.courseEvents.filter(e=>e.phase==='outside').length&&`外院處置 ${S.courseEvents.filter(e=>e.phase==='outside').length} 筆`]);
       case "obConsult":return raw("obReason");
-      case "obArrive":return raw("obArrival");
-      case "route":return j([mselTxt("obSx"),raw("pwOnsetH")&&`生後 ${raw("pwOnsetH")} ${raw("pwOnsetUnit")==="minutes"?"分":"小時"}`,segTxt("obRespType"),optTxt("obRespRelation"),S.courseEvents.length&&`後續事件 ${S.courseEvents.length} 筆`,raw("obCourse")]);
+      case "obArrive":return j([segTxt("obM1Type"),raw("obArriveSpo2")&&`SpO₂ ${raw("obArriveSpo2")}%`,raw("obArrival"),S.courseEvents.filter(e=>e.phase==='arrival').length&&`現場處置 ${S.courseEvents.filter(e=>e.phase==='arrival').length} 筆`]);
+      case "route":return j([mselTxt("obSx"),raw("pwOnsetH")&&`生後 ${raw("pwOnsetH")} ${raw("pwOnsetUnit")==="minutes"?"分":"小時"}`,segTxt("obRespType"),S.courseEvents.filter(e=>!S.outborn||!e.phase||e.phase==='transport').length&&`後續事件 ${S.courseEvents.length} 筆`,raw("obCourse")]);
       case "brEval":return j([mselTxt("brEval"),raw("brEvalIn"),mselTxt("brWorkup"),mselTxt("brFindings"),raw("brCrp")&&`CRP ${raw("brCrp")}`,raw("brGlu")&&`血糖 ${raw("brGlu")}`,raw("brFindIn")]);
       case "prior":return j([segTxt("readmitPrior"),raw("readmitPriorUnit"),raw("readmitDischargeDate")&&`出院 ${raw("readmitDischargeDate")}`,raw("readmitDischargeWeight")&&`${raw("readmitDischargeWeight")} g`,segTxt("readmitFeeding"),raw("readmitPriorCourse")]);
       case "home":return j([mselTxt("readmitBaseline"),raw("readmitHomeNote")]);
@@ -3291,7 +3456,6 @@
     }
     stageVisited.add(workflowStages[active][0].id);
   }
-  const supportChoiceDrafts=new Map();
   const supportName=mode=>({room:'Room air（未用氧氣）',o2:'氧氣',cpap:'CPAP',ppv:'PPV',ett:'氣管內管呼吸支持'}[mode]||'這個時點尚無資料');
   function birthPhaseDefinitions(){
     const place=S.delivery==='cs'?'刀房':S.delivery?'產房':'出生場所',prefix=S.pathway==='outborn'?'外院':'',history=S.pathway==='readmit';
@@ -3369,7 +3533,6 @@
       fillStageContext(document.getElementById('context-'+p.key.replace(':','-')),p.key);
     }
     if(S.journeyStep)fillStageContext(document.getElementById('journeyContext'),S.journeyStep);
-    const summary=document.getElementById('entryPathSummary');if(summary){summary.hidden=!S.pathway;summary.textContent=S.pathway?`接下來：產前資料 → ${S.pathway==='readmit'?'出生背景':'出生經過'} → ${journeyDefinitions().filter(s=>s.show).sort((a,b)=>a.order-b.order).map(s=>s.lab).join(' → ')} → 核對病歷`:'';}
     syncPreviewStage();
   }
   function closeWorkflowMenus(){}
@@ -3418,7 +3581,7 @@
   const bandField=selector=>{const el=document.querySelector(selector);return el?.closest('.risk-item,.field')||el;};
   function bandPlaces(){
     const birthPlace=S.delivery==='cs'?'刀房':'產房';
-    return {outborn:{birth:'外院',obCare:'外院',obConsult:'外院',obArrive:'外院',route:'轉送途中',adm:'本院'},
+    return {outborn:{birth:'外院',obCare:'外院',obConsult:'外院',obArrive:'我方到場',route:'轉送途中',adm:'本院'},
       nursery:{birth:birthPlace,route:'嬰兒室',consult:'嬰兒室',brEval:'嬰兒室',adm:'病房'},
       readmit:{birth:'出院前',prior:'出院前',home:'家中',illness:'家中',evaluation:'門急診',adm:'門急診'}}[S.pathway]||null;
   }
@@ -3437,24 +3600,45 @@
       return nodes;
     }
     const places=bandPlaces();
-    if(stage===2)return birthPhaseDefinitions().map(p=>{
-      let has=!!journeySummary(p.id),time='';
-      if(p.id==='info'){has=!!(raw('birthDate')||raw('gaW')||raw('bw'));time=[shortDate(raw('birthDate')),raw('birthTime')].filter(Boolean).join(' ');}
-      if(p.id==='consult'&&raw('pwConsultH'))time=`生後 ${raw('pwConsultH')} 小時`;
-      if(p.id==='dr'){const first=activeBirthEvents().find(e=>e.minutes!==undefined&&e.minutes!=='');if(first)time=`生後 ${first.minutes} 分`;}
-      if(p.id==='drEnd'&&raw('birthFinalMin'))time=`生後 ${raw('birthFinalMin')} 分`;
-      return {key:p.key,name:p.id==='info'?'出生':p.lab,time:when(has,time),has,phase:true,place:places?.birth||''};
-    });
+    // 可選站沒在故事裡時是空心虛線點（點一下加入）；在故事裡的可選站多一顆「移除」。
+    const optionalNode=(id,place)=>{const o=OPTIONAL_STATIONS[id];return {key:o.phase,name:o.lab(),time:'點一下加入',has:false,opt:id,place};};
+    if(stage===2){
+      const defs=birthPhaseDefinitions(),nodes=[],place=places?.birth||'';
+      for(const id of ['info','standby','birth','consult','dr','drEnd']){
+        const p=defs.find(x=>x.id===id);
+        if(!p){if(OPTIONAL_STATIONS[id]?.avail())nodes.push(optionalNode(id,place));continue;}
+        // 急救階梯骨架：產房段依 NRP 順序長出每一筆處置／再評估節點，點了定位到那一列。
+        const events=id==='dr'?activeBirthEvents():[];
+        if(events.length){
+          const seen={};
+          for(const e of events){
+            seen[e.kind]=(seen[e.kind]||0)+1;
+            const done=e.kind==='assessment'?!!(e.breathing||e.tone||e.hr||e.support):eventFilled(e)||(e.kind==='ppv'&&e.nrp===false);
+            nodes.push({key:'birth:dr:'+e.id,target:'birth:dr',event:e.id,name:LADDER_EVENT_LABEL[e.kind]+(seen[e.kind]>1?' '+seen[e.kind]:''),time:when(done,e.minutes!==undefined&&e.minutes!==''?`生後 ${e.minutes} 分`:''),has:done,phase:true,place});
+          }
+          continue;
+        }
+        let has=!!journeySummary(p.id),time='';
+        if(p.id==='info'){has=!!(raw('birthDate')||raw('gaW')||raw('bw'));time=[shortDate(raw('birthDate')),raw('birthTime')].filter(Boolean).join(' ');}
+        if(p.id==='consult'&&raw('pwConsultH'))time=`生後 ${raw('pwConsultH')} 小時`;
+        if(p.id==='dr'&&ladderLevel()==='none')time='無需急救';
+        if(p.id==='drEnd'){const leave={room:'Room air',o2:'O₂',ppv:'PPV 持續',ett:'插管',cpap:'CPAP'}[raw('birthFinalSupport')];if(leave)time=leave;else if(raw('birthFinalMin'))time=`生後 ${raw('birthFinalMin')} 分`;}
+        nodes.push({key:p.key,name:p.id==='info'?'出生':p.lab,time:when(has,time),has,phase:true,place,optOn:OPTIONAL_STATIONS[id]?id:''});
+      }
+      return nodes;
+    }
     if(stage===3){
       if(!S.pathway)return null;
-      return journeyDefinitions().filter(s=>s.show).sort((a,b)=>a.order-b.order).map(s=>{
+      return journeyDefinitions().filter(s=>s.show||s.optional&&OPTIONAL_STATIONS[s.id]?.avail()).sort((a,b)=>a.order-b.order).map(s=>{
+        if(!s.show)return optionalNode(s.id,places?.[s.id]||'');
         const has=!!journeySummary(s.id);let time='';
         if(s.id==='route'&&raw('pwOnsetH'))time=`生後 ${raw('pwOnsetH')} ${raw('pwOnsetUnit')==='minutes'?'分':'小時'}`;
         if(s.id==='consult'&&raw('pwConsultH'))time=`生後 ${raw('pwConsultH')} 小時`;
         if(s.id==='prior'&&raw('readmitDischargeDate'))time=`出院 ${shortDate(raw('readmitDischargeDate'))}`;
         if(s.id==='illness'&&raw('readmitOnsetDOL'))time=`DOL ${raw('readmitOnsetDOL')}`;
         if(['evaluation','adm'].includes(s.id))time=[shortDate(raw('admissionDate')),raw('admissionTime')].filter(Boolean).join(' ');
-        return {key:'course:'+s.id,name:s.lab,time:when(has,time),has,phase:true,place:places?.[s.id]||''};
+        // 可略過的站（入院前處置、我方抵達、入院狀況等）沒填不算缺，也不計入「已記錄 x／y」。
+        return {key:'course:'+s.id,name:s.lab,time:has?time||'已記錄':s.opt?'可略過':'未記錄',has,skip:!!s.opt&&!has,phase:true,place:places?.[s.id]||'',optOn:s.optional?s.id:''};
       });
     }
     return [];
@@ -3467,8 +3651,15 @@
     lastReviewLists.conflicts.forEach(m=>add(m,'conflicts'));
     return groups;
   }
+  // 出生事件列對應到自己的節點（birth:dr:<id>）；其他欄位對應所在的站。
+  let currentBandEvent=null;
+  function nodeKeyForElement(el){
+    const row=el?.closest?.('.clinical-event[data-event-scope="birth"]');
+    if(row&&activeBirthEvents().length)return 'birth:dr:'+row.dataset.eventId;
+    return phaseForElement(el);
+  }
   function nodeHasConflict(node,stage,conflicts){
-    return conflicts.some(c=>{if(!c.el)return false;if(stage===1){const block=node.block();return !!block&&block.contains(c.el);}return phaseForElement(c.el)===node.key;});
+    return conflicts.some(c=>{if(!c.el)return false;if(stage===1){const block=node.block();return !!block&&block.contains(c.el);}return nodeKeyForElement(c.el)===node.key;});
   }
   function stageStatus(i,group){
     const n=lastReviewLists.conflicts.length;
@@ -3477,7 +3668,7 @@
     if(parts.length)return [parts.join('・'),true];
     if(i<2)return [i===0||S.prenatalConfirmed?'完成':'未開始',false];
     // 出生資料／本次病程：節點沒有全部記錄就不寫「完成」，改寫已記錄幾站（未記錄的站可能本來就不適用，所以不用提醒色）。
-    const nodes=i===2?bandNodes(2):S.pathway?(bandNodes(3)||[]):[],done=nodes.filter(n=>n.has).length;
+    const nodes=(i===2?bandNodes(2):S.pathway?(bandNodes(3)||[]):[]).filter(n=>!n.opt&&!n.skip),done=nodes.filter(n=>n.has).length;
     return [!done?'未開始':done===nodes.length?'完成':`已記錄 ${done}／${nodes.length}`,false];
   }
   function renderStageBand(){
@@ -3493,11 +3684,14 @@
       const host=seg.querySelector('.band-nodes');
       if(host){
         const nodes=bandNodes(i),places=seg.querySelector('.band-places');
-        const signature=JSON.stringify(nodes?nodes.map(n=>[n.key,n.name,n.place||'']):null);
+        const signature=JSON.stringify(nodes?nodes.map(n=>[n.key,n.name,n.place||'',n.opt||'',n.optOn||'']):null);
         if(host.dataset.signature!==signature){
-          const focused=host.contains(document.activeElement)?document.activeElement.dataset.bandNode:'';
-          host.innerHTML=nodes?nodes.map(n=>`<button type="button" class="band-node" data-band-node="${n.key}"${n.phase?` data-phase-target="${n.key}"`:''}><span class="dot" aria-hidden="true"></span><span class="nm">${htmlEscape(n.name)}</span><span class="tm"></span></button>`).join(''):'<p class="band-empty">尚未選情境</p>';
-          host.dataset.signature=signature;if(focused)host.querySelector(`[data-band-node="${focused}"]`)?.focus({preventScroll:true});
+          const focusedEl=host.contains(document.activeElement)?document.activeElement:null,focused=focusedEl?.closest('[data-band-node]')?.dataset.bandNode||'';
+          const inner=n=>`<span class="dot" aria-hidden="true"></span><span class="nm">${htmlEscape(n.name)}</span><span class="tm"></span>`;
+          host.innerHTML=nodes?nodes.map(n=>n.opt?`<button type="button" class="band-node opt" data-band-node="${n.key}" data-band-opt="${n.opt}" data-phase-target="${n.key}">${inner(n)}</button>`
+            :n.optOn?`<div class="band-node opt-on" data-band-node="${n.key}"><button type="button" class="band-hit" data-phase-target="${n.target||n.key}">${inner(n)}</button><button type="button" class="band-x" data-band-opt-remove="${n.optOn}" aria-label="把「${htmlEscape(n.name)}」從故事移除">×</button></div>`
+            :`<button type="button" class="band-node" data-band-node="${n.key}"${n.phase?` data-phase-target="${n.target||n.key}"`:''}>${inner(n)}</button>`).join(''):'<p class="band-empty">尚未選情境</p>';
+          host.dataset.signature=signature;if(focused){const node=host.querySelector(`[data-band-node="${focused}"]`);(node?.matches('button')?node:node?.querySelector('.band-hit'))?.focus({preventScroll:true});}
           const groupsOfPlace=[];for(const n of nodes||[]){const last=groupsOfPlace.at(-1);if(last&&last.place===n.place)last.count++;else groupsOfPlace.push({place:n.place,count:1});}
           places.hidden=!groupsOfPlace.some(g=>g.place);
           places.innerHTML=places.hidden?'':groupsOfPlace.map(g=>`<span style="flex:${g.count} ${g.count} 0;min-width:${g.count*60-12}px">${htmlEscape(g.place)}</span>`).join('');
@@ -3505,11 +3699,13 @@
         seg.style.flexGrow=String(Math.max(1,nodes?.length||1));
         for(const n of nodes||[]){
           const button=host.querySelector(`[data-band-node="${n.key}"]`);if(!button)continue;
-          const warn=nodeHasConflict(n,i,groups[i].conflicts);
+          const hit=button.matches('button')?button:button.querySelector('.band-hit'),warn=!n.opt&&nodeHasConflict(n,i,groups[i].conflicts);
           button.classList.toggle('has',n.has);button.classList.toggle('warn',warn);
           const tm=button.querySelector('.tm');if(tm.textContent!==n.time)tm.textContent=n.time;
-          if(n.key===phaseKey)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');
-          button.setAttribute('aria-label',`${n.name}：${n.time}${warn?'（待核對）':''}`);
+          const current=n.key===phaseKey||!!n.event&&phaseKey==='birth:dr'&&(n.event===currentBandEvent||!nodes.some(x=>x.event===currentBandEvent)&&n===nodes.find(x=>x.event));
+          if(current)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');
+          const label=n.opt?`${n.name}：不在故事裡，點一下加入`:`${n.name}：${n.time}${warn?'（待核對）':''}`;
+          hit.setAttribute('aria-label',label);button.title=label;
         }
       }
       const missing=document.getElementById(`stageMissing-${i+1}`);
@@ -3545,6 +3741,12 @@
       window.scrollTo({top:Math.max(0,block.getBoundingClientRect().top+window.scrollY-workflowOffset()),left:0,behavior:'instant'});
       pulseBlock(block);return;
     }
+    if(key.startsWith('birth:dr:')){
+      const id=key.slice(9),row=document.querySelector(`#birthEvents [data-event-id="${id}"]`);if(!row)return;
+      currentBandEvent=Number(id);row.querySelector('input:not([type="hidden"]),select,button[aria-pressed]')?.focus({preventScroll:true});
+      window.scrollTo({top:Math.max(0,row.getBoundingClientRect().top+window.scrollY-workflowOffset()),left:0,behavior:'instant'});
+      syncWorkflowNavigation();pulseBlock(row);return;
+    }
     const phase=clinicalPhases().find(p=>p.key===key);if(!phase)return;
     pulseBlock(phase.chapter==='pathwayCard'?document.getElementById('journeyWorkspace'):document.getElementById(phase.target));
   }
@@ -3559,8 +3761,8 @@
       {id:"obCare",show:ob,order:30,lab:"外院照護",plain:"我方抵達之前，外院團隊做了什麼（依外院紀錄）。"},
       {id:"obConsult",show:ob,order:35,lab:"外院聯繫我方",plain:"外院為什麼聯繫我方（轉入原因）。"},
       {id:"obArrive",show:ob,order:40,lab:"我方抵達外院",plain:"我們的團隊到外院時看到什麼（不是到本院時）。",opt:true},
-      {id:"route",show:!re,order:ob?50:nu?55:60,lab:ob?"轉送途中":nu?"嬰兒室":"入院前處置",plain:ob?"前段支持會顯示供對照；只補這段期間的實際情況，參數不會自動複製。":nu?"在嬰兒室出現了什麼、掛了什麼、大約生後幾小時。兒科評估與抽血在下一站填。":"從產房到入院之間有沒有前處理；沒有就整站留空。",opt:!nu},
-      {id:"brEval",show:nu,order:57,lab:"兒科評估・抽血",plain:"兒科為什麼去看、在嬰兒室抽了什麼、結果如何。沒填結果不會被寫成正常。"},
+      {id:"route",show:!re&&(!ob||stationOn('route')),optional:ob,order:ob?50:nu?55:60,lab:ob?"轉送途中":nu?"嬰兒室":"入院前處置",plain:ob?"前段支持會顯示供對照；只補這段期間的實際情況，參數不會自動複製。":nu?"在嬰兒室出現了什麼、掛了什麼、大約生後幾小時。兒科評估與抽血在下一站填。":"從產房到入院之間有沒有前處理；沒有就整站留空。",opt:!nu},
+      {id:"brEval",show:nu&&stationOn('brEval'),optional:nu,order:57,lab:"兒科評估・抽血",plain:"兒科為什麼去看、在嬰兒室抽了什麼、結果如何。沒填結果不會被寫成正常。"},
       {id:"prior",show:re,order:10,lab:"前次出院",plain:"只補出生後到前次出院的經過；產前、Apgar 與急救沿用前面，不在這裡重填。"},
       {id:"home",show:re,order:20,lab:"返家後狀況",plain:"記錄返家後原本的基準狀況與直到本次生病前的經過；不確定的內容留空。",opt:true},
       {id:"illness",show:re,order:30,lab:"本次病程",plain:"先選主要問題，只會展開相關欄位；用時間順序寫變化，不必重複出生背景。"},
@@ -3613,6 +3815,7 @@
     });
     if(mountedJourneyStop!==S.journeyStep){returnMountedJourneyBody();const li=ol.querySelector(`li[data-stop="${S.journeyStep}"]`),body=li?.querySelector(":scope > .body");if(body){ws.appendChild(body);mountedJourneyStop=S.journeyStep;}}
     const active=visible.find(x=>x.id===S.journeyStep),idx=visible.indexOf(active);
+    {const tag=document.getElementById('journeyPlace'),place=S.pathway==='outborn'?bandPlaces()?.[S.journeyStep]||'':'';if(tag){tag.hidden=!place;tag.textContent=place;}}
     const stage=document.getElementById("journeyStage"),counter=document.getElementById("journeyCounter");
     if(stage)stage.textContent=`情境 ${story}・${active?.lab||"本次入院"}`;if(counter)counter.textContent=`第 ${idx+1}／${visible.length} 階段`;
     const prev=document.getElementById("journeyPrev"),next=document.getElementById("journeyNext");if(prev){prev.disabled=false;prev.textContent=idx<=0?'← 出生資料':`← ${visible[idx-1].lab}`;}if(next){next.disabled=false;next.textContent=idx>=visible.length-1?'下一段：核對 →':`下一段：${visible[idx+1].lab} →`;}
@@ -3882,6 +4085,23 @@
     return false;
   }
 
+  // 出生資料站：階梯摘要、站內「＋」、離開產房的選項與補充評估。
+  function renderBirthStation(){
+    const el=id=>document.getElementById(id),level=ladderLevel(),place=S.pathway==='outborn'?'外院產房':S.delivery==='cs'?'刀房':'產房';
+    const skeleton=LADDER_SKELETON[level]||[],acts=activeBirthEvents().filter(e=>e.kind!=='assessment');
+    const summary=!S.pathway?'先在第 1 區選情境與「急救到哪一階」。':level===''?'還沒選急救到哪一階：':level==='none'?`第 1 區已選：${place}無需急救。`:`骨架（第 1 區定）：${skeleton.map(k=>EVENT_ROW_LABEL[k]).join(' → ')}`;
+    const summaryHtml=`<span>${htmlEscape(summary)}</span><button type="button" class="link-btn" data-flow-target="admissionContext">${level===''?'到第 1 區選階梯':'在第 1 區改階'}</button>`;
+    if(el('birthLadderSummary').innerHTML!==summaryHtml)el('birthLadderSummary').innerHTML=summaryHtml;
+    const buttons=[...skeleton.map(k=>`<button type="button" class="add" data-add-birth="${k}">＋ 再做一次 ${EVENT_ROW_LABEL[k]}</button>`),'<button type="button" class="add" data-add-birth="assessment">＋ 中途再評估</button>'].join('');
+    const host=el('birthAdderButtons');if(host.dataset.sig!==buttons){const focused=host.contains(document.activeElement)?document.activeElement.dataset.addBirth:'';host.innerHTML=buttons;host.dataset.sig=buttons;if(focused)host.querySelector(`[data-add-birth="${focused}"]`)?.focus({preventScroll:true});}
+    el('birthAdderHint').textContent=S.birthEvents.length>skeleton.length?`已有 ${S.birthEvents.length} 筆，照時間順序排。`:'例：PPV 停了又重上＝再做一次；PPV 後看心跳＝中途再評估。';
+    document.querySelectorAll('#birthEvents [data-event-kind]').forEach(card=>{card.hidden=card.dataset.eventKind!=="assessment"&&raw("birthResusStatus")!=="performed";});
+    el('leaveTitle').textContent=`離開${place}時`;
+    el('leaveChoices').querySelector('[data-v="cpap"]').hidden=S.pathway!=='outborn'&&raw('birthFinalSupport')!=='cpap';
+    if(el('leaveSpo2').value!==String(S.leaveSpo2||''))el('leaveSpo2').value=S.leaveSpo2||'';
+    const more=el('leaveMore'),filled=['birthFinalBreathing','birthFinalTone','birthFinalHR','birthFinalMin','birthFinalNote'].some(id=>raw(id))||S.birthFinalSigns.length;
+    if(filled&&!more.dataset.autoOpened){more.open=true;more.dataset.autoOpened='1';}
+  }
   function renderAdm(){
     const sl=(t,w)=>`<span class="slot${w?" abn":""}">${t}</span>`;
     const ph=t=>`<span class="ph">${t}</span>`;                       // 未填空格（灰）
@@ -3930,17 +4150,16 @@
     const sh=(id,show)=>{const el=document.getElementById(id); if(el)el.hidden=!show;};
     sh("pwSbWrap",S.pwStandby);sh("pwConsultWrap",S.pwConsult);
     sh("birthActionsWrap",true);sh("birthEvents",true);
-    document.querySelectorAll('[data-add-birth]').forEach(b=>b.hidden=b.dataset.addBirth!=='assessment'&&raw('birthResusStatus')!=='performed');
+    renderBirthStation();
     document.querySelectorAll('#birthEvents [data-event-kind]').forEach(card=>{card.hidden=card.dataset.eventKind!=="assessment"&&raw("birthResusStatus")!=="performed";});
     sh("outbornWrap",S.outborn);
     sh("pwSxWrap",pwSx);
     sh("pwOnsetWrap",S.obSx.length>0); sh("pwOnsetHWrap",true);
-    sh("obM1Wrap",S.outborn); sh("obM1O2Wrap",resolvedSupport("obM1Relation",S.obM1Type).mode==="o2");
-    {const mode=resolvedSupport('obM1Relation',S.obM1Type).mode;sh('obM1VentWrap',['cpap','ppv','ett'].includes(mode));sh('obM1IPWrap',['ppv','ett'].includes(mode));sh('obM1RRWrap',mode==='ett');document.getElementById('obM1PEEPLabel').textContent=(mode==='cpap'?'Pressure':'PEEP')+'（cmH₂O，選填）';}
+    sh("obM1Wrap",S.outborn); sh("obM1O2Wrap",S.obM1Type==="o2");
+    {const mode=S.obM1Type;sh('obM1VentWrap',['cpap','ppv','ett'].includes(mode));sh('obM1IPWrap',['ppv','ett'].includes(mode));sh('obM1RRWrap',mode==='ett');document.getElementById('obM1PEEPLabel').textContent=mode==='cpap'?'Pressure':'PEEP';}
     sh("obArrWrap",S.outborn);
     sh("pwLadderWrap",pwSx);
     const supportMode=pathwaySupportMode();
-    sh("pathwaySupportControls",raw("obRespRelation")!=="stopped");
     sh("obO2Wrap",supportMode==="o2");
     sh("obRespWrap",["cpap","ppv","ett"].includes(supportMode));
     sh("obIPfield",supportMode!=="cpap");sh("obRRfield",supportMode==="ett");
@@ -3949,16 +4168,18 @@
     sh("dolOtherWrap",S.dol==="x");
     sh("pwCourseWrap",true);
     sh("brCrpWrap",S.brFindings.includes("crp"));sh("brGluWrap",S.brFindings.includes("hypoglycemia"));
-    renderSupportReuse();
     const stageLabel=S.outborn?'轉送途中':S.pathway==='nursery'?'BR 觀察期間':'入院前';
-    document.querySelector('#pwSxWrap > .lab').innerHTML=`${stageLabel}的症狀<span class="q">（多選；只補新出現、持續或再次出現的變化）</span>`;
-    document.querySelector('label[for="obCourse"]').textContent=`${stageLabel}補充（選填，完整英文句）`;
+    {const lab=`${stageLabel}症狀<span class="q">多選；出生當下已記錄的不必再填</span>`,el=document.querySelector('#pwSxWrap > .lab');if(el.innerHTML!==lab)el.innerHTML=lab;}
+    {const el=document.querySelector('label[for="obCourse"]'),lab=`${stageLabel}補充<span class="q">選填，完整英文句</span>`;if(el.innerHTML!==lab)el.innerHTML=lab;}
     document.getElementById('obCourse').placeholder='只補上方未涵蓋的經過，不必重述已選內容';
-    document.getElementById('courseEvents').previousElementSibling.querySelector('summary').textContent=`新增${stageLabel}處置／再評估（選填）`;
-    const siteSummary=document.getElementById('siteSupportSummary'),siteEvent=lastArrivalSupport();
-    siteSummary.hidden=!siteEvent;siteSummary.textContent=siteEvent?`我方現場最後一筆支持紀錄：${supportName(siteEvent.kind==='assessment'?siteEvent.support:siteEvent.kind==='intubation'?'ett':siteEvent.kind)}。下一段可確認是否延續；參數不會自動帶入。`:'';
-    const ladLab=document.getElementById("ladderALab");
-    if(ladLab)ladLab.textContent=S.pathway==="outborn"?"我方處置·轉送中呼吸維持":S.pathway==="nursery"?"嬰兒室呼吸處置":"呼吸處置";
+    document.querySelector('#courseAdders .lab .q').textContent=`${stageLabel}處置`;
+    // 產房／刀房只有 Neopuff、沒有呼吸器：A/B/C 的入院前不出現 CPAP（已選到的照樣顯示，不靜默清掉）；外接途中可有。
+    // 「未記錄」按鈕是清除動作，不是一個被選取的臨床所見。
+    document.querySelectorAll('[data-seg="obRespType"] [data-v=""],[data-seg="obM1Type"] [data-v=""],[data-seg="obO2Dev"] [data-v=""],[data-seg="obM1Dev"] [data-v=""]').forEach(b=>b.setAttribute('aria-pressed','false'));
+    for(const b of document.querySelectorAll('[data-seg="obRespType"] [data-v="cpap"],#courseAdderButtons [data-add-course="cpap"]'))b.hidden=!S.outborn&&!(b.dataset.v==='cpap'&&S.obRespType==='cpap');
+    {const ladLab=document.getElementById("ladderALab");ladLab.textContent=S.outborn?"轉送途中呼吸支持":S.pathway==="nursery"?"嬰兒室呼吸支持":"入院前呼吸支持";
+     const source=sourceMode('obRespRelation'),before=document.getElementById('routeSupportBefore');
+     before.hidden=!source;before.textContent=source?`前一站（${S.outborn?(lastArrivalSupport()?'我方現場最後一筆':S.obM1Type?'到場時':'外院最後一筆'):'離開'+(S.delivery==='cs'?'刀房':'產房')+'時'}）：${supportName(source)}。選一樣的會寫「持續」，不一樣寫「改變」。`:'';}
     {const st=deriveStory(); setCsum("pathway",st?[`${st} · `+{direct:"直接入院",nursery:"嬰兒室觀察",outborn:"外接",readmit:"出院後再次就醫"}[S.pathway],S.pwStandby?"standby":"",S.pwConsult?"會診":""].filter(Boolean).join("・"):"尚未選故事",!st);}
     renderJourney();
     timelineReview();
@@ -5306,7 +5527,11 @@ ${opLine}`);
     maternal.querySelector('.sec-h .n').textContent="2";screening.querySelector('.sec-h .n').textContent="2";medication.querySelector('.sec-h .n').textContent="2";
     pathway.querySelector('.sec-h .n').textContent="4";review.querySelector('.sec-h').innerHTML='<span class="n">5</span>核對病歷<span class="csum">暫定診斷・其他補充</span>';
     for(const card of [maternal,screening,medication,birth,pathway,review])form.appendChild(card);
-    const teamWrap=document.createElement("div");teamWrap.className="field";teamWrap.innerHTML='<span class="lab">團隊介入時間（出生直接入院時）</span>';teamWrap.appendChild(team);birth.appendChild(teamWrap);teamWrap.id="birthTeamWrap";
+    // 故事線在第 1 區一次定好：A/B 的團隊介入、急救到哪一階；可選站也能在上方時序帶直接點空心點加入。
+    const teamWrap=document.createElement("div");teamWrap.className="field";teamWrap.innerHTML='<span class="lab">團隊介入<span class="q">A＝產前 standby；B＝出生後會診（也可在時序帶點空心站加入）</span></span>';teamWrap.appendChild(team);teamWrap.id="birthTeamWrap";
+    const ladderWrap=document.createElement("div");ladderWrap.className="field";ladderWrap.id="ladderWrap";
+    ladderWrap.innerHTML=`<span class="lab" id="ladderLabel"><span id="ladderTitle">產房急救到哪一階</span><span class="q">依 NRP 順序長出節點：O₂ → PPV → 插管 → 壓胸 → Epinephrine；同一階重複做或中途再評估，到出生資料站內按「＋」</span></span><div class="seg" id="ladderChoices" role="radiogroup" aria-labelledby="ladderTitle">${LADDER_LEVELS.map(([v,t])=>`<button type="button" class="choice-button" data-choice-kind="single" role="radio" data-ladder-v="${v}" aria-checked="false" aria-pressed="false">${t}</button>`).join('')}</div><div class="inline-confirm" id="ladderConfirm" role="alertdialog" aria-labelledby="ladderConfirmText" hidden><p id="ladderConfirmText"></p><button type="button" id="ladderConfirmYes">移除並改階</button><button type="button" id="ladderConfirmNo">取消</button></div>`;
+    const storyPlan=document.createElement("div");storyPlan.id="storyPlan";storyPlan.append(teamWrap,ladderWrap);byId('storyHelp').after(storyPlan);
     for(const stop of ["standby","birth","consult","dr","drEnd"]){
       const li=document.querySelector(`#journey li[data-stop="${stop}"]`),body=li.querySelector('.body'),section=document.createElement("div");
       section.className="birth-stage";section.id=`birthStage-${stop}`;
@@ -5316,16 +5541,19 @@ ${opLine}`);
     }
     byId("birthReview").classList.add("local-review");birth.appendChild(byId("birthReview"));
     const ob=byId("obFacility").closest(".field");ob.id="outsideBirthFacility";byId("birthHospWrap").after(ob);
-    context.querySelector('#entryRoutes').insertAdjacentHTML('afterend','<p id="entryPathSummary" hidden></p>');
-    birth.querySelector('.sec-h').insertAdjacentHTML('afterend','<div class="phase-context" id="context-birth-info"></div>');
+    birth.querySelector('.sec-h').insertAdjacentHTML('afterend','<p class="guide" id="birthGuide"><b>單純的案例照順序填到底就好。</b>處置不只一次、或中途有再評估，用站內的「＋」往下加；加的會照時間順序寫進病歷。骨架（急救到哪一階）在第 1 區定。</p><div class="phase-context" id="context-birth-info"></div>');
     for(const stop of ['standby','birth','consult','dr','drEnd']){
       const section=byId('birthStage-'+stop);section.querySelector('h3').insertAdjacentHTML('afterend',`<div class="phase-context" id="context-birth-${stop}"></div>`);
     }
     byId('journeyWorkspace').insertAdjacentHTML('afterbegin','<div class="phase-context" id="journeyContext"></div>');
+    // 外院／我方現場處置：預設零筆，有才按＋（外院可能有 CPAP／插管等設備）。
+    const ADD_KINDS=[['o2','O₂'],['cpap','CPAP'],['ppv','PPV'],['intubation','插管'],['compressions','胸外按壓'],['epinephrine','Epinephrine'],['assessment','再評估']];
     for(const [stop,phase] of [['obCare','outside'],['obArrive','arrival']]){
       const body=document.querySelector(`[data-stop="${stop}"] > .body`);
-      body.insertAdjacentHTML('beforeend',`<details class="optional-events"><summary>${phase==='outside'?'新增外院處置':'新增我方現場處置'}（選填）</summary><p class="man-h">同一次處置只記一次；可重複新增不同事件。</p><div class="seg event-add" aria-label="新增${phase==='outside'?'外院':'我方現場'}事件">${Object.entries(EVENT_NAMES).map(([kind,label])=>`<button type="button" data-add-stage-event="${kind}" data-event-phase="${phase}">＋ ${label}</button>`).join('')}</div></details><div id="${stop}Events"></div>${phase==='arrival'?'<p class="site-support-summary" id="siteSupportSummary" hidden></p>':''}`);
+      body.insertAdjacentHTML('beforeend',`<div id="${stop}Events"></div><div class="adders"><div class="lab"><span class="q">${phase==='outside'?'外院處置':'我方現場處置'}</span></div><div class="btns" aria-label="新增${phase==='outside'?'外院':'我方現場'}事件">${ADD_KINDS.map(([kind,label])=>`<button type="button" class="add" data-add-stage-event="${kind}" data-event-phase="${phase}">＋ ${label}</button>`).join('')}</div><p class="hint">${phase==='outside'?'外院沒有額外處置就不用填；有才按＋。':'沒有現場處置就不用填；有才按＋。'}</p></div>`);
     }
+    byId('courseAdderButtons').innerHTML=ADD_KINDS.map(([kind,label])=>`<button type="button" class="add" data-add-course="${kind}">＋ ${label}</button>`).join('');
+    document.querySelectorAll('[data-select-chips]').forEach(group=>group.insertAdjacentHTML('beforeend','<button type="button" class="choice-clear" data-v="">清除</button>'));
     const home=document.querySelector('[data-stop="home"] .body');
     home.querySelector('.stop-plain').textContent="返家後原本狀況（選填；只勾已確認）。";
     document.querySelector('[data-stop="prior"] .body').appendChild(home);
@@ -5359,16 +5587,6 @@ ${opLine}`);
     const evaluation=document.querySelector('[data-stop="evaluation"] .body');evaluation.id="readmitEvaluationBody";evaluation.insertAdjacentHTML("beforeend",'<div class="inherited-summary" id="readmitWeightChange"></div>');
     const status=document.querySelector('[data-stop="adm"] > .body');status.id="admissionStatusBody";
     const statusLabel=status.querySelector('.lab');statusLabel.textContent="入院時呼吸支持（只描述本次入院當時）";
-    const outside=byId('obM1Wrap'),outsideControls=document.createElement('div');outsideControls.id='outsideSupportControls';
-    outside.appendChild(outsideControls);
-    outsideControls.appendChild(outside.querySelector('[data-seg="obM1Type"]'));outsideControls.appendChild(byId('obM1O2Wrap'));outsideControls.appendChild(byId('obM1VentWrap'));
-    for(const [field,control] of [['obM1Relation',outsideControls],['obRespRelation',byId('pathwaySupportControls')]]){
-      control.insertAdjacentHTML('beforebegin',`<details class="support-extra" id="${field}Details" hidden><summary>裝置／參數（選填）</summary><p class="inherited-summary" id="${field}Summary" hidden></p></details>`);
-      const native=byId(field),holder=native.parentElement;holder.hidden=true;
-      holder.insertAdjacentHTML('beforebegin',`<div class="support-guide" id="${field}Guide"><div class="support-before" id="${field}Before"></div><p class="support-question" id="${field}Question"></p><div class="support-choices" id="${field}Choices" role="group" aria-labelledby="${field}Question" tabindex="-1"></div></div>`);
-      control.insertAdjacentHTML('afterend',`<div class="support-tools" id="${field}Tools"></div><details class="support-help" id="${field}Help"><summary>補記開始／重啟與選項說明</summary><div class="support-choices" id="${field}Exceptions"></div><p>持續使用只沿用方式；參數另填。已停止不代表已改為 Room air。</p><p>直接選方式只描述本段狀態。插管／重新插管請在本階段新增一次實際處置。</p></details>`);
-      control.insertAdjacentHTML('afterbegin',`<p class="lab" id="${field}ModeLabel">本段呼吸方式</p>`);
-    }
     byId('obAdmissionStatus').placeholder='例如：The infant had mild retractions.';
     const accSeg=document.querySelector('#accForm [data-seg="resp"]');accSeg.dataset.seg="acceptanceResp";
     const accCard=accSeg.closest('.card');accCard.querySelector('.man-h').textContent="接手當時是獨立時點，不會改寫入院紀錄。確認未變時可按「與入院時相同」。";
@@ -5427,15 +5645,24 @@ ${opLine}`);
     const nav=document.createElement('nav');nav.id='workflowNav';nav.className='flow-band';nav.setAttribute('aria-label','病歷段落與時序');
     const stages=workflowStages=[[context,'入院設定'],[maternal,'產前資料'],[birth,'出生資料'],[pathway,'本次病程'],[review,'核對病歷']];
     const capText=['情境 · 去處 · 日期','','','','前後矛盾 · 複製'];
-    nav.innerHTML=`<div class="band-scroll" id="bandScroll"><div class="band" id="stageBand">${stages.map(([card,label],i)=>`<div class="band-seg${capText[i]?' cap':''}" data-band-seg="${i+1}"><button type="button" class="band-head" data-flow-target="${card.id}"><span class="n">${i+1}</span><span class="t">${label}</span><span class="s"></span></button>${capText[i]?`<div class="band-one">${capText[i]}</div>`:`<div class="band-places" aria-hidden="true" hidden></div><div class="band-nodes" role="group" aria-label="${label}時序"></div>`}</div>`).join('')}</div></div><div id="reviewJumpBar" class="review-jump-bar" hidden><span id="reviewJumpStatus" role="status"></span><button type="button" id="returnToReview">返回核對</button></div>`;form.prepend(nav);
+    nav.innerHTML=`<div class="band-scroll" id="bandScroll"><div class="band" id="stageBand">${stages.map(([card,label],i)=>`<div class="band-seg${capText[i]?' cap':''}" data-band-seg="${i+1}"><button type="button" class="band-head" data-flow-target="${card.id}"><span class="n">${i+1}</span><span class="t">${label}</span><span class="s"></span></button>${capText[i]?`<div class="band-one">${capText[i]}</div>`:`<div class="band-places" aria-hidden="true" hidden></div><div class="band-nodes" role="group" aria-label="${label}時序"></div>`}</div>`).join('')}</div></div><div class="inline-confirm band-confirm" id="bandConfirm" role="alertdialog" aria-labelledby="bandConfirmText" hidden><p id="bandConfirmText"></p><button type="button" id="bandConfirmYes">移除並清空</button><button type="button" id="bandConfirmNo">取消</button></div><div id="reviewJumpBar" class="review-jump-bar" hidden><span id="reviewJumpStatus" role="status"></span><button type="button" id="returnToReview">返回核對</button></div>`;form.prepend(nav);
     for(let i=0;i<stages.length;i++){
       const host=i===1?medication:stages[i][0];
       const missing=`<div class="stage-missing" id="stageMissing-${i+1}" hidden></div>`;
       if(host===pathway)byId('journeyNav').insertAdjacentHTML('afterend',missing);
-      host.insertAdjacentHTML('beforeend',`<div class="stage-actions"${host===pathway?' id="pathwayFallbackActions"':''}>${host===pathway?'':missing}${i>0?`<button type="button" class="secondary" data-flow-target="${stages[i-1][0].id}">← ${stages[i-1][1]}</button>`:''}${i<stages.length-1?`<button type="button" class="primary" data-flow-target="${stages[i+1][0].id}">${i===1?'以上都對，':''}下一段：${stages[i+1][1]} →</button>`:''}</div>`);
+      host.insertAdjacentHTML('beforeend',`<div class="stage-actions"${host===pathway?' id="pathwayFallbackActions"':''}>${host===pathway?'':missing}${i===0?'<p class="story-line" id="storyLine" hidden></p>':''}${i>0?`<button type="button" class="secondary" data-flow-target="${stages[i-1][0].id}">← ${stages[i-1][1]}</button>`:''}${i<stages.length-1?`<button type="button" class="primary" data-flow-target="${stages[i+1][0].id}">${i===1?'以上都對，':''}下一段：${stages[i+1][1]} →</button>`:''}</div>`);
     }
     medication.querySelector('.stage-actions .primary').id='prenatalNext';
     const measureNavigation=measureWorkflowNavigation;
+    // 站內同一個形狀（Ryan 2026-10-06）：第 3、4 段每一題＝左 112px 標籤欄＋右控制項；只換父層，id／data 屬性與狀態不變。
+    {const apgar=byId('ap1').closest('.gp-apgar>div');if(apgar)apgar.classList.add('field','apgar-field');
+     const asStep=field=>{
+       if(field.classList.contains('step'))return;const lab=field.querySelector(':scope > .lab');if(!lab)return;
+       const ctl=document.createElement('div');ctl.className='ctl';[...field.childNodes].forEach(n=>{if(n!==lab)ctl.appendChild(n);});
+       field.insertBefore(lab,field.firstChild);field.appendChild(ctl);field.classList.add('step');
+     };
+     for(const root of [birth,byId('journey')])root.querySelectorAll('.field').forEach(asStep);}
+    byId('journeyContext').insertAdjacentHTML('afterend','<p class="place-tag" id="journeyPlace" hidden></p>');
     measureNavigation();window.addEventListener('resize',()=>{measureNavigation();requestAnimationFrame(revealCurrentBandStage);});
     if(typeof ResizeObserver==='function'){const observer=new ResizeObserver(measureNavigation);observer.observe(nav);observer.observe(document.querySelector('.tabs'));}
     // Alt+→／Alt+← 切段。文字欄位保留系統的 Option／Alt+方向鍵（逐字移動）。
@@ -5450,11 +5677,18 @@ ${opLine}`);
     byId("clearBirthTeam").addEventListener('click',()=>{setTog('pwStandby',false);setTog('pwConsult',false);render();});
     byId("useAdmissionResp").addEventListener('click',()=>{if(S.resp){S.acceptanceResp=S.resp;render();}});
     document.addEventListener('click',e=>{
+      // 故事線：可選站加入／移除、急救階梯與降階確認；處理完就結束，不再當成節點導覽。
+      const optAdd=e.target.closest('[data-band-opt]'),optRemove=e.target.closest('[data-band-opt-remove]');
+      if(optAdd||optRemove){toggleStation((optAdd||optRemove).dataset.bandOpt||optRemove.dataset.bandOptRemove);return;}
+      if(e.target.closest('#bandConfirmYes')){toggleStation(stationPending,{force:true});return;}
+      if(e.target.closest('#bandConfirmNo')){stationPending=null;render();return;}
+      const ladder=e.target.closest('[data-ladder-v]');if(ladder){applyLadder(ladder.dataset.ladderV);return;}
+      if(e.target.closest('#ladderConfirmYes')){applyLadder(ladderPending,{force:true});return;}
+      if(e.target.closest('#ladderConfirmNo')){ladderPending=null;render();document.querySelector('#ladderChoices [aria-checked="true"],#ladderChoices button')?.focus({preventScroll:true});return;}
       if(e.target.closest('#prenatalNext'))S.prenatalConfirmed=true;   // 只記錄「已按過以上都對」，不影響病歷輸出。
       const phase=e.target.closest('[data-phase-target]');if(phase)navigateClinicalPhase(phase.dataset.phaseTarget);
       const node=e.target.closest('[data-band-node]');if(node)goToBandNode(node.dataset.bandNode);
       const missingLink=e.target.closest('[data-stage-target]');if(missingLink)goToReviewTarget(missingLink.dataset.stageTarget,missingLink.dataset.stageLabel,{bar:false});
-      const support=e.target.closest('[data-support-choice]');if(support)chooseSupport(support.dataset.supportField,support.dataset.supportChoice);
       const jump=e.target.closest('[data-flow-target]');if(jump)navigateWorkflow(jump.dataset.flowTarget);
       const stop=e.target.closest('[data-flow-stop]');if(stop)selectJourneyStep(stop.dataset.flowStop,{focus:true});
       const clear=e.target.closest('[data-clear-seg]');if(clear&&!clear.disabled){const key=clear.dataset.clearSeg;S[key]='';if(key==='dest')S.destNotice='';document.querySelectorAll(`[data-seg="${key}"] button[data-v]`).forEach(b=>b.setAttribute('aria-pressed','false'));render();}
@@ -5484,6 +5718,12 @@ ${opLine}`);
     el('birthHosp').placeholder=re?'請填出生院所；不會推定同本院':'同本院區（自動）';
     el('birthHospWrap').querySelector('.lab').textContent=re?'出生院所（實際出生地；不推定同收治院區）':'出生院所（未填沿用本院區）';
     el('birthTeamWrap').hidden=S.pathway!=='direct';
+    el('ladderWrap').hidden=!S.pathway;
+    el('ladderTitle').textContent=S.pathway==='outborn'?'外院處置到哪一階':S.pathway==='readmit'?'出生時急救到哪一階（病史）':`${S.delivery==='cs'?'刀房':'產房'}急救到哪一階`;
+    {const level=ladderLevel();el('ladderChoices').querySelectorAll('[data-ladder-v]').forEach(b=>{const on=b.dataset.ladderV===level;b.setAttribute('aria-checked',String(on));b.setAttribute('aria-pressed',String(on));});}
+    el('ladderConfirm').hidden=!ladderPending;el('ladderConfirmText').textContent=ladderPendingText();
+    {const parts=storyLineParts(),line=el('storyLine');line.hidden=!parts.length;line.textContent=parts.length?'故事線：'+parts.join(' → '):'';}
+    {const pending=stationPending&&OPTIONAL_STATIONS[stationPending];el('bandConfirm').hidden=!pending;el('bandConfirmText').textContent=pending?`「${pending.lab()}」已有資料；移除這一站會清空這一站的內容。確定要移除嗎？`:'';}
     el('birthStage-standby').hidden=!S.pwStandby||re;el('birthStage-consult').hidden=!S.pwConsult||re;
     el('outsideBirthFacility').hidden=S.pathway!=='outborn';
     document.querySelectorAll('[data-story]').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.story===deriveStory())));
@@ -5518,62 +5758,6 @@ ${opLine}`);
     const weight=Number(raw('readmitCurrentWeight')),discharge=Number(raw('readmitDischargeWeight'));
     el('readmitWeightChange').textContent=weight>0&&discharge>0?`與前次出院 ${discharge} g 比較：${weight-discharge>=0?'+':''}${weight-discharge} g（${((weight-discharge)/discharge*100).toFixed(1)}%）。僅描述數值，不自動判定脫水。`:'體重有不同時點：出生、前次出院與本次評估分開記錄。';
     S.habitReviewed=raw('habitStatus')==='negative';
-  }
-  function supportSourceLabel(field){
-    if(field==='obM1Relation'||!S.outborn)return `離開${S.pathway==='outborn'?'外院':''}${S.delivery==='cs'?'刀房':S.delivery?'產房':'出生場所'}前`;
-    return lastArrivalSupport()?'我方在外院最後記錄的支持':lastSupportAt('outside')?'外院團隊最後記錄的支持':'外院照護時';
-  }
-  function supportConfig(field){return field==='obM1Relation'?{key:'obM1Type',device:'obM1Dev',fields:['obM1Flow','obM1FiO2','obM1IP','obM1PEEP','obM1RR']}:{key:'obRespType',device:'obO2Dev',fields:['obO2Flow','obFiO2','obIP','obPEEP','obRR']};}
-  function chooseSupport(field,choice){
-    const cfg=supportConfig(field),select=document.getElementById(field),old=raw(field),key=`${S.pathway}:${field}:`,value=['clear','observed'].includes(choice)?'':choice;
-    if(choice!=='clear'&&supportChoiceDrafts.get(key+'active')===choice&&S.continuitySignatures[field]===sourceStamp(field))return;
-    const draftKey=(relation,source)=>key+relation+(['continued','settings','changed','stopped'].includes(relation)?':'+(source||''):'');
-    supportChoiceDrafts.set(draftKey(old,S.continuitySignatures[field]),{mode:S[cfg.key],device:S[cfg.device],stable:field==='obRespRelation'&&S.obRespStable,values:Object.fromEntries(cfg.fields.map(id=>[id,raw(id)]))});
-    const saved=choice==='clear'?null:supportChoiceDrafts.get(draftKey(value,sourceStamp(field)));
-    supportChoiceDrafts.set(key+'active',choice);
-    S[cfg.key]=['continued','settings'].includes(value)?'':saved?.mode||'';S[cfg.device]=saved?.device||'';
-    if(field==='obRespRelation'){S.obRespStable=!!saved?.stable;document.querySelectorAll('[data-tog="obRespStable"] button').forEach(b=>b.setAttribute('aria-pressed',String(S.obRespStable)));}
-    cfg.fields.forEach(id=>document.getElementById(id).value=saved?.values[id]||'');
-    select.value=value;S.continuitySignatures[field]=sourceStamp(field);
-    for(const name of [cfg.key,cfg.device])document.querySelectorAll(`[data-seg="${name}"] button`).forEach(b=>b.setAttribute('aria-pressed',String(!!S[name]&&b.dataset.v===S[name])));
-    render();if(value==='settings')document.getElementById(field+'Details').open=true;document.getElementById(`${field}-choice-${choice}`)?.focus({preventScroll:true});
-  }
-  function renderSupportGuide(field){
-    const cfg=supportConfig(field),r=resolvedSupport(field,S[cfg.key]),before=document.getElementById(field+'Before'),choices=document.getElementById(field+'Choices');if(!before)return;
-    before.innerHTML=r.source?`${htmlEscape(supportSourceLabel(field))}：<strong>${htmlEscape(supportName(r.source))}</strong>`:'';before.hidden=!r.source;
-    document.getElementById(field+'Question').textContent=field==='obM1Relation'?'我方到場前，外院怎麼協助寶寶呼吸？':S.outborn?'轉送途中，呼吸支持有什麼變化？':S.pathway==='nursery'?'在 BR 這段期間，呼吸支持有什麼變化？':'入院前這段期間，呼吸支持有什麼變化？';
-    if(!r.source)document.getElementById(field+'Question').textContent=(field==='obM1Relation'?'我方到場前，外院':S.outborn?'轉送途中':S.pathway==='nursery'?'在 BR 這段期間':'入院前這段期間')+'使用哪種呼吸方式？';
-    const entries=[];
-    if(r.source||r.relation==='continued')entries.push(['continued',r.source==='room'?'仍未用氧氣／呼吸支持':r.source?'仍持續用 '+supportName(r.source):'先前選擇持續使用，待核對',!r.source]);
-    if(r.source&&r.source!=='room')entries.push(['settings','方式不變，調整設定'],['changed','換了呼吸方式'],['stopped','已停止 '+supportName(r.source)],['repeat','停過，後來又開始']);
-    else if(r.source==='room')entries.push(['new','開始呼吸支持'],['repeat','停過，後來又開始']);
-    if(r.relation&&!entries.some(([v])=>v===r.relation))entries.push([r.relation,document.getElementById(field).selectedOptions[0]?.textContent||'原選擇']);
-    const button=([value,label,disabled])=>`<button type="button" id="${field}-choice-${value}" class="choice-button" data-choice-kind="single" data-support-field="${field}" data-support-choice="${value}" aria-pressed="${r.relation===value}" ${disabled?'disabled':''}>${htmlEscape(label)}</button>`;
-    const extra=[['new','本段開始呼吸支持'],['repeat','本段停過，後來又開始']].filter(([v])=>!entries.some(([e])=>e===v));
-    for(const [id,markup] of [[field+'Choices',entries.map(button).join('')],[field+'Exceptions',extra.map(button).join('')],[field+'Tools',`<button type="button" id="${field}-choice-clear" data-support-field="${field}" data-support-choice="clear" ${!r.relation&&!S[cfg.key]?'disabled':''}>清除此段選擇</button>`]]){
-      const host=document.getElementById(id);if(host.innerHTML!==markup){const focused=host.contains(document.activeElement)?document.activeElement.id:'';host.innerHTML=markup;if(focused)document.getElementById(focused)?.focus({preventScroll:true});}
-    }
-  }
-  function renderSupportReuse(){
-    for(const [field,controlId,selected,fields,device] of [
-      ['obM1Relation','outsideSupportControls',S.obM1Type,supportConfig('obM1Relation').fields,S.obM1Dev],
-      ['obRespRelation','pathwaySupportControls',S.obRespType,['obO2Flow','obFiO2','obIP','obPEEP','obRR'],S.obO2Dev]
-    ]){
-      const control=document.getElementById(controlId),details=document.getElementById(field+'Details'),summary=document.getElementById(field+'Summary');if(!details)return;
-      const r=resolvedSupport(field,selected),hasSettings=!!device||fields.some(id=>raw(id));
-      renderSupportGuide(field);control.hidden=r.relation==='stopped';
-      const reset=control.querySelector('[data-v=""]');if(reset){reset.textContent='清除方式';reset.hidden=!selected;reset.setAttribute('aria-pressed','false');}
-      const modeGroup=control.querySelector(`[data-seg="${field==='obM1Relation'?'obM1Type':'obRespType'}"]`);modeGroup.hidden=r.confirmed;
-      for(const b of modeGroup.querySelectorAll('button[data-v]')){b.disabled=b.dataset.v==='room'&&['new','repeat','settings'].includes(r.relation)||!!b.dataset.v&&r.relation==='changed'&&b.dataset.v===r.source;b.title=b.disabled?(b.dataset.v==='room'?'Room air 不是開始或重啟呼吸支持':'方式相同請選「方式不變，調整設定」'):'';}
-      const modeLabel=document.getElementById(field+'ModeLabel');modeLabel.hidden=r.confirmed||!r.source&&!r.relation;modeLabel.textContent=r.relation==='changed'?'選擇新的呼吸方式':'本段呼吸方式';
-      summary.hidden=!r.confirmed;details.hidden=!r.confirmed;
-      if(r.confirmed){
-        const source=supportSourceLabel(field);
-        summary.textContent=`已確認：${supportName(r.mode)}（同${source}）${r.relation==='settings'?'；本段調整設定。':'。裝置／參數另填。'}`;
-        details.querySelector('summary').textContent=hasSettings?'裝置／參數已填（原值保留）':'裝置／參數（選填）';
-        if(control.parentElement!==details){details.open=r.relation==='settings'||hasSettings||control.contains(document.activeElement);details.appendChild(control);}
-      }else if(control.parentElement===details)details.after(control);
-    }
   }
   function pulseIap(){const el=document.getElementById("iapHint"); if(!el||el.hidden)return; el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse");}
   // 隱藏元素的 innerText 會退成 textContent，遺失排版換行（例如家系圖那段）。

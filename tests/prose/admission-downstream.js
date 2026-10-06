@@ -44,9 +44,11 @@ function withPage(check){
     const radio=get(`.scr-row[data-scr="${key}"] input[type=radio][value="${value}"]`);
     radio.click();
   }
+  // 2026-10-06：出生處置由第 1 區急救階梯依 NRP 順序長出；已有同類才用站內「＋」再做一次。
   function addBirth(kind){
-    if(get('#birthResusStatus').value!=='performed')input('birthResusStatus','performed');
-    click(`[data-add-birth="${kind}"]`);
+    const level={o2:'o2',ppv:'ppv',intubation:'ett',compressions:'cpr',epinephrine:'cpr'}[kind];
+    if(kind==='assessment'||d.querySelector(`#birthEvents [data-event-kind="${kind}"]`))click(`[data-add-birth="${kind}"]`);
+    else click(`[data-ladder-v="${level}"]`);
   }
   const tab=name=>click(`[data-tab="${name}"]`);
   const note=()=>get('#note').textContent.trim();

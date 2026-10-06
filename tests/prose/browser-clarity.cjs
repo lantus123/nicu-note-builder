@@ -45,9 +45,9 @@ async function main(){
   await send('Page.enable');await send('Page.bringToFront');await send('Runtime.enable');await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'light'}]});for(let i=0;i<100;i++){if(await ev("!!document.getElementById('note')?.textContent"))break;await pause(100);}
   await resize(1440);await click('[data-story="D"]');await click('[data-seg="dest"] [data-v="NICU"]');await input('birthDate','2026-10-03');
   await chapter('birthHistoryCard');await click('[data-seg="gender"] [data-v="male"]');await input('gaW','37');await input('bw','2800');await click('[data-seg="delivery"] [data-v="cs"]');
-  await phase('birth:dr');await input('birthResusStatus','performed');await click('[data-add-birth="ppv"]');await click('[data-add-birth="epinephrine"]');
+  await chapter('admissionContext');await click('[data-ladder-v="cpr"]');await phase('birth:dr');
   for(const width of [1920,1440,1366,1280,1024,900,800,390,360,320]){await resize(width);await phase('birth:dr');await align('#birthEvents');await layout('birth-events');if([1440,320].includes(width))await shot('birth-'+width);}
-  await resize(1440);await phase('birth:drEnd');await input('birthFinalSupport','o2');await phase('course:obCare');await click('#obM1Relation-choice-continued');await phase('course:obArrive');await input('obArrival','The infant had mild retractions.');await phase('course:route');await click('#obRespRelation-choice-continued');
+  await resize(1440);await phase('birth:drEnd');await click('[data-select-chips="birthFinalSupport"] [data-v="o2"]');await phase('course:obArrive');await click('[data-seg="obM1Type"] [data-v="o2"]');await input('obArrival','The infant had mild retractions.');await phase('course:route');await click('[data-seg="obRespType"] [data-v="o2"]');
   for(const theme of ['light','dark']){
    await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:theme}]});
    for(const width of [1920,1440,1366,1280,1024,900,800,390,360,320]){
@@ -63,7 +63,7 @@ async function main(){
   const beforeDest=await geometry('[data-seg="dest"]');await click('[data-seg="dest"] [data-v="NICU"]');assert.equal(await note(),beforeRoute);assert.deepEqual(await geometry('[data-seg="dest"]'),beforeDest);
   await chapter('prenatalCard');for(const width of [1920,1366,1024,390,320]){await resize(width);await align('#prenatalCard');await layout('prenatal');if([1366,320].includes(width))await shot('prenatal-'+width);}
   for(const story of ['A','B','C','E']){
-   await resize(1366);await chapter('admissionContext');if(['A','B'].includes(story)){await click('#entryDirect');await chapter('birthHistoryCard');}await click(`[data-story="${story}"]`);
+   await resize(1366);await chapter('admissionContext');if(['A','B'].includes(story))await click('#entryDirect');await click(`[data-story="${story}"]`);
    if(story==='E'){await click('[data-seg="dest"] [data-v="NBC"]');await click('[data-msel="readmitProblems"] [data-v="respiratory"]');await click('[data-msel="readmitProblems"] [data-v="poor-feeding"]');}
    await phase('course:'+(story==='E'?'illness':'route'));
    for(const width of [1366,1024,390,320]){await resize(width);await align('#journeyWorkspace');await layout('story-'+story);if(width===1366||story==='E'&&width===320)await shot('story-'+story+'-'+width);}

@@ -145,7 +145,7 @@ for(const [label,before,after] of [
   ['shared low surrogate',String.fromCodePoint(0x20000),String.fromCodePoint(0x20400)]
 ])test(`change markers preserve complete Unicode codepoints (${label})`,()=>withPage(({W,d,note,click,input})=>{
   click('#previewReading');
-  click('[data-tog="pwStandby"] button');
+  click('[data-story="A"]');
   input('obCourse',`Synthetic ${before} observation`);
   input('obCourse',`Synthetic ${after} observation`);
   assert.ok(note.textContent.includes(`Synthetic ${after} observation`));
@@ -185,7 +185,7 @@ test('no manual-editing affordance remains in the preview',()=>withPage(({d,note
 test('escaped free text remains literal across display modes and later updates',()=>withPage(page=>{
   const {d,note,click,input}=page;seed(page);
   const literal='<b>Synthetic observation</b> & follow-up';
-  click('[data-tog="pwStandby"] button');input('obCourse',literal);
+  click('[data-story="A"]');input('obCourse',literal);
   assert.ok(note.textContent.includes(literal));assert.equal(note.querySelector('b'),null);
   const text=note.textContent;
   click('#previewReading');input('previewFont','large');

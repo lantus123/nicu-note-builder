@@ -134,7 +134,7 @@ test('explicit external birth and transfer facilities stay distinct from the sel
   select('homeHosp',campusValue('新竹'));select('ancPlace','周天給');select('birthHosp',birth);
   assertBirthplace(note(),birth);
   click('[data-tab="acc"]');assertBirthplace(note(),birth);click('[data-tab="adm"]');
-  click('[data-seg="pathway"] [data-v="outborn"]');
+  click('[data-story="D"]');
   select('obFacility',birth);select('obTransferFrom',source);
   for(const homeLabel of ['新竹','台東']){
     const home=campusValue(homeLabel);select('homeHosp',home);
@@ -154,7 +154,7 @@ test('explicit external birth and transfer facilities stay distinct from the sel
 
 test('another MMH campus remains selectable as an explicit outside birth and transfer facility',()=>withPage(({select,click,campusValue,note})=>{
   select('homeHosp',campusValue('新竹'));
-  click('[data-seg="pathway"] [data-v="outborn"]');
+  click('[data-story="D"]');
   select('obFacility',campusValue('淡水'));select('obTransferFrom',campusValue('台東'));
   for(const mode of ['adm','acc']){
     click(`[data-tab="${mode}"]`);assertBirthplace(note(),campusValue('淡水'));
@@ -172,7 +172,7 @@ test('a typed facility outside the list is written into both notes verbatim',()=
 
 test('an empty transfer source inherits a typed outborn facility',()=>withPage(({d,select,click,note})=>{
   const typed='Synthetic Birth Center';
-  click('[data-seg="pathway"] [data-v="outborn"]');
+  click('[data-story="D"]');
   select('obFacility',typed,{custom:true});
   assert.equal(d.getElementById('obTransferFrom').value,'','The transfer source stays automatic');
   for(const mode of ['adm','acc']){

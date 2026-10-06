@@ -107,26 +107,28 @@ test('E jaundice optional results and legacy conflicting signs have concrete tar
   assert.match(where(),/評估與收治/);
 });
 
-test('missing performed actions focuses the add-action group without adding a procedure',({get,story,input,jump})=>{
-  story('A');input('birthResusStatus','performed');jump('#birthActionsWrap .event-add');
+test('missing performed actions focuses the ladder without adding a procedure',({get,story,input,jump})=>{
+  // 2026-10-06：處置骨架由第 1 區急救階梯決定；「有急救但沒有處置」只會來自舊流程，連到階梯、不自動新增。
+  story('A');input('birthResusStatus','performed');jump('#ladderChoices');
   assert.equal(get('#birthEvents').children.length,0);
-  assert.match(get('#reviewPendingList').textContent,/補上實際處置/);
+  assert.match(get('#reviewPendingList').textContent,/急救到哪一階/);
 });
 
 test('several epinephrine events expose separate dose and route links with stable event IDs',({d,get,story,click,jump,input,link})=>{
-  story('A');click('[data-add-birth="epinephrine"]');click('[data-add-birth="epinephrine"]');
-  const ids=[...d.querySelectorAll('#birthEvents .clinical-event')].map(e=>e.dataset.eventId);
+  story('A');click('[data-ladder-v="cpr"]');click('[data-add-birth="epinephrine"]');
+  const ids=[...d.querySelectorAll('#birthEvents .clinical-event[data-event-kind="epinephrine"]')].map(e=>e.dataset.eventId);
   for(const id of ids)for(const field of ['drugDose','drugRoute'])jump(`#event-${id}-${field}`);
   const stableId=link(`#event-${ids[1]}-drugRoute`).id;
+  // 第 2 劑是站內「＋」加的，可移動；移到第 1 劑前面後連結仍指向同一筆（穩定 ID）。
   click(`[data-event-id="${ids[1]}"] [data-event-action="up"]`);
-  assert.equal(link(`#event-${ids[1]}-drugRoute`).id,stableId);assert.match(link(`#event-${ids[1]}-drugRoute`).textContent,/第 1 筆/);
+  assert.equal(link(`#event-${ids[1]}-drugRoute`).id,stableId);assert.match(link(`#event-${ids[1]}-drugRoute`).textContent,/第 4 筆/);
   jump(`#event-${ids[1]}-drugRoute`);input(`event-${ids[1]}-drugRoute`,'synthetic route');
   assert.equal(d.querySelector(`#${stableId}`),null,'Resolved field loses its link without rebinding its id');
   assert.ok(link(`#event-${ids[0]}-drugRoute`));
 });
 
 test('PPV pending link does not accept suggested settings or reorder resuscitation events',({d,get,story,click,jump,input})=>{
-  story('A');click('[data-add-birth="ppv"]');click('[data-add-birth="assessment"]');
+  story('A');click('[data-ladder-v="ppv"]');click('[data-add-birth="assessment"]');
   const ids=[...d.querySelectorAll('#birthEvents .clinical-event')].map(e=>e.dataset.eventId);
   jump(`#event-${ids[0]}-pip`);assert.ok(get(`[data-nrp-accept="${ids[0]}"]`));
   input(`event-${ids[0]}-minutes`,'5');input(`event-${ids[1]}-minutes`,'2');jump(`#event-${ids[1]}-minutes`);
@@ -140,10 +142,10 @@ test('C missing findings mounts the nursery evaluation without claiming normal r
   assert.equal(get('[data-msel="brFindings"]').querySelector('[aria-pressed="true"]'),null);
 });
 
-test('D origin and unconfirmed continued support mount the correct stage',({get,story,input,stage,jump,where})=>{
-  story('D');input('obTransferFrom',get('#homeHosp').value);input('obM1Relation','continued');stage('adm');
+test('D origin conflict mounts the outside-care stage',({get,story,input,stage,jump,where})=>{
+  // 2026-10-06：「與前一站的關係」已改由前後資料推導，不再有待確認的延續選項可跳。
+  story('D');input('obTransferFrom',get('#homeHosp').value);stage('adm');
   jump('#obTransferFrom');assert.match(where(),/外院照護/);
-  jump('#obM1RelationChoices');assert.match(where(),/外院照護/);
 });
 
 test('legacy missing screening opens the collapsed screening card without marking a result',({W,get,click,jump,chapter})=>{

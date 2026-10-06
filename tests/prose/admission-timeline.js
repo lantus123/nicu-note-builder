@@ -33,23 +33,30 @@ function withPage(check){
   }
   const click=selector=>get(selector).click();
   const input=(id,value)=>change(get(`#${id}`),value);
-  const seg=(key,value)=>click(`[data-seg="${key}"] [data-v="${value}"]`);
-  const toggle=key=>click(`[data-tog="${key}"] button`);
+  // 2026-10-06：路徑由第 1 區情境卡決定（「調整細節」退役）；standby／會診是時序帶上的可選站。
+  const seg=(key,value)=>key==='pathway'?click({direct:'#entryDirect',nursery:'[data-story="C"]',outborn:'[data-story="D"]'}[value]):click(`[data-seg="${key}"] [data-v="${value}"]`);
+  const toggle=key=>{const station={pwStandby:'standby',pwConsult:'consult'}[key];
+    if(!station)return click(`[data-tog="${key}"] button`);
+    click(d.querySelector(`[data-band-opt="${station}"]`)?`[data-band-opt="${station}"]`:`[data-band-opt-remove="${station}"]`);};
   const symptom=value=>click(`[data-msel="obSx"] [data-v="${value}"]`);
   const note=()=>get('#note').textContent.trim();
   const rows=scope=>[...d.querySelectorAll(`#${scope}Events .clinical-event[data-event-id]`)];
+  // 出生處置由第 1 區急救階梯長出骨架（NRP 順序）；同一階再做一次才用站內「＋」。
+  const LEVEL={o2:'o2',ppv:'ppv',intubation:'ett',compressions:'cpr',epinephrine:'cpr'};
   function add(kind,scope='birth'){
-    if(scope==='birth'&&kind!=='assessment'&&get('#birthResusStatus').value!=='performed')input('birthResusStatus','performed');
     const before=rows(scope).map(el=>el.dataset.eventId);
-    click(`[data-add-${scope}="${kind}"]`);
-    const added=rows(scope).filter(el=>!before.includes(el.dataset.eventId));
+    if(scope==='birth'&&kind!=='assessment'&&!rows('birth').some(el=>el.dataset.eventKind===kind))click(`[data-ladder-v="${LEVEL[kind]}"]`);
+    else click(`[data-add-${scope}="${kind}"]`);
+    const added=rows(scope).filter(el=>!before.includes(el.dataset.eventId)&&el.dataset.eventKind===kind);
     assert.equal(added.length,1,`Adding ${scope} ${kind} must add exactly one identifiable event`);
     return {scope,id:added[0].dataset.eventId};
   }
   const row=event=>get(`#${event.scope}Events .clinical-event[data-event-id="${event.id}"]`);
   function eventInput(event,field,value){
     const el=row(event).querySelector(`[data-event-field="${field}"]`);
-    assert.ok(el,`Missing ${event.scope} event field: ${field}`);change(el,value);
+    // 2026-10-06：再評估的呼吸與處置反應改成 chips（data-event-choice）；仍是同一個事件欄位。
+    if(!el){const chip=row(event).querySelector(`[data-event-choice="${field}"] [data-v="${value}"]`);assert.ok(chip,`Missing ${event.scope} event field: ${field}`);chip.click();return;}
+    change(el,value);
   }
   function eventAction(event,action){
     const el=row(event).querySelector(`[data-event-action="${action}"]`);
@@ -63,9 +70,7 @@ function withPage(check){
     seg('gender','female');input('gaW','39');input('gaD','0');input('bw','3200');
     seg('delivery','nsd');input('gravida','2');input('para','1');input('matAge','31');
     input('ap1','8');input('ap5','9');seg('dol','1');
-    // 2026-09-20 故事優先：第 5＋6 區合併成時間線，pathway 不再預設。這裡用「調整細節」裡的路徑開關
-    // 直接選 direct（等同舊預設：直接入院、standby／會診皆關），讓各站出現又不動到兩個開關；
-    // 各測試仍可用 seg('pathway',…)／toggle(…) 自行改，控制項 id／data-* 與以前相同。
+    // 直接入院（standby／會診皆不在故事裡）；各測試仍可用 seg('pathway',…)／toggle(…) 改（見上方對應）。
     seg('pathway','direct');
     check(api);
     assert.deepEqual(errors,[],'Birth/admission interactions must not raise page errors');
@@ -107,13 +112,14 @@ test('initial observations precede actual treatments and final observations foll
   assert.doesNotMatch(text,/after (?:the )?Apgar|following (?:the )?Apgar|Apgar[^.]*therefore/i);
 });
 
-for(const [kind,required,forbidden] of [
-  ['ppv',ppv,[intub,compress,epi]],
-  ['intubation',intub,[ppv,compress,epi]],
-  ['compressions',compress,[ppv,intub,epi]],
-  ['epinephrine',epi,[ppv,intub,compress]]
-])test(`${kind} records only the selected intervention, without a cumulative ladder`,({add,note})=>{
-  add(kind);assert.match(note(),required);
+// 2026-10-06 急救階梯：選到哪一階＝依 NRP 順序長出那一階為止的骨架，不多也不少。
+for(const [level,required,forbidden] of [
+  ['o2',[/supplemental oxygen/i],[ppv,intub,compress,epi]],
+  ['ppv',[ppv],[intub,compress,epi]],
+  ['ett',[ppv,intub],[compress,epi]],
+  ['cpr',[ppv,intub,compress,epi],[]]
+])test(`ladder ${level} records exactly its NRP skeleton and nothing beyond`,({click,note})=>{
+  click(`[data-ladder-v="${level}"]`);for(const expression of required)assert.match(note(),expression);
   for(const expression of forbidden)assert.doesNotMatch(note(),expression);
 });
 
@@ -125,11 +131,11 @@ test('a new birth PPV carries NRP 9th-edition initial settings, flagged until ed
   assert.equal(v('minutes'),'');assert.equal(v('fiO2'),'21');assert.equal(v('pip'),'25');assert.equal(v('peep'),'5');
   assert.ok(card.querySelector('.nrp-hint'),'the card must say the values are NRP defaults');
   assert.ok(card.querySelector('[data-event-field="pip"]').classList.contains('nrp-default'));
-  assert.match(note(),/positive-pressure ventilation \(PPV\) was initiated[^.]*FiO2 21%[^.]*PIP 25 cmH2O[^.]*PEEP 5 cmH2O/i);
+  assert.match(note(),/positive-pressure ventilation \(PPV\) was given via Neopuff \(FiO2 21%, IP\/PEEP 25\/5 cmH2O\)/i);
   assert.match(get('#birthReview').textContent,/NRP[^。]*尚未核對/);
   eventInput(event,'pip','22');
   assert.ok(!row(event).querySelector('.nrp-hint'),'editing any value removes the default flag');
-  assert.match(note(),/PIP 22 cmH2O/);assert.doesNotMatch(get('#birthReview').textContent,/尚未核對/);
+  assert.match(note(),/IP\/PEEP 22\/5 cmH2O/);assert.doesNotMatch(get('#birthReview').textContent,/尚未核對/);
 });
 test('accepting the NRP defaults as-is clears the reminder without changing the values',({add,row,note,get})=>{
   const event=add('ppv'), card=row(event);
@@ -137,7 +143,7 @@ test('accepting the NRP defaults as-is clears the reminder without changing the 
   card.querySelector('[data-nrp-accept]').click();
   assert.ok(!row(event).querySelector('.nrp-hint'),'the hint is gone after accepting');
   assert.doesNotMatch(get('#birthReview').textContent,/尚未核對/);
-  assert.match(note(),/FiO2 21%[^.]*PIP 25 cmH2O[^.]*PEEP 5 cmH2O/,'values are kept exactly');
+  assert.match(note(),/FiO2 21%, IP\/PEEP 25\/5 cmH2O/,'values are kept exactly');
   assert.equal(row(event).querySelector('[data-event-field="pip"]').value,'25');
 });
 test('NRP initial oxygen and pressure follow gestational age; course-scope PPV and intubation stay blank',({add,row,input,seg,note})=>{
@@ -168,8 +174,9 @@ test('partially entered ventilation settings do not fill in the missing paramete
     const el=row(event).querySelector(`[data-event-field="${field}"]`);
     assert.ok(el,`Missing intubation ${field}`);assert.equal(el.value,'');
   }
-  assert.match(note(),/42/);
-  assert.doesNotMatch(note(),/PIP[^.;]*18|PEEP[^.;]*5|(?:RR|rate)[^.;]*40|1:10000/i);
+  const sentence=note().split(/(?<=\.)\s+/).find(x=>/endotracheal intubation/i.test(x));
+  assert.match(sentence,/42/);
+  assert.doesNotMatch(sentence,/IP[^.;]*\d|PEEP[^.;]*\d|(?:RR|rate)[^.;]*\d|1:10000/i,'Only the entered FiO2 is written for the intubation');
 });
 
 test('epinephrine dose and route require entry rather than an assumed route',({add,eventInput,note,row})=>{
@@ -178,7 +185,8 @@ test('epinephrine dose and route require entry rather than an assumed route',({a
     const el=row(event).querySelector(`[data-event-field="${field}"]`);
     assert.ok(el,`Missing epinephrine ${field}`);assert.equal(el.value,'');
   }
-  assert.doesNotMatch(note(),/1:10000|via (?:the )?ETT|endotracheal(?:ly)?|intravenous(?:ly)?/i);
+  const epiSentence=()=>note().split(/(?<=\.)\s+/).find(x=>/epinephrine/i.test(x));
+  assert.doesNotMatch(epiSentence(),/1:10000|via (?:the )?ETT|endotracheal(?:ly)?|intravenous(?:ly)?/i,'The epinephrine sentence assumes no dose or route');
   eventInput(event,'drugDose','synthetic-dose');eventInput(event,'drugRoute','synthetic-route');
   assert.match(note(),/synthetic-dose/);assert.match(note(),/synthetic-route/);
 });
@@ -191,15 +199,16 @@ test('an intermediate reassessment is narrated between the two recorded treatmen
   before(note(),ppv,/91/);before(note(),/91/,intub);
 });
 
-test('event order follows explicit reorder actions and removal removes only that event',({add,eventAction,note,rows})=>{
-  const first=add('ppv'),second=add('intubation');
-  before(note(),ppv,intub);
-  eventAction(second,'up');before(note(),intub,ppv);
-  eventAction(second,'down');before(note(),ppv,intub);
-  eventAction(first,'remove');assert.equal(rows('birth').length,1);
-  assert.doesNotMatch(note(),ppv);assert.match(note(),intub);
+test('event order follows explicit reorder actions and removal removes only that event',({add,eventAction,eventInput,note,rows,row})=>{
+  // 骨架節點（PPV → 插管）依 NRP 固定順序；可移動、可移除的是站內「＋」加的再評估與重複處置。
+  const first=add('ppv'),assessment=add('assessment');eventInput(assessment,'hr','91');const again=add('ppv');eventInput(again,'minutes','6');
+  assert.equal(row(first).querySelector('[data-event-action]'),null,'The skeleton node itself has no reorder/remove');
+  before(note(),/91/,/PPV was given again/);
+  eventAction(again,'up');before(note(),/PPV was given again/,/91/);
+  eventAction(again,'down');before(note(),/91/,/PPV was given again/);
+  eventAction(again,'remove');assert.equal(rows('birth').length,2);
+  assert.doesNotMatch(note(),/given again/);assert.match(note(),/91/);assert.match(note(),ppv);
 });
-
 test('two separately recorded PPV episodes retain their distinct times',({add,eventInput,note,rows})=>{
   const first=add('ppv');eventInput(first,'minutes','1');
   const assessment=add('assessment');eventInput(assessment,'breathing','spontaneous');
@@ -209,14 +218,14 @@ test('two separately recorded PPV episodes retain their distinct times',({add,ev
   before(note(),/spontaneous|spontaneously/i,/At 5 minutes of age/i);
 });
 
-test('explicitly no resuscitation does not erase unconfirmed observations or imply normality',({input,note})=>{
-  input('birthResusStatus','none');
+test('explicitly no resuscitation does not erase unconfirmed observations or imply normality',({click,note})=>{
+  click('[data-ladder-v="none"]');
   assert.match(note(),/no resuscitation|resuscitation was not|did not (?:receive|require).*resuscitation/i);
   assert.doesNotMatch(note(),/good (?:muscle )?tone|normal (?:muscle )?tone|breathing spontaneously|remained stable/i);
 });
 
-test('a reassessment can follow confirmed no resuscitation without becoming an intervention',({input,add,eventInput,get,note})=>{
-  input('birthResusStatus','none');
+test('a reassessment can follow confirmed no resuscitation without becoming an intervention',({click,add,eventInput,get,note})=>{
+  click('[data-ladder-v="none"]');
   assert.ok(!get('[data-add-birth="assessment"]').closest('[hidden]'),
     'An assessment must remain reachable without confirming treatment');
   const assessment=add('assessment');eventInput(assessment,'hr','147');
@@ -277,7 +286,7 @@ test('story B: the delivery-room consultation is narrated after the birth observ
   const text=note();
   before(text,/At birth, the infant had labored breathing/,/Apgar scores were/);
   before(text,/Apgar scores were/,/consulted in the delivery room .*?because of grunting/);
-  before(text,/consulted in the delivery room/,/positive-pressure ventilation \(PPV\) was initiated/i);
+  before(text,/consulted in the delivery room/,/positive-pressure ventilation \(PPV\) was given/i);
   assert.equal((text.match(/was consulted/g)||[]).length,1,'the consultation is stated once');
   input('pwConsultH','2');eventInput(ppv,'minutes','1');
   assert.match(get('#pathwayReview').textContent,/會診時間晚於第一個產房處置/);
@@ -286,12 +295,12 @@ test('Admission and Acceptance narrate the delivery room in the same order: obse
   input('birthBreathing','apnea');input('ap1','4');input('ap5','7');add('ppv');input('birthFinalMin','10');input('birthFinalBreathing','spontaneous');
   const adm=note();
   before(adm,/At birth, the infant was apneic/,/Apgar scores were 4 and 7/);
-  before(adm,/Apgar scores were 4 and 7/,/positive-pressure ventilation \(PPV\) was initiated/i);
-  before(adm,/positive-pressure ventilation \(PPV\) was initiated/i,/On reassessment at 10 minutes of age/);
+  before(adm,/Apgar scores were 4 and 7/,/positive-pressure ventilation \(PPV\) was given/i);
+  before(adm,/positive-pressure ventilation \(PPV\) was given/i,/On reassessment at 10 minutes of age/);
   click('[data-tab="acc"]');const acc=note();
   before(acc,/At birth, the infant was apneic/,/Apgar scores were 4 and 7/);
-  before(acc,/Apgar scores were 4 and 7/,/positive-pressure ventilation \(PPV\) was initiated/i);
-  before(acc,/positive-pressure ventilation \(PPV\) was initiated/i,/On reassessment at 10 minutes of age/);
+  before(acc,/Apgar scores were 4 and 7/,/positive-pressure ventilation \(PPV\) was given/i);
+  before(acc,/positive-pressure ventilation \(PPV\) was given/i,/On reassessment at 10 minutes of age/);
 });
 test('the journey stepper keeps exactly one explicit stage active',({get,input,click})=>{
   const birth=get('li[data-stop="route"]'),dr=get('li[data-stop="adm"]');
@@ -314,10 +323,10 @@ test('the admission stop is labelled 入院 until a destination is chosen',({get
 
 test('confirmed continuing PPV is a continuation, not another administration',({add,input,seg,note})=>{
   add('ppv');input('birthFinalSupport','ppv');
-  seg('obRespType','ppv');input('obRespRelation','continued');
+  seg('obRespType','ppv');   // 2026-10-06：離開產房與入院前同為 PPV ⇒ 推導為持續，不再另問關係
   const text=note();
   assert.match(text,/continu(?:ed|ing)/i);
-  assert.equal((text.match(/the infant received positive[- ]pressure ventilation(?: \(PPV\))?|(?:positive[- ]pressure ventilation|PPV)[^.]*was (?:provided|initiated|administered)/gi)||[]).length,1,
+  assert.equal((text.match(/the infant received positive[- ]pressure ventilation(?: \(PPV\))?|(?:positive[- ]pressure ventilation|PPV)[^.]*was (?:provided|initiated|administered|given)/gi)||[]).length,1,
     'Continuing the same PPV must not generate a second initiation');
   assert.doesNotMatch(text,/again|reinitiated|restarted/i);
 });
@@ -326,8 +335,8 @@ test('a newly recorded later PPV episode is not removed as duplicate birth care'
   add('ppv');input('birthFinalSupport','room');
   seg('pathway','nursery');symptom('apnea');seg('pwOnset','recurrent');
   input('pwOnsetH','2');input('pwOnsetUnit','hours');
-  seg('obRespType','ppv');input('obRespRelation','repeat');
-  const text=note();assert.match(text,/recurr|again|repeat|reinitiated|restarted/i);
+  seg('obRespType','ppv');   // 離開產房 room air、BR 又上 PPV ⇒ 推導為新開始
+  const text=note();assert.match(text,/recurr|again|repeat|reinitiated|restarted/i);assert.match(text,/During observation in the baby room, apnea recurred[^.]*\. Positive-pressure ventilation \(PPV\) was initiated\./);
   assert.match(text,/2 hours/i);
   assert.ok((text.match(/positive[- ]pressure ventilation|\bPPV\b/gi)||[]).length>=2,
     'A genuinely later episode must remain in the note');
@@ -360,8 +369,9 @@ test('an onset number without units does not silently become hours',({seg,sympto
 });
 
 test('standby and a subsequent consultation coexist with the nursery admission route',({toggle,input,seg,symptom,note})=>{
-  toggle('pwStandby');input('pwSbRIn','synthetic antenatal indication');
-  seg('pathway','nursery');symptom('tachypnea');seg('pwOnset','developed');
+  // 2026-10-06：先選 C（情境卡會重設 A/B 旗標），再在帶子上把 standby／會診加進故事。
+  seg('pathway','nursery');toggle('pwStandby');input('pwSbRIn','synthetic antenatal indication');
+  symptom('tachypnea');seg('pwOnset','developed');
   input('pwOnsetH','2');input('pwOnsetUnit','hours');
   toggle('pwConsult');input('pwConsultReason','synthetic later concern');input('pwConsultH','2');
   const text=note();
@@ -382,12 +392,13 @@ test('hidden standby and consultation reasons are retained without leaking into 
 
 test('outside care, transport-team arrival, transport and hospital admission retain separate stages',({seg,input,note})=>{
   seg('pathway','outborn');input('obCourse','Synthetic transport observation');
-  seg('obM1Type','cpap');input('obM1Relation','new');
+  seg('obM1Type','cpap');   // 2026-10-06：外院到場時掛什麼＝我方到場一題
   input('obArrival','Synthetic assessment at referring hospital');
-  seg('obRespType','ett');input('obRespRelation','changed');
+  seg('obRespType','ett');
   input('obAdmissionStatus','Synthetic assessment on hospital admission');
   const text=note();
-  before(text,/CPAP was initiated at the referring hospital/,/Synthetic assessment at referring hospital/);
+  before(text,/On our team's arrival at the referring hospital, the infant was receiving CPAP/,/Synthetic assessment at referring hospital/);
+  assert.match(text,/respiratory support was changed to mechanical ventilation via an endotracheal tube during transport/i,'Different arrival and transport support is derived as a change');
   before(text,/Synthetic assessment at referring hospital/,/Synthetic transport observation/);
   before(text,/Synthetic transport observation/,/Synthetic assessment on hospital admission/);
   assert.match(text,/CPAP|continuous positive airway pressure/i);
@@ -412,42 +423,34 @@ test('switching routes retains distinct drafts and excludes hidden route-only in
   assert.match(note(),/cyanosis/i);
 });
 
-test('continued support without a recorded predecessor prompts review rather than creating past care',({seg,input,note,warnings})=>{
-  seg('obRespType','ppv');input('obRespRelation','continued');
-  assert.ok(warnings().trim(),'Unmatched continuation needs a visible review prompt');
+test('support without a recorded predecessor is described, never linked to past care',({seg,note})=>{
+  seg('obRespType','ppv');
+  assert.match(note(),/the infant was receiving positive-pressure ventilation \(PPV\) before admission/i);
   assert.doesNotMatch(note(),/continued|remained on|previously (?:received|required)|at birth[^.]*positive[- ]pressure ventilation/i);
 });
-
-test('a conflicting final birth state prevents a false continuation of an older treatment',({add,input,seg,note,warnings})=>{
+test('a conflicting final birth state prevents a false continuation of an older treatment',({add,input,seg,note})=>{
   add('ppv');input('birthFinalSupport','room');
-  seg('obRespType','ppv');input('obRespRelation','continued');
-  assert.ok(warnings().trim(),'A recorded change to room air cannot silently become uninterrupted PPV');
+  seg('obRespType','ppv');
   assert.doesNotMatch(note(),/PPV[^.]*continued|positive[- ]pressure ventilation[^.]*continued|continued[^.]*(?:PPV|positive[- ]pressure ventilation)/i);
-  assert.match(note(),/room air/i);
+  assert.match(note(),/weaned to room air/i);assert.match(note(),/PPV was initiated before admission|positive-pressure ventilation \(PPV\) was initiated before admission/i,'Room air then PPV is derived as a new start');
 });
-
-test('editing the previously confirmed source invalidates a continuation until it is checked again',({input,seg,note,warnings})=>{
-  input('birthFinalSupport','ppv');seg('obRespType','ppv');input('obRespRelation','continued');
+test('editing the previous station re-derives continuity at once',({input,seg,note})=>{
+  input('birthFinalSupport','ppv');seg('obRespType','ppv');
   assert.match(note(),/positive[- ]pressure ventilation[^.]*continued/i);
   input('birthFinalSupport','cpap');
-  assert.ok(warnings().trim(),'A changed source requires a visible continuity review');
-  assert.doesNotMatch(note(),/(?:positive[- ]pressure ventilation|PPV|CPAP)[^.]*continued/i);
+  assert.doesNotMatch(note(),/(?:positive[- ]pressure ventilation|PPV)[^.]*continued before admission/i);
+  assert.match(note(),/respiratory support was changed to positive-pressure ventilation/i);
   assert.match(note(),/CPAP/i,'The amended birth observation must remain recorded');
-  seg('obRespType','cpap');input('obRespRelation','continued');
-  assert.match(note(),/CPAP[^.]*continued/i,'A new explicit confirmation may establish the revised continuity');
+  seg('obRespType','cpap');
+  assert.match(note(),/CPAP[^.]*continued/i,'Matching values establish the revised continuity');
 });
-
-test('a stale stop confirmation cannot silently switch the intervention that was stopped',({input,seg,note,warnings})=>{
-  input('birthFinalSupport','ppv');seg('obRespType','ppv');input('obRespRelation','stopped');
-  assert.match(note(),/positive[- ]pressure ventilation[^.]*discontinued/i);
+test('stopping is written from the next station value and follows the current previous support',({input,seg,note})=>{
+  input('birthFinalSupport','ppv');seg('obRespType','room');
+  assert.match(note(),/switched from positive-pressure ventilation \(PPV\) to room air before admission/i);
   input('birthFinalSupport','cpap');
-  assert.ok(warnings().trim(),'Changing the stop target must request renewed confirmation');
-  assert.doesNotMatch(note(),/stopped|discontinued/i,
-    'The stale relation cannot either retain the old stop or assert a newly stopped CPAP');
-  input('obRespRelation','stopped');
-  assert.match(note(),/CPAP[^.]*discontinued/i,'Reconfirming uses the now-recorded support');
+  assert.doesNotMatch(note(),/switched from positive-pressure ventilation/i,'No stale stop target survives');
+  assert.match(note(),/switched from CPAP to room air before admission/i);assert.doesNotMatch(note(),/discontinued/i);
 });
-
 for(const pathway of ['direct','outborn'])test(`${pathway} oxygen without a selected device never assumes an oxygen hood`,({seg,input,note})=>{
   seg('pathway',pathway);
   if(pathway==='outborn'){seg('obM1Type','o2');input('obM1Flow','3.5');}
@@ -479,17 +482,15 @@ test('resetting referring-hospital support does not leak its retained device or 
 });
 
 test('changed support does not invent improvement, deterioration or a clinical reason',({input,seg,note})=>{
-  input('birthFinalSupport','ppv');seg('obRespType','cpap');input('obRespRelation','changed');
+  input('birthFinalSupport','ppv');seg('obRespType','cpap');
   assert.match(note(),/CPAP|continuous positive airway pressure/i);
   assert.doesNotMatch(note(),/improv|deteriorat|stabili[sz]|because[^.]*CPAP|therefore[^.]*CPAP/i);
 });
 
-test('stopping a recorded support does not imply room air or recovery',({input,seg,note})=>{
-  input('birthFinalSupport','ppv');seg('obRespType','ppv');input('obRespRelation','stopped');
-  assert.match(note(),/stopped|discontinued|cessation/i);
-  assert.doesNotMatch(note(),/room air|improv|recover|stable/i);
+test('an unrecorded next station says nothing about stopping, room air or recovery',({input,seg,note})=>{
+  input('birthFinalSupport','ppv');
+  assert.doesNotMatch(note(),/stopped|discontinued|cessation|room air before admission|improv|recover|stable/i);
 });
-
 test('later course events retain their entered sequence without overwriting the birth history',({input,seg,add,eventInput,eventAction,note,rows})=>{
   input('birthInitialNote','Synthetic birth marker');seg('pathway','nursery');
   const first=add('assessment','course');eventInput(first,'note','Synthetic course assessment');

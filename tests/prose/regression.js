@@ -9,6 +9,8 @@ const pick=(attribute,key,value)=>({click:`[data-${attribute}="${key}"] [data-v=
 const seg=(key,value)=>pick('seg',key,value);
 const hc=(key,value)=>pick('hc',key,value);
 const toggle=key=>({click:`[data-tog="${key}"] button`});
+// 2026-10-06：路徑由第 1 區情境卡決定（「調整細節」退役）；A＝直接入院＋產前 standby，B＝直接入院＋出生後會診。
+const route=story=>({click:{direct:'#entryDirect',nursery:'[data-story="C"]',outborn:'[data-story="D"]',A:'[data-story="A"]',B:'[data-story="B"]'}[story]});
 const screen=(key,value)=>({cycle:[`.scr-row[data-scr="${key}"] .scr-btn`,value]});
 const tab=mode=>({tab:mode});
 const BASE=[seg('gender','male'),set('gaW','40'),set('gaD','0'),set('bw','3500'),
@@ -61,7 +63,7 @@ const tests=[];
 const test=(name,check)=>tests.push([name,check]);
 
 test('standby retains its visible supplemental course',()=>{
-  const {admission}=notes([toggle('pwStandby'),set('obCourse','Synthetic standby observation retained')]);
+  const {admission}=notes([route('A'),set('obCourse','Synthetic standby observation retained')]);
   includes(admission,'Synthetic standby observation retained');
 });
 
@@ -225,7 +227,7 @@ test('recorded tocolysis date survives without a selected agent',()=>{
 });
 
 test('outborn reason, symptoms, supplemental course and diagnosis are independent',()=>{
-  const {admission}=notes([seg('pathway','outborn'),set('obFacility','TSMMH'),
+  const {admission}=notes([route('outborn'),set('obFacility','TSMMH'),
     set('admReason','induction of labor'),set('obReason','the need for a higher level of care'),
     pick('msel','obSx','tachypnea'),set('tentDx','transient tachypnea of the newborn'),
     set('obCourse','Synthetic transport details retained'),seg('obM1Type','room'),seg('obRespType','room')]);
@@ -268,10 +270,10 @@ test('course keeps related findings together without inventing treatment respons
 
 test('a new route excludes another route draft from the plan and restoring it restores its rules',()=>{
   // pathway 不再預設 direct（2026-09-19）：草稿是綁路徑的，這條測的是「切走再切回」，所以先明選 direct
-  const prior=[seg('dest','NICU'),seg('pathway','direct'),seg('obRespType','ett')];
-  const {plan}=notes([...prior,seg('pathway','nursery')]);
+  const prior=[seg('dest','NICU'),route('direct'),seg('obRespType','ett')];
+  const {plan}=notes([...prior,route('nursery')]);
   assert.doesNotMatch(plan,/respiratory support with|OG decompression|arterial line/i);
-  const restored=notes([...prior,seg('pathway','nursery'),seg('pathway','direct')]).plan;
+  const restored=notes([...prior,route('nursery'),route('direct')]).plan;
   assert.match(restored,/OG decompression/i);assert.match(restored,/arterial line/i);
   assert.doesNotMatch(restored,/Provide respiratory support with/i,
     'Restoring an earlier route draft must still not assert current support');
@@ -317,7 +319,7 @@ test('grammar cleanup preserves diagnostic uncertainty in free text',()=>{
 
 test('generic transfer need remains a reason, not a diagnosis',()=>{
   const reason='the need for a higher level of care';
-  const {admission,acceptance}=notes([seg('pathway','outborn'),set('obFacility','TSMMH'),set('obReason',reason)]);
+  const {admission,acceptance}=notes([route('outborn'),set('obFacility','TSMMH'),set('obReason',reason)]);
   for(const text of [admission,section(acceptance,'Brief history')]){
     includes(text,reason);
     assert.doesNotMatch(text,/(?:diagnosis of|admitted[^.]* with) the need for/i);
@@ -325,7 +327,7 @@ test('generic transfer need remains a reason, not a diagnosis',()=>{
 });
 
 test('a recorded transfer reason and a tentative diagnosis both survive in acceptance',()=>{
-  const {acceptance}=notes([seg('pathway','outborn'),set('obFacility','TSMMH'),
+  const {acceptance}=notes([route('outborn'),set('obFacility','TSMMH'),
     set('obReason','the need for a higher level of care'),set('tentDx','neonatal hypoglycemia')]);
   const brief=section(acceptance,'Brief history');
   includes(brief,'because of the need for a higher level of care');
@@ -354,7 +356,7 @@ for(const amount of ['0','1','1.5','2']){
     test(`numeric agreement: ${amount} ${timeUnit}, delayed cry, and nursery onset`,()=>{
       const {admission,acceptance}=notes([
         pick('ryn','prom','yes'),set('promH',amount),pick('numunit','promH',timeUnit),
-        toggle('doic'),set('doicMin',amount),seg('pathway','nursery'),
+        toggle('doic'),set('doicMin',amount),route('nursery'),
         seg('pwOnset','developed'),set('pwOnsetH',amount),set('pwOnsetUnit','hours'),pick('msel','obSx','tachypnea')
       ]);
       const inflection=unit=>amount==='1'?unit:unit+'s';
@@ -378,7 +380,7 @@ for(const dose of ['1','2']){
 
 test('unknown durations remain unknown instead of becoming zero or one',()=>{
   const {admission,acceptance}=notes([pick('ryn','prom','yes'),toggle('doic'),
-    seg('pathway','nursery'),pick('msel','obSx','tachypnea')]);
+    route('nursery'),pick('msel','obSx','tachypnea')]);
   for(const text of [admission,section(acceptance,'Brief history')]){
     assert.match(text,/tachypnea was noted/i,'An observed symptom must remain recorded when onset is unknown');
     assert.match(text,/DOIC/);
@@ -512,26 +514,26 @@ test('admission-status sentence follows the chosen destination and is not duplic
   assert.equal((acceptance.match(/tachypneic with mild retractions/g)||[]).length,1,'acceptance must reuse the sentence once, not duplicate it');
 });
 test('standby and reassessment name the operating room for C/S and the delivery room for NSD',()=>{
-  const nsd=notes([seg('dest','NICU'),toggle('pwStandby'),pick('msel','pwSbR','preterm labor')]);
+  const nsd=notes([seg('dest','NICU'),route('A'),pick('msel','pwSbR','preterm labor')]);
   includes(nsd.admission,'called to stand by in the delivery room for the delivery');
-  const cs=notes([seg('dest','NICU'),seg('delivery','cs'),toggle('pwStandby'),pick('msel','pwSbR','preterm labor')]);
+  const cs=notes([seg('dest','NICU'),seg('delivery','cs'),route('A'),pick('msel','pwSbR','preterm labor')]);
   includes(cs.admission,'called to stand by in the operating room for the delivery');
   assert.doesNotMatch(cs.admission,/stand by in the delivery room/);
 });
 test('consult location is added only for an explicit direct pathway',()=>{
-  const direct=notes([seg('dest','NICU'),seg('delivery','cs'),seg('pathway','direct'),toggle('pwConsult')]);
+  const direct=notes([seg('dest','NICU'),seg('delivery','cs'),route('B')]);
   includes(direct.admission,'was consulted in the operating room');
-  const nursery=notes([seg('dest','NICU'),seg('delivery','cs'),seg('pathway','nursery'),toggle('pwConsult')]);
+  const nursery=notes([seg('dest','NICU'),seg('delivery','cs'),route('nursery'),{click:'[data-band-opt="consult"]'}]);
   assert.doesNotMatch(nursery.admission,/consulted in the (operating|delivery) room/);
-  const unset=notes([seg('dest','NICU'),seg('delivery','cs'),toggle('pwConsult')]);
-  assert.doesNotMatch(unset.admission,/consulted in the (operating|delivery) room/,'no pathway chosen ⇒ no asserted place');
+  // 2026-10-06：會診是時序帶上的可選站，必須先有路徑才出現；「無路徑卻有會診」已無入口，原斷言移除。
+  assert.equal(notes([seg('dest','NICU'),seg('delivery','cs')]).admission.includes('consulted'),false,'no pathway chosen ⇒ no consultation at all');
 });
 test('pathway has no default and reselecting the same route preserves it',()=>{
   const blank=notes([seg('dest','NICU')]).admission;
   assert.doesNotMatch(blank,/initially cared for in the baby room|referring hospital/);
-  const nursery=notes([seg('dest','NICU'),seg('pathway','nursery')]).admission;
+  const nursery=notes([seg('dest','NICU'),route('nursery')]).admission;
   includes(nursery,'initially cared for in the baby room');
-  const unpicked=notes([seg('dest','NICU'),seg('pathway','nursery'),seg('pathway','nursery')]).admission;
+  const unpicked=notes([seg('dest','NICU'),route('nursery'),route('nursery')]).admission;
   assert.equal(unpicked,nursery,'Repeated selection must not remove the clinical route');
 });
 test('empty-legal segments have explicit clear actions; reselecting is stable',()=>{
@@ -546,7 +548,7 @@ test('empty-legal segments have explicit clear actions; reselecting is stable',(
 
 // ── 2026-09-20 故事 C（Ryan）：嬰兒室有狀況／母體風險 → 兒科去看（不是會診）→ 嬰兒室抽血 → 結果異常才收 ──
 test('story C: the baby-room evaluation is not a consultation and derives maternal risk factors from section 2',()=>{
-  const {admission}=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','obSx','tachypnea'),seg('pwOnset','persisted'),
+  const {admission}=notes([seg('dest','NBC'),route('nursery'),pick('msel','obSx','tachypnea'),seg('pwOnset','persisted'),
     pick('ryn','fever','yes'),pick('ryn','prom','yes'),pick('rc','prom','prom'),set('promH','18'),screen('gbs','pos'),
     pick('msel','brEval','persist24'),pick('msel','brEval','maternal')]);
   includes(admission,'initially cared for in the baby room');
@@ -556,7 +558,7 @@ test('story C: the baby-room evaluation is not a consultation and derives matern
   assert.doesNotMatch(admission,/was consulted|nursery/i);
 });
 test('story C: baby-room work-up findings are recorded once and justify the admission',()=>{
-  const {admission,acceptance}=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brWorkup','cbc'),pick('msel','brWorkup','crp'),
+  const {admission,acceptance}=notes([seg('dest','NBC'),route('nursery'),pick('msel','brWorkup','cbc'),pick('msel','brWorkup','crp'),
     pick('msel','brFindings','bandemia'),pick('msel','brFindings','crp'),set('brCrp','12.3')]);
   includes(admission,'complete blood count with differential');
   includes(admission,'were obtained in the baby room, which showed bandemia and an elevated CRP level (12.3 mg/dL).');
@@ -566,19 +568,19 @@ test('story C: baby-room work-up findings are recorded once and justify the admi
   assert.equal((admission.match(/bandemia/g)||[]).length,1,'the finding is stated once');
 });
 test('story C: a work-up without recorded results is not written as normal; an explicit confirmation is',()=>{
-  const pending=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brWorkup','cbc')]).admission;
+  const pending=notes([seg('dest','NBC'),route('nursery'),pick('msel','brWorkup','cbc')]).admission;
   includes(pending,'A complete blood count with differential was obtained in the baby room.');
   const nurseryCourse=pending.split('\n\n').find(paragraph=>paragraph.includes('obtained in the baby room'));
   assert.ok(nurseryCourse);assert.doesNotMatch(nurseryCourse,/unremarkable|normal|therefore/i);   // 只驗本次病程，不把產前超音波的正常預設誤當嬰兒室檢驗結果。
-  const normal=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brWorkup','cbc'),pick('msel','brFindings','normal')]).admission;
+  const normal=notes([seg('dest','NBC'),route('nursery'),pick('msel','brWorkup','cbc'),pick('msel','brFindings','normal')]).admission;
   includes(normal,'and the results were unremarkable');
   includes(normal,'Subsequently, the infant was admitted');
   // 勾了異常再勾「無異常」⇒ 互斥，只剩無異常
-  const flipped=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brFindings','bandemia'),pick('msel','brFindings','normal')]).admission;
+  const flipped=notes([seg('dest','NBC'),route('nursery'),pick('msel','brFindings','bandemia'),pick('msel','brFindings','normal')]).admission;
   assert.doesNotMatch(flipped,/bandemia/);includes(flipped,'unremarkable');
 });
 test('story C: maternal-risk reason without any recorded risk falls back to a generic phrase',()=>{
-  const {admission}=notes([seg('dest','NBC'),seg('pathway','nursery'),pick('msel','brEval','maternal')]);
+  const {admission}=notes([seg('dest','NBC'),route('nursery'),pick('msel','brEval','maternal')]);
   includes(admission,'Because of maternal risk factors, the pediatric team was asked to evaluate');   // 2026-09-23：Because of + 名詞片語
   assert.doesNotMatch(admission,/maternal risk factors \(/);
 });

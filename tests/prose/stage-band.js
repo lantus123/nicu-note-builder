@@ -62,16 +62,18 @@ test('the band is built once; switching stage only changes classes and text',({d
   assert.equal(d.querySelectorAll('#workflowNav').length,1);
 });
 
+// 2026-10-06 故事線：可選站（standby／出生後會診／嬰兒室抽血評估／轉送途中）以空心虛線點留在帶子上（opt）。
 const STORIES={
-  A:{birth:['birth:info','birth:standby','birth:birth','birth:dr','birth:drEnd'],course:['course:route','course:adm'],birthPlaces:[],coursePlaces:[]},
-  B:{birth:['birth:info','birth:birth','birth:consult','birth:dr','birth:drEnd'],course:['course:route','course:adm'],birthPlaces:[],coursePlaces:[]},
-  C:{birth:['birth:info','birth:birth','birth:dr','birth:drEnd'],course:['course:route','course:brEval','course:adm'],birthPlaces:['產房'],coursePlaces:['嬰兒室','病房']},
-  D:{birth:['birth:info','birth:birth','birth:dr','birth:drEnd'],course:['course:obCare','course:obConsult','course:obArrive','course:route','course:adm'],birthPlaces:['外院'],coursePlaces:['外院','轉送途中','本院']},
-  E:{birth:['birth:info','birth:birth','birth:dr','birth:drEnd'],course:['course:prior','course:illness','course:evaluation'],birthPlaces:['出院前'],coursePlaces:['出院前','家中','門急診']}
+  A:{birth:['birth:info','birth:standby','birth:birth','birth:consult','birth:dr','birth:drEnd'],opt:['birth:consult'],course:['course:route','course:adm'],birthPlaces:[],coursePlaces:[]},
+  B:{birth:['birth:info','birth:standby','birth:birth','birth:consult','birth:dr','birth:drEnd'],opt:['birth:standby'],course:['course:route','course:adm'],birthPlaces:[],coursePlaces:[]},
+  C:{birth:['birth:info','birth:standby','birth:birth','birth:consult','birth:dr','birth:drEnd'],opt:['birth:standby','birth:consult','course:brEval'],course:['course:route','course:brEval','course:adm'],birthPlaces:['產房'],coursePlaces:['嬰兒室','病房']},
+  D:{birth:['birth:info','birth:birth','birth:dr','birth:drEnd'],opt:['course:route'],course:['course:obCare','course:obConsult','course:obArrive','course:route','course:adm'],birthPlaces:['外院'],coursePlaces:['外院','我方到場','轉送途中','本院']},
+  E:{birth:['birth:info','birth:birth','birth:dr','birth:drEnd'],opt:[],course:['course:prior','course:illness','course:evaluation'],birthPlaces:['出院前'],coursePlaces:['出院前','家中','門急診']}
 };
-for(const [name,want] of Object.entries(STORIES))test(`story ${name} nodes and place grouping come from the existing stage definitions`,({story,nodes,places})=>{
+for(const [name,want] of Object.entries(STORIES))test(`story ${name} nodes and place grouping come from the existing stage definitions`,({d,story,nodes,places})=>{
   story(name);
   assert.deepEqual(nodes(3),want.birth);assert.deepEqual(nodes(4),want.course);
+  assert.deepEqual([...d.querySelectorAll('#stageBand .band-node.opt')].map(n=>n.dataset.bandNode),want.opt,'Optional stations stay on the band as hollow nodes');
   assert.deepEqual(places(3),want.birthPlaces);assert.deepEqual(places(4),want.coursePlaces);
 });
 
@@ -99,7 +101,7 @@ test('status text follows filling: missing, not started and complete',({status,s
   story('A');seg('dest','NICU');input('birthDate','2026-08-29');assert.equal(status(1).textContent,'完成');assert.equal(status(1).dataset.risk,'false');
   seg('gender','female');input('gaW','38');input('bw','3100');assert.equal(status(3).textContent,'缺 1 項');
   seg('delivery','nsd');assert.equal(status(3).textContent,'已記錄 1／5');
-  assert.equal(status(4).textContent,'未開始');click('#admissionStatusBody [data-seg="resp"] [data-v="room air"]');assert.equal(status(4).textContent,'已記錄 1／2');
+  assert.equal(status(4).textContent,'未開始');click('#admissionStatusBody [data-seg="resp"] [data-v="room air"]');assert.equal(status(4).textContent,'完成','The empty pre-admission station is skippable (no new treatment = nothing to fill)');
   click('#prenatalNext');assert.equal(status(2).textContent,'完成');
   click('#stageBand [data-flow-target="finalReviewCard"]');assert.equal(status(5).textContent,'完成');
 });
@@ -108,7 +110,8 @@ test('node dots: filled when recorded, hollow when not; current node is marked',
   story('D');assert.equal(get('[data-band-node="birth:birth"]').classList.contains('has'),false);
   assert.equal(get('[data-band-node="birth:birth"] .tm').textContent,'未記錄');
   input('birthBreathing','crying');assert.equal(get('[data-band-node="birth:birth"]').classList.contains('has'),true);
-  input('birthFinalMin','10');input('birthFinalSupport','cpap');assert.equal(get('[data-band-node="birth:drEnd"] .tm').textContent,'生後 10 分');
+  input('birthFinalMin','10');assert.equal(get('[data-band-node="birth:drEnd"] .tm').textContent,'生後 10 分');
+  input('birthFinalSupport','cpap');assert.equal(get('[data-band-node="birth:drEnd"] .tm').textContent,'CPAP','The leaving-support answer is the node time once chosen');
   click('[data-band-node="course:obArrive"]');assert.equal(current(),'我方抵達外院');
   assert.equal(get('[data-band-node="course:obArrive"]').getAttribute('aria-current'),'step');
 });
@@ -119,7 +122,7 @@ test('clicking a node switches stage, focuses the stage and briefly marks the ta
   const block=get('[data-seg="iap"]').closest('.field');assert.ok(block.contains(d.activeElement),'Focus lands inside the IAP field');assert.equal(block.classList.contains('band-pulse'),true);
   story('C');click('[data-band-node="birth:dr"]');assert.equal(chapter(),'出生資料');assert.equal(current(),'出生場所處置');
   assert.ok(get('#birthStage-dr').contains(d.activeElement));assert.equal(get('#birthStage-dr').classList.contains('band-pulse'),true);
-  click('[data-band-node="course:brEval"]');assert.equal(chapter(),'本次病程');assert.equal(current(),'兒科評估・抽血');
+  click('[data-band-node="course:brEval"]');assert.equal(chapter(),'本次病程');assert.equal(current(),'兒科評估・抽血','A hollow optional node adds the station and goes there');
   assert.equal(d.activeElement,get('#journeyWorkspace'));assert.equal(get('#journeyWorkspace').classList.contains('band-pulse'),true);
 });
 
@@ -225,13 +228,14 @@ test('a conflicting IAP date marks the IAP node and the prenatal header; review 
 });
 
 test('birth and course conflicts mark only the node whose block holds the target',({get,story,input,click,status,W})=>{
-  story('A');click('#stageBand [data-flow-target="birthHistoryCard"]');input('birthResusStatus','performed');
-  click('[data-add-birth="ppv"]');click('[data-add-birth="assessment"]');
+  story('A');click('[data-ladder-v="ppv"]');click('#stageBand [data-flow-target="birthHistoryCard"]');
+  click('[data-add-birth="assessment"]');
   const ids=W.bandTest.S.birthEvents.map(e=>e.id);input(`event-${ids[0]}-minutes`,'5');input(`event-${ids[1]}-minutes`,'2');
-  assert.equal(get('[data-band-node="birth:dr"]').classList.contains('warn'),true,'Out-of-order event times mark the delivery-room node');
+  assert.equal(get(`[data-band-node="birth:dr:${ids[1]}"]`).classList.contains('warn'),true,'Out-of-order event times mark the event node that holds the field');
+  assert.equal(get(`[data-band-node="birth:dr:${ids[0]}"]`).classList.contains('warn'),false);
   assert.equal(get('[data-band-node="birth:birth"]').classList.contains('warn'),false);
   assert.match(status(3).textContent,/項待核對/);
-  input(`event-${ids[1]}-minutes`,'7');assert.equal(get('[data-band-node="birth:dr"]').classList.contains('warn'),false);
+  input(`event-${ids[1]}-minutes`,'7');assert.equal(get(`[data-band-node="birth:dr:${ids[1]}"]`).classList.contains('warn'),false);
   story('D');input('obTransferFrom',get('#homeHosp').value||'TPEMMH');
   assert.equal(get('[data-band-node="course:obCare"]').classList.contains('warn'),true,'Transfer origin equal to our campus marks outside care');
   assert.equal(get('[data-band-node="course:route"]').classList.contains('warn'),false);assert.match(status(4).textContent,/1 項待核對/);
