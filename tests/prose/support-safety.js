@@ -21,6 +21,8 @@ test('72 derived support combinations never imply intubation and link only what 
    const {relation}=resolvedSupport('obRespRelation',selected),text=supportSentence('obRespRelation',selected,'during transport',{fiO2:'30',peep:'6'});
    assert.doesNotMatch(text,/\b(?:reintubated|intubated|intubation|reintubation|discontinued|wean|improv|extubat)\b/i);
    if(!selected){assert.equal(text,'');assert.equal(relation,'');}
+   // 2026-10-12 Ryan：路上與本院的 ETT 都是壓 PPV 經 ETT（不是呼吸器）；ETT 句型固定 PPV was provided/continued through the endotracheal tube
+   else if(selected==='ett'){assert.match(text,relation==='continued'?/Positive-pressure ventilation \(PPV\) was continued through the endotracheal tube/:/Positive-pressure ventilation \(PPV\) was provided through the endotracheal tube/);assert.doesNotMatch(text,/mechanical ventilation/);}
    else if(!source){assert.equal(relation,'');assert.match(text,/was receiving|was breathing room air/);}
    else if(selected===source){assert.equal(relation,'continued');assert.match(text,/was continued|continued breathing room air/);}
    else if(source==='room'){assert.equal(relation,'new');assert.match(text,/was initiated/);}

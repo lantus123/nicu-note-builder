@@ -37,7 +37,7 @@ function withPage(check){
   const seg=(key,value)=>click(`[data-seg="${key}"] [data-v="${value}"]`);
   const msel=(key,value)=>click(`[data-msel="${key}"] [data-v="${value}"]`);
   const story=key=>click(`[data-story="${key}"]`);
-  // flag 型風險（fever）只有是／否；choice 型（prom）要再點一次分類鈕，時數另填。
+  // flag 型風險（fever／prom）只有是／否；PROM 的時數另填。
   const riskYes=key=>click(`[data-ryn="${key}"] [data-v="yes"]`);
   const riskChoice=(key,value)=>click(`[data-rc="${key}"] [data-v="${value}"]`);
   function screening(key,value){
@@ -156,15 +156,15 @@ test('兒科去嬰兒室評估的原因句用 Because of + 名詞片語',page=>{
   assert.doesNotMatch(note(),/Because maternal risk factors/);
 });
 
-test('回歸：產房結束時已回 room air，但做過 PPV 仍算呼吸問題',page=>{
+test('回歸：PPV 後已回 room air 且無症狀，不列為目前呼吸問題',page=>{
   const {input,story,addBirth,dx}=page;
   story('A');addBirth('ppv');input('birthFinalSupport','room');
-  assert.ok(dx().includes('Respiratory distress'),`急救事件規則不得被產房結束支持覆蓋：${dx().join('|')}`);
+  assert.ok(!dx().includes('Respiratory distress'),`最新 room air 且無症狀時不應由既往 PPV 推論目前問題：${dx().join('|')}`);
 });
 
 test('回歸：母體 PROM 仍能從風險列填進來並進入感染風險',page=>{
   const {input,story,riskYes,riskChoice,screening,onTab}=page;
-  riskYes('prom');riskChoice('prom','prom');input('promH','20');
+  riskYes('prom');input('promH','20');
   screening('gbs','pos');
   story('C');input('birthResusStatus','none');
   assert.match(onTab('plan'),/empirical antibiotics/);

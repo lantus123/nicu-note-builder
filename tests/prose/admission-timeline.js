@@ -124,7 +124,7 @@ for(const [level,required,forbidden] of [
 });
 
 // 2026-09-20 Ryan：產房急救 PPV 依 NRP 第 9 版預設帶入（≥32 週 PIP 25／PEEP 5；≥35 週 FiO₂ 21%），
-// 帶入即標示、改任一值即視為實際紀錄；時間仍空白；其他事件（插管等）與 course 範圍的 PPV 不帶預設。
+// 第 1 批逐欄確認：改任一值只確認該欄；時間仍空白；其他事件（插管等）與 course 範圍的 PPV 不帶預設。
 test('a new birth PPV carries NRP 9th-edition initial settings, flagged until edited; timing stays blank',({add,row,eventInput,note,get})=>{
   const event=add('ppv'), card=row(event);
   const v=f=>card.querySelector(`[data-event-field="${f}"]`).value;
@@ -132,17 +132,21 @@ test('a new birth PPV carries NRP 9th-edition initial settings, flagged until ed
   assert.ok(card.querySelector('.nrp-hint'),'the card must say the values are NRP defaults');
   assert.ok(card.querySelector('[data-event-field="pip"]').classList.contains('nrp-default'));
   assert.match(note(),/positive-pressure ventilation \(PPV\) was given via Neopuff \(FiO2 21%, IP\/PEEP 25\/5 cmH2O\)/i);
-  assert.match(get('#birthReview').textContent,/NRP[^。]*尚未核對/);
+  assert.match(get('#birthReview').textContent,/PPV 待核對/);
   eventInput(event,'pip','22');
-  assert.ok(!row(event).querySelector('.nrp-hint'),'editing any value removes the default flag');
-  assert.match(note(),/IP\/PEEP 22\/5 cmH2O/);assert.doesNotMatch(get('#birthReview').textContent,/尚未核對/);
+  // 第 1 批改為逐欄確認：修改 IP 後，FiO₂／PEEP 仍需核對。
+  assert.ok(row(event).querySelector('.nrp-hint'));
+  assert.doesNotMatch(row(event).querySelector('.nrp-hint').textContent,/\bIP\b/);
+  assert.ok(!row(event).querySelector('[data-event-field="pip"]').classList.contains('nrp-default'));
+  for(const field of ['fiO2','peep'])assert.ok(row(event).querySelector(`[data-event-field="${field}"]`).classList.contains('nrp-default'));
+  assert.match(note(),/IP\/PEEP 22\/5 cmH2O/);assert.match(get('#birthReview').textContent,/待核對/);
 });
 test('accepting the NRP defaults as-is clears the reminder without changing the values',({add,row,note,get})=>{
   const event=add('ppv'), card=row(event);
-  assert.match(get('#birthReview').textContent,/尚未核對/);
+  assert.match(get('#birthReview').textContent,/待核對/);
   card.querySelector('[data-nrp-accept]').click();
   assert.ok(!row(event).querySelector('.nrp-hint'),'the hint is gone after accepting');
-  assert.doesNotMatch(get('#birthReview').textContent,/尚未核對/);
+  assert.doesNotMatch(get('#birthReview').textContent,/待核對/);
   assert.match(note(),/FiO2 21%, IP\/PEEP 25\/5 cmH2O/,'values are kept exactly');
   assert.equal(row(event).querySelector('[data-event-field="pip"]').value,'25');
 });
@@ -200,9 +204,10 @@ test('an intermediate reassessment is narrated between the two recorded treatmen
 });
 
 test('event order follows explicit reorder actions and removal removes only that event',({add,eventAction,eventInput,note,rows,row})=>{
-  // 骨架節點（PPV → 插管）依 NRP 固定順序；可移動、可移除的是站內「＋」加的再評估與重複處置。
+  // 第 1 批：骨架節點可獨立移除但不可重排；站內「＋」加的事件可移動、可移除。
   const first=add('ppv'),assessment=add('assessment');eventInput(assessment,'hr','91');const again=add('ppv');eventInput(again,'minutes','6');
-  assert.equal(row(first).querySelector('[data-event-action]'),null,'The skeleton node itself has no reorder/remove');
+  assert.ok(row(first).querySelector('[data-event-action="remove"]'),'The skeleton node can be removed independently');
+  for(const action of ['up','down'])assert.equal(row(first).querySelector(`[data-event-action="${action}"]`),null,'The skeleton node cannot be reordered');
   before(note(),/91/,/PPV was given again/);
   eventAction(again,'up');before(note(),/PPV was given again/,/91/);
   eventAction(again,'down');before(note(),/91/,/PPV was given again/);
@@ -232,7 +237,9 @@ test('a reassessment can follow confirmed no resuscitation without becoming an i
   assert.equal(get('#birthResusStatus').value,'none');
   assert.match(note(),/no resuscitation|resuscitation was not|did not (?:receive|require).*resuscitation/i);
   assert.match(note(),/147/);
-  assert.doesNotMatch(note(),/resuscitation was performed|interventions were not specified|positive[- ]pressure ventilation|epinephrine/i);
+  // 2026-10-13：9B §1（Ryan 10/13）非良好出生觀察用中性無急救句，仍禁止肯定處置敘述。
+  assert.match(note(),/No resuscitation was performed at birth\./);
+  assert.doesNotMatch(note(),/(?<!\bNo )resuscitation was performed|interventions were not specified|positive[- ]pressure ventilation|epinephrine/i);
 });
 
 test('a standalone reassessment does not decide whether resuscitation was needed',({add,eventInput,get,note})=>{
@@ -336,7 +343,9 @@ test('a newly recorded later PPV episode is not removed as duplicate birth care'
   seg('pathway','nursery');symptom('apnea');seg('pwOnset','recurrent');
   input('pwOnsetH','2');input('pwOnsetUnit','hours');
   seg('obRespType','ppv');   // 離開產房 room air、BR 又上 PPV ⇒ 推導為新開始
-  const text=note();assert.match(text,/recurr|again|repeat|reinitiated|restarted/i);assert.match(text,/During observation in the baby room, apnea recurred[^.]*\. Positive-pressure ventilation \(PPV\) was initiated\./);
+  // 2026-10-13：9A §8 同份病歷首次展開 PPV，嬰兒室再次開始只寫縮寫，並保留先後順序。
+  const text=note();assert.match(text,/recurr|again|repeat|reinitiated|restarted/i);assert.match(text,/During observation in the baby room, apnea recurred[^.]*\. PPV was initiated\./);
+  before(text,/Positive-pressure ventilation \(PPV\)/,/PPV was initiated/);
   assert.match(text,/2 hours/i);
   assert.ok((text.match(/positive[- ]pressure ventilation|\bPPV\b/gi)||[]).length>=2,
     'A genuinely later episode must remain in the note');
@@ -398,7 +407,9 @@ test('outside care, transport-team arrival, transport and hospital admission ret
   input('obAdmissionStatus','Synthetic assessment on hospital admission');
   const text=note();
   before(text,/On our team's arrival at the referring hospital, the infant was receiving CPAP/,/Synthetic assessment at referring hospital/);
-  assert.match(text,/respiratory support was changed to mechanical ventilation via an endotracheal tube during transport/i,'Different arrival and transport support is derived as a change');
+  // 2026-10-13：第 7 批（Ryan 2026-10-12）轉送 ETT 寫經管 PPV，9A §8 首次展開全稱。
+  assert.match(text,/Positive-pressure ventilation \(PPV\) was provided through the endotracheal tube during transport/i,'Transport ETT after arrival CPAP is written as PPV through the endotracheal tube');
+  assert.doesNotMatch(text,/mechanical ventilation/i);
   before(text,/Synthetic assessment at referring hospital/,/Synthetic transport observation/);
   before(text,/Synthetic transport observation/,/Synthetic assessment on hospital admission/);
   assert.match(text,/CPAP|continuous positive airway pressure/i);
@@ -436,7 +447,9 @@ test('a conflicting final birth state prevents a false continuation of an older 
 });
 test('editing the previous station re-derives continuity at once',({input,seg,note})=>{
   input('birthFinalSupport','ppv');seg('obRespType','ppv');
-  assert.match(note(),/positive[- ]pressure ventilation[^.]*continued/i);
+  // 2026-10-13：9A §8 前文已展開 PPV，入院前持續句只寫縮寫，定義須在前。
+  assert.match(note(),/\bPPV was continued before admission\./);
+  before(note(),/Positive-pressure ventilation \(PPV\)/,/\bPPV was continued before admission\./);
   input('birthFinalSupport','cpap');
   assert.doesNotMatch(note(),/(?:positive[- ]pressure ventilation|PPV)[^.]*continued before admission/i);
   assert.match(note(),/respiratory support was changed to positive-pressure ventilation/i);
@@ -446,7 +459,9 @@ test('editing the previous station re-derives continuity at once',({input,seg,no
 });
 test('stopping is written from the next station value and follows the current previous support',({input,seg,note})=>{
   input('birthFinalSupport','ppv');seg('obRespType','room');
-  assert.match(note(),/switched from positive-pressure ventilation \(PPV\) to room air before admission/i);
+  // 2026-10-13：9A §8 前文已展開 PPV，轉為室內空氣句只寫縮寫，定義須在前。
+  assert.match(note(),/switched from PPV to room air before admission/i);
+  before(note(),/Positive-pressure ventilation \(PPV\)/,/switched from PPV to room air before admission/);
   input('birthFinalSupport','cpap');
   assert.doesNotMatch(note(),/switched from positive-pressure ventilation/i,'No stale stop target survives');
   assert.match(note(),/switched from CPAP to room air before admission/i);assert.doesNotMatch(note(),/discontinued/i);

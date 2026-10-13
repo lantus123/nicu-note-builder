@@ -68,7 +68,7 @@ for(const [birth,admission,dol] of [['2026-10-02','2026-10-02',1],['2026-09-30',
 }
 test('E retains visible birth observations and resuscitation without switching route',({seed,story,visible,input,note,get,click})=>{
   seed();story('E');assert.equal(visible('ladderChoices'),true);assert.equal(get('[data-select-chips="birthBreathing"]').closest('[hidden]'),null);
-  input('birthBreathing','crying');click('[data-ladder-v="none"]');assert.match(note(),/No resuscitation was required at birth/);
+  input('birthBreathing','crying');click('[data-ladder-v="none"]');assert.match(note(),/and did not require resuscitation/);
 });
 test('entry selection does not jump; E source and problems live at the entry',({W,story,get})=>{
   let calls=0;W.HTMLElement.prototype.scrollIntoView=()=>calls++;story('E');assert.equal(calls,0);
@@ -129,7 +129,7 @@ const samples=[
   ['jaundice',{rm_jaundice_trend:'persisted'},/The jaundice persisted/],
   ['prolonged-jaundice',{rm_jaundice_trend:'increased'},/The jaundice increased/],
   ['respiratory',{rm_respiratory_setting:'during feeding'},/Respiratory symptoms were reported during feeding/],
-  ['fever',{rm_fever_temperature:'38.3',rm_fever_method:'axillary',rm_fever_time:'2026-10-02T10:15'},/38.3 °C.*axillary.*2026-10-02 10:15/],
+  ['fever',{rm_fever_temperature:'38.3',rm_fever_method:'axillary',rm_fever_time:'2026-10-02T10:15'},/An axillary temperature of 38\.3 °C was recorded at 10:15 on October 2, 2026\./],
   ['poor-feeding',{rm_feeding_usual:'90',rm_feeding_current:'45',rm_feeding_frequency:'every 3 hours'},/decreased from 90 to 45 mL per feed/],
   ['weight-loss',{rm_feeding_current:'30'},/Current milk intake was 30 mL/],
   ['apnea',{rm_apnea_count:'2',rm_apnea_duration:'15',rm_apnea_setting:'during sleep',rm_apnea_recovery:'after tactile stimulation'},/2 episodes of apnea or cyanosis were reported during sleep, each lasting approximately 15 seconds; the infant recovered after tactile stimulation/],

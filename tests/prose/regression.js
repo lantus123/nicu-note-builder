@@ -67,18 +67,20 @@ test('standby retains its visible supplemental course',()=>{
   includes(admission,'Synthetic standby observation retained');
 });
 
-test('IAP drug and date survive undocumented completeness',()=>{
+test('antibiotic drug and date survive an unselected purpose without implying IAP',()=>{
   const {admission}=notes([set('iapDrug','Ampicillin'),set('iapSince','08/28 09:45')]);
   includes(admission,'Ampicillin');
   includes(admission,'08/28 09:45');
+  assert.doesNotMatch(admission,/intrapartum antibiotic prophylaxis|completeness was/i);
   assert.doesNotMatch(admission,/\b(?:IAP|prophylaxis) was (?:in)?complete\b/i,
     'Drug entry must not infer IAP completeness');
 });
 
-test('IAP date alone is retained without inventing an antibiotic',()=>{
+test('antibiotic date alone is retained without inventing an antibiotic or IAP',()=>{
   const {admission}=notes([set('iapSince','08/28 11:25')]);
   includes(admission,'08/28 11:25');
   assert.doesNotMatch(admission,/\b(?:Ampicillin|Penicillin|Cefazolin)\b/i);
+  assert.doesNotMatch(admission,/intrapartum antibiotic prophylaxis/i);
 });
 
 test('IAP date survives a documented status with no drug',()=>{
@@ -239,7 +241,7 @@ test('outborn reason, symptoms, supplemental course and diagnosis are independen
 test('complete steroid course and entered dates are both retained',()=>{
   const {admission,acceptance}=notes([pick('ryn','steroid','yes'),set('steroidDates','08/27-08/28')]);
   for(const text of [admission,acceptance]){
-    includes(text,'complete course'); includes(text,'08/27-08/28');
+    includes(text,'complete course'); includes(text,'from 08/27 to 08/28');
   }
 });
 
@@ -336,7 +338,7 @@ test('a recorded transfer reason and a tentative diagnosis both survive in accep
 
 for(const details of ['date only','drug only','drug and date']){
   test(`undocumented IAP completeness has a grammatical subject: ${details}`,()=>{
-    const steps=[...(details!=='drug only'?[set('iapSince','08/28 11:25')]:[]),
+    const steps=[seg('maternalAbxPurpose','iap'),...(details!=='drug only'?[set('iapSince','08/28 11:25')]:[]),
       ...(details!=='date only'?[set('iapDrug','Ampicillin')]:[])];
     const {admission,acceptance}=notes(steps);
     for(const text of [admission,section(acceptance,'Brief history')]){
@@ -344,7 +346,7 @@ for(const details of ['date only','drug only','drug and date']){
       if(details!=='date only')includes(text,'Ampicillin');
       else assert.doesNotMatch(text,/Ampicillin/);
       assert.doesNotMatch(text,/details were|prophylaxis[^.]* was (?:in)?complete[.;]/i);
-      assert.match(text,/completeness was not (?:specified|documented)/i);
+      assert.match(text,/its adequacy could not be determined from the available record/i);
     }
   });
 }
@@ -362,7 +364,7 @@ for(const amount of ['0','1','1.5','2']){
       const inflection=unit=>amount==='1'?unit:unit+'s';
       for(const text of [admission,section(acceptance,'Brief history')]){
         includes(text,`for ${amount} ${inflection(timeUnit==='days'?'day':'hour')}`);
-        includes(text,`by ${amount} ${inflection('minute')} (DOIC)`);
+        includes(text,`delayed initial crying (DOIC), with the first cry at ${amount} ${inflection('minute')} of age`);   // 2026-10-13 Ryan：兩份 note 同句型
         includes(text,`at ${amount} ${inflection('hour')} of age`);
         assert.doesNotMatch(text,/\b1 (?:minutes|hours|days)\b/);
       }
@@ -549,7 +551,7 @@ test('empty-legal segments have explicit clear actions; reselecting is stable',(
 // ── 2026-09-20 故事 C（Ryan）：嬰兒室有狀況／母體風險 → 兒科去看（不是會診）→ 嬰兒室抽血 → 結果異常才收 ──
 test('story C: the baby-room evaluation is not a consultation and derives maternal risk factors from section 2',()=>{
   const {admission}=notes([seg('dest','NBC'),route('nursery'),pick('msel','obSx','tachypnea'),seg('pwOnset','persisted'),
-    pick('ryn','fever','yes'),pick('ryn','prom','yes'),pick('rc','prom','prom'),set('promH','18'),screen('gbs','pos'),
+    pick('ryn','fever','yes'),pick('ryn','prom','yes'),set('promH','18'),screen('gbs','pos'),
     pick('msel','brEval','persist24'),pick('msel','brEval','maternal')]);
   includes(admission,'initially cared for in the baby room');
   includes(admission,'Because of persistence of tachypnea beyond 24 hours of age');   // 2026-09-23：Because of + 名詞片語

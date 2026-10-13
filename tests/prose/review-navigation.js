@@ -130,7 +130,7 @@ test('several epinephrine events expose separate dose and route links with stabl
 test('PPV pending link does not accept suggested settings or reorder resuscitation events',({d,get,story,click,jump,input})=>{
   story('A');click('[data-ladder-v="ppv"]');click('[data-add-birth="assessment"]');
   const ids=[...d.querySelectorAll('#birthEvents .clinical-event')].map(e=>e.dataset.eventId);
-  jump(`#event-${ids[0]}-pip`);assert.ok(get(`[data-nrp-accept="${ids[0]}"]`));
+  jump(`#event-${ids[0]}-fiO2`);assert.ok(get(`[data-nrp-accept="${ids[0]}"]`));
   input(`event-${ids[0]}-minutes`,'5');input(`event-${ids[1]}-minutes`,'2');jump(`#event-${ids[1]}-minutes`);
   input('birthFinalMin','1');jump('#birthFinalMin');
   input('birthInitialNote','No resuscitation was required.');jump('#birthInitialNote');

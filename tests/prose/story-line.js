@@ -48,7 +48,7 @@ test('the ladder grows NRP-ordered delivery-room nodes and the story line reads 
   assert.match(get('#storyLine').textContent,/產前 standby → 出生 → 產房 PPV → 插管 → 壓胸 → Epi → 離開產房 → 入院/);
   assert.equal(d.querySelector('[data-ladder-v="cpr"]').getAttribute('aria-checked'),'true');
   ladder('none');assert.equal(S.birthEvents.length,0);assert.equal(get('#birthResusStatus').value,'none');
-  assert.match(get('#note').textContent,/No resuscitation was required at birth\./);
+  assert.match(get('#note').textContent,/No resuscitation was performed at birth\./);
   assert.match(get('#storyLine').textContent,/產房無需急救/);
 });
 test('stepping the ladder down removes extra events; filled ones ask first and are kept on cancel',({S,story,ladder,input,get,click,ev,note})=>{
@@ -104,21 +104,23 @@ test('each delivery-room node asks only for its settings plus one response quest
   assert.ok(has('compressions','ratio'));assert.equal(has('compressions','duration'),false);
   assert.ok(has('epinephrine','drugDose'));assert.ok(has('epinephrine','drugRoute'));
   for(const kind of ['ppv','intubation','compressions','epinephrine'])assert.ok(d.querySelector(`[data-event-id="${ev(kind)[0].id}"] [data-event-choice="response"]`),kind);
-  assert.doesNotMatch(note(),/after which|partial improvement|without improvement/,'Empty response writes nothing');
+  assert.doesNotMatch(note(),/after which|partial improvement|without improvement|following the intervention|subsequently improved|partially improved|No improvement was noted/,'Empty response writes nothing');
   choose(ev('ppv')[0].id,'response','improved');choose(ev('compressions')[0].id,'response','partial');choose(ev('epinephrine')[0].id,'response','none');
   input(`event-${ev('compressions')[0].id}-ratio`,'3:1');
   const n=note();
-  assert.match(n,/Positive-pressure ventilation \(PPV\) was given via Neopuff \(FiO2 \d+%, IP\/PEEP \d+\/5 cmH2O\), after which heart rate and oxygen saturation improved\./);
-  assert.match(n,/chest compressions were initiated at a 3:1 compression-to-ventilation ratio, with partial improvement\./i);
-  assert.match(n,/epinephrine was administered, without improvement\./i);
-  click(`[data-event-id="${ev('ppv')[0].id}"] [data-event-choice="response"] .choice-clear`);assert.doesNotMatch(note(),/after which heart rate/);
+  assert.match(n,/Positive-pressure ventilation \(PPV\) was given via Neopuff \(FiO2 \d+%, IP\/PEEP \d+\/5 cmH2O\)\. Heart rate and oxygen saturation subsequently improved\./);
+  assert.match(n,/chest compressions were initiated at a 3:1 compression-to-ventilation ratio\. Respiratory distress partially improved\./i);
+  assert.match(n,/epinephrine was administered\. No improvement was noted\./i);
+  click(`[data-event-id="${ev('ppv')[0].id}"] [data-event-choice="response"] .choice-clear`);assert.doesNotMatch(note(),/Heart rate and oxygen saturation subsequently improved/);
   function click(s){get(s).click();}
 });
-test('"＋" only repeats a skeleton step or adds a reassessment; later rows show "第 N 次" and remove',({d,S,story,ladder,click,get,note})=>{
+test('"＋" repeats a skeleton step or adds a reassessment; each row can be removed and later rows show "第 N 次"',({d,S,story,ladder,click,get,note})=>{
   story('A');ladder('ppv');
   assert.deepEqual([...d.querySelectorAll('#birthAdderButtons [data-add-birth]')].map(b=>b.dataset.addBirth),['ppv','assessment']);
   assert.match(get('#birthAdderHint').textContent,/PPV/);
-  assert.equal(d.querySelector('#birthEvents .ev-row .ev-head'),null,'The first row has no number or remove');
+  assert.ok(get('#birthEvents .ev-row .ev-head [data-event-action="remove"]'),'The first row can be removed');
+  assert.equal(d.querySelector('#birthEvents .ev-row .ev-head b'),null,'The first row has no repeat number');
+  assert.equal(d.querySelector('#birthEvents .ev-row .ev-head [data-event-action="up"],#birthEvents .ev-row .ev-head [data-event-action="down"]'),null,'Only repeated rows have reorder controls');
   click('[data-add-birth="ppv"]');const second=S.birthEvents[1];
   assert.match(get(`[data-event-id="${second.id}"] .ev-head`).textContent,/第 2 次/);
   assert.equal(second.nrp,true);assert.match(note(),/PPV was given again via Neopuff/);

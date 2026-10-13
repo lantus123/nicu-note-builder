@@ -277,8 +277,8 @@ test('spec fictional case: admission note follows the template skeleton',page=>{
 
 // ── D：產程用藥日期守門（只提醒，不擋） ──
 const conflictText=d=>d.querySelector('#reviewConflictList').textContent;
-test('D an IAP start date more than 7 days before birth raises a review reminder',({input,d})=>{
-  input('birthDate','2026-08-30');input('iapDrug','Ampicillin');input('iapSince','7/20');
+test('D an explicit IAP start date more than 7 days before birth raises a review reminder',({input,seg,d})=>{
+  seg('maternalAbxPurpose','iap');input('birthDate','2026-08-30');input('iapDrug','Ampicillin');input('iapSince','7/20');
   assert.match(conflictText(d),/IAP開始日期比出生早 41 天/);
   input('iapSince','8/28');assert.doesNotMatch(conflictText(d),/IAP開始日期/,'within 7 days is silent');
   input('iapSince','before delivery');assert.doesNotMatch(conflictText(d),/IAP開始日期/,'unparseable text is silent');
@@ -288,8 +288,8 @@ test('D undischarged tocolysis is checked and a discharged prior admission is no
   assert.match(conflictText(d),/安胎開始日期比出生早 60 天/);
   tog('tocoDischarged');assert.doesNotMatch(conflictText(d),/安胎開始日期/);
 });
-test('D no birth date means no date reminder, and January births look back to December',({input,d})=>{
-  input('iapSince','7/20');assert.doesNotMatch(conflictText(d),/IAP開始日期/);
+test('D no birth date means no date reminder, and January births look back to December',({input,seg,d})=>{
+  seg('maternalAbxPurpose','iap');input('iapSince','7/20');assert.doesNotMatch(conflictText(d),/IAP開始日期/);
   input('birthDate','2027-01-03');input('iapSince','12/20');assert.match(conflictText(d),/IAP開始日期比出生早 14 天/);
 });
 

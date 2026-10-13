@@ -176,9 +176,13 @@ test('prenatal checklist keeps every item visible as one row; ids and data attri
   click('#stageBand [data-flow-target="prenatalCard"]');
   for(const card of [get('#prenatalCard'),...d.querySelectorAll('#admSections > .card.pn-compact')])assert.equal(card.classList.contains('pn-compact'),true);
   assert.equal(d.querySelectorAll('#admSections > .card.pn-compact').length,3);
-  for(const sel of ['[data-ryn="gdm"]','[data-ryn="pih"]','[data-r3="pre"]','[data-ryn="aph"]','[data-ryn="pph"]','[data-ryn="uri"]','[data-ryn="fever"]','[data-ryn="prom"]','[data-ryn="steroid"]','[data-seg="ancReg"]','[data-seg="us"]','[data-seg="amnio"]','[data-seg="nipt"]','[data-par="thal"]','[data-par="g6pd"]','[data-par="thyroid"]','[data-habit="smoking"]','[data-habit="alcohol"]','[data-habit="drug"]','[data-seg="mgso4"]','[data-seg="toco"]','[data-seg="iap"]','#habitStatus','#admReason','#edc','#ancPlace','#matOtherHx','#gravida','#para','#matAge','#tocoSince','#iapSince','#iapDrug']){
+  for(const sel of ['[data-ryn="gdm"]','[data-ryn="pih"]','[data-r3="pre"]','[data-ryn="aph"]','[data-ryn="pph"]','[data-ryn="uri"]','[data-ryn="fever"]','[data-ryn="prom"]','[data-ryn="steroid"]','[data-seg="ancReg"]','[data-seg="us"]','[data-seg="amnio"]','[data-seg="nipt"]','[data-par="thal"]','[data-par="g6pd"]','[data-par="thyroid"]','[data-habit="smoking"]','[data-habit="alcohol"]','[data-habit="drug"]','[data-seg="mgso4"]','[data-seg="toco"]','[data-seg="maternalAbxPurpose"]','#habitStatus','#admReason','#edc','#ancPlace','#matOtherHx','#gravida','#para','#matAge','#tocoSince','#iapSince','#iapDrug']){
     const el=get(sel);assert.equal(el.closest('[hidden]'),null,sel+' stays on screen');assert.equal(el.closest('details:not([open])'),null,sel+' is not folded away');
   }
+  assert.equal(get('#maternalIapStatus').hidden,true,'Completeness is not asked for non-IAP antibiotics');
+  click('[data-seg="maternalAbxPurpose"] [data-v="iap"]');assert.equal(get('[data-seg="iap"]').closest('[hidden]'),null);
+  assert.equal(get('[data-seg="iap"]').closest('details:not([open])'),null,'Explicit IAP makes completeness directly visible');
+  click('[data-seg="maternalAbxPurpose"] [data-v="treatment"]');assert.equal(get('#maternalIapStatus').hidden,true);
   for(const k of ['hbsag','syphilis','rubella','hiv','gbs'])assert.equal(get(`.scr-row[data-scr="${k}"]`).closest('[hidden]'),null);
   assert.equal(get('#prenatalStatus-gdm').dataset.default,'true','Default badges remain for assistive technology');
   assert.ok(d.querySelectorAll('#prenatalCard .pn-row').length>=8);assert.ok(get('#risks').classList.contains('pn-grid'));

@@ -25,7 +25,7 @@ async function main(){
  const align=async selector=>{await ev(`document.querySelector(${JSON.stringify(selector)}).scrollIntoView({block:'start',behavior:'instant'})`);await pause(100);};
  const shot=async name=>{const r=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync('/private/tmp/nicu-clarity-'+name+'.png',Buffer.from(r.data,'base64'));};
  const note=()=>ev("document.getElementById('note').textContent");
- const geometry=selector=>ev(`(()=>{const g=document.querySelector(${JSON.stringify(selector)}),r=g.getBoundingClientRect();return [...g.querySelectorAll('button')].filter(b=>b.checkVisibility()).map(b=>{const a=b.getBoundingClientRect();return [b.dataset.v||b.dataset.clearSeg,a.x-r.x,a.y-r.y,a.width,a.height];});})()`);
+ const geometry=selector=>ev(`(()=>{const g=document.querySelector(${JSON.stringify(selector)}),r=g.getBoundingClientRect();return [...g.querySelectorAll('button')].filter(b=>b.checkVisibility()).map(b=>{const a=b.getBoundingClientRect();return [b.dataset.v||b.dataset.clearSeg,...[a.x-r.x,a.y-r.y,a.width,a.height].map(v=>Math.round(v*100)/100)];});})()`);
  const layout=async label=>{
   const result=await ev(`(()=>{
    const visible=e=>e.checkVisibility()&&e.getBoundingClientRect().width>0,rect=e=>e.getBoundingClientRect(),scroller=document.getElementById('bandScroll'),form=document.querySelector('.wrap'),preview=document.querySelector('.dock');

@@ -85,7 +85,7 @@ test('birth nodes reach every B stage and next leads to the course without creat
  click('#birthHistoryCard .stage-actions .primary');assert.equal(chapter(),'本次病程');assert.match(current(),/入院前處置/);assert.equal(W.guidanceTest.S.birthEvents.length,0);
 });
 test('E retains historical birth records and three complaint-driven admission stages',({story,seg,phase,get,input,note,d})=>{
- story('E');seg('dest','NBC');clickProblem(d,'respiratory');phase('birth:dr');input('birthResusStatus','none');assert.match(note(),/No resuscitation was required at birth/);
+ story('E');seg('dest','NBC');clickProblem(d,'respiratory');phase('birth:dr');input('birthResusStatus','none');assert.match(note(),/No resuscitation was performed at birth/);
  phase('course:illness');assert.match(get('#journeyContext').textContent,/再次就醫/);assert.ok(get('#readmitTSB').closest('[hidden]'));
  assert.equal(WCourse(d),3);assert.match(get('#context-birth-info').textContent,/出生背景/);
 });

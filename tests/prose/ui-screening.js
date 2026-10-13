@@ -95,7 +95,8 @@ test('Rubella antibody, pending, untested and unknown states remain distinct',()
 test('direct GBS risk selection retains the IAP prompt without recording prophylaxis',()=>withPage(({d,pick,select,note})=>{
   const hint=d.getElementById('iapHint');assert.equal(hint.hidden,true);
   pick('gbs','pos');assert.equal(hint.hidden,false);assert.ok(hint.classList.contains('pulse'));
-  assert.equal(d.querySelector('[data-seg="iap"] [data-v="none"]').getAttribute('aria-pressed'),'true');
+  assert.equal(d.getElementById('maternalIapStatus').hidden,true);
+  assert.match(hint.textContent,/IAP/);
   assert.doesNotMatch(note(),/prophylaxis \(IAP\) was (?:in)?complete/);
   select('gbs','neg');assert.equal(hint.hidden,true);
 }));
