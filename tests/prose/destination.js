@@ -74,9 +74,15 @@ test('E PICU is shared by admission and acceptance but never borrows a NICU plan
 test('C retains nursery history, distinct from the inpatient destination',({story,seg,note})=>{
   story('C');seg('dest','PICU');
   for(const mode of ['adm','acc']){
-    assert.match(note(mode),/initially cared for in the baby room/);
-    assert.match(note(mode),/admitted to our PICU/);
-    assert.doesNotMatch(note(mode),/admitted to our baby room/);
+    const text=note(mode);
+    if(mode==='adm')assert.match(text,/initially cared for in the baby room/);
+    else{
+      const opening=text.split('【Brief history】')[1]?.trimStart().split('\n')[0];
+      assert.ok(opening,'Acceptance must contain a Brief history opening');
+      assert.match(opening,/^A .*, was transferred from the baby room and admitted to our PICU for ____\.$/);
+    }
+    assert.match(text,/admitted to our PICU/);
+    assert.doesNotMatch(text,/admitted to our baby room/);
   }
 });
 

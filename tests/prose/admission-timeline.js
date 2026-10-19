@@ -298,16 +298,18 @@ test('story B: the delivery-room consultation is narrated after the birth observ
   input('pwConsultH','2');eventInput(ppv,'minutes','1');
   assert.match(get('#pathwayReview').textContent,/會診時間晚於第一個產房處置/);
 });
-test('Admission and Acceptance narrate the delivery room in the same order: observation, Apgar, treatment, reassessment',({input,add,note,get,click})=>{
-  input('birthBreathing','apnea');input('ap1','4');input('ap5','7');add('ppv');input('birthFinalMin','10');input('birthFinalBreathing','spontaneous');
+test('Admission keeps the birth narrative while Acceptance preserves its key respiratory milestones',({input,add,note,get,click})=>{
+  input('birthBreathing','apnea');input('ap1','4');input('ap5','7');add('ppv');input('birthFinalMin','10');input('birthFinalBreathing','spontaneous');input('birthFinalSupport','room');
   const adm=note();
   before(adm,/At birth, the infant was apneic/,/Apgar scores were 4 and 7/);
   before(adm,/Apgar scores were 4 and 7/,/positive-pressure ventilation \(PPV\) was given/i);
   before(adm,/positive-pressure ventilation \(PPV\) was given/i,/On reassessment at 10 minutes of age/);
   click('[data-tab="acc"]');const acc=note();
-  before(acc,/At birth, the infant was apneic/,/Apgar scores were 4 and 7/);
-  before(acc,/Apgar scores were 4 and 7/,/positive-pressure ventilation \(PPV\) was given/i);
-  before(acc,/positive-pressure ventilation \(PPV\) was given/i,/On reassessment at 10 minutes of age/);
+  assert.match(acc,/Apgar scores: 4 and 7 at 1 and 5 minutes/);
+  const respiratory=acc.split('Respiratory: ')[1].split('\n')[0];
+  before(respiratory,/at birth: apnea/,/birth resuscitation: PPV/);
+  before(respiratory,/birth resuscitation: PPV/,/leaving the delivery room: room air/);
+  assert.match(respiratory,/at admission: ____; at acceptance: ____/,'An earlier recovery does not fill either later support field');
 });
 test('the journey stepper keeps exactly one explicit stage active',({get,input,click})=>{
   const birth=get('li[data-stop="route"]'),dr=get('li[data-stop="adm"]');
@@ -338,7 +340,7 @@ test('confirmed continuing PPV is a continuation, not another administration',({
   assert.doesNotMatch(text,/again|reinitiated|restarted/i);
 });
 
-test('a newly recorded later PPV episode is not removed as duplicate birth care',({add,input,seg,symptom,note})=>{
+test('a newly recorded later PPV episode is not removed as duplicate birth care',({add,input,seg,symptom,note,click})=>{
   add('ppv');input('birthFinalSupport','room');
   seg('pathway','nursery');symptom('apnea');seg('pwOnset','recurrent');
   input('pwOnsetH','2');input('pwOnsetUnit','hours');
@@ -349,6 +351,9 @@ test('a newly recorded later PPV episode is not removed as duplicate birth care'
   assert.match(text,/2 hours/i);
   assert.ok((text.match(/positive[- ]pressure ventilation|\bPPV\b/gi)||[]).length>=2,
     'A genuinely later episode must remain in the note');
+  click('[data-tab="acc"]');
+  assert.match(note(),/in the baby room at 2 hours of age: recurrent apnea/,'The brief preserves the explicitly recurrent symptom and recorded onset');
+  assert.match(note(),/birth resuscitation: PPV.*leaving the delivery room: room air.*in the baby room: PPV/,'Earlier and later support remain distinct milestones');
 });
 
 test('new symptoms are not described as persistence',({seg,symptom,input,note})=>{
@@ -358,11 +363,14 @@ test('new symptoms are not described as persistence',({seg,symptom,input,note})=
   assert.match(note(),/2 hours/i);assert.doesNotMatch(note(),/persisted/i);
 });
 
-test('confirmed persistent symptoms are not rewritten as a newly developed episode',({seg,symptom,input,note})=>{
+test('confirmed persistent symptoms are not rewritten as a newly developed episode',({seg,symptom,input,note,click})=>{
   seg('pathway','nursery');symptom('tachypnea');seg('pwOnset','persisted');
   input('pwOnsetH','3');input('pwOnsetUnit','hours');
   assert.match(note(),/persisted/i);
   assert.doesNotMatch(note(),/tachypnea[^.]*developed|developed[^.]*tachypnea/i);
+  click('[data-tab="acc"]');
+  assert.match(note(),/in the baby room at 3 hours of age: persistent tachypnea/,'The brief preserves the selected persistence qualifier');
+  assert.doesNotMatch(note(),/new tachypnea|recurrent tachypnea/);
 });
 
 test('an observed symptom without known onset does not gain an invented onset',({seg,symptom,note})=>{

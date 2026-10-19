@@ -95,7 +95,9 @@ test('A3 repeated pre-admission findings are not relisted; persisting ones expla
   assert.match(text,/Before admission, tachypnea was noted\. Because apnea persisted, positive-pressure ventilation \(PPV\) was initiated \(PEEP 6 cmH2O\)\./);
   assert.equal(count(text,/before admission/gi),1,'one time phrase per paragraph');
   assert.doesNotMatch(text,/apnea was noted|apnea and tachypnea/);
-  assert.match(note('acc'),/Because apnea persisted, positive-pressure ventilation \(PPV\) was initiated/,'Acceptance reuses the same narrative');
+  const acc=note('acc');
+  assert.match(acc,/Respiratory:.*at birth: apnea.*leaving the delivery room: room air.*before admission: apnea and tachypnea.*before admission: PPV/,'Acceptance retains the findings and distinct support milestones');
+  assert.doesNotMatch(acc,/Because apnea persisted/,'The compact summary need not repeat the Admission causal narrative');
 });
 test('A3 persisted symptoms with support merge into one Because sentence',({story,msel,seg,choose,input,body})=>{
   story('A');msel('obSx','grunting');seg('pwOnset','persisted');input('birthFinalSupport','room');seg('obRespType','o2');seg('obO2Dev','hood');
@@ -152,7 +154,8 @@ test('A4 an empty diagnosis keeps the previous fallback; E keeps its dated closi
 test('A4 Acceptance still owns its admission sentence',({story,seg,msel,note})=>{
   story('B');seg('dest','NICU');msel('obSx','grunting');
   const acc=note('acc');
-  assert.match(acc,/The infant was admitted to our NICU on August 30, 2026 with respiratory distress for further evaluation and treatment\./);
+  assert.match(acc,/A .* neonate, GA .* BW .* was admitted to our NICU for respiratory distress\./);
+  assert.equal(count(acc,/was admitted/g),1,'The brief opens with the admission reason once');
   assert.doesNotMatch(acc,/Under the tentative diagnosis/);
 });
 
@@ -188,7 +191,7 @@ test('B3 the delivery-room end assessment writes persisting findings once',({sto
   // 2026-10-06：離開產房的支持是獨立一題（產房只有 Neopuff），寫在補充評估之後；兩份 note 共用。
   msel('birthFinalSigns','cyanosis');msel('birthFinalSigns','grunting');input('birthFinalBreathing','labored');input('birthFinalSupport','ppv');
   assert.match(body(),/labored breathing persisted\. Positive-pressure ventilation \(PPV\) was provided via Neopuff\./);
-  assert.match(note('acc'),/labored breathing persisted\. Positive-pressure ventilation \(PPV\) was provided via Neopuff\./,'Acceptance shares the delivery-room narrative');
+  assert.match(note('acc'),/Respiratory:.*at birth: labored breathing and cyanosis.*birth reassessment: labored breathing.*leaving the operating room: PPV/,'Acceptance keeps distinct observed findings and the recorded final support');
 });
 test('B3 a timed end assessment with only signs is not reported as unspecified',({story,input,msel,body})=>{
   story('A');input('birthFinalMin','10');msel('birthFinalSigns','retractions');

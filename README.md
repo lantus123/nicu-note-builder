@@ -8,7 +8,7 @@
 |------|------|
 | **Admission** | 出生摘要、母體背景、產程與入院經過的敘述式段落；自動 AGA/SGA/LGA（Fenton 2025）＋暫定診斷清單 |
 | **NI plan** | NBC／NICU 依週數＋admission 選擇自動組出 Diagnostic／Therapeutic／Prognostic 三段計畫，早產醫囑**依出生週數／體重細分**（ROP、腦超、echo、PN、caffeine、預後分層）並自動換算日期；未選去處或 PICU 專用模板尚未確認時，不產生 plan |
-| **Acceptance** | 沿用出生資料產生敘述式 Brief history；Hospital course 依呼吸及感染問題串接，ABG 貼上自動判酸鹼；目前體重另填 |
+| **Acceptance** | 沿用出生與入院資料產生重點式 Brief history；Hospital course 依呼吸及感染問題串接，ABG 貼上自動判酸鹼；目前體重另填 |
 | **Procedure** | 勾選 8 種 procedure（intubation／A-line／LISA／LP／UAC／UVC／chest tube／exchange transfusion），依體重自動帶 ETT size・深度・劑量等 |
 
 ## 設計原則
@@ -20,6 +20,22 @@
 - **敘述保留事實**：採美式英文；按已記錄的時間與問題銜接，不替未填欄位補上治療、改善或因果。檢驗解析器回報未解析的行會保留原文供核對。
 - **文法與時態**：時間單位依數值使用單複數；處置紀錄與後續追蹤計畫分開，換血步驟維持計畫式指令。校正的是自動組稿文句，不擅自改寫使用者貼上的原始報告。
 - **產前檢查敘述**：已有羊穿 aCGH 結果而沒有 NIPT 結果時，只寫 aCGH 結果，不另補「NIPT 未做」；兩者都有結果時先寫 NIPT，再接 aCGH，不推定檢查先後、因果或結果互相證實。表單順序與已填結果保持不變。
+
+## Acceptance 短版 Brief history（2026-10-19）
+
+【Brief history】使用獨立摘要組稿，從既有表單挑選出生背景、入院原因及重要風險。一般病例為開頭一句加六個欄位：
+
+- **開頭**：性別、GA（保留週／日）、BW、既有 AGA／SGA／LGA 分類、住院去處與原因。再入院標明本次日齡／日期，外院轉入保留來源及已記錄的轉入原因。
+- **Birth history**：母親 G/P、生產方式與適應症、出生時間／日期／院所；不重複完整母親住院段落。
+- **Apgar scores**：1／5 分鐘，已記錄的 10 分鐘分數一起保留。
+- **Fetal distress／DOIC／MSAF**：陽性保留 DOIC 首次哭聲時間與 MSAF 程度；陰性沿用出生事件確認狀態，未確認不補 `(-)`。
+- **Respiratory**：出生／入院前的重要觀察與處置、入院支持、接手支持，以時間或場所標示。接手狀態仍只讀獨立的 `S.acceptanceResp`，不從出生或轉送紀錄推定。
+- **Perinatal history**：重要的非感染母體／產前背景與相關用藥。
+- **Infection risk factors**：GBS 原有狀態、IAP 用途與完整性、破水時間、母體發燒及相關感染資料，避免在 Perinatal 再寫一次。
+
+有額外的重要觀察、非呼吸問題或自由補充時，才追加 **Other relevant findings**。自由文字保留原意與時間／來源標示，不用截字或句數上限刪掉異常；複雜病例因此可以超過一般摘要長度。摘要採常用臨床縮寫，完整 Admission 保留原有敘事與首次縮寫全稱規則。
+
+此調整沿用現有資料、使用者已接受的表單預設與核對機制，不新增診斷、處置或療效推論。Acceptance 後續 Hospital course、檢驗與各項病程仍由原有區塊產生。
 
 ## 母親用藥與敘述校正（2026-10-11）
 

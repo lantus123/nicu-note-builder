@@ -154,7 +154,7 @@ test('acceptance retains birth timing and detailed perinatal events',()=>{
   assert.match(brief,/\b4\b[^.\n]*\b6\b[^.\n]*\b9\b[^.\n]*\b10\s+minutes?/i,
     'All three Apgar scores and the 10-minute time point must be retained');
   assert.match(brief,/(?:DOIC[^.\n]*\b3\s+minutes?|first cry[^.\n]*\b3\s+minutes?\s*\(DOIC\))/i);
-  assert.match(brief,/\bthick\b[^.\n]*(?:meconium|MSAF)/i);
+  assert.match(brief,/MSAF\s*\(\+; thick\)/i);
 });
 
 test('CSF remains selected independently of the sepsis work-up group',()=>{
@@ -298,8 +298,9 @@ for(const observation of ['pH was reviewed.','iNO was documented.','"Synthetic o
   test(`supplemental prose preserves meaningful case and terminal punctuation: ${observation}`,()=>{
     const {admission,acceptance}=notes([set('obCourse',observation),tab('acc'),set('hcExtra',observation)]);
     for(const text of [admission,section(acceptance,'Brief history'),section(acceptance,'Hospital course')]){
-      includes(text,observation);
-      assert.ok(!text.includes(observation+'.'),'Already terminated text must not receive another period');
+      const expected=text===section(acceptance,'Brief history')?observation.replace(/。$/,'.'):observation;
+      includes(text,expected);
+      assert.ok(!text.includes(expected+'.'),'Already terminated text must not receive another period');
     }
   });
 }
@@ -332,8 +333,8 @@ test('a recorded transfer reason and a tentative diagnosis both survive in accep
   const {acceptance}=notes([route('outborn'),set('obFacility','TSMMH'),
     set('obReason','the need for a higher level of care'),set('tentDx','neonatal hypoglycemia')]);
   const brief=section(acceptance,'Brief history');
-  includes(brief,'because of the need for a higher level of care');
-  includes(brief,'with neonatal hypoglycemia');
+  includes(brief,'transfer indication: the need for a higher level of care');
+  includes(brief,'for neonatal hypoglycemia');
 });
 
 for(const details of ['date only','drug only','drug and date']){
@@ -346,7 +347,7 @@ for(const details of ['date only','drug only','drug and date']){
       if(details!=='date only')includes(text,'Ampicillin');
       else assert.doesNotMatch(text,/Ampicillin/);
       assert.doesNotMatch(text,/details were|prophylaxis[^.]* was (?:in)?complete[.;]/i);
-      assert.match(text,/its adequacy could not be determined from the available record/i);
+      assert.match(text,text===admission?/its adequacy could not be determined from the available record/i:/IAP:[^\n]*adequacy unknown/i);
     }
   });
 }
@@ -363,8 +364,8 @@ for(const amount of ['0','1','1.5','2']){
       ]);
       const inflection=unit=>amount==='1'?unit:unit+'s';
       for(const text of [admission,section(acceptance,'Brief history')]){
-        includes(text,`for ${amount} ${inflection(timeUnit==='days'?'day':'hour')}`);
-        includes(text,`delayed initial crying (DOIC), with the first cry at ${amount} ${inflection('minute')} of age`);   // 2026-10-13 Ryan：兩份 note 同句型
+        includes(text,text===admission?`for ${amount} ${inflection(timeUnit==='days'?'day':'hour')}`:`PROM ${amount} ${inflection(timeUnit==='days'?'day':'hour')} before delivery`);
+        includes(text,text===admission?`delayed initial crying (DOIC), with the first cry at ${amount} ${inflection('minute')} of age`:`DOIC (+; first cry at ${amount} ${inflection('minute')} of age)`);
         includes(text,`at ${amount} ${inflection('hour')} of age`);
         assert.doesNotMatch(text,/\b1 (?:minutes|hours|days)\b/);
       }
@@ -384,7 +385,7 @@ test('unknown durations remain unknown instead of becoming zero or one',()=>{
   const {admission,acceptance}=notes([pick('ryn','prom','yes'),toggle('doic'),
     route('nursery'),pick('msel','obSx','tachypnea')]);
   for(const text of [admission,section(acceptance,'Brief history')]){
-    assert.match(text,/tachypnea was noted/i,'An observed symptom must remain recorded when onset is unknown');
+    assert.match(text,text===admission?/tachypnea was noted/i:/in the baby room: tachypnea/i,'An observed symptom must remain recorded when onset is unknown');
     assert.match(text,/DOIC/);
     assert.doesNotMatch(text,/\b(?:for|by|at) [01] (?:minutes?|hours?|days?)\b/);
     assert.doesNotMatch(text,/tachypnea[^.]*developed|tachypnea[^.]*persisted/i,
@@ -411,7 +412,7 @@ test('absent prenatal care preserves explicitly unknown histories and test resul
 
 test('vaginal delivery is expressed without duplicated delivery nouns',()=>{
   const {admission,acceptance}=notes([]);
-  assert.match(section(acceptance,'Brief history'),/delivered vaginally/);
+  assert.match(section(acceptance,'Brief history'),/Birth history:[^\n]*; VD at/);
   assert.doesNotMatch(admission+'\n'+acceptance,/Delivery was by vaginal delivery/i);
   assert.match(admission,/3500 g\b/);
 });

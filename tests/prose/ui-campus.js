@@ -46,7 +46,14 @@ function withPage(check,{persistedHome}={}){
   finally{W.close();}
 }
 function birthSentence(text){
-  const sentence=text.match(/[^.\n]*(?:was delivered|newborn was born)[^.\n]*\./)?.[0];   // Admission 模板開場句／Acceptance 出生句
+  if(text.includes('【Brief history】')){
+    const brief=text.split('【Brief history】')[1].split('【Hospital course】')[0];
+    const rows=brief.split('\n').filter(line=>line.startsWith('Birth history: '));
+    assert.equal(rows.length,1,'Acceptance must have exactly one Birth history row');
+    assert.match(rows[0],/^Birth history: .+\.$/,'Acceptance birthplace belongs to the short Birth history row');
+    return rows[0];
+  }
+  const sentence=text.match(/[^.\n]*(?:was delivered|newborn was born)[^.\n]*\./)?.[0];   // Admission 模板開場句不變。
   assert.ok(sentence,'The note must contain a delivery sentence');return sentence;
 }
 function assertBirthplace(text,value){

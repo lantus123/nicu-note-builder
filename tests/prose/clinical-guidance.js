@@ -33,9 +33,21 @@ test('stage preview highlights exact recorded sentences without rewriting or aut
  story('D');phase('course:obArrive');input('obArrival','The infant was tachypneic.');const text=note(),body=get('#previewBody');body.scrollTop=150;phase('course:route');assert.equal(note(),text);assert.equal(body.scrollTop,150);assert.equal(get('#previewStage').disabled,true);
  phase('course:obArrive');assert.match(get('.note-scope[data-active="true"]').textContent,/On our team's arrival.*tachypneic/);assert.match(get('#previewStage').textContent,/我方抵達外院/);const formTop=d.documentElement.scrollTop;click('#previewStage');assert.equal(d.documentElement.scrollTop,formTop);assert.equal(note(),text);
 });
-test('transport symptom labels and narrative agree on timing and follow the on-site record',({story,phase,input,get,note,click})=>{
- story('D');phase('course:obArrive');input('obArrival','The infant had mild retractions.');phase('course:route');click('[data-msel="obSx"] [data-v="tachypnea"]');input('obCourse','Transport monitoring was continued.');assert.match(get('#pwSxWrap > .lab').textContent,/轉送途中/);
- for(const tab of ['adm','acc']){click(`[data-tab="${tab}"]`);const text=note();assert.match(text,/During transport, tachypnea was noted/);assert.doesNotMatch(text,/Before transfer, tachypnea/);assert.ok(text.indexOf("On our team's arrival")<text.indexOf('During transport, tachypnea'));assert.equal(text.split('Transport monitoring was continued.').length,2);}
+test('transport symptom labels and narrative agree on timing and follow the on-site record',({story,phase,input,get,note,click,seg})=>{
+ story('D');phase('course:obArrive');seg('obM1Type','cpap');input('obArrival','The infant had mild retractions.');phase('course:route');click('[data-msel="obSx"] [data-v="tachypnea"]');input('obCourse','Transport monitoring was continued.');assert.match(get('#pwSxWrap > .lab').textContent,/轉送途中/);
+ for(const tab of ['adm','acc']){
+  click(`[data-tab="${tab}"]`);const text=note();
+  if(tab==='adm'){
+   assert.match(text,/During transport, tachypnea was noted/);assert.ok(text.indexOf("On our team's arrival")<text.indexOf('During transport, tachypnea'));
+  }else{
+   const respiratory=text.split('Respiratory: ')[1].split('\n')[0],other=text.split('Other relevant findings: ')[1].split('\n')[0];
+   assert.match(respiratory,/on team arrival at referring hospital: CPAP/);assert.match(respiratory,/during transport: tachypnea/);
+   assert.ok(respiratory.indexOf('on team arrival at referring hospital')<respiratory.indexOf('during transport: tachypnea'),'Transport symptoms follow the recorded referring-hospital arrival support');
+   assert.match(other,/on team arrival at referring hospital: The infant had mild retractions/);assert.match(other,/during transport: Transport monitoring was continued/);
+   assert.ok(other.indexOf('on team arrival at referring hospital')<other.indexOf('during transport'),'Free findings retain their own chronological phase order');
+  }
+  assert.doesNotMatch(text,/Before transfer, tachypnea/);assert.equal(text.split('Transport monitoring was continued.').length,2);
+ }
 });
 test('five chart chapters and unique fields remain; relation questions are gone and the story line shows the route',({d,get,story,phase})=>{
  story('D');const ids=[...d.querySelectorAll('[id]')].map(e=>e.id);assert.equal(ids.length,new Set(ids).size);
@@ -123,7 +135,18 @@ test('outside, on-site and transport events keep one record each and render in c
  input('event-'+outside+'-note','Synthetic outside care.');input('event-'+arrival+'-note','Synthetic on-site care.');input('event-'+transport+'-note','Synthetic transport care.');
  assert.ok(get('#obCareEvents').contains(get('#event-'+outside+'-minutes')));assert.ok(get('#obArriveEvents').contains(get('#event-'+arrival+'-minutes')));
  assert.equal(W.guidanceTest.S.courseEvents.length,3);
- for(const tab of ['adm','acc']){click(`[data-tab="${tab}"]`);const n=note();assert.ok(n.indexOf('Synthetic outside care.')<n.indexOf('Synthetic on-site care.'));assert.ok(n.indexOf('Synthetic on-site care.')<n.indexOf('Synthetic transport care.'));assert.equal(n.split('Synthetic on-site care.').length,2);assert.match(n,/before our team's arrival/);assert.match(n,/after our team's arrival/);assert.match(n,/During transport/);}
+ for(const tab of ['adm','acc']){
+  click(`[data-tab="${tab}"]`);const n=note();
+  if(tab==='adm'){
+   assert.ok(n.indexOf('Synthetic outside care.')<n.indexOf('Synthetic on-site care.'));assert.ok(n.indexOf('Synthetic on-site care.')<n.indexOf('Synthetic transport care.'));assert.equal(n.split('Synthetic on-site care.').length,2);assert.match(n,/before our team's arrival/);assert.match(n,/after our team's arrival/);assert.match(n,/During transport/);
+  }else{
+   const respiratory=n.split('Respiratory: ')[1].split('\n')[0],other=n.split('Other relevant findings: ')[1].split('\n')[0];
+   assert.match(respiratory,/at referring hospital: CPAP.*after team arrival at referring hospital: intubation.*during transport: epinephrine/);
+   assert.match(other,/at referring hospital: Synthetic outside care/);assert.match(other,/after team arrival at referring hospital: Synthetic on-site care/);assert.match(other,/during transport: Synthetic transport care/);
+   assert.ok(other.indexOf('Synthetic outside care')<other.indexOf('Synthetic on-site care'));assert.ok(other.indexOf('Synthetic on-site care')<other.indexOf('Synthetic transport care'));
+   for(const marker of ['Synthetic outside care','Synthetic on-site care','Synthetic transport care'])assert.equal(n.split(marker).length,2,'Each recorded phase note survives once');
+  }
+ }
 });
 test('outside intubation is not recorded as a procedure performed by our team',({story,add,get})=>{
  story('D');add('outside','intubation');assert.equal(get('[data-proctog] [data-v="intub"]').getAttribute('aria-pressed'),'false');add('arrival','intubation');assert.equal(get('[data-proctog] [data-v="intub"]').getAttribute('aria-pressed'),'true');

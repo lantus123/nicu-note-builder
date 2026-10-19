@@ -93,13 +93,25 @@ for(const risk of ['low','high'])test(`the existing NIPT-only ${risk}-risk wordi
   assert.equal(sentence,`Amniocentesis with array comparative genomic hybridization (aCGH) was not performed, while noninvasive prenatal testing (NIPT) indicated ${result}.`);
 });
 
-test('prenatal reporting choices do not change NI Plan or Acceptance output',()=>{
+test('prenatal choices preserve NI Plan and Acceptance outside the relevant brief findings',()=>{
   const reference=notes([seg('amnio','none'),seg('nipt','none')]);
   for(const steps of [[seg('amnio','normal'),seg('nipt','none')],
     [seg('amnio','abnormal'),set('acghFindings',ACGH_FINDING),seg('nipt','none')],...bothResults]){
     const result=notes(steps);
     assert.equal(result.plan,reference.plan,'Prenatal wording changes must not alter treatment plans');
-    assert.equal(result.acceptance,reference.acceptance,'Acceptance is outside this narrative change');
+    assert.equal(result.acceptance.split('【Brief history】')[0],reference.acceptance.split('【Brief history】')[0],
+      'Prenatal findings must not alter the Acceptance header');
+    assert.equal(result.acceptance.split('【Hospital course】')[1],reference.acceptance.split('【Hospital course】')[1],
+      'Prenatal findings must not alter Hospital course or subsequent sections');
+    const brief=result.acceptance.split('【Brief history】')[1].split('【Hospital course】')[0];
+    const selected=JSON.stringify(steps);
+    if(selected.includes(ACGH_FINDING))assert.ok(brief.includes(ACGH_FINDING),'An abnormal aCGH finding must survive summarization');
+    if(selected.includes(NIPT_FINDING)){
+      assert.ok(brief.includes(NIPT_FINDING),'A high-risk NIPT finding must survive summarization');
+      if(steps.some(step=>step.click===seg('amnio','normal').click))
+        assert.match(brief,/aCGH: normal/,'A recorded normal aCGH must accompany high-risk NIPT');
+    }
+    noInventedLink(brief);
   }
 });
 

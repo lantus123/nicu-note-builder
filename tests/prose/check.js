@@ -2,6 +2,7 @@
 // 平常: node check.js            → 輸出與 baseline 逐字元比對,任何 diff=紅燈
 // 改文案後: node check.js --update → 先過不變量,再檢查佔位符 vs 舊 baseline 不減,才允許覆寫
 //   （佔位符減少=可能把沒填的欄位寫成了事實;確認合理時 --update --force）
+//   --update --brief-only：另確認全部情境只改 Acceptance 的 Brief history。
 const fs=require('fs');
 const {run}=require('./corpus');
 const BASELINE=__dirname+'/baseline.json';
@@ -57,6 +58,22 @@ if(fails.length){
 }
 
 if(update){
+  if(process.argv.includes('--brief-only')){
+    const old=JSON.parse(fs.readFileSync(BASELINE,'utf8'));
+    const prefix='【Brief history】',suffix='【Hospital course】';
+    const outsideBrief=note=>{
+      if(typeof note!=='string'||note.split(prefix).length!==2||note.split(suffix).length!==2)return null;
+      return [note.split(prefix)[0],note.split(suffix)[1]];
+    };
+    for(const name of new Set([...Object.keys(old),...Object.keys(out)])){
+      const a=old[name],b=out[name],before=outsideBrief(a?.acceptance),after=outsideBrief(b?.acceptance);
+      if(!a||!b||!before||!after||['admission','plan'].some(key=>a[key]!==b[key])||
+         before.some((text,index)=>text!==after[index])){
+        console.error(`✗ ${name}: Brief history 以外有變更，拒絕更新 baseline`);process.exit(1);
+      }
+    }
+    console.log(`✓ ${Object.keys(out).length} 份病歷僅 Brief history 改變；Admission、NI plan、Acceptance 表頭及後續段落保持逐字相同`);
+  }
   if(process.argv.includes('--pedigree-only')){
     const old=JSON.parse(fs.readFileSync(BASELINE,'utf8')),marker='Pedigree:\n';
     for(const name of new Set([...Object.keys(old),...Object.keys(out)])){

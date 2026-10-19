@@ -94,9 +94,9 @@ test('birth hospital and maternal admission location are not inferred for E',({s
   story('E');input('admReason','induction of labor');assert.match(note(),/newborn was born to .* at ____ via/);assert.doesNotMatch(note(),/mother was admitted to our hospital/);
 });
 test('acceptance support has an explicit reuse action and does not rewrite admission',({seed,story,seg,click,tab,note})=>{
-  seed();story('E');seg('resp','room air');const admission=note();tab('acc');assert.match(note(),/Respiratory support at acceptance is ____/);
-  click('#useAdmissionResp');assert.match(note(),/At acceptance, the infant is breathing room air/);seg('acceptanceResp','NC');tab('adm');assert.equal(note(),admission);
-  seg('resp','HFNC');tab('acc');assert.match(note(),/At acceptance.*NC/);
+  seed();story('E');seg('resp','room air');const admission=note();tab('acc');assert.match(note(),/at acceptance: ____/);
+  click('#useAdmissionResp');assert.match(note(),/at acceptance: room air/);seg('acceptanceResp','NC');tab('adm');assert.equal(note(),admission);
+  seg('resp','HFNC');tab('acc');assert.match(note(),/at acceptance: NC/);
 });
 test('a newly measured acceptance weight does not replace admission weight',({seed,story,input,seg,tab,note,get})=>{
   seed();story('E');input('readmitCurrentWeight','3450');const adm=note();tab('acc');assert.match(note(),/weight recorded at admission/);
