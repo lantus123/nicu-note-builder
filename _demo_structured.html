@@ -1492,7 +1492,7 @@
   <!-- ═══ Acceptance note（只在 acc 分頁顯示）═══ -->
   <div id="accForm" hidden>
     <section class="card">
-      <h2 class="sec-h"><span class="n">A</span>接手時呼吸支持 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">寫入 Brief history 敘述</span></h2>
+      <h2 class="sec-h"><span class="n">A</span>接手時呼吸支持 <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">寫入 Brief history 的 Respiratory 摘要</span></h2>
       <div class="seg" data-seg="resp" style="flex-wrap:wrap">
         <button data-v="room air" style="flex:0 1 auto">Room air</button><button data-v="O2 hood" style="flex:0 1 auto">O₂ hood</button><button data-v="NC" style="flex:0 1 auto">NC</button><button data-v="HFNC" style="flex:0 1 auto">HFNC</button>
         <button data-v="bubble CPAP" style="flex:0 1 auto">bubble CPAP</button><button data-v="NCPAP" style="flex:0 1 auto">NCPAP</button>
@@ -5342,6 +5342,194 @@ ${opLine}`);
       [["Diagnostic plans",D],["Therapeutic plans",T],["Prognostic plans",Pr]].filter(([,a])=>a.length).map(([t,a])=>sec(t,a)).join("\n\n"),"text");   // 空段落不輸出光禿禿的標題
   }
 
+  // Acceptance 的短版只挑已記錄事實，不沿用 Admission 的整段組稿，也不登記全篇縮寫。
+  // 自由文字保留原文與時點；未知不變成陰性，出生／入院／接手支持各讀自己的來源。
+  function acceptanceBriefHistory(){
+    const clean=s=>String(s||'').trim().replace(/\s+/g,' ').replace(/[.。]+$/,''),c=id=>clean(raw(id));
+    const uniq=items=>{const seen=new Set();return items.filter(Boolean).filter(x=>{const key=clean(x).toLowerCase();if(seen.has(key))return false;seen.add(key);return true;});};
+    const details=items=>uniq(items).join('; '),rows=[],other=[],peri=[],infection=[],resp=[];
+    const symptomPhrase=items=>({recurrent:'recurrent ',persisted:'persistent ',developed:'new '}[S.pwOnset]||'')+joinAnd(items);
+    const add=(label,text)=>{if(text)rows.push([label,finish(text)]);};
+    const put=(list,label,value)=>{if(value)list.push(`${label}: ${clean(value)}`);};
+    const isReadmit=S.pathway==='readmit',home=raw('homeHosp')||'TPEMMH';
+    const obFacility=S.outborn&&raw('obFacility')===home?'':raw('obFacility');
+    const birthPlace=S.outborn?(obFacility||'____'):(raw('birthHosp')||(isReadmit?'____':home));
+    const transferSource=raw('obTransferFrom')||obFacility||'____';
+    const tentative=c('tentDx'),transferReason=S.outborn?c('obReason'):'';
+    let reason=tentative||transferReason||primaryDx();
+    if(isReadmit&&!reason){
+      if(S.readmitProblems.includes('abnormal-screen')){const test=rmValue('screen','test');reason=test?`evaluation of ${/\b(?:abnormal|elevated|low|positive|high|results?)\b/i.test(test)?test:`an abnormal ${test} result`}`:'evaluation of an abnormal screening or laboratory result';}
+      else if(S.readmitProblems.includes('care'))reason=rmValue('care','reason')||'continued newborn care';
+      else reason=c('readmitComplaint');
+    }
+    const ga=(raw('gaW')||'__')+(raw('gaD')&&Number(raw('gaD'))!==0?`+${raw('gaD')}`:'');
+    const sex={male:'male',female:'female'}[S.gender]||'____',growth=sizeLong[S.growth]?S.growth:'____';
+    const dol=dolInfo().value;
+    const identity=`A ${sex} neonate, GA ${ga} weeks${isReadmit?' at birth':''}, BW ${raw('bw')||'____'} g (${growth})`;
+    const readmitRoute={clinic:' via our outpatient clinic',emergency:' via our emergency department',scheduled:' as scheduled'}[S.readmitSource]||'';
+    const admission=isReadmit?`was admitted to ${destPhrase()}${readmitRoute}${admissionWhen()} on DOL ${dol??'____'}`
+      :S.outborn?`was transferred from ${transferSource} and admitted to ${destPhrase()}`
+      :S.pathway==='nursery'?`was transferred from the baby room and admitted to ${destPhrase()}`:`was admitted to ${destPhrase()}`;
+    add('',`${identity}, ${admission} for ${reason||'____'}`);
+    const gpa=`G${raw('gravida')||'_'}P${raw('para')||'_'}${raw('abortion')?`A${raw('abortion')}`:''}`;
+    const delivery=S.delivery==='nsd'?'VD':S.delivery==='cs'?`C/S for ${c('csReason')||'____'}`:'____';
+    const birthTime=clockTime(raw('birthTime')),birthDate=raw('birthDate');
+    const born=[birthTime?`at ${birthTime}`:'',birthDate?`on ${fmtDate(birthDate)}`:'',`at ${birthPlace}`].filter(Boolean).join(' ');
+    const trigger=c('deliveryTrigger'),csReason=S.delivery==='cs'?c('csReason'):'';
+    add('Birth history',`${raw('matAge')?`${raw('matAge')}-year-old `:''}${gpa} mother; ${delivery} ${born}${trigger&&trigger.toLowerCase()!==csReason.toLowerCase()?`; delivery indication: ${trigger}`:''}`);
+    const ap10=raw('ap10');
+    add('Apgar scores',ap10?`${raw('ap1')||'_'}, ${raw('ap5')||'_'}, and ${ap10} at 1, 5, and 10 minutes, respectively`:`${raw('ap1')||'_'} and ${raw('ap5')||'_'} at 1 and 5 minutes, respectively`);
+    const birthFlag=key=>S[key]?'+':S.birthNegConfirmed?'-':'unknown';
+    const doic=S.doic&&raw('doicMin')?`; first cry at ${raw('doicMin')} ${unitLabel(raw('doicMin'),'minute')} of age`:'';
+    add('',`Fetal distress (${birthFlag('fd')}), DOIC (${birthFlag('doic')}${doic}), MSAF (${birthFlag('msaf')}${S.msaf&&S.msafGrade?`; ${S.msafGrade}`:''})`);
+
+    const shortSupport=(mode,phase)=>mode==='ett'?(phase==='outside'?'mechanical ventilation via ETT':'PPV via ETT'):
+      ({room:'room air',o2:'supplemental oxygen',cpap:'CPAP',ppv:'PPV'}[mode]||'');
+    const eventAction=e=>{
+      const action={o2:'supplemental oxygen',cpap:'CPAP',ppv:'PPV',intubation:e.intubationAction==='repeat'?'reintubation':'intubation',compressions:'chest compressions',epinephrine:'epinephrine'}[e.kind];
+      if(!action)return '';
+      const ds=[];
+      if(e.kind==='compressions'&&e.duration)ds.push(`${e.duration} ${unitLabel(e.duration,'minute')}`);
+      if(e.kind==='epinephrine'){if(e.drugDose)ds.push(e.drugDose);if(e.drugRoute)ds.push(`via ${e.drugRoute}`);}
+      if(e.response==='none')ds.push('no improvement');
+      else if(e.response==='partial')ds.push('partial improvement in respiratory distress');
+      return action+(e.minutes!==undefined&&e.minutes!==''?` at ${e.minutes} ${unitLabel(e.minutes,'minute')} of age`:'')+(ds.length?` (${ds.join(', ')})`:'');
+    };
+    const eventMilestones=(events,label)=>{
+      let actions=[];const flush=()=>{if(actions.length)put(resp,label,actions.join(' then '));actions=[];};
+      events.forEach(e=>{const context=`${label}${e.location?` (${e.location})`:''}${e.minutes!==undefined&&e.minutes!==''?` at ${e.minutes} ${unitLabel(e.minutes,'minute')} of age`:''}`;
+        put(other,context,e.note);
+        if(e.kind==='assessment'){
+          flush();
+          const findings=[BREATHING_NOUN[e.breathing],...(e.signs||[])].filter(Boolean);
+          if(findings.length)put(resp,context,joinAnd(findings));
+          if(e.support)put(resp,context,shortSupport(e.support,e.phase));
+          const severe=[['poor','flaccid'].includes(e.tone)?(e.tone==='poor'?'poor muscle tone':'flaccidity'):'',e.hr!==undefined&&e.hr!==''&&Number(e.hr)<100?`HR ${e.hr}/min`:''].filter(Boolean);
+          if(severe.length)put(other,context,joinAnd(severe));
+        }else {const action=eventAction(e);if(action)actions.push(action);}
+      });
+      flush();
+    };
+    const birthFindings=[BREATHING_NOUN[raw('birthBreathing')],...S.birthSigns].filter(Boolean);
+    if(birthFindings.length)put(resp,isReadmit?'at birth (prior history)':'at birth',joinAnd(birthFindings));
+    const birthEvents=activeBirthEvents();
+    eventMilestones(birthEvents,isReadmit?'birth resuscitation (prior history)':'birth resuscitation');
+    if(raw('birthResusStatus')==='none')resp.push('no resuscitation at birth');
+    else if(raw('birthResusStatus')==='performed'&&!birthHasAction())resp.push('resuscitation at birth (interventions not specified)');
+    if(S.surfactant)resp.push(`surfactant in ${deliveryPlace()}${isReadmit?' (prior birth history)':''}`);
+    const finalFindings=[BREATHING_NOUN[raw('birthFinalBreathing')],...S.birthFinalSigns].filter(Boolean);
+    if(finalFindings.length&&joinAnd(finalFindings)!==joinAnd(birthFindings))put(resp,isReadmit?'birth reassessment (prior history)':'birth reassessment',joinAnd(finalFindings));
+    if(raw('birthFinalSupport'))put(resp,`leaving ${deliveryPlace()}${isReadmit?' (prior history)':''}`,raw('birthFinalSupport')==='ett'?'intubated':shortSupport(raw('birthFinalSupport')));
+    for(const prefix of ['birth','birthFinal']){
+      const time=prefix==='birth'?'at birth':'at birth reassessment';
+      const severe=[['poor','flaccid'].includes(raw(prefix+'Tone'))?(raw(prefix+'Tone')==='poor'?'poor muscle tone':'flaccidity'):'',raw(prefix+'HR')&&Number(raw(prefix+'HR'))<100?`HR ${raw(prefix+'HR')}/min`:''].filter(Boolean);
+      if(severe.length)put(other,time,joinAnd(severe));
+      put(other,time,c(prefix==='birth'?'birthInitialNote':'birthFinalNote'));
+    }
+    if(!isReadmit){
+      const sx=S.obSx.filter(x=>RESP_SX.includes(x));
+      if(S.outborn){
+        eventMilestones(S.courseEvents.filter(e=>e.phase==='outside'),'at referring hospital');
+        if(S.obM1Type)put(resp,'on team arrival at referring hospital',shortSupport(S.obM1Type,'arrival'));
+        if(raw('obArriveSpo2'))put(resp,'on team arrival at referring hospital',`SpO2 ${raw('obArriveSpo2')}%`);
+        put(other,'on team arrival at referring hospital',c('obArrival'));
+        eventMilestones(S.courseEvents.filter(e=>e.phase==='arrival'),'after team arrival at referring hospital');
+      }
+      if(sx.length){const onset=raw('pwOnsetH')&&raw('pwOnsetUnit')?` at ${raw('pwOnsetH')} ${unitLabel(raw('pwOnsetH'),raw('pwOnsetUnit')==='minutes'?'minute':'hour')} of age`:'';
+        put(resp,(S.outborn?'during transport':S.pathway==='nursery'?'in the baby room':'before admission')+onset,symptomPhrase(sx));}
+      if(S.obRespType)put(resp,S.outborn?'during transport':S.pathway==='nursery'?'in the baby room':'before admission',shortSupport(S.obRespType));
+      eventMilestones(S.courseEvents.filter(e=>!S.outborn||!['outside','arrival'].includes(e.phase)),S.outborn?'during transport':S.pathway==='nursery'?'in the baby room':'before admission');
+    }else{
+      if(S.readmitProblems.includes('respiratory'))put(resp,'current presentation',joinAnd(rmChips('respiratory','symptoms'))||'respiratory symptoms');
+      if(S.readmitProblems.includes('apnea'))put(resp,'current presentation',apneaLabel());
+      if(raw('readmitSpO2'))put(resp,'current evaluation',`SpO2 ${raw('readmitSpO2')}%`);
+    }
+    put(resp,'at admission',S.resp||'____');
+    put(resp,'at acceptance',S.acceptanceResp||'____');
+    add('Respiratory',details(resp));
+
+    if(S.r.gdm.on)peri.push('maternal '+({diet:'diet-controlled GDM',oha:'GDM treated with oral hypoglycemic agents',insulin:'GDM treated with insulin'}[S.r.gdm.val]||'GDM'));
+    if(S.r.pih.on)peri.push('maternal PIH');
+    if(S.r.pre.on)peri.push(S.r.pre.val==='highrisk'?'high risk of preeclampsia, with aspirin prophylaxis':`maternal ${({mild:'mild ',severe:'severe '}[S.r.pre.extra[0]]||'')}preeclampsia`);
+    for(const [k,label] of [['aph','maternal APH'],['pph','maternal PPH']])if(S.r[k].on)peri.push(label);
+    for(const [k,label] of [['gdm','GDM'],['pih','PIH'],['pre','preeclampsia'],['aph','APH'],['pph','PPH']])if(S.r[k].status==='unknown')peri.push(`${label} history unknown`);
+    if(maternalOtherHistory())put(peri,'maternal history',maternalOtherHistory());
+    if(['none','irregular','unknown'].includes(S.ancReg))peri.push({none:'no prenatal care',irregular:'irregular prenatal care',unknown:'prenatal care history unknown'}[S.ancReg]);
+    if(S.us==='abnormal')put(peri,'prenatal ultrasound',c('usFindings')||'abnormal findings');
+    if(S.nipt==='high')put(peri,'high-risk NIPT',c('niptFind')||'details not recorded');
+    if(S.amnio==='abnormal')put(peri,'abnormal aCGH',c('acghFindings')||'details not recorded');
+    else if(S.amnio==='normal'&&S.nipt==='high')put(peri,'aCGH','normal');
+    for(const [k,name] of [['thal','thalassemia'],['g6pd','G6PD deficiency'],['thyroid',({hypo:'hypothyroidism',hyper:'hyperthyroidism'}[S.thyType]||'thyroid disease')]]){
+      const who={mother:'maternal',father:'paternal',both:'parental'}[S.parent[k]];
+      if(who)peri.push(`${who} ${name}${k==='thyroid'&&S.thyMed?(S.thyType==='hypo'?' treated with thyroxine':S.thyType==='hyper'?' treated with antithyroid medication':' treated with medication'):''}`);
+    }
+    for(const [key,label] of [['smoking','smoking'],['alcohol','alcohol use'],['drug','substance use']])if(S.habit[key])peri.push(`maternal ${label} during pregnancy`);
+    const maternalReason=c('admReason'),infectionReasons=[...(S.r.prom.on?['PROM','PPROM',...PROM_REASON_TEXTS]:[]),...(S.r.fever.on?['maternal fever']:[])];
+    if(maternalReason&&![csReason,trigger,...infectionReasons].some(x=>x&&x.toLowerCase()===maternalReason.toLowerCase()))put(peri,'maternal admission',maternalReason);
+    if(S.r.steroid.on){const st=S.r.steroid,ds=[];if(st.val)ds.push(`${st.val} ${unitLabel(st.val,'dose')}`);if(st.extra.includes('incomplete'))ds.push('incomplete course');else if(st.extra.includes('complete'))ds.push('complete course');if(raw('steroidDates'))ds.push(recordedDatePhrase(raw('steroidDates')));peri.push(`antenatal betamethasone${ds.length?` (${ds.join(', ')})`:''}`);}
+    if(S.mgso4==='neuro'||S.mgso4==='seizure')peri.push(`maternal MgSO4 for ${S.mgso4==='neuro'?'fetal neuroprotection':'seizure prophylaxis'}`);
+    if(S.toco!=='none')peri.push(`${S.toco} tocolysis${c('tocoReason')?` for ${c('tocoReason')}`:''}${S.tocoDischarged?' during a previous maternal hospitalization':''}`);
+
+    infection.push(`maternal GBS ${{neg:'negative',pos:'positive',pend:'pending',nd:'not obtained',unknown:'unknown'}[S.scr.gbs]||'____'}`);
+    const prom=S.r.prom;
+    if(prom.on)infection.push(`${promLabel().s}${raw('promH')?` ${raw('promH')} ${unitLabel(raw('promH'),S.numUnit.promH==='days'?'day':'hour')} before delivery`:' (ROM duration unknown)'}`);
+    else infection.push(prom.reviewed?'no PROM':prom.status==='unknown'?'PROM history unknown':'PROM history ____');
+    if(S.r.fever.on)infection.push('maternal fever');else infection.push(S.r.fever.reviewed?'no maternal fever':S.r.fever.status==='unknown'?'maternal fever history unknown':'maternal fever history ____');
+    if(S.r.uri.on)infection.push('maternal URI symptoms');
+    for(const [key,name] of [['hbsag','HBsAg'],['syphilis','syphilis screening'],['hiv','HIV screening']]){
+      const v=S.scr[key];if(v==='pos'||v==='pend'||v==='nd'||v==='unknown')infection.push(`maternal ${name} ${{pos:'positive',pend:'pending',nd:'not performed',unknown:'unknown'}[v]}`);
+    }
+    if(S.scr.hbsag==='pos')infection.push(`maternal HBeAg ${{neg:'negative',pos:'positive',pend:'pending',nd:'not performed',unknown:'unknown'}[S.scr.hbeag]||'____'}`);
+    const abxRows=maternalAbxRecords(),iapRows=abxRows.filter(r=>r.purpose==='iap');
+    for(const r of abxRows){
+      const recorded=!!(r.drug||r.since||r.until||r.purpose==='iap'&&r.iap!=='none');
+      if(!recorded)continue;
+      const start=r.since?recordedDatePhrase(r.since):'';
+      const timing=start.startsWith('from ')?start:r.since&&r.until?`from ${r.since} to ${r.until}`:start?r.since?`starting ${start}`:start:r.until?`until ${r.until}`:'';
+      const drug=(r.drug||'antibiotic ____')+(timing?` ${timing}`:'');
+      if(r.purpose==='iap')infection.push(`IAP: ${drug} (${r.iap==='complete'?'documented complete':r.iap==='incomplete'?'documented incomplete':'adequacy unknown'})`);
+      else put(r.purpose==='treatment'?infection:peri,r.purpose==='treatment'?'maternal infection treatment':r.purpose==='other'?'maternal antibiotics for another purpose':'maternal antibiotics (purpose unspecified)',drug);
+    }
+    if((iapRows.length&&!iapRows.some(r=>r.drug||r.since||r.until||r.iap!=='none'))||!iapRows.length&&['pos','pend','nd','unknown','na'].includes(S.scr.gbs))infection.push('IAP status unknown');
+    if(S.toco!=='none'&&S.tocoDischarged&&c('tocoAbx'))put(peri,'antibiotics during previous maternal hospitalization (purpose unspecified)',c('tocoAbx'));
+    if(isReadmit&&readmitDetails().general)put(infection,'current sick-contact history',c('readmitSickContact'));
+    add('Perinatal history',details(peri)||'No additional relevant history recorded');
+    add('Infection risk factors',details(infection));
+
+    if(S.outborn&&tentative&&transferReason&&tentative.toLowerCase()!==transferReason.toLowerCase())put(other,'transfer indication',transferReason);
+    if(S.pwStandby)put(other,'standby indication',c('pwSbRIn'));
+    if(S.pwConsult)put(other,'consultation indication',c('pwConsultReason'));
+    if(!isReadmit){
+      const nonresp=S.obSx.filter(x=>!RESP_SX.includes(x));if(nonresp.length)put(other,S.outborn?'during transport':'before admission',symptomPhrase(nonresp));
+      if(S.pathway==='nursery'){
+        const findings={bandemia:'bandemia',leukocytosis:'leukocytosis',leukopenia:'leukopenia',crp:`elevated CRP${raw('brCrp')?` ${raw('brCrp')} mg/dL`:''}`,hypoglycemia:`hypoglycemia${raw('brGlu')?` (glucose ${raw('brGlu')} mg/dL)`:''}`,cxr:'abnormal chest radiograph'};
+        put(other,'baby-room findings',details([...S.brFindings.map(k=>findings[k]).filter(Boolean),c('brFindIn')]));
+        put(other,'baby-room evaluation indication',c('brEvalIn'));
+      }
+      put(other,S.outborn?'during transport':'before admission',c('obCourse'));
+    }else{
+      if(S.readmitPrior==='treated')put(other,'previous postnatal treatment',c('readmitPriorCourse'));
+      put(other,'after discharge',c('readmitHomeNote'));
+      const dischargeDetails=[raw('readmitDischargeDate')?fmtDate(raw('readmitDischargeDate')):'',feedingIntakeState().active&&raw('readmitDischargeWeight')?`weight ${raw('readmitDischargeWeight')} g`:''];
+      put(other,'previous discharge',dischargeDetails.filter(Boolean).join(', '));
+      put(other,'current presentation',details([...readmitEpisodes().map(e=>clean(e.line)),...readmitModuleNarrative().map(clean)]));
+      put(other,'current course',c('readmitCourse'));
+      if(readmitDetails().jaundice){
+        const values=[raw('readmitTSB')?`TSB ${raw('readmitTSB')} mg/dL`:'',raw('readmitDB')?`direct bilirubin ${raw('readmitDB')} mg/dL`:'',...S.readmitJaundiceSigns.filter(x=>['dark urine','pale stools','no dark urine','no pale stools'].includes(x))];
+        put(other,'current jaundice evaluation',details(values));
+      }
+      if(readmitDetails().general){
+        if(!feedingIntakeState().duplicate)put(other,'current intake',c('readmitIntake'));
+        if(feedingIntakeState().active)put(other,'current feeding',c('readmitFeedingNote'));
+        put(other,'current urine output',c('readmitUrine'));put(other,'current activity',c('readmitActivity'));
+      }
+      put(other,'current evaluation',c('readmitEvaluation'));put(other,'treatment before this admission',c('readmitTreatment'));
+    }
+    put(other,'at admission',c('obAdmissionStatus'));
+    if(other.length)add('Other relevant findings',details(other));
+    return rows;
+  }
+
   // ── Acceptance note（模板填欄；上半自動沿用 admission 資料）──
   function renderAcc(){
     composingNote="acc";noteAbbreviations.acc.clear();
@@ -5355,10 +5543,7 @@ ${opLine}`);
     const clause=id=>inV(id).replace(/[.。]+$/,"");   // 僅移除句點，保留 sepsis? 等不確定語意
     const fv=id=>{const v=inV(id); return v?sl(esc(v)):"";};           // 有填才亮，否則空
     const gw=parseInt(V("gaW")||"0",10), gd=parseInt(V("gaD")||"0",10);
-    const gaTxt=(gw||"__")+(gd?`+${gd}`:"")+" weeks";
-    const sex={male:"male",female:"female"}[S.gender]||"";
     const bw=V("bw")||"____", growth=S.growth;
-    const ap1=V("ap1")||"_", ap5=V("ap5")||"_", G=V("gravida")||"_", P=V("para")||"_", A=V("abortion")||"";
     // 出生當天 = DOL 1；PMA 加的是實際經過天數（DOL - 1），不是 DOL 數字本身。
     const di=dolInfo(),dolKnown=di.value!==null,dolN=dolKnown?di.value:0;
     const dol=dolKnown?String(dolN):"__", totalDays=gw&&dolKnown?gw*7+gd+di.elapsed:0;
@@ -5377,36 +5562,6 @@ ${opLine}`);
      chip("pctBH","L",V("accBH"));
      chip("pctHC","H",V("accHC"));}
 
-    const via=S.delivery==="cs"?abbr('C/S','cesarean section'):"";
-    const maternalReason=clause("admReason"), maternalAge=inV("matAge"), csReason=clause("csReason");
-    const accHome=inV("homeHosp")||"TPEMMH";
-    let accObFac=inV("obFacility"); if(S.outborn&&accObFac===accHome)accObFac="";
-    const birthPlace=S.outborn?(accObFac||"____"):(inV("birthHosp")||(S.pathway==='readmit'?"____":accHome));
-    const birthDate=inV("birthDate"),birthTime=clockTime(inV("birthTime"));
-    const bornWhen=[birthTime?`at ${sl(esc(birthTime))}`:"",birthDate?`on ${sl(esc(fmtDate(birthDate)))}`:""].filter(Boolean).join(" ");
-    // admReason 是媽媽的入院原因；嬰兒的診斷沿用 Admission 的暫定診斷。
-    // 原本自己算一套 respConcern，與 DX chip／入院結語不同源；改讀 primaryDx()（外接轉入原因的優先順序維持現狀）。
-    const tentativeDiagnosis=clause("tentDx"), transferReason=S.outborn?clause("obReason"):"";
-    const admissionReason=tentativeDiagnosis||transferReason||primaryDx();
-    const periAuto=[];
-    if(S.r.gdm.on){const treatment={diet:"diet-controlled ",oha:"",insulin:""}[S.r.gdm.val]||"";
-      periAuto.push(treatment+abbr('GDM','gestational diabetes mellitus')+(S.r.gdm.val==="oha"?" treated with oral hypoglycemic agents":S.r.gdm.val==="insulin"?" treated with insulin":""));}
-    if(S.r.pih.on)periAuto.push(abbr('PIH','pregnancy-induced hypertension'));
-    if(S.r.pre.on&&S.r.pre.val!=="highrisk")periAuto.push(({mild:"mild ",severe:"severe "}[S.r.pre.extra[0]]||"")+"preeclampsia");
-    if(S.r.aph.on)periAuto.push(abbr('APH','antepartum hemorrhage'));
-    if(S.r.uri.on)periAuto.push("maternal upper respiratory tract symptoms");
-    const infAuto=[], screeningNotes=[];
-    if(S.scr.gbs==="pos")infAuto.push(`maternal ${abbr("GBS","group B streptococcus")} colonization`);
-    else if(S.scr.gbs==="pend")screeningNotes.push("Maternal GBS culture results were pending.");
-    else if(S.scr.gbs==="nd")screeningNotes.push("Maternal GBS screening was not performed.");
-    if(S.r.prom.on){const h=V("promH"), u=S.numUnit.promH==="days"?"day":"hour"; infAuto.push((promProse())+(h?` for ${h} ${unitLabel(h,u)}`:""));}
-    if(S.r.fever&&S.r.fever.on)infAuto.push("maternal fever");
-    // 2026-10-13 Ryan：陽性篩檢的縮寫走 helper（acceptance 首次出現要全稱），不再寫死 HBsAg／HBeAg／HIV
-    [["hbsag",()=>abbr('HBsAg','hepatitis B surface antigen')],["hbeag",()=>abbr('HBeAg','hepatitis B e antigen')],["syphilis",()=>"syphilis screening"],["hiv",()=>`${abbr('HIV','human immunodeficiency virus')} screening`]].forEach(([key,label])=>{
-      if(key==="hbeag"&&S.scr.hbsag!=="pos")return;
-      if(S.scr[key]==="pos")infAuto.push(`positive maternal ${label()}`);
-    });
-
     const abx=S.acc.abx.length?S.acc.abx.join(" / "):"";
     const scr=(k,vid)=>S.acc[k]==="done"?(inV(vid)||"done"):"not yet";
 
@@ -5415,64 +5570,10 @@ ${opLine}`);
     L.push(`DOL ${dolKnown?sl(dol):ph(dol)}, PMA ${totalDays?sl(pma):ph(pma)} wks, Wt: ${wtTxt} (${growth==="?"?ph("____"):sl(growth,growth==="SGA"||growth==="LGA")})${S.pathway==='readmit'&&S.acceptanceWeightMode==='admission'?' [weight recorded at admission]':''}`);
     L.push("");
     L.push("【Brief history】");
-    const maternal=[`This ${sex?sl(sex):ph("____")} infant was born at ${gw?sl(gaTxt):ph(gaTxt)} of gestation to a ${maternalAge?sl(esc(maternalAge)):ph("__")}-year-old G${V("gravida")?sl(G):ph(G)}P${V("para")?sl(P):ph(P)}${A?`A${sl(A)}`:""} mother.`];
-    if(periAuto.length)maternal.push(`The pregnancy was notable for ${sl(esc(joinAnd(periAuto)),true)}.`);
-    if(S.r.pre.on&&S.r.pre.val==="highrisk")maternal.push(`The mother received ${sl("aspirin")} because of ${sl("a high risk of preeclampsia",true)}.`);
-    if(maternalReason)maternal.push(`Before delivery, the mother was admitted for ${sl(esc(maternalReason))}.`);
-    if(S.r.steroid.on){const dose=S.r.steroid.val, course=S.r.steroid.extra[0], dates=inV("steroidDates"), details=[];
-      if(dose)details.push(`${dose} ${unitLabel(dose,"dose")}`);
-      if(course==="complete"||course==="incomplete")details.push(`a${course==="incomplete"?"n":""} ${course} course`);
-      if(dates)details.push(recordedDatePhrase(dates));
-      maternal.push(`Antenatal ${sl("betamethasone")} was administered${details.length?` (${sl(esc(details.join(", ")))})`:""}.`);}
-    if(infAuto.length)maternal.push(`Perinatal infection risk factors included ${sl(esc(joinAnd(infAuto)),true)}.`);
-    screeningNotes.forEach(sentence=>maternal.push(sl(sentence,true)));
-    maternal.push(...maternalAntibioticNarrative().map(text=>sl(esc(text).replace(/____/g,ph('____')))));
-    const standby=standbyNarrative();
-    if(standby)maternal.push(sl(esc(standby)));
-    L.push(maternal.join(" "));
-    L.push("");
-    let delivery=`The infant was delivered ${S.delivery==="nsd"?sl(abbr('VD','vaginally')):`by ${via?sl(via):ph("____")}${S.delivery==="cs"?` for ${csReason?sl(esc(csReason)):ph("____")}`:""}`} at ${birthPlace==="____"?ph(birthPlace):sl(esc(birthPlace))}${bornWhen?" "+bornWhen:""}.`;
-    const growthSeen=noteAbbreviations.acc.has(growth);
-    const growthText=growth==="?"?ph("____"):sl(abbr(growth,sizeLong[growth]),growth==="SGA"||growth==="LGA");
-    delivery+=` Birth weight was ${V("bw")?sl(bw):ph(bw)} g${growth==="?"||growthSeen?` (${growthText})`:", "+growthText}.`;
-    const birth=[delivery], events=[];
-    const trigger=deliveryTriggerNarrative();if(trigger)birth.push(sl(esc(trigger)));
-    if(S.csUncompl)birth.push(`The delivery was ${sl("uncomplicated")}.`);
-    if(S.fd)events.push("fetal distress");
-    if(S.msaf)events.push((S.msafGrade?S.msafGrade+" ":"")+abbr('MSAF','meconium-stained amniotic fluid'));
-    if(events.length)birth.push(`${sl(esc(joinAnd(events)),true)} ${events.length===1?"was":"were"} noted during delivery.`.replace(/^<span([^>]*)>([a-z])/,(_,attrs,c)=>`<span${attrs}>${c.toUpperCase()}`));
-    if(S.doic){const minutes=inV("doicMin"); birth.push(minutes
-      ?`The infant had ${sl(abbr("DOIC","delayed initial crying"),true)}, with the first cry at ${sl(`${esc(minutes)} ${unitLabel(minutes,"minute")}`,true)} of age.`
-      :`The infant had ${sl(abbr('DOIC','delayed initial crying'),true)}.`);}
-    if(S.birthNegConfirmed&&!S.fd&&!S.msaf&&!S.doic)birth.push(`No ${sl(`fetal distress, ${abbr('MSAF','meconium-stained amniotic fluid')}, or ${abbr('DOIC','delayed initial crying')}`)} was reported.`);
-    // 出生觀察 → Apgar → 處置 → 再評估（與 Admission 同序）；與 Admission 共用實際事件，不再以累積階梯補出未記錄的 PPV、插管或藥物。
-    birthObservation().forEach(sentence=>birth.push(sl(esc(sentence))));
-    const ap10=inV("ap10");
-    birth.push(ap10
-      ?`Apgar scores were ${V("ap1")?sl(ap1):ph(ap1)}, ${V("ap5")?sl(ap5):ph(ap5)}, and ${sl(esc(ap10))} at 1, 5, and 10 minutes, respectively.`
-      :`Apgar scores were ${V("ap1")?sl(ap1):ph(ap1)} and ${V("ap5")?sl(ap5):ph(ap5)} at 1 and 5 minutes, respectively.`);
-    birthCourse().forEach(sentence=>birth.push(sl(esc(sentence))));
-    if(S.surfactant)birth.push(`${sl("Surfactant")} was administered in ${deliveryPlace()}.`);
-    if(S.r.pph.on)birth.push(`The mother had ${sl(abbr('PPH','postpartum hemorrhage'),true)}.`);
-    L.push(birth.join(" "));
-    L.push("");
-    // 入院前的不同場域與時點共用同一份事件敘述；接手當下仍只讀 A 區明選狀態。
-    const source=inV("obTransferFrom")||accObFac;
-    const postnatal=postnatalNarrative({transferSource:source,diagnosis:admissionReason,closeAdmission:false});
-    // 共用組稿器的末段入院評估接在 Acceptance 自己的入院結語之後。
-    const admissionAssessment=inV("obAdmissionStatus")&&postnatal.at(-1)?.startsWith(`On admission to ${destPhrase()}, `)?postnatal.pop():"";   // 必須與 postnatalNarrative 的那句同源，否則 Acceptance 認不出來會重複印
-    const presentation=postnatal.map(sentence=>sl(esc(sentence)));
-    if(S.pathway==='readmit'&&!admissionReason&&S.readmitProblems.length)
-      presentation.push(`The infant was admitted to ${destPhrase(ph("____"))}${esc(admissionWhen())} for ${S.readmitProblems.every(p=>p==='care')?'the requested care':'further evaluation and management'}.`);
-    else if(S.outborn&&transferReason&&!tentativeDiagnosis)
-      presentation.push(`The infant was admitted to ${destPhrase(ph("____"))}${esc(admissionWhen())} for further evaluation and treatment.`);
-    else presentation.push(`The infant was admitted to ${destPhrase(ph("____"))}${esc(admissionWhen())} with ${admissionReason?sl(esc(admissionReason)):ph("____")} for further evaluation and treatment.`);
-    if(admissionAssessment)presentation.push(sl(esc(admissionAssessment)));
-    // 接手狀態只用 A 區明選值；產房或 D 區較早的 ETT 不可覆蓋目前 room air。
-    presentation.push(S.acceptanceResp==="room air"?`At acceptance, the infant is ${sl("breathing room air")}.`
-      :S.acceptanceResp?`At acceptance, the infant is receiving respiratory support with ${sl(esc(S.acceptanceResp))}.`
-      :`Respiratory support at acceptance is ${ph("____")}.`);
-    L.push(presentation.join(" "));
+    acceptanceBriefHistory().forEach(([label,text])=>{
+      const body=sl(esc(text).replace(/_{2,}/g,value=>ph(value)));
+      L.push((label?label+": ":"")+body);
+    });
     L.push("");
     const gas=parseGas(inV("accABG"));
     L.push("【Hospital course】");

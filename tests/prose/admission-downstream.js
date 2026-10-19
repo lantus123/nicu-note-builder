@@ -79,7 +79,7 @@ test('產房結束時掛著 CPAP 就會進診斷、計畫與 acceptance（沒有
   assert.match(plan,/sepsis work-up/);
   assert.match(plan,/OG decompression/);
   const acceptance=onTab('acc');
-  assert.match(acceptance,/admitted to our NICU(?: on [^.]+)? with respiratory distress/);
+  assert.match(acceptance,/admitted to our NICU for respiratory distress/);
 });
 
 test('嬰兒室驗出的低血糖會變成診斷、Dex 指徵與入院原因（沒勾症狀也算）',page=>{
@@ -91,7 +91,7 @@ test('嬰兒室驗出的低血糖會變成診斷、Dex 指徵與入院原因（�
   const plan=onTab('plan');
   assert.match(plan,/Check Dex STAT and Q6H \(indications:[^)]*neonatal hypoglycemia/);
   const acceptance=onTab('acc');
-  assert.match(acceptance,/with neonatal hypoglycemia/);
+  assert.match(acceptance,/admitted to our NICU for neonatal hypoglycemia/);
 });
 
 test('嬰兒室抽出的 bandemia 會變成疑似敗血症，並讓 plan 只補沒做過的項目',page=>{
@@ -116,13 +116,13 @@ test('入院與接手呼吸支持分開，明確確認同前才帶入',page=>{
   assert.equal(accPressed('NCPAP'),'false','接手時不可由入院狀態自行推定');
   assert.match(note(),/On admission to our NICU, the infant was receiving respiratory support with NCPAP\./);
   assert.match(onTab('plan'),/Provide respiratory support with NCPAP/);
-  onTab('acc');click('#useAdmissionResp');assert.match(note(),/At acceptance, the infant is receiving respiratory support with NCPAP/);
+  onTab('acc');click('#useAdmissionResp');assert.match(note(),/at acceptance: NCPAP/);
   // 清除是明確獨立操作；接手時已確認的值仍保留。
   onTab('adm');admResp('NCPAP');click('[data-clear-seg="resp"]');
   assert.equal(accPressed('NCPAP'),'true','清空入院狀態不能改寫接手狀態');
   assert.doesNotMatch(note(),/NCPAP/);
   assert.doesNotMatch(onTab('plan'),/NCPAP/);
-  assert.match(onTab('acc'),/At acceptance, the infant is receiving respiratory support with NCPAP/);
+  assert.match(onTab('acc'),/at acceptance: NCPAP/);
   // 與入院時狀況併成一句
   onTab('adm');admResp('NCPAP');input('obAdmissionStatus','the infant was pink and active');
   assert.match(note(),/On admission to our NICU, the infant was receiving respiratory support with NCPAP and was pink and active\./);

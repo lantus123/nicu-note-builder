@@ -8,7 +8,7 @@ function test(name,run){
  const get=s=>{const e=d.querySelector(s);assert.ok(e,'Missing '+s);return e;},click=s=>get(s).click();
  const input=(id,v)=>{const e=get('#'+id);e.value=v;e.dispatchEvent(new W.Event(e.tagName==='SELECT'?'change':'input',{bubbles:true}));};
  const seg=(k,v)=>click(`[data-seg="${k}"] [data-v="${v}"]`),story=s=>click(`[data-story="${s}"]`),note=()=>get('#note').textContent;
- const both=check=>{for(const t of ['adm','acc']){click(`[data-tab="${t}"]`);check(note());}click('[data-tab="adm"]');};
+ const both=check=>{for(const t of ['adm','acc']){click(`[data-tab="${t}"]`);check(note(),t);}click('[data-tab="adm"]');};
  const warning=(target,word)=>[...d.querySelectorAll('#reviewConflictList [data-review-target]')].find(e=>e.dataset.reviewTarget===target&&(!word||e.textContent.includes(word)));
  try{run({W,d,get,click,input,seg,story,note,both,warning,...W.safetyAPI});assert.deepEqual(errors,[]);passed++;console.log('✓ '+name);}catch(e){failed++;console.error('✗ '+name+'\n'+e.stack);}finally{W.close();}
 }
@@ -40,7 +40,7 @@ test('same mode with entered settings is a continuation carrying only the entere
 });
 test('explicit reintubation is recorded once and only our known phase enables Procedure',({story,click,input,both,S,get})=>{
  story('D');click('[data-add-stage-event="intubation"][data-event-phase="arrival"]');const id=S.courseEvents.at(-1).id;
- input(`event-${id}-intubationAction`,'repeat');both(n=>assert.equal((n.match(/endotracheal reintubation was performed/gi)||[]).length,1));assert.equal(get('[data-proctog] [data-v="intub"]').getAttribute('aria-pressed'),'true');
+ input(`event-${id}-intubationAction`,'repeat');both((n,mode)=>assert.equal((n.match(mode==='adm'?/endotracheal reintubation was performed/gi:/\breintubation\b/gi)||[]).length,1));assert.equal(get('[data-proctog] [data-v="intub"]').getAttribute('aria-pressed'),'true');
  for(const phase of ['outside','']){input(`event-${id}-phase`,phase);assert.equal(get('[data-proctog] [data-v="intub"]').getAttribute('aria-pressed'),'false');}
  input(`event-${id}-phase`,'transport');assert.equal(get('[data-proctog] [data-v="intub"]').getAttribute('aria-pressed'),'true');
 });
@@ -59,8 +59,11 @@ test('prior-course conflict links to its choice and does not silently edit the h
 });
 test('predicate normalization preserves full sentences, negation, uncertainty and medical case',({story,input,seg,both})=>{
  story('D');seg('dest','NICU');seg('resp','room air');
- for(const value of ['had mild retractions','Had mild retractions','was not cyanotic','appeared to have mild retractions']){input('obArrival',value);input('obAdmissionStatus',value);both(n=>{assert.match(n,new RegExp('arrival at the referring hospital, the infant '+value.toLowerCase()));assert.match(n,new RegExp('admission to our NICU, the infant (?:'+value.toLowerCase()+'|was breathing room air and '+value.toLowerCase()+')'));});}
- for(const value of ['pH was 7.31.','iNO was not required.','Possible mild retractions were noted.']){input('obArrival',value);input('obAdmissionStatus',value);both(n=>{assert.ok(n.includes(value));assert.ok(!n.includes('the infant '+value));});}
+ for(const value of ['had mild retractions','Had mild retractions','was not cyanotic','appeared to have mild retractions']){input('obArrival',value);input('obAdmissionStatus',value);both((n,mode)=>{
+   if(mode==='adm'){assert.match(n,new RegExp('arrival at the referring hospital, the infant '+value.toLowerCase()));assert.match(n,new RegExp('admission to our NICU, the infant (?:'+value.toLowerCase()+'|was breathing room air and '+value.toLowerCase()+')'));}
+   else{assert.match(n,new RegExp('on team arrival at referring hospital: '+value,'i'));assert.match(n,new RegExp('at admission: '+value,'i'));}
+ });}
+ for(const value of ['pH was 7.31.','iNO was not required.','Possible mild retractions were noted.']){input('obArrival',value);input('obAdmissionStatus',value);both((n,mode)=>{const expected=mode==='adm'?value:value.replace(/\.$/,'');assert.ok(n.includes(expected));assert.ok(!n.includes('the infant '+expected));});}
 });
 test('apnea details form one episode sentence without inventing unknown counts or timing',({story,click,input,both})=>{
  story('E');click('[data-msel="readmitProblems"] [data-v="apnea"]');click('[data-rm-chip="rm_apnea_type"][data-v="apnea"]');input('rm_apnea_duration','15');input('rm_apnea_recovery','spontaneously');both(n=>{assert.match(n,/Apnea was reported, with a reported duration of approximately 15 seconds; the infant recovered spontaneously/);assert.doesNotMatch(n,/Episodes of apnea|The infant had apnea\./);});
@@ -70,7 +73,11 @@ test('care and screening together do not fabricate a disease or omit either reas
  story('E');for(const v of ['care','abnormal-screen'])click(`[data-msel="readmitProblems"] [data-v="${v}"]`);input('rm_care_reason','temporary caregiver unavailability');input('rm_screen_test','newborn screening');input('rm_screen_result','an elevated marker');both(n=>{assert.match(n,/temporary caregiver unavailability/);assert.match(n,/newborn screening/);assert.doesNotMatch(n,/with ____ for further evaluation and treatment/);});
 });
 test('the same mode before and after is never written as a change',({story,input,seg,both})=>{
- story('A');input('birthFinalSupport','o2');seg('obRespType','o2');input('obO2Flow','2');both(n=>{assert.doesNotMatch(n,/was changed to/);assert.match(n,/Supplemental oxygen was continued before admission \(flow 2 L\/min\)/);});
+ story('A');input('birthFinalSupport','o2');seg('obRespType','o2');input('obO2Flow','2');both((n,mode)=>{
+   assert.doesNotMatch(n,/was changed to/);
+   if(mode==='adm')assert.match(n,/Supplemental oxygen was continued before admission \(flow 2 L\/min\)/);
+   else{assert.match(n,/leaving the delivery room: supplemental oxygen/);assert.match(n,/before admission: supplemental oxygen/);}
+ });
 });
 test('no relation questions or relation warnings remain; room air keeps its own meaning',({d,story,input,seg,note,warning})=>{
  story('D');assert.equal(d.querySelector('#obM1Relation,#obRespRelation,[data-support-choice],[id$="RelationChoices"]'),null);
@@ -79,7 +86,7 @@ test('no relation questions or relation warnings remain; room air keeps its own 
  assert.equal([...d.querySelectorAll('#reviewConflictList [data-review-target]')].filter(e=>/Relation/.test(e.dataset.reviewTarget)).length,0);
 });
 test('arrival settings have editable parameters, isolated drafts and no transport inheritance',({story,input,seg,get,both,click,d,warning})=>{
- story('D');click('[data-phase-target="course:obArrive"]');seg('obM1Type','cpap');input('obM1FiO2','35');input('obM1PEEP','6');assert.equal(get('#obM1IPWrap').hidden,true);assert.equal(get('#obM1RRWrap').hidden,true);both(n=>assert.match(n,/On our team's arrival at the referring hospital, the infant was receiving CPAP \(FiO2 35%, pressure 6 cmH2O\)/));
+ story('D');click('[data-phase-target="course:obArrive"]');seg('obM1Type','cpap');input('obM1FiO2','35');input('obM1PEEP','6');assert.equal(get('#obM1IPWrap').hidden,true);assert.equal(get('#obM1RRWrap').hidden,true);both((n,mode)=>assert.match(n,mode==='adm'?/On our team's arrival at the referring hospital, the infant was receiving CPAP \(FiO2 35%, pressure 6 cmH2O\)/:/on team arrival at referring hospital: CPAP/));
  click('[data-phase-target="course:route"]');seg('obRespType','cpap');assert.equal(get('#obFiO2').value,'');assert.equal(get('#obPEEP').value,'');
  story('E');both(n=>assert.doesNotMatch(n,/FiO2 35%/));story('D');assert.equal(get('#obM1FiO2').value,'35');assert.equal(get('#obM1PEEP').value,'6');
  input('obM1FiO2','150');click('[data-phase-target="course:route"]');click('[data-flow-target="finalReviewCard"]');const issue=warning('#obM1FiO2');assert.ok(issue);issue.click();assert.equal(d.activeElement.id,'obM1FiO2');input('obM1FiO2','35');assert.equal(warning('#obM1FiO2'),undefined);

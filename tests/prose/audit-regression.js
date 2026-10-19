@@ -88,6 +88,14 @@ function equalOutputs(a,b){
 }
 const includes=(text,phrase,label=phrase)=>assert.ok(text.includes(phrase),'Missing '+label);
 const excludes=(text,phrase)=>assert.ok(!text.includes(phrase),'Unexpected '+phrase);
+const accBrief=r=>{
+  const section=r.acc.match(/【Brief history】\n([\s\S]*?)\n\n【Hospital course】/);
+  assert.ok(section,'Acceptance Brief history section exists');return section[1];
+};
+const accRow=(r,label)=>{
+  const row=accBrief(r).split('\n').find(line=>line.startsWith(label+': '));
+  assert.ok(row,'Acceptance row exists: '+label);return row;
+};
 const dxLines=r=>r.adm.split('\n').filter(line=>line.startsWith('# ')).join('\n');
 const ppv=/positive-pressure ventilation \(PPV\) was (?:given|initiated|provided)|PPV was (?:given|initiated|provided)/i;
 const ett=/endotracheal intubation was performed/i;
@@ -114,14 +122,18 @@ const checks={
     assert.match(r.adm,ppv,'PPV sentence remains');assert.match(r.adm,ett,'Intubation sentence remains');
     includes(r.adm,'Chest compressions were initiated');assert.match(r.adm,/epinephrine was administered/i,'Epinephrine sentence remains');
   },
-  cause:r=>{for(const text of [r.adm,r.acc]){
-    excludes(text,'Because jaundice persisted');includes(text,'jaundice persisted');includes(text,'Supplemental oxygen was initiated');
-  }},
+  cause:r=>{
+    excludes(r.adm,'Because jaundice persisted');includes(r.adm,'jaundice persisted');includes(r.adm,'Supplemental oxygen was initiated');
+    includes(accRow(r,'Other relevant findings'),'before admission: persistent jaundice');
+    includes(accRow(r,'Respiratory'),'in the baby room: supplemental oxygen');
+    excludes(accBrief(r),'Because');excludes(accRow(r,'Respiratory'),'jaundice');
+  },
   lab_map:r=>{
-    for(const text of [r.adm,r.acc]){
-      excludes(text,'which showed hypoglycemia');includes(text,'Chest radiography was obtained in the baby room.');
-      assert.match(text,/hypoglycemia \(blood glucose 32 mg\/dL\)/i,'Recorded glucose finding remains');
-    }
+    for(const text of [r.adm,r.acc])excludes(text,'which showed hypoglycemia');
+    includes(r.adm,'Chest radiography was obtained in the baby room.');
+    assert.match(r.adm,/hypoglycemia \(blood glucose 32 mg\/dL\)/i,'Recorded glucose finding remains');
+    includes(accRow(r,'Other relevant findings'),'baby-room findings: hypoglycemia (glucose 32 mg/dL)');
+    excludes(accBrief(r),'abnormal chest radiograph');
     assert.equal(r.state.dx,'neonatal hypoglycemia');
     assert.match(r.review.pending+r.review.conflicts,/Blood sugar|未勾/,'Unmatched glucose test needs review');
   },
@@ -139,7 +151,12 @@ const checks={
     assert.equal(r.state.dx,'respiratory distress');assert.match(r.adm,ett,'Arrival intubation remains');
   },
   manual_dx:r=>{includes(dxLines(r),'Respiratory distress');includes(dxLines(r),'Maternal GBS colonization');},
-  assessment_grammar:r=>{for(const text of [r.adm,r.acc])includes(text,'was crying, had poor muscle tone, and was receiving CPAP');},
+  assessment_grammar:r=>{
+    includes(r.adm,'was crying, had poor muscle tone, and was receiving CPAP');
+    includes(accRow(r,'Respiratory'),'after team arrival at referring hospital: CPAP');
+    includes(accRow(r,'Other relevant findings'),'after team arrival at referring hospital: poor muscle tone');
+    includes(accRow(r,'Respiratory'),'at admission: ____; at acceptance: ____.');
+  },
   antibiotic_dates:r=>{
     includes(r.review.conflicts,'抗生素結束日早於開始日，請核對；跨年請加年份。');
     assert.ok(r.reviewTargets.find(([m])=>m.includes('抗生素結束日早於開始日'))?.[1].some(t=>t.selector==='#maternalAbxUntil'));
@@ -156,7 +173,10 @@ const checks={
     for(const text of [r.adm,r.acc]){includes(text,'cough, fever, and poor feeding');includes(text,'38.2');includes(text,'from 60 to 30 mL per feed');}
     const common=[...A.readmitEpisodes().map(e=>e.line),...A.readmitModuleNarrative()];
     assert.ok(common.length,'E illness has shared sentences');
-    for(const text of [r.adm,r.acc])for(const sentence of common)includes(text,sentence,'shared E sentence: '+sentence);
+    for(const sentence of common){
+      includes(r.adm,sentence,'shared E sentence: '+sentence);
+      includes(accRow(r,'Other relevant findings'),sentence.replace(/[.。]+$/,''),'shared E facts: '+sentence);
+    }
   },
 };
 
@@ -188,7 +208,8 @@ test('resolved_resus_hint',r=>{
   includes(r.review.pending,'未列入呼吸問題');includes(r.review.pending,'（PPV）');
   const targets=r.reviewTargets.find(([message])=>message.includes('未列入呼吸問題'))?.[1];
   assert.ok(targets?.some(t=>t.selector==='[data-seg="resp"]'),'Resolved intervention links to admission support');
-  includes(r.acc,'with neonatal hyperbilirubinemia');
+  includes(accBrief(r).split('\n')[0],'for neonatal hyperbilirubinemia.');
+  includes(accRow(r,'Respiratory'),'at admission: room air; at acceptance: ____.');
 },()=>scenario('resolved_resus'));
 test('resolved_resus_manual_dx_clears_hint',()=>{
   input('tentDx','respiratory distress');excludes(snapshot().review.pending,'未列入呼吸問題');
@@ -201,25 +222,35 @@ test('outborn_arrival_intubation_after_room',()=>{
 // Batch 7: station-specific ETT wording and transport CPAP availability.
 test('outborn_arrival_ett_ppv_wording',()=>{
   reset('outborn');S.obM1Type='ett';raw('obM1FiO2','30');raw('obM1IP','20');raw('obM1PEEP','5');raw('obArriveSpo2','95');
-  const r=snapshot();for(const text of [r.adm,r.acc]){
-    includes(text,"On our team's arrival at the referring hospital, the infant was intubated, with positive-pressure ventilation (PPV) provided through the endotracheal tube (FiO2 30%, PIP 20 cmH2O, PEEP 5 cmH2O), with SpO2 95%.");
-    excludes(text,'mechanical ventilation');
-  }
+  const r=snapshot();
+  includes(r.adm,"On our team's arrival at the referring hospital, the infant was intubated, with positive-pressure ventilation (PPV) provided through the endotracheal tube (FiO2 30%, PIP 20 cmH2O, PEEP 5 cmH2O), with SpO2 95%.");
+  includes(accRow(r,'Respiratory'),'on team arrival at referring hospital: PPV via ETT');
+  includes(accRow(r,'Respiratory'),'on team arrival at referring hospital: SpO2 95%');
+  includes(accRow(r,'Respiratory'),'at admission: ____; at acceptance: ____.');
+  for(const text of [r.adm,r.acc])excludes(text,'mechanical ventilation');
 });
 test('outborn_transport_ett_continued',()=>{
   reset('outborn');S.obM1Type='ett';S.obRespType='ett';
-  const r=snapshot();for(const text of [r.adm,r.acc])includes(text,'PPV was continued through the endotracheal tube during transport.');
+  const r=snapshot();includes(r.adm,'PPV was continued through the endotracheal tube during transport.');
+  const respiratory=accRow(r,'Respiratory');
+  includes(respiratory,'on team arrival at referring hospital: PPV via ETT');
+  includes(respiratory,'during transport: PPV via ETT');
+  assert.ok(respiratory.indexOf('on team arrival')<respiratory.indexOf('during transport'),'Known arrival support precedes transport support');
+  includes(respiratory,'at admission: ____; at acceptance: ____.');
 });
 test('outborn_transport_ett_unknown_prior',()=>{
   reset('outborn');S.obRespType='ett';
-  const r=snapshot();for(const text of [r.adm,r.acc]){
-    includes(text,'Positive-pressure ventilation (PPV) was provided through the endotracheal tube during transport.');
-    excludes(text,'mechanical ventilation');excludes(text,'PPV was continued');
-  }
+  const r=snapshot();includes(r.adm,'Positive-pressure ventilation (PPV) was provided through the endotracheal tube during transport.');
+  includes(accRow(r,'Respiratory'),'during transport: PPV via ETT');
+  excludes(accRow(r,'Respiratory'),'on team arrival at referring hospital');
+  includes(accRow(r,'Respiratory'),'at admission: ____; at acceptance: ____.');
+  for(const text of [r.adm,r.acc]){excludes(text,'mechanical ventilation');excludes(text,'PPV was continued');}
 });
 test('outborn_outside_ett_keeps_mv',()=>{
   reset('outborn');S.courseEvents=[{id:1,phase:'outside',kind:'assessment',support:'ett'}];
-  const r=snapshot();for(const text of [r.adm,r.acc])includes(text,"At the referring hospital before our team's arrival, the infant was receiving mechanical ventilation via an endotracheal tube.");
+  const r=snapshot();includes(r.adm,"At the referring hospital before our team's arrival, the infant was receiving mechanical ventilation via an endotracheal tube.");
+  includes(accRow(r,'Respiratory'),'at referring hospital: mechanical ventilation via ETT');
+  includes(accRow(r,'Respiratory'),'at admission: ____; at acceptance: ____.');
 });
 test('outborn_transport_cpap_hidden',()=>{
   reset('outborn');A.render();
@@ -247,9 +278,10 @@ test('outborn_transport_ett_new_changed_and_context',()=>{
 test('outborn_arrival_transport_ett_reassessment',()=>{
   for(const phase of ['arrival','transport']){
     reset('outborn');S.courseEvents=[{id:1,phase,kind:'assessment',support:'ett'}];
-    const r=snapshot();for(const text of [r.adm,r.acc]){
-      includes(text,'was receiving positive-pressure ventilation (PPV) through the endotracheal tube');excludes(text,'mechanical ventilation');
-    }
+    const r=snapshot();includes(r.adm,'was receiving positive-pressure ventilation (PPV) through the endotracheal tube');
+    includes(accRow(r,'Respiratory'),`${phase==='arrival'?'after team arrival at referring hospital':'during transport'}: PPV via ETT`);
+    includes(accRow(r,'Respiratory'),'at admission: ____; at acceptance: ____.');
+    for(const text of [r.adm,r.acc])excludes(text,'mechanical ventilation');
   }
 });
 test('outborn_ett_to_room_source_wording',()=>{
@@ -303,7 +335,8 @@ test('manual_dx_replaces_auto',()=>{
   excludes(lines,'Neonatal hypoglycemia');assert.equal(lines.split('\n')[1],'# Transient tachypnea of the newborn');
   assert.match(r.adm.split('Tentative diagnosis:')[0],/hypoglycemia/i);
   includes(r.adm,'Under the tentative diagnosis of transient tachypnea of the newborn,');
-  includes(r.acc,'with transient tachypnea of the newborn');
+  includes(accBrief(r).split('\n')[0],'for transient tachypnea of the newborn.');
+  includes(accRow(r,'Other relevant findings'),'baby-room findings: hypoglycemia (glucose 32 mg/dL)');
 });
 test('manual_dx_idm',()=>{
   A.render();click('[data-ryn="gdm"] [data-v="yes"]');input('tentDx','respiratory distress');
@@ -422,36 +455,46 @@ test('ladder_cpr_remove_epi',()=>{
 },()=>scenario('ladder_cpr'));
 test('cause_resp_control',()=>{
   reset('nursery');A.render();input('birthFinalSupport','room');multi('obSx','tachypnea');seg('pwOnset','persisted');seg('obRespType','o2');
-  const r=snapshot();for(const text of [r.adm,r.acc])includes(text,'Because tachypnea persisted, supplemental oxygen was initiated in the baby room.');
+  const r=snapshot();includes(r.adm,'Because tachypnea persisted, supplemental oxygen was initiated in the baby room.');
+  includes(accRow(r,'Respiratory'),'in the baby room: persistent tachypnea');
+  includes(accRow(r,'Respiratory'),'in the baby room: supplemental oxygen');
 });
 test('cause_mixed',()=>{
-  multi('obSx','tachypnea');const r=snapshot();for(const text of [r.adm,r.acc]){
-    includes(text,'During observation in the baby room, jaundice and tachypnea persisted. Supplemental oxygen was initiated.');excludes(text,'Because');
-  }
+  multi('obSx','tachypnea');const r=snapshot();
+  includes(r.adm,'During observation in the baby room, jaundice and tachypnea persisted. Supplemental oxygen was initiated.');
+  includes(accRow(r,'Respiratory'),'in the baby room: persistent tachypnea');
+  includes(accRow(r,'Respiratory'),'in the baby room: supplemental oxygen');
+  includes(accRow(r,'Other relevant findings'),'before admission: persistent jaundice');
+  for(const text of [r.adm,r.acc])excludes(text,'Because');
 },()=>scenario('cause'));
 test('lab_map_matched',()=>{
   reset('nursery');A.render();multi('brWorkup','cbc');multi('brWorkup','crp');multi('brFindings','crp');
-  const r=snapshot();for(const text of [r.adm,r.acc])includes(text,'which showed an elevated CRP level');
+  const r=snapshot();includes(r.adm,'which showed an elevated CRP level');
+  includes(accRow(r,'Other relevant findings'),'baby-room findings: elevated CRP');
   excludes(r.review.pending,'未勾');
 });
 test('lab_map_cbc_only_crp',()=>{
   reset('nursery');A.render();multi('brWorkup','cbc');multi('brFindings','crp');
-  const r=snapshot();for(const text of [r.adm,r.acc]){
-    includes(text,'A complete blood count with differential was obtained in the baby room.');
-    includes(text,'An elevated CRP level was noted in the baby room.');
-  }
+  const r=snapshot();
+  includes(r.adm,'A complete blood count with differential was obtained in the baby room.');
+  includes(r.adm,'An elevated CRP level was noted in the baby room.');
+  includes(accRow(r,'Other relevant findings'),'baby-room findings: elevated CRP');
+  excludes(accBrief(r),'which showed an elevated CRP');
   includes(r.review.pending,'未勾');
   assert.ok(r.reviewTargets.find(([message])=>message.includes('未勾'))?.[1].some(t=>t.selector==='[data-msel="brWorkup"]'));
 });
 test('lab_findings_without_tests_no_hint',()=>{
   reset('nursery');A.render();multi('brFindings','leukocytosis');
   assert.equal(S.brWorkup.length,0);
-  const r=snapshot();for(const text of [r.adm,r.acc])includes(text,'A work-up was performed in the baby room, which showed leukocytosis.');
+  const r=snapshot();includes(r.adm,'A work-up was performed in the baby room, which showed leukocytosis.');
+  includes(accRow(r,'Other relevant findings'),'baby-room findings: leukocytosis');
   excludes(r.review.pending,'未勾');
 });
 test('lab_normal_only',()=>{
   reset('nursery');A.render();multi('brWorkup','cbc');multi('brFindings','normal');
-  const r=snapshot();for(const text of [r.adm,r.acc])includes(text,'A complete blood count with differential was obtained in the baby room, and the results were unremarkable.');
+  const r=snapshot();includes(r.adm,'A complete blood count with differential was obtained in the baby room, and the results were unremarkable.');
+  excludes(accBrief(r),'complete blood count');
+  assert.doesNotMatch(accBrief(r),/baby-room findings|leukocytosis|leukopenia|elevated CRP|hypoglycemia/,'Routine normal CBC is omitted without adding abnormal findings');
 });
 test('lab_mapping_boundaries',()=>{
   reset('nursery');S.brWorkup=['cbc'];S.brFindings=['bandemia','crp','hypoglycemia'];raw('brGlu','32');raw('brCrp','2');raw('brFindIn','a synthetic additional finding');
@@ -464,7 +507,9 @@ test('lab_mapping_boundaries',()=>{
 test('assessment_room_air',()=>{
   reset('outborn');A.render();click('[data-add-stage-event="assessment"][data-event-phase="arrival"]');const id=S.courseEvents.at(-1).id;
   click(`[data-event-id="${id}"] [data-event-choice="breathing"] [data-v="crying"]`);input('event-'+id+'-tone','good');input('event-'+id+'-support','room');
-  const r=snapshot();for(const text of [r.adm,r.acc])includes(text,'was crying, had good muscle tone, and was breathing room air');
+  const r=snapshot();includes(r.adm,'was crying, had good muscle tone, and was breathing room air');
+  includes(accRow(r,'Respiratory'),'after team arrival at referring hospital: room air');
+  includes(accRow(r,'Respiratory'),'at admission: ____; at acceptance: ____.');
 });
 test('assessment_adjacent_auxiliary_controls',()=>{
   for(const prior of [undefined,{signs:['grunting']}]){

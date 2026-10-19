@@ -45,17 +45,17 @@ test('no maternal antibiotic default or extra required field is introduced',({ge
 
 test('infection treatment and unspecified antibiotics never become IAP',({S,input,seg,both,get,issue,maternalIapStatus,click})=>{
   input('iapDrug','Synthetic antibiotic');input('iapSince','8/1');input('birthDate','2026-08-30');
-  both(n=>{assert.match(n,/The mother received antibiotics with Synthetic antibiotic starting on 8\/1\./);assert.doesNotMatch(n,/Intrapartum antibiotic prophylaxis/);});
+  both((n,mode)=>{assert.match(n,mode==='adm'?/The mother received antibiotics with Synthetic antibiotic starting on 8\/1\./:/maternal antibiotics \(purpose unspecified\): Synthetic antibiotic starting on 8\/1/);assert.doesNotMatch(n,/Intrapartum antibiotic prophylaxis|\bIAP:/);});
   const missing=issue('[data-seg="maternalAbxPurpose"]');assert.ok(missing);missing.click();
   assert.equal(get('[data-seg="maternalAbxPurpose"]').getAttribute('tabindex'),'-1');
   seg('maternalAbxPurpose','treatment');
-  both(n=>{assert.match(n,/The mother received antibiotic treatment with Synthetic antibiotic starting on 8\/1\./);assert.doesNotMatch(n,/Intrapartum antibiotic prophylaxis|completeness was/);});
+  both((n,mode)=>{assert.match(n,mode==='adm'?/The mother received antibiotic treatment with Synthetic antibiotic starting on 8\/1\./:/maternal infection treatment: Synthetic antibiotic starting on 8\/1/);assert.doesNotMatch(n,/Intrapartum antibiotic prophylaxis|\bIAP:|completeness was/);});
   assert.equal(issue('#iapSince','IAP開始'),undefined);assert.equal(issue('[data-seg="maternalAbxPurpose"]'),undefined);
   assert.equal(maternalIapStatus(),'none');assert.equal(get('#maternalIapStatus').hidden,true);
   // Explicit old IAP status is retained as a draft, but is not active under another purpose.
   seg('maternalAbxPurpose','iap');seg('iap','complete');assert.equal(maternalIapStatus(),'complete');
   seg('maternalAbxPurpose','other');assert.equal(S.iap,'complete');assert.equal(maternalIapStatus(),'none');
-  both(n=>assert.doesNotMatch(n,/Intrapartum antibiotic prophylaxis|prophylaxis was documented as complete/));
+  both(n=>assert.doesNotMatch(n,/Intrapartum antibiotic prophylaxis|\bIAP:|prophylaxis was documented as complete|documented complete/));
   seg('maternalAbxPurpose','iap');assert.equal(get('[data-seg="iap"] [data-v="complete"]').getAttribute('aria-pressed'),'true');
   assert.equal(get('#iapDrug').value,'Synthetic antibiotic');assert.equal(get('#iapSince').value,'8/1');
   click('[data-flow-target="prenatalCard"]');assert.match(get('[data-band-node="prenatal:iap"]').textContent,/IAP/);
@@ -63,11 +63,11 @@ test('infection treatment and unspecified antibiotics never become IAP',({S,inpu
 
 test('explicit IAP reports only recorded completeness and review links to its actual fields',({input,seg,get,issue,d,both,maternalIapStatus})=>{
   seg('maternalAbxPurpose','iap');input('iapDrug','Synthetic prophylactic antibiotic');input('iapSince','8/1');input('birthDate','2026-08-30');
-  both(n=>assert.match(n,/Intrapartum antibiotic prophylaxis \(IAP\) with Synthetic prophylactic antibiotic was administered starting on 8\/1; its adequacy could not be determined from the available record\./));
+  both((n,mode)=>assert.match(n,mode==='adm'?/Intrapartum antibiotic prophylaxis \(IAP\) with Synthetic prophylactic antibiotic was administered starting on 8\/1; its adequacy could not be determined from the available record\./:/IAP: Synthetic prophylactic antibiotic starting on 8\/1 \(adequacy unknown\)/));
   assert.equal(maternalIapStatus(),'none');
   const status=issue('[data-seg="iap"]','完整性仍需');assert.ok(status);status.click();assert.equal(d.activeElement,get('[data-seg="iap"]'));
   const date=issue('#iapSince','IAP開始日期比出生早 29 天');assert.ok(date);date.click();assert.equal(d.activeElement.id,'iapSince');
-  seg('iap','incomplete');both(n=>assert.match(n,/prophylaxis was documented as incomplete\./));
+  seg('iap','incomplete');both((n,mode)=>assert.match(n,mode==='adm'?/prophylaxis was documented as incomplete\./:/IAP: Synthetic prophylactic antibiotic starting on 8\/1 \(documented incomplete\)/));
   assert.equal(maternalIapStatus(),'incomplete');assert.equal(issue('[data-seg="iap"]','完整性仍需'),undefined);
   seg('iap','none');assert.equal(get('[data-seg="iap"] [data-v="none"]').getAttribute('aria-pressed'),'false');
   assert.equal(maternalIapStatus(),'none');
@@ -79,7 +79,7 @@ test('multiple courses use one source, preserve focus and drafts, and support un
   assert.equal(d.activeElement.id,key('purpose'));input(key('purpose'),'iap');input(key('iap'),'complete');
   const drug=get('#'+key('drug'));drug.focus();input(key('drug'),'Synthetic prophylaxis B');assert.equal(d.activeElement,drug);assert.equal(get('#'+key('drug')),drug,'Typing must not rebuild the row');
   input(key('since'),'8/30');assert.equal(maternalIapStatus(),'complete');
-  both(n=>{assert.equal((n.match(/Synthetic treatment A/g)||[]).length,1);assert.equal((n.match(/Synthetic prophylaxis B/g)||[]).length,1);assert.match(n,/with Synthetic treatment A from 8\/20 to 8\/22/);});
+  both((n,mode)=>{assert.equal((n.match(/Synthetic treatment A/g)||[]).length,1);assert.equal((n.match(/Synthetic prophylaxis B/g)||[]).length,1);assert.match(n,mode==='adm'?/with Synthetic treatment A from 8\/20 to 8\/22/:/maternal infection treatment: Synthetic treatment A from 8\/20 to 8\/22/);});
   input(key('purpose'),'treatment');assert.equal(maternalIapStatus(),'none');assert.equal(S.maternalAbxCourses[0].iap,'complete');
   assert.equal(get('#'+key('iap')).parentElement.hidden,true);
   input(key('purpose'),'iap');assert.equal(get('#'+key('iap')).value,'complete');
@@ -97,7 +97,7 @@ test('extra-course review targets remain stable and conflicting IAP statuses are
   input(key('iap'),'incomplete');assert.equal(maternalIapStatus(),'none');
   S.scr.gbs='pos';render();assert.match(note(),/IAP adequacy requires verification/);assert.doesNotMatch(note(),/IAP status not documented/,'Conflicting documented courses are not described as unrecorded');
   assert.ok(issue('#'+key('iap'),'不同 IAP 療程'));assert.ok(issue('[data-seg="iap"]','不同 IAP 療程'));
-  both(n=>{assert.match(n,/with Synthetic drug A was administered; prophylaxis was documented as complete/);assert.match(n,/with Synthetic drug B was administered; prophylaxis was documented as incomplete/);});
+  both((n,mode)=>{assert.match(n,mode==='adm'?/with Synthetic drug A was administered; prophylaxis was documented as complete/:/IAP: Synthetic drug A \(documented complete\)/);assert.match(n,mode==='adm'?/with Synthetic drug B was administered; prophylaxis was documented as incomplete/:/IAP: Synthetic drug B \(documented incomplete\)/);});
   input(key('iap'),'complete');assert.equal(maternalIapStatus(),'complete');assert.equal(issue('#'+key('iap'),'不同 IAP 療程'),undefined);
   input(key('purpose'),'other');assert.equal(maternalIapStatus(),'complete','Other purposes do not negate an explicit IAP course');
 });
@@ -106,8 +106,8 @@ test('dates, missing drugs and literal drug text survive without guessing',({S,i
   for(const separator of ['-','–','~','～'])assert.equal(recordedDatePhrase('8/20 '+separator+' 8/22'),'from 8/20 to 8/22');
   assert.equal(recordedDatePhrase('8/20'),'on 8/20');assert.equal(recordedDatePhrase('8/20, 8/22'),'on 8/20, 8/22');
   input('iapSince','8/20-8/22');
-  both(n=>{assert.match(n,/The mother received antibiotics from 8\/20 to 8\/22; the antibiotic was ____\./);assert.doesNotMatch(n,/starting from|Intrapartum antibiotic prophylaxis/);assert.ok([...get('#note').querySelectorAll('.ph')].some(el=>el.closest('.slot')?.textContent.includes('the antibiotic was ____')),'A missing drug keeps placeholder styling');});
-  seg('maternalAbxPurpose','iap');both(n=>{assert.match(n,/IAP\) was recorded from 8\/20 to 8\/22; the antibiotic was ____/);assert.doesNotMatch(n,/Ampicillin/);});
+  both((n,mode)=>{assert.match(n,mode==='adm'?/The mother received antibiotics from 8\/20 to 8\/22; the antibiotic was ____\./:/maternal antibiotics \(purpose unspecified\): antibiotic ____ from 8\/20 to 8\/22/);assert.doesNotMatch(n,/starting from|Intrapartum antibiotic prophylaxis/);assert.ok([...get('#note').querySelectorAll('.ph')].some(el=>el.closest('.slot')?.textContent.includes(mode==='adm'?'the antibiotic was ____':'antibiotic ____')),'A missing drug keeps placeholder styling');});
+  seg('maternalAbxPurpose','iap');both((n,mode)=>{assert.match(n,mode==='adm'?/IAP\) was recorded from 8\/20 to 8\/22; the antibiotic was ____/:/IAP: antibiotic ____ from 8\/20 to 8\/22 \(adequacy unknown\)/);assert.doesNotMatch(n,/Ampicillin/);});
   input('iapDrug','Drug <tag> & "literal"');both(n=>assert.ok(n.includes('Drug <tag> & "literal"')));assert.equal(get('#note').querySelector('tag'),null);
   click('#addMaternalAbx');const id=S.maternalAbxCourses[0].id;input(`maternal-abx-${id}-drug`,'  Synthetic B  ');
   assert.ok(maternalAntibioticNarrative().some(n=>n==='The mother received antibiotics with Synthetic B.'));
@@ -135,16 +135,22 @@ test('intubation, partial response and Apgar retain chronological facts in both 
   click(`[data-event-id="${id}"] [data-event-choice="response"] [data-v="partial"]`);
   input('ap1','8');input('ap5','9');
   input('tentDx','prematurity');assert.equal(get('#respiratoryDxReview').hidden,false,'Course events alone also prompt review, without adding a diagnosis');
-  both(n=>{assert.match(n,/Apgar scores were 8 and 9/);assert.match(n,/endotracheal intubation was performed and ventilatory support was provided through the endotracheal tube \(PIP 16 cmH2O, PEEP 5 cmH2O\)\. Respiratory distress partially improved\./i);assert.doesNotMatch(n,/Thus,|continued through the endotracheal tube|due to poor response/);});
+  both((n,mode)=>{
+    assert.match(n,mode==='adm'?/Apgar scores were 8 and 9/:/Apgar scores: 8 and 9/);
+    assert.match(n,mode==='adm'?/endotracheal intubation was performed and ventilatory support was provided through the endotracheal tube \(PIP 16 cmH2O, PEEP 5 cmH2O\)\. Respiratory distress partially improved\./i:/after team arrival at referring hospital: intubation \(partial improvement in respiratory distress\)/);
+    assert.doesNotMatch(n,/Thus,|continued through the endotracheal tube|due to poor response/);
+  });
+  assert.equal(get(`#event-${id}-pip`).value,'16');assert.equal(get(`#event-${id}-peep`).value,'5','Omitting routine settings from the brief does not change their source');
 });
 
 test('delivery trigger is optional, separate from admission and C/S reasons, and shared once',({input,seg,both,get})=>{
   input('admReason','synthetic maternal observation');seg('delivery','cs');input('csReason','synthetic surgical indication');
   both(n=>assert.doesNotMatch(n,/Delivery occurred because of/));
   input('deliveryTrigger','synthetic delivery trigger');
-  for(const mode of ['cs','nsd']){seg('delivery',mode);both(n=>{
-    assert.equal((n.match(/Delivery occurred because of synthetic delivery trigger\./g)||[]).length,1);
+  for(const mode of ['cs','nsd']){seg('delivery',mode);both((n,noteMode)=>{
+    assert.equal((n.match(noteMode==='adm'?/Delivery occurred because of synthetic delivery trigger\./g:/delivery indication: synthetic delivery trigger/g)||[]).length,1);
     assert.doesNotMatch(n,/Delivery occurred because of synthetic maternal observation/);
+    if(noteMode==='acc')assert.match(n,/maternal admission: synthetic maternal observation/,'Maternal admission and delivery indications keep their own labels');
   });}
   const scope=[...get('#note').querySelectorAll('.note-scope')].find(el=>el.textContent==='Delivery occurred because of synthetic delivery trigger.');
   assert.equal(scope?.dataset.notePhase,'birth:info','Preview links back to the stage that contains the trigger field');
@@ -219,23 +225,32 @@ test('batch9C birth signs use neutral sentences without an added resuscitation r
   for(const sign of ['retractions','grunting','cyanosis']){
     S.birthSigns=[sign];
     for(const renderNote of [renderAdm,renderAcc]){
-      renderNote();assert.match(note(),new RegExp('At birth, the infant was breathing spontaneously and had good muscle tone, with '+sign+' and a heart rate of 142 beats/min\\.'));
-      assert.match(note(),/No resuscitation was performed at birth\./);assert.doesNotMatch(note(),/did not require resuscitation/);
+      renderNote();
+      if(renderNote===renderAdm){
+        assert.match(note(),new RegExp('At birth, the infant was breathing spontaneously and had good muscle tone, with '+sign+' and a heart rate of 142 beats/min\\.'));
+        assert.match(note(),/No resuscitation was performed at birth\./);
+      }else{
+        assert.match(note(),new RegExp('Respiratory: at birth: '+sign+'; no resuscitation at birth'));
+        assert.match(note(),/at admission: ____; at acceptance: ____/,'Birth observations do not define either later support state');
+      }
+      assert.doesNotMatch(note(),/did not require resuscitation/);
     }
     timelineReview();assert.doesNotMatch(get('#workflowReview').textContent,/出生呼吸紀錄與「無需急救」並存/);
   }
 });
 
-test('batch9C legacy PPV GBS and DOIC phrases use first-definition helpers',({S,get,renderAdm,renderAcc,note})=>{
+test('batch9C Admission defines abbreviations while Acceptance retains concise PPV GBS and DOIC facts',({S,get,renderAdm,renderAcc,note})=>{
   Object.assign(S,{pathway:'outborn',outborn:true,doic:true,obM1Type:'',birthEvents:[],courseEvents:[{id:'synthetic-support',kind:'assessment',phase:'transport',support:'ett'}]});
   S.scr.gbs='pos';get('#doicMin').value='3';get('#birthResusStatus').value='';
-  for(const renderNote of [renderAdm,renderAcc]){
-    renderNote();const body=note().split('Tentative diagnosis:')[0];
-    assert.match(body,/positive-pressure ventilation \(PPV\) through the endotracheal tube/);
-    assert.equal((body.match(/positive-pressure ventilation \(PPV\)/g)||[]).length,1);
-  }
-  assert.match(note(),/maternal group B streptococcus \(GBS\) colonization/);
-  assert.match(note(),/The infant had delayed initial crying \(DOIC\), with the first cry at 3 minutes of age\./);
+  renderAdm();const body=note().split('Tentative diagnosis:')[0];
+  assert.match(body,/positive-pressure ventilation \(PPV\) through the endotracheal tube/);
+  assert.equal((body.match(/positive-pressure ventilation \(PPV\)/g)||[]).length,1);
+  assert.match(body,/The infant had delayed initial crying \(DOIC\), with the first cry at 3 minutes of age\./);
+  renderAcc();
+  assert.match(note(),/during transport: PPV via ETT/);
+  assert.match(note(),/maternal GBS positive/);
+  assert.match(note(),/DOIC \(\+; first cry at 3 minutes of age\)/);
+  assert.match(note(),/at admission: ____; at acceptance: ____/,'Transfer support cannot become current support without an entry');
 });
 
 test('batch9C time bounds, dynamic rupture chip, and exception cleanup',({S,get,click,render,renderAdm,renderAcc,note,W,getComposingNote,abbr})=>{
