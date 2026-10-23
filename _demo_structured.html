@@ -2679,7 +2679,8 @@
     const text={
       room:acts.length?"the infant was then weaned to room air":"the infant remained in room air",
       o2:had("o2")&&!had("ppv")&&!had("intubation")?"supplemental oxygen was continued":acts.length?"the infant was then weaned to supplemental oxygen":"supplemental oxygen was administered",
-      cpap:"CPAP was provided",
+      // 本院出生離開產房／刀房掛 CPAP（32 週 RDS 每週都有）；不是 weaned to O₂。外接的 CPAP 裝置不詳，維持原句
+      cpap:ourBirth?(acts.length?"the infant was then placed on CPAP via Neopuff":"CPAP was provided via Neopuff"):"CPAP was provided",
       get ppv(){return `${had("ppv")?"PPV":abbr('PPV','positive-pressure ventilation')} was ${had("ppv")||had("intubation")?'continued':'provided'}${ourBirth?" via Neopuff":""}`;},
       ett:had("intubation")?"the infant remained intubated":"the infant was receiving ventilation through an endotracheal tube"
     }[s];
@@ -2937,8 +2938,16 @@
   // 只補可明確辨認的嬰兒述語，不改寫完整句、否定、不確定性或 pH／iNO 等大小寫。
   const infantClause=text=>{const s=String(text||'').trim();return /^(received|remained|continued|was|had|underwent|developed|required|appeared|became|did not|could not)\b/i.test(s)?`the infant ${s[0].toLowerCase()+s.slice(1)}`:s.replace(/^(The|This|He|She|It|There)(?=\s)/,w=>w.toLowerCase());};
   const infantSentence=text=>sentence(infantClause(text));
+  // 本院出生：前一站（嬰兒室處置／路徑支持／離開產房）已是 CPAP，入院也選 CPAP 類＝延續，不寫成像是新開始。
+  // 只處理 CPAP：其他模式（PPV→NSIMV 等）是否算延續屬臨床判斷，維持原句。
+  function inHouseCpapContinued(){
+    if(S.outborn||S.pathway==='readmit'||!['CPAP','bubble CPAP','NCPAP'].includes(S.resp))return false;
+    const mode=e=>e?(e.kind==='assessment'?e.support:e.kind==='intubation'?'ett':e.kind):'';
+    const station=mode(S.courseEvents.filter(e=>['o2','cpap','ppv','intubation'].includes(e.kind)||e.kind==='assessment'&&e.support).at(-1));
+    return (station||pathwaySupportMode()||raw('birthFinalSupport'))==='cpap';
+  }
   function admissionAssessmentSentence(closeAdmission){
-    const status=infantClause(raw('obAdmissionStatus')),resp=closeAdmission&&S.resp?(S.resp==='room air'?'breathing room air':S.resp==='O2 hood'?'receiving supplemental oxygen via an oxygen hood':`receiving respiratory support with ${S.resp}`):'';
+    const status=infantClause(raw('obAdmissionStatus')),resp=closeAdmission&&S.resp?(S.resp==='room air'?'breathing room air':S.resp==='O2 hood'?'receiving supplemental oxygen via an oxygen hood':inHouseCpapContinued()?`continued on ${S.resp}`:`receiving respiratory support with ${S.resp}`):'';
     if(!status&&!resp)return '';
     const predicate=status.startsWith('the infant ')?status.slice(11):'';
     const observation=resp?`the infant was ${resp}${predicate?' and '+predicate:status?'; '+status:''}`:status;
@@ -4394,7 +4403,6 @@
     el('birthAdderHint').textContent=S.birthEvents.length>skeleton.length?`已有 ${S.birthEvents.length} 筆，照時間順序排。`:'例：PPV 停了又重上＝再做一次；PPV 後看心跳＝中途再評估。';
     document.querySelectorAll('#birthEvents [data-event-kind]').forEach(card=>{card.hidden=card.dataset.eventKind!=="assessment"&&raw("birthResusStatus")!=="performed";});
     el('leaveTitle').textContent=`離開${place}時`;
-    el('leaveChoices').querySelector('[data-v="cpap"]').hidden=S.pathway!=='outborn'&&raw('birthFinalSupport')!=='cpap';
     if(el('leaveSpo2').value!==String(S.leaveSpo2||''))el('leaveSpo2').value=S.leaveSpo2||'';
     const more=el('leaveMore'),filled=['birthFinalBreathing','birthFinalTone','birthFinalHR','birthFinalMin','birthFinalNote'].some(id=>raw(id))||S.birthFinalSigns.length;
     if(filled&&!more.dataset.autoOpened){more.open=true;more.dataset.autoOpened='1';}
