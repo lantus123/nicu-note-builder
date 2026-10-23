@@ -4,3 +4,4 @@ _check.js
 .scratch/
 tests/prose/node_modules/
 tests/prose/current.json
+.claude/worktrees/

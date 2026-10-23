@@ -6585,7 +6585,7 @@ ${opLine}`);
       try{ta.value=txt; ta.style.position="fixed"; ta.style.top="0"; ta.style.opacity="0";
         document.body.appendChild(ta); ta.focus({preventScroll:true}); ta.select(); ok=document.execCommand("copy");
       }catch(e){}finally{ta.remove(); if(focused?.isConnected)focused.focus({preventScroll:true});}}
-    const blanks=(txt.match(/_{2,}|……|——/g)||[]).length;   // 未填佔位:____/……/——(四分頁通用)
+    const blanks=countBlanks(txt);   // 與第 5 段核對總覽同一個函式，兩個數字才不會打架（2026-10-24）
     status.textContent=ok?(S.copyWarnings?`已複製 · 仍有 ${S.copyWarnings} 項待核對，請先確認再貼入 HIS。`:blanks?`已複製 ✓ · 尚有 ${blanks} 空格，請核對後再貼入 HIS。`:"已複製 ✓")
       :"未能複製，請展開預覽後選取文字複製。";
     // 複製把關：只提醒不擋。第 2 段還沒按過「以上都對」時，Admission 的複製狀態多一句。
