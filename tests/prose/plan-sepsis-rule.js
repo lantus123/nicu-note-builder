@@ -16,6 +16,12 @@ test('36+2 無風險無症狀 → 無 work-up',p=>{
   const t=plan(p);assert.doesNotMatch(t,WORKUP,t);assert.equal(pressed(p),'false');
   assert.match(t,/late prematurity/,'其他早產規則照舊');
 });
+test('36+2 只在出生評估記到 labored＋grunting（入院症狀 chip 沒點）→ 有 work-up（Codex 2026-10-24）',p=>{
+  base(p,'36','2');direct(p);
+  p.click('[data-select-chips="birthBreathing"] [data-v="labored"]');p.msel('birthSigns','grunting');
+  const t=plan(p);assert.match(t,WORKUP,t);assert.equal(pressed(p),'true');
+  assert.doesNotMatch(p.note('adm'),/# Respiratory distress/,'觀察不推診斷的規則不動');
+});
 test('36+2＋grunting → 有 work-up',p=>{
   base(p,'36','2');direct(p);p.msel('obSx','grunting');
   assert.match(plan(p),WORKUP);assert.equal(pressed(p),'true');

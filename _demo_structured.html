@@ -3631,6 +3631,8 @@
        const why=[b.compressions||b.epinephrine?'已記錄'+[b.compressions?'壓胸':'',b.epinephrine?'epinephrine':''].filter(Boolean).join('／'):'',b.apgar?'Apgar 偏低（10 分鐘 ≤5 或 5 分鐘 ≤3）':''].filter(Boolean).join('、');
        const how=[tent?'手填的暫定診斷未納入':'',hieOn?'':'NI plan 的 HIE 評估已關閉'].filter(Boolean).join('；');
        crossIssues.push(reviewIssue(`${why}，尚未評估 perinatal asphyxia／HIE（${how}）`,'#tentDx','入院問題／暫定診斷'));}}
+    if(unknownAbx().length)
+      crossIssues.push(reviewIssue(`Acceptance 抗生素項目無法辨識：${unknownAbx().join("、")}，劑量不會跟著 NI plan 等級，請重新點選`,'[data-am="abx"]','Antibiotic course'));
     if(planAbxLevel()==="none"&&S.acc.abx.length)
       crossIssues.push(reviewIssue(`NI plan 抗生素為「不開」，但 Acceptance 已記錄 ${S.acc.abx.map(k=>ABX_DOSE[k]?.name||k).join("、")}`,'[data-seg="planAbx"]','抗生素處方'));
     const all=[...new Set([...birth,...path,...contextIssues,...medIssues,...numericIssues,...crossIssues,...birthNegPending,...(S.destNotice?[reviewIssue(S.destNotice,'[data-seg="dest"]','收治單位')]:[])])];
@@ -3950,6 +3952,7 @@
   function navigateWorkflow(id,{fromReview=false,scroll=true}={}){
     if(!fromReview)clearReviewLocation();
     const target=document.getElementById(id);if(!target)return;
+    scheduleDraftSave();   // 換段不一定 render；草稿要記住停在哪一段
     if(workflowActive==='pathwayCard')rememberJourneyView();
     workflowActive=id;applyStageVisibility();
     const heading=target.querySelector('.sec-h');heading?.setAttribute('tabindex','-1');heading?.focus({preventScroll:true});
@@ -5177,12 +5180,15 @@ ${opLine}`);
     const KEY=/^(pH|pCO[2₂]|pO[2₂]|HCO[3₃]-?|B\.?\s?E\.?|SaO[2₂])\s*[:：=]?\s*(?:[LH]\s+)?(-?\d+(?:\.\d+)?)\s*(?:mmHg|mmol∕L|mEq∕L|%)?/i;
     const norm=k=>k.toUpperCase().replace(/[.\s-]/g,"").replace("₂","2").replace("₃","3");
     // 單位裡的斜線（mmol/L）先換成 ∕ 保護，免得被當成分隔符切斷；保留原文時再換回
-    txt.replace(/\b(mmol|mEq|mg)\/(dL|L)\b/gi,"$1∕$2").split(/\n/).flatMap(line=>line.split(/[\/,;|，；]/)).forEach(token=>{
+    txt.replace(/\b(mmol|mEq|mg)\/(dL|L)\b/gi,"$1∕$2").split(/\n/)
+      .map(line=>line.replace(/\d{2,4}[\/.-]\d{1,2}[\/.-]\d{1,4}(?:\s+\d{1,2}:\d{2})?/g," ").replace(/\d{6,}/g," "))   // 日期時間與病歷號那種長數字先拿掉：日期含斜線會被當分隔符切成碎片又留下來（整份報告貼進來時）
+      .flatMap(line=>line.split(/[\/,;|，；]/)).forEach(token=>{
       let rest=token.trim(); if(!rest)return;
-      const src=rest.match(/檢體來源\s*[:：]?\s*(\S+)/); if(src){out.SRC=src[1];return;}
+      const src=rest.match(/檢體來源\s*[:：]?\s*(\S+)/); if(src){out.SRC=src[1];rest=rest.replace(src[0],"").trim();if(!rest)return;}   // 來源與數值同段時不能整段丟（Codex 2026-10-24）
       // 同一段內空白分隔的「pH 7.32 PCO2 43」也逐對吃掉；吃不掉的尾巴原文保留，不丟資料
       for(let m=rest.match(KEY);m;m=rest.match(KEY)){out[norm(m[1])]=m[2];rest=rest.slice(m[0].length).trim();}
-      if(rest)unparsed.push(rest.replace(/∕/g,"/"));
+      // 只留像檢驗值的片段（有數字、短、不是病歷號／日期那種長數字）；整份報告貼進來時的姓名／病歷號／日期行不進 note
+      if(rest&&rest.length<=40&&/^[A-Za-z][A-Za-z0-9.+\-]{0,14}\s*[:：=]?\s*-?\d/.test(rest))unparsed.push(rest.replace(/∕/g,"/"));   // 「短標籤＋數字」才像檢驗值；Name/Bed/Chart No. 這類不是
     });
     const parts=[];
     if(out.PH)parts.push(`pH ${out.PH}`);
@@ -5273,6 +5279,10 @@ ${opLine}`);
   const ABX_LEVELS=["empirical","sepsis","meningitic"];
   const ABX_REGIMEN={empirical:["ampicillin","gentamicin"],sepsis:["ampicillin","gentamicin"],meningitic:["ampicillin","cefotaxime"]};   // NI plan 各等級開哪些藥
   // acc=true 用 Acceptance 的藥名（Cefotaxime 帶商品名 Claforan）；表外的值原樣輸出，不補劑量。
+  // 舊版 chip 把劑量寫死在 data-v（"Ampicillin (200 mg/kg/day)"）；草稿若帶著這種值，依藥名前綴對回 key，對不上的原樣保留並由核對列出
+  const abxKeyOf=v=>{if(ABX_DOSE[v])return v;const m=String(v).match(/^([A-Za-z]+)/);const k=m&&m[1].toLowerCase();return k&&ABX_DOSE[k]?k:v;};
+  const normalizeAbxKeys=()=>{S.acc.abx=[...new Set(S.acc.abx.map(abxKeyOf))];};
+  const unknownAbx=()=>S.acc.abx.filter(k=>!ABX_DOSE[k]);
   const abxPhrase=(key,level,acc)=>{const d=ABX_DOSE[key]; if(!d)return String(key);
     const dose=d[level]||d.all||"", name=acc&&d.accName||d.name; return dose?`${name} (${dose})`:name;};
   // Acceptance 的劑量等級：plan 為「不開」時仍以 empirical 劑量寫出已記錄的藥，並由核對列出衝突。
@@ -5414,7 +5424,8 @@ ${opLine}`);
     // sepsis work-up：<35 週一律做；≥35 週（含 35–36+6 晚期早產）要有感染風險、症狀、呼吸支持或 FD／DOIC 才做。
     // 「有症狀來住院通常還是會做」（Ryan 2026-10-24）：A–D 看本次入院問題與入院經過症狀／嬰兒室異常；E 看發燒或呼吸問題（黃疸再入院不算）。
     const symptomatic=S.pathway==="readmit"?(pr.infection||pr.respiratory)
-      :(pr.respiratory||pr.hypoglycemia||pr.jaundice||S.obSx.length>0||(S.pathway==="nursery"&&S.brFindings.some(k=>k!=="normal")));   // 「結果無異常（確認）」不是症狀
+      :(pr.respiratory||pr.hypoglycemia||pr.jaundice||S.obSx.length>0||(S.pathway==="nursery"&&S.brFindings.some(k=>k!=="normal"))
+        ||respiratoryAdmissionFacts().observed);   // 「結果無異常（確認）」不是症狀；出生／離開產房記到 labored／grunting 也算有症狀（只影響 work-up，不推診斷）
     const RULE={sepsis:infRisk||symptomatic||(gw>0&&gw<PLAN_GA.sepsis.ga)||respSupport||S.fd||S.doic, csf:false,
                 biogram:S.fd||S.doic, sga:SGA, aline:S.hc.aline||(cfg.alineRule&&invasive),
                 pn:(gw>0&&gw<PLAN_GA.pn.ga)||(bwN>0&&bwN<PLAN_GA.pn.bw)||invasive,
@@ -6136,7 +6147,7 @@ ${opLine}`);
     if(draftSaveTimer!==null)clearTimeout(draftSaveTimer);
     draftSaveTimer=setTimeout(saveDraft,300);
   }
-  function flushDraftSave(){if(draftSaveTimer!==null){clearTimeout(draftSaveTimer);saveDraft();}}
+  function flushDraftSave(){if(draftSaveTimer!==null)clearTimeout(draftSaveTimer);saveDraft();}   // 離頁前無條件存：有些狀態變更（以上都對、章節導覽）沒排程存檔；saveDraft 自己擋停存與空白頁
   function readDraft(){
     try{
       if(sessionStorage.getItem('nicu_after_reset'))return null;   // 看範例／清空重填的 reload 不還原
@@ -6202,6 +6213,14 @@ ${opLine}`);
     each('[data-habit]',g=>{const k=g.dataset.habit;press(g,()=>S.habit[k]);});
     const doic=document.getElementById('doicMinWrap');if(doic)doic.hidden=!S.doic;
     const msaf=document.getElementById('msafGradeWrap');if(msaf)msaf.hidden=!S.msaf;
+    // 下面四類只在各自的點擊 handler 裡同步，render 不回推（Codex 2026-10-24：GBS 陽性 reload 後畫面回「預設：陰性」、手足列消失、NCPAP 日期欄消失）
+    Object.keys(S.scr).forEach(syncScreen);   // 篩檢列 radio／select／「預設：」徽章
+    drawSibs();   // 家庭樹手足與半手足列
+    syncDates('resp');syncDates('line');   // Acceptance 呼吸支持／管路起始日期欄
+    const pedRel=document.querySelector('[data-seg="pedRel"]');if(pedRel)pedRel.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.v===S.ped.rel)));
+    each('[data-pedrel]',g=>{const o=S.ped[g.dataset.pedrel];if(o)g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(!!o.rel&&x.dataset.v===o.rel)));});
+    const fu=document.querySelector('[data-tog="fatherUnknown"] button');if(fu)fu.setAttribute('aria-pressed',String(!!S.ped.fatherUnknown));
+    const fa=document.getElementById('fatherAge');if(fa)fa.disabled=!!S.ped.fatherUnknown;
     drawEvents('course');drawEvents('birth');   // 事件列只在點擊時重畫，render 不會長出來
   }
   function restoreDraftUi(ui){
@@ -6466,7 +6485,7 @@ ${opLine}`);
       if(e.target.closest('#exampleConfirmYes')){const kind=examplePending;examplePending='';resetPage(kind==='example'?'example':'');render();return;}
       if(e.target.closest('#exampleConfirmNo')){examplePending='';render();return;}
       const ov=e.target.closest('[data-ov-target]');if(ov){goToOverviewRow(ov.dataset.ovTarget);return;}
-      if(e.target.closest('#prenatalNext'))S.prenatalConfirmed=true;   // 只記錄「已按過以上都對」，不影響病歷輸出。
+      if(e.target.closest('#prenatalNext')){S.prenatalConfirmed=true;scheduleDraftSave();}   // 只記錄「已按過以上都對」，不影響病歷輸出；不 render 所以要自己排存。
       const phase=e.target.closest('[data-phase-target]');if(phase)navigateClinicalPhase(phase.dataset.phaseTarget);
       const node=e.target.closest('[data-band-node]');if(node)goToBandNode(node.dataset.bandNode);
       const missingLink=e.target.closest('[data-stage-target]');if(missingLink)goToReviewTarget(missingLink.dataset.stageTarget,missingLink.dataset.stageLabel,{bar:false});
@@ -6602,7 +6621,7 @@ ${opLine}`);
   // 欄位有一部分是初始化／drawEvents 才建立的，分兩次設。
   const draft=readDraft();
   initializeAdmissionWorkflow();
-  if(draft){applyDraftState(S,draft.S);applyDraftFields(draft.fields);restoreDraftUi(draft.ui);}
+  if(draft){applyDraftState(S,draft.S);normalizeAbxKeys();applyDraftFields(draft.fields);restoreDraftUi(draft.ui);}
   render();
   if(draft){
     syncRestoredControls();applyDraftFields(draft.fields);render();   // event-* 等事件列要 drawEvents 後才存在，欄位再設一次
@@ -6613,7 +6632,9 @@ ${opLine}`);
   window.addEventListener('pagehide',flushDraftSave);
   window.addEventListener('beforeunload',e=>{
     flushDraftSave();   // debounce 還沒到就 reload，最後幾個字會不見
-    if(skipUnloadGuard||!pageHasData())return;
+    if(skipUnloadGuard)return;
+    let hasDraft=false;try{hasDraft=!!sessionStorage.getItem(DRAFT_KEY);}catch(_){}   // pageHasData 只看 Admission；只填 Acceptance／Procedure 也該攔
+    if(!pageHasData()&&!hasDraft)return;
     e.preventDefault();e.returnValue='';
   });
 })();

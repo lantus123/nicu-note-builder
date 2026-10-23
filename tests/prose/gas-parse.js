@@ -24,6 +24,10 @@ const cases=[
   ['空白分隔同一行','pH 7.28 PCO2 52 PO2 60 HCO3 22 BE -4',FULL_LINE,FULL],
   ['未知 token 原文保留','pH 7.28 / pCO2 52 / BE -4; Lac 3.2 mmol/L | Na 135',
     'pH 7.28 / pCO2 52 / BE -4; Lac 3.2 mmol/L; Na 135',{PH:'7.28',PCO2:'52',BE:'-4'}],
+  ['檢體來源與數值同一段不整段丟（Codex 2026-10-24）','檢體來源：Arterial pH 7.28\npCO2 52',
+    'pH 7.28 / pCO2 52 (Arterial)',{PH:'7.28',PCO2:'52',SRC:'Arterial'}],
+  ['整份報告貼進來：姓名／病歷號／日期行不進 note，像檢驗值的片段才留','Name: WANG XIAO MING\nChart No. 12345678\n2026/10/24 08:15\nBed A-3\npH 7.28 / pCO2 52 / Lac 3.2',
+    'pH 7.28 / pCO2 52; Lac 3.2',{PH:'7.28',PCO2:'52'}],
   ['SaO2 帶百分比','pH 7.40 / SaO2 96%','pH 7.40 / SaO2 96%',{PH:'7.40',SAO2:'96'}],
   ['完全解析不到時保留原文','血氣待補 drawn at 08:00','血氣待補 drawn at 08:00',{}],
 ];

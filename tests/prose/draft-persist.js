@@ -112,6 +112,40 @@ function assertSame(before,uiBefore,S0,p,label){
   assert.deepEqual(setDiff(uiAfter.hidden,uiBefore.hidden),{missing:[],extra:[]},label+' hidden');
   assert.equal(JSON.stringify(p.S),S0,label+' S');
 }
+test('restored controls: screening radio, sibling rows, acceptance date inputs, father-unknown (Codex 2026-10-24)',async()=>{
+  let p=open();
+  p.click('#entryDirect');p.click('[data-seg="dest"] [data-v="NICU"]');
+  const row=p.get('.scr-row[data-scr="gbs"]');[...row.querySelectorAll('input[type="radio"]')].find(el=>el.value==='pos').click();
+  assert.equal(p.S.scr.gbs,'pos');
+  p.click('#addSib');assert.ok(p.S.sibs.length>=1,'手足已新增');
+  p.click('[data-tog="fatherUnknown"] button');assert.equal(p.S.ped.fatherUnknown,true);
+  p.click('[data-tab="acc"]');p.click('[data-am="resp"] [data-v="NCPAP"]');assert.ok(p.S.acc.respDates.NCPAP,'NCPAP 有日期');
+  p.click('[data-tab="adm"]');
+  p=await reload(p);
+  assert.deepEqual(p.errors,[]);
+  const row2=p.get('.scr-row[data-scr="gbs"]');
+  assert.equal([...row2.querySelectorAll('input[type="radio"]')].find(el=>el.checked)?.value,'pos','GBS radio 要回到陽性');
+  assert.match(row2.querySelector('.prenatal-status').textContent,/已選/,'徽章不能寫「預設」');
+  assert.ok(p.d.querySelectorAll('.sib-item').length>=1,'手足列要重畫出來');
+  assert.equal(p.get('[data-tog="fatherUnknown"] button').getAttribute('aria-pressed'),'true');
+  assert.equal(p.get('#fatherAge').disabled,true,'父親不詳時年齡欄停用');
+  p.click('[data-tab="acc"]');
+  assert.ok(p.d.querySelector('#respDates input[data-ditem="NCPAP"]'),'NCPAP 日期欄要在');
+  p.close();
+});
+test('legacy dose strings in a draft are normalised to keys; unknown ones are flagged, not silently printed as a prescription',async()=>{
+  let p=open();fullCase(p);await wait(400);
+  const s=p.session();p.close();
+  const d=JSON.parse(s[KEY]);d.S.acc.abx=['Ampicillin (200 mg/kg/day)','gentamicin','Weirdomycin (1 mg/kg)'];s[KEY]=JSON.stringify(d);
+  p=open(s);
+  assert.deepEqual(p.errors,[]);
+  assert.deepEqual([...p.S.acc.abx],['ampicillin','gentamicin','Weirdomycin (1 mg/kg)']);
+  p.click('[data-tab="acc"]');
+  assert.match(p.d.getElementById('note').textContent,/Ampicillin \(100 mg\/kg\/day\)/,'舊 200 字串要對回 key 並依 plan 等級（empirical）出 100');
+  p.click('[data-tab="adm"]');
+  assert.match(p.d.getElementById('workflowReview').textContent+p.d.getElementById('reviewOverview').textContent,/無法辨識：Weirdomycin/,'對不上的要在核對列出');
+  p.close();
+});
 test('every golden corpus scenario survives a reload unchanged',async()=>{
   const {S:corpus}=require('./corpus');
   assert.equal(Object.keys(corpus).length,20);

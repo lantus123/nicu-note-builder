@@ -34,6 +34,8 @@
 - **sepsis work-up 規則（Ryan 2026-10-24：「有症狀來住院通常還是會做」）**：`infRisk || 有症狀 || GA < PLAN_GA.sepsis.ga(35) || 呼吸支持 || FD || DOIC`。有症狀於 A–D＝呼吸／低血糖／黃疸問題、症狀 chip、嬰兒室異常（排除「確認無異常」）；E＝感染／呼吸。≥35 週無症狀無風險不再常規開（baseline 12／17 少掉該句）；足月低血糖（baseline 05）因「有症狀」而新增該句。
 - **核對訊號同源**：`countBlanks()` 供第 5 段摘要與複製鈕共用，摘要在「關鍵資料未填 N 項」後接「目前病歷仍有 M 個空格」（M=0 不寫）。Acceptance Brief history 對未確認的 FD／DOIC／MSAF 整項省略（不再寫 `(unknown)`）；核對新增待確認項「出生事件 FD／DOIC／MSAF 尚未確認（沒有勾選不代表沒有發生）」，連到第 3 段的確認鈕，所以「本段還缺」與時序帶節點會跟著反映。
 - 複製狀態列切分頁即隱藏；Procedure 底部文案改為「請複製到 HIS 後再修改」。
+- **Codex 二審後補修（同日）**：①還原時補同步篩檢列 radio／徽章（`syncScreen`）、家庭樹手足列（`drawSibs`）、Acceptance 日期欄（`syncDates`）、家庭樹關係與父親不詳——之前 GBS 陽性 reload 後畫面回「預設：陰性」但病歷仍陽性；②sepsis「有症狀」加入出生／離開產房記到的 labored／grunting（只影響 work-up 預設，不推診斷），否則 35–36+6 週只在出生評估記到呼吸症狀的病人會漏 work-up；③草稿裡的舊字串劑量依藥名前綴對回 key，對不上的由核對列出，不再原樣當處方輸出；④ABG 片段同時含「檢體來源」與數值時不再整段丟；未知片段只保留像檢驗值的（有數字、≤40 字、不含 6 位以上連號或日期），整份報告貼進來時姓名／病歷號不進 note；⑤`beforeunload` 改看「有草稿或 Admission 有資料」，只填 Acceptance／Procedure 也攔；⑥離頁前無條件 flush，「以上都對」與換段會排程存檔。
+- **sessionStorage 的邊界（Codex 提醒）**：複製分頁或瀏覽器「復原分頁」會把草稿一起帶過去，同 origin 在同一分頁載入的其他頁面也讀得到；它不是「只有這一分頁、絕不外流」，而是「關掉分頁就沒了」。共用工作站請養成用完按「清空重填」的習慣。
 - 驗收：九支新 jsdom 測試接進 `npm test`（`draft-persist`、`gas-parse`、`cpap-inhouse`、`fd-autoset`、`copy-status-tab`、`abx-single-source`、`hie-safety`、`plan-sepsis-rule`、`review-consistency`；`page-helper.js` 是後四支共用的頁面，selector 找不到直接 throw）。`story-line`、`stage-band`、`brief-history`、`corpus`、`regression` 依新規格改了對應的 selector／斷言。合併後在真 Chrome 以範例驗過：reload 後四份 note 逐字相同、CPR 事件與手填診斷都還原、console 零錯誤。
 
 ## Acceptance 短版 Brief history（2026-10-19）
