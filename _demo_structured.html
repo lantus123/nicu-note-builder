@@ -499,6 +499,10 @@
   #storyPlan>.field[hidden]{display:none}
   .inline-confirm{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;padding:10px 12px;border-left:3px solid var(--risk);background:var(--risk-soft);color:var(--risk);font-size:13px;line-height:1.6}
   .inline-confirm[hidden]{display:none}
+  .draft-notice{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-size:13px;line-height:1.6}
+  .draft-notice[hidden]{display:none}
+  .draft-notice p{flex:1 1 auto;margin:0}
+  .draft-notice button{flex:0 0 auto;min-width:38px;min-height:38px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
   .inline-confirm p{flex:1 1 220px;margin:0}
   .inline-confirm button{min-height:38px;padding:0 14px;border:1px solid var(--risk-line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
   .band-confirm{margin-top:8px}
@@ -1985,6 +1989,8 @@
                cxrDx:[],infMarkers:"na",abxPlan:"none",cultures:"none",monitor:true}};   // monitor 預設開=closing 恆出(opt-out,改法27)
   RISKS.forEach(x=>S.r[x.k]={on:false,val:null,extra:[],num:x.num?x.num.val:null});
   S.r.steroid.val="2"; S.r.steroid.extra=["complete"];   // Y11 類固醇預設 2 劑・完整療程(turn on 即帶,例外才改)
+  // 草稿暫存的狀態放在 S 旁邊：render() 第一次被呼叫前就要存在（let 在宣告行之前讀會 TDZ）
+  let draftSaveTimer=null,draftSuspended=false,draftBaseline=null,skipUnloadGuard=false;
 
   // ── AGA/SGA/LGA 自動判定：Fenton 2025 出生體重百分位（取自 neonatal-navigator/src/lib/neocalc.ts）──
   const maleBWpct={21:[397,675.2],22:[397,675.2],23:[496,753.5],24:[562.7,843.9],25:[635.7,957.4],26:[719.2,1097.9],27:[816.2,1261],28:[928.7,1444.2],29:[1057.8,1644.7],30:[1203.7,1859.2],31:[1365.4,2084.4],32:[1541.2,2316.6],33:[1728.3,2551.8],34:[1922.9,2785.7],35:[2120.2,3013.9],36:[2314.6,3231.5],37:[2499.3,3433.5],38:[2667.7,3614.5],39:[2808.3,3769],40:[2914.2,3890.9],41:[2974.1,3974.2],42:[2976.4,4012.3],43:[2908.5,3998.6],44:[2756.9,3926]};
@@ -4146,7 +4152,7 @@
     if(S.mode==="plan"){renderPlan();return;}
     if(S.mode==="proc"){renderProc();return;}
     renderAdm();
-    }finally{syncChoiceControls();syncPreviewStage();}
+    }finally{syncChoiceControls();syncPreviewStage();scheduleDraftSave();}
   }
 
   // ══ 家庭樹（Pedigree）══
@@ -5927,8 +5933,115 @@ ${opLine}`);
   }
   let examplePending='';
   function resetPage(after=''){
+    // 先停存再刪草稿：reload 前還有 render／debounce 可能把舊病人寫回去，清空後又被還原
+    draftSuspended=true;skipUnloadGuard=true;if(draftSaveTimer!==null){clearTimeout(draftSaveTimer);draftSaveTimer=null;}
+    try{sessionStorage.removeItem(DRAFT_KEY);}catch(_){}
     try{if(after)sessionStorage.setItem('nicu_after_reset',after);else sessionStorage.removeItem('nicu_after_reset');}catch(_){}
     (window.nicuReset||(()=>location.reload()))();
+  }
+  // ── 草稿暫存：sessionStorage（關分頁即消失、不落地、不上雲；Ryan 拍板）。localStorage 只放三個偏好，不混用 ──
+  // 臨床狀態一半在 S、一半活在表單欄位（V()/raw() 即時讀），兩邊都要存，只存 S 會還原出半份病人。
+  const DRAFT_KEY='nicu_draft_v1',DRAFT_MAX_AGE=12*3600*1000;
+  function draftFields(){
+    const out={},root=document.querySelector('.app-layout')||document.body;
+    for(const el of root.querySelectorAll('input[id],select[id],textarea[id]')){
+      if(el.id==='homeHosp')continue;   // 院區是本機偏好（localStorage），草稿不覆蓋
+      out[el.id]=el.type==='checkbox'||el.type==='radio'?el.checked:el.value;
+    }
+    return out;
+  }
+  // 不在 S 裡的導覽狀態：沒存的話 reload 後時序帶會跳回第 1 段，看起來像資料不見
+  const draftUi=()=>({workflowActive,birthPhase,currentBandEvent,clearedReadmitIntake});
+  const draftSignature=()=>{const {mode,journeyOpen,journeyStep,...rest}=S;return JSON.stringify([rest,draftFields()]);};   // 只切分頁不算有資料
+  function saveDraft(){
+    draftSaveTimer=null;if(draftSuspended)return;
+    try{
+      // 跟開頁時一模一樣＝沒東西可還原；存了反而 reload 會冒出「已還原草稿」誤導
+      if(draftBaseline!==null&&draftSignature()===draftBaseline){sessionStorage.removeItem(DRAFT_KEY);return;}
+      sessionStorage.setItem(DRAFT_KEY,JSON.stringify({ts:Date.now(),S,ui:draftUi(),fields:draftFields()}));
+    }catch(_){}
+  }
+  function scheduleDraftSave(){
+    if(draftSuspended)return;
+    if(draftSaveTimer!==null)clearTimeout(draftSaveTimer);
+    draftSaveTimer=setTimeout(saveDraft,300);
+  }
+  function flushDraftSave(){if(draftSaveTimer!==null){clearTimeout(draftSaveTimer);saveDraft();}}
+  function readDraft(){
+    try{
+      if(sessionStorage.getItem('nicu_after_reset'))return null;   // 看範例／清空重填的 reload 不還原
+      const d=JSON.parse(sessionStorage.getItem(DRAFT_KEY)||'null'),age=d&&Date.now()-d.ts;
+      if(!d||typeof d!=='object'||!d.S||typeof d.S!=='object'||!d.fields||typeof d.fields!=='object')return null;
+      if(!(age>=0&&age<DRAFT_MAX_AGE)){sessionStorage.removeItem(DRAFT_KEY);return null;}   // 超過一個班的草稿多半是上一位病人
+      return d;
+    }catch(_){return null;}
+  }
+  const isPlainObject=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
+  // 物件逐層套用（新版程式加的預設鍵不被舊草稿抹掉）；陣列整個取代（事件清單的順序與筆數就是事實）
+  function applyDraftState(target,src){
+    for(const [k,v] of Object.entries(src)){
+      if(isPlainObject(v)&&isPlainObject(target[k]))applyDraftState(target[k],v);
+      else target[k]=v;
+    }
+  }
+  function applyDraftFields(fields){
+    let changed=false;
+    for(const [id,v] of Object.entries(fields)){
+      const el=document.getElementById(id);if(!el||id==='homeHosp')continue;
+      if(el.type==='checkbox'||el.type==='radio'){if(el.checked!==!!v){el.checked=!!v;changed=true;}}
+      else if(el.value!==v){el.value=v;changed=el.value===v||changed;}   // select 沒有該選項時設不進去，不算變更以免無限重設
+    }
+    return changed;
+  }
+  function showDraftNotice(ts){
+    const t=new Date(ts),hm=`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+    const box=document.createElement('div');box.className='draft-notice';box.id='draftNotice';box.setAttribute('role','status');
+    box.innerHTML=`<p>已還原本分頁的草稿（${hm} 儲存）。若不是同一位病人，請按『清空重填』。</p><button type="button" id="draftNoticeClose" aria-label="關閉草稿還原提示">✕</button>`;
+    const wrap=document.querySelector('.wrap');wrap.insertBefore(box,wrap.querySelector('header.top')?.nextSibling||wrap.firstChild);
+    box.querySelector('button').addEventListener('click',()=>{box.hidden=true;});
+  }
+  // 多數按鈕的 pressed 只在點擊當下設（render 不回推），還原時 S 對了畫面卻是空的——只在還原時依 S 回推一次，
+  // 平常流程不經過這裡，避免改動 golden master 情境。
+  function syncRestoredControls(){
+    const each=(sel,f)=>document.querySelectorAll(sel).forEach(f);
+    const press=(g,on)=>g.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(!(b.dataset.v===''&&b.hidden)&&!!on(b.dataset.v))));   // 可清除組的 data-v="" 是隱藏占位，永不按下（thyType 的空值鈕是可見選項）
+    const prim=v=>v===null||['string','number','boolean'].includes(typeof v);
+    each('[data-seg]',g=>{const k=g.dataset.seg;if(Object.hasOwn(S,k)&&prim(S[k]))press(g,v=>v===String(S[k]));});
+    each('[data-msel]',g=>{const a=S[g.dataset.msel];if(Array.isArray(a))press(g,v=>a.includes(v));});
+    each('[data-tog]',g=>{const k=g.dataset.tog;if(Object.hasOwn(S,k))press(g,()=>S[k]);});
+    for(const [k,r] of Object.entries(S.r)){
+      const item=document.querySelector(`.risk-item[data-k="${k}"]`);if(!item)continue;
+      const yn=item.querySelector(`[data-ryn="${k}"],[data-r3="${k}"]`);
+      if(yn&&r.status!==undefined)press(yn,v=>v===r.status);
+      item.classList.toggle('active',!!r.on);
+      const child=item.querySelector('.child');if(child)child.hidden=!(r.on&&child.innerHTML.trim());
+      const rc=item.querySelector(`[data-rc="${k}"]`);if(rc&&r.on)press(rc,v=>v===String(r.val));
+      const re=item.querySelector(`[data-re="${k}"]`);if(re&&Array.isArray(r.extra))press(re,v=>r.extra.includes(v));
+    }
+    each('[data-numunit]',g=>{const u=S.numUnit[g.dataset.numunit];if(u)press(g,v=>v===u);});
+    each('[data-am]',g=>{const a=S.acc[g.dataset.am];if(Array.isArray(a))press(g,v=>a.includes(v));});
+    each('[data-as]',g=>{const k=g.dataset.as;press(g,v=>v===S.acc[k]);const inp=g.parentElement.querySelector('.tin');if(inp)inp.hidden=S.acc[k]!=='done';});
+    each('[data-hc]',g=>{const k=g.dataset.hc;if(prim(S.hc[k]))press(g,v=>v===S.hc[k]);});
+    each('[data-hcm]',g=>{const a=S.hc[g.dataset.hcm];if(Array.isArray(a))press(g,v=>a.includes(v));});
+    each('[data-hct]',g=>{const k=g.dataset.hct;press(g,()=>S.hc[k]);
+      const child=document.querySelector(`[data-hcc="${k}"]`);if(child)child.hidden=!S.hc[k];
+      document.querySelector(`[data-hcrow="${k}"]`)?.classList.toggle('on',!!S.hc[k]);});
+    each('[data-proctog]',g=>press(g,v=>S.proc[v]));
+    each('[data-po]',g=>{const k=g.dataset.po;press(g,v=>v===S.procOpt[k]);});
+    each('[data-par]',g=>{const k=g.dataset.par;press(g,v=>v===S.parent[k]);});
+    each('[data-habit]',g=>{const k=g.dataset.habit;press(g,()=>S.habit[k]);});
+    const doic=document.getElementById('doicMinWrap');if(doic)doic.hidden=!S.doic;
+    const msaf=document.getElementById('msafGradeWrap');if(msaf)msaf.hidden=!S.msaf;
+    drawEvents('course');drawEvents('birth');   // 事件列只在點擊時重畫，render 不會長出來
+  }
+  function restoreDraftUi(ui){
+    if(!isPlainObject(ui))return;
+    if(typeof ui.workflowActive==='string'&&document.getElementById(ui.workflowActive))workflowActive=ui.workflowActive;
+    if(typeof ui.birthPhase==='string')birthPhase=ui.birthPhase;
+    if(ui.currentBandEvent===null||typeof ui.currentBandEvent==='number')currentBandEvent=ui.currentBandEvent;
+    if(typeof ui.clearedReadmitIntake==='string')clearedReadmitIntake=ui.clearedReadmitIntake;
+    journeyLastPathway=S.pathway;   // 否則第一次 render 以為路徑剛換，清掉 journeyStep／journeyOpen
+    tabButtons.forEach(x=>{const selected=x.dataset.tab===S.mode;x.setAttribute('aria-selected',String(selected));x.tabIndex=selected?0:-1;});
   }
   function exampleAction(kind){
     if(pageHasData()){examplePending=kind;render();document.getElementById('exampleConfirmNo')?.focus({preventScroll:true});return;}
@@ -6315,8 +6428,24 @@ ${opLine}`);
     if(copyFeedbackTimer!==null)clearTimeout(copyFeedbackTimer);
     copyFeedbackTimer=setTimeout(()=>{status.hidden=true;updateCollapsedDockHeight();},blanks||!ok||prenatalUnconfirmed?5000:2000);
   });
+  // 草稿在初始化前讀、初始化後才套 S：initializeAdmissionWorkflow 會把產前 S.r 的 status／reviewed 寫回正常預設，
+  // 先套會被蓋掉（PIH「有」還原成「無」）。草稿本來就是「初始化後＋使用者操作」的快照，後套才忠實。
+  // 欄位有一部分是初始化／drawEvents 才建立的，分兩次設。
+  const draft=readDraft();
   initializeAdmissionWorkflow();
+  if(draft){applyDraftState(S,draft.S);applyDraftFields(draft.fields);restoreDraftUi(draft.ui);}
   render();
+  if(draft){
+    syncRestoredControls();applyDraftFields(draft.fields);render();   // event-* 等事件列要 drawEvents 後才存在，欄位再設一次
+    syncWorkflowNavigation();showDraftNotice(draft.ts);
+  }else draftBaseline=draftSignature();
   try{const after=sessionStorage.getItem('nicu_after_reset');if(after){sessionStorage.removeItem('nicu_after_reset');if(after==='example')loadExample();}}catch(_){}
+  document.querySelector('.app-layout')?.addEventListener('input',scheduleDraftSave);   // 打字不一定每鍵 render（select／number 走 change）
+  window.addEventListener('pagehide',flushDraftSave);
+  window.addEventListener('beforeunload',e=>{
+    flushDraftSave();   // debounce 還沒到就 reload，最後幾個字會不見
+    if(skipUnloadGuard||!pageHasData())return;
+    e.preventDefault();e.returnValue='';
+  });
 })();
 </script>
