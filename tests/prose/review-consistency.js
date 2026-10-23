@@ -13,7 +13,7 @@ const FULL=p=>{
 const blanks=t=>(t.match(/_{2,}|……|——/g)||[]).length;   // 與複製鈕相同規則
 const summary=p=>{p.note('adm');return p.get('#reviewSummary').textContent;};
 const pendingText=p=>{p.note('adm');return p.get('#reviewPendingList').textContent;};
-const UNCONFIRMED='出生事件 FD／DOIC／MSAF 尚未確認（未勾選不等於未發生）';
+const UNCONFIRMED='出生事件 FD／DOIC／MSAF 尚未確認（沒有勾選不代表沒有發生）';
 
 test('母病歷號空白 → 第 5 段摘要寫「1 個空格」；填了就不再出現',p=>{
   FULL(p);

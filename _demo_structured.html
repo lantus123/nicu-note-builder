@@ -3471,7 +3471,7 @@
     // 未勾選 FD／DOIC／MSAF 不等於沒發生：沒按確認就列待確認（Acceptance 也因此不寫這幾項，見 acceptanceBriefHistory）
     // 和其他待確認項一樣計入複製提醒（S.copyWarnings），但不另出現在第 1 區的出生核對框。
     const birthNegPending=S.pathway&&S.pathway!=='readmit'&&!S.birthNegConfirmed&&!(S.fd&&S.doic&&S.msaf)
-      ?[reviewIssue('出生事件 FD／DOIC／MSAF 尚未確認（未勾選不等於未發生）','[data-tog="birthNegConfirmed"] button','確認未勾選的出生事件均未發生')]:[];
+      ?[reviewIssue('出生事件 FD／DOIC／MSAF 尚未確認（沒有勾選不代表沒有發生）','[data-tog="birthNegConfirmed"] button','出生事件陰性確認（FD／DOIC／MSAF）')]:[];
     pending.push(...birthNegPending);
     if(raw("birthFinalMin")&&last>Number(raw("birthFinalMin")))birth.push(reviewIssue("最後評估時間早於前面的事件，請核對。",'#birthFinalMin'));
     if(raw("birthResusStatus")==="performed"&&!birthHasAction())awaitBirth("已選有急救，請在第 1 區選急救到哪一階。",S.pathway?'#ladderChoices':'#entryRoutes',S.pathway?'急救到哪一階':'請先選擇入院情境');
