@@ -5051,11 +5051,17 @@ ${opLine}`);
   // ── ABG 貼上 → 整理成一列 + 回傳數值供判酸鹼 ──
   function parseGas(txt){
     if(!txt)return {line:"",vals:{}};
-    const out={};
-    txt.split(/\n/).forEach(line=>{
-      const m=line.match(/^\s*(pH|pCO2|pO2|HCO3|B\.?E\.?|SaO2)[\s:=]+(?:[LH]\s+)?(-?\d+(?:\.\d+)?)/i);
-      if(m)out[m[1].toUpperCase().replace(/\./g,"")]=m[2];
-      const src=line.match(/檢體來源\s*[:：]?\s*(\S+)/); if(src)out.SRC=src[1];
+    const out={},unparsed=[];
+    // 手打／LINE 常是一行「pH 7.28 / pCO2 52 / BE -4」；只切換行時後面全被靜默丟掉，判讀也跟著錯
+    const KEY=/^(pH|pCO[2₂]|pO[2₂]|HCO[3₃]-?|B\.?\s?E\.?|SaO[2₂])\s*[:：=]?\s*(?:[LH]\s+)?(-?\d+(?:\.\d+)?)\s*(?:mmHg|mmol∕L|mEq∕L|%)?/i;
+    const norm=k=>k.toUpperCase().replace(/[.\s-]/g,"").replace("₂","2").replace("₃","3");
+    // 單位裡的斜線（mmol/L）先換成 ∕ 保護，免得被當成分隔符切斷；保留原文時再換回
+    txt.replace(/\b(mmol|mEq|mg)\/(dL|L)\b/gi,"$1∕$2").split(/\n/).flatMap(line=>line.split(/[\/,;|，；]/)).forEach(token=>{
+      let rest=token.trim(); if(!rest)return;
+      const src=rest.match(/檢體來源\s*[:：]?\s*(\S+)/); if(src){out.SRC=src[1];return;}
+      // 同一段內空白分隔的「pH 7.32 PCO2 43」也逐對吃掉；吃不掉的尾巴原文保留，不丟資料
+      for(let m=rest.match(KEY);m;m=rest.match(KEY)){out[norm(m[1])]=m[2];rest=rest.slice(m[0].length).trim();}
+      if(rest)unparsed.push(rest.replace(/∕/g,"/"));
     });
     const parts=[];
     if(out.PH)parts.push(`pH ${out.PH}`);
@@ -5066,6 +5072,7 @@ ${opLine}`);
     if(out.SAO2)parts.push(`SaO2 ${out.SAO2}%`);
     let s=parts.join(" / ");
     if(s&&out.SRC)s+=` (${out.SRC})`;
+    if(s&&unparsed.length)s+="; "+unparsed.join("; ");   // 解析不到的段落（Lac、Na…）接在整理後那行，供核對
     return {line:s||txt.trim(), vals:out};
   }
   // pH/pCO2/HCO3/BE → 酸鹼判定
