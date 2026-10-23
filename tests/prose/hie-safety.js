@@ -38,9 +38,10 @@ test('10 分 Apgar 6（5 分 4）且無壓胸 → 不觸發',p=>{
   assert.ok(!conflictText(p).includes(REVIEW));
 });
 test('E 再入院路徑：出生 Apgar 1/3/5 不觸發',p=>{
-  TERM(p);p.input('ap1','1');p.input('ap5','3');p.input('ap10','5');p.story('E');p.msel('readmitProblems','prolonged-jaundice');
+  TERM(p);p.input('ap1','1');p.input('ap5','3');p.input('ap10','5');p.story('E');p.seg('dest','NBC');p.msel('readmitProblems','prolonged-jaundice');
   assert.doesNotMatch(p.note('adm'),/asphyxia/i);
-  assert.ok(!p.note('plan').includes(HYPO));
+  const plan=p.note('plan');assert.match(plan,/Therapeutic plans:/,'plan 必須真的產生（空字串會假通過）');
+  assert.ok(!plan.includes(HYPO));
   assert.ok(!conflictText(p).includes(REVIEW));
 });
 test('關掉 HIE 評估 → plan 句消失、餵食句回來、核對列出並跳 tentDx；手填 tentDx "HIE" 後不再列',p=>{

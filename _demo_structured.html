@@ -5286,6 +5286,7 @@ ${opLine}`);
     echo:{ga:30},             // GA <30 週 → hsPDA 心臟超音波
     pn:{ga:34,bw:1800},       // GA <34 週或 BW <1800 g（或插管）→ PN
     caffeine:{ga:34},         // GA <34 週 → caffeine，至少到 PMA 34 週
+    sepsis:{ga:35},           // GA <35 週 → 無症狀無風險也做 sepsis work-up；≥35 週要有症狀或風險（Ryan 2026-10-24）
     tiers:{very:32,moderate:34}   // 預後段分層：<32／32–33+6／34–36+6
   };
   // 生後第 n 天的日曆日期；#birthDate 沒填就回空字串（plan 只留相對說法，不掰日期）。
@@ -5343,7 +5344,11 @@ ${opLine}`);
 
     // 這些是臨床決定不是可推導的事實：規則只給預設值，最終由 planOn 覆寫，且按鈕一律顯示生效狀態
     // GA 空白（gw=0）時所有 GA 規則都不觸發，維持「以足月組稿」；BW 空白時 BW 規則同樣不觸發。
-    const RULE={sepsis:infRisk||preterm||respSupport||S.fd||S.doic||pr.respiratory, csf:false,
+    // sepsis work-up：<35 週一律做；≥35 週（含 35–36+6 晚期早產）要有感染風險、症狀、呼吸支持或 FD／DOIC 才做。
+    // 「有症狀來住院通常還是會做」（Ryan 2026-10-24）：A–D 看本次入院問題與入院經過症狀／嬰兒室異常；E 看發燒或呼吸問題（黃疸再入院不算）。
+    const symptomatic=S.pathway==="readmit"?(pr.infection||pr.respiratory)
+      :(pr.respiratory||pr.hypoglycemia||pr.jaundice||S.obSx.length>0||(S.pathway==="nursery"&&S.brFindings.some(k=>k!=="normal")));   // 「結果無異常（確認）」不是症狀
+    const RULE={sepsis:infRisk||symptomatic||(gw>0&&gw<PLAN_GA.sepsis.ga)||respSupport||S.fd||S.doic, csf:false,
                 biogram:S.fd||S.doic, sga:SGA, aline:S.hc.aline||(cfg.alineRule&&invasive),
                 pn:(gw>0&&gw<PLAN_GA.pn.ga)||(bwN>0&&bwN<PLAN_GA.pn.bw)||invasive,
                 minimal:veryPreterm||invasive, og:respSupport&&cfg.og!==false,
