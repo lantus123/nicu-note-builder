@@ -1745,7 +1745,7 @@
         <div class="seg" data-po="betRh"><button data-v="Rh-positive" style="flex:0 1 auto">Rh＋</button><button data-v="Rh-negative" style="flex:0 1 auto">Rh−</button></div></div>
       <div class="field" style="margin-top:13px"><span class="lab">Operator</span>
         <div class="num"><span class="u">Dr.</span><input class="tin" id="procOperator" placeholder="操作醫師" style="max-width:180px"></div></div>
-      <p class="man-h" style="margin-top:4px">ETT size／深度、surfactant 藥物與劑量、雙倍換血量、UAC／UVC 深度皆依體重自動帶（可於上方欄位覆寫）；其餘 slash 選項與空格可於下方預覽直接改。</p>
+      <p class="man-h" style="margin-top:4px">ETT size／深度、surfactant 藥物與劑量、雙倍換血量、UAC／UVC 深度皆依體重自動帶（可於上方欄位覆寫）；其餘 slash 選項與空格請複製到 HIS 後再修改。</p>
     </section>
   </div>
 
@@ -1996,7 +1996,8 @@
   S.r.steroid.val="2"; S.r.steroid.extra=["complete"];   // Y11 類固醇預設 2 劑・完整療程(turn on 即帶,例外才改)
   // 草稿暫存的狀態放在 S 旁邊：render() 第一次被呼叫前就要存在（let 在宣告行之前讀會 TDZ）
   let draftSaveTimer=null,draftSuspended=false,draftBaseline=null,skipUnloadGuard=false;
-  let autoTogConfirm="";   // 剛擋下一次取消的 fd／msaf，顯示「再點一次才會取消」
+  let autoTogConfirm="";
+  let copyFeedbackTimer=null;   // 宣告提前：切分頁的 handler 也要清它，必須在任何 click 前就存在   // 剛擋下一次取消的 fd／msaf，顯示「再點一次才會取消」
 
   // ── AGA/SGA/LGA 自動判定：Fenton 2025 出生體重百分位（取自 neonatal-navigator/src/lib/neocalc.ts）──
   const maleBWpct={21:[397,675.2],22:[397,675.2],23:[496,753.5],24:[562.7,843.9],25:[635.7,957.4],26:[719.2,1097.9],27:[816.2,1261],28:[928.7,1444.2],29:[1057.8,1644.7],30:[1203.7,1859.2],31:[1365.4,2084.4],32:[1541.2,2316.6],33:[1728.3,2551.8],34:[1922.9,2785.7],35:[2120.2,3013.9],36:[2314.6,3231.5],37:[2499.3,3433.5],38:[2667.7,3614.5],39:[2808.3,3769],40:[2914.2,3890.9],41:[2974.1,3974.2],42:[2976.4,4012.3],43:[2908.5,3998.6],44:[2756.9,3926]};
@@ -2178,6 +2179,8 @@
     const tab=b.closest("[data-tab]"); if(tab){
       if(tab.dataset.tab===S.mode)return;
       clearReviewLocation();
+      // 複製狀態只屬於剛複製的那份 note；切到別的分頁還顯示「已複製 · 尚有 N 空格」會誤導
+      {const cs=document.getElementById("copyStatus");if(cs)cs.hidden=true;if(copyFeedbackTimer!==null){clearTimeout(copyFeedbackTimer);copyFeedbackTimer=null;}}
       rememberTabView(S.mode);
       S.mode=tab.dataset.tab;
       tabButtons.forEach(x=>{
@@ -6443,7 +6446,6 @@ ${opLine}`);
     try{return copy.innerText;}finally{copy.remove();}
   }
   // 複製（Artifact iframe 剪貼簿 API 常被擋，加 execCommand fallback）
-  let copyFeedbackTimer=null;
   document.getElementById("copy").addEventListener("click",async()=>{
     const txt=noteTextForCopy(), status=document.getElementById("copyStatus"); let ok=false;
     if(!txt.trim()){
