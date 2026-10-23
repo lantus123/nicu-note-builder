@@ -6221,7 +6221,7 @@ ${opLine}`);
     drawSibs();   // 家庭樹手足與半手足列
     syncDates('resp');syncDates('line');   // Acceptance 呼吸支持／管路起始日期欄
     const pedRel=document.querySelector('[data-seg="pedRel"]');if(pedRel)pedRel.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.v===S.ped.rel)));
-    each('[data-pedrel]',g=>{const o=S.ped[g.dataset.pedrel];if(o)g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(!!o.rel&&x.dataset.v===o.rel)));});
+    each('[data-pedrel]',g=>{const o=S.ped[g.dataset.pedrel];if(o&&o.rel)g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.v===o.rel)));});   // 沒選過的不補 aria-pressed，維持與開頁時相同的屬性集合
     const fu=document.querySelector('[data-tog="fatherUnknown"] button');if(fu)fu.setAttribute('aria-pressed',String(!!S.ped.fatherUnknown));
     const fa=document.getElementById('fatherAge');if(fa)fa.disabled=!!S.ped.fatherUnknown;
     drawEvents('course');drawEvents('birth');   // 事件列只在點擊時重畫，render 不會長出來
