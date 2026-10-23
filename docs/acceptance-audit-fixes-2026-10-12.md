@@ -122,7 +122,7 @@
 - 既往處置 `hadIntervention`（含外接到場時掛著的 O₂／CPAP／PPV／ETT）**且**最新支持未知 → true；最新支持為 room air 且無 `symptomatic` → false 並提示。
 - **終版規則：既往觀察不自動產生診斷，只提示；既往處置在最新支持未知時列、room air 時不列並提示。** `observed` 包含出生／離開產房異常呼吸、`birthSigns`／`birthFinalSigns`、courseEvents assessment 的異常呼吸，任何情況都不因觀察本身推論呼吸問題；觀察保留於敘事與摘要，手填診斷仍由 `respiratoryDxNeedsReview()` 提示確認。
 - 待核對提示限非 E 路徑、尚未列入呼吸問題、手填診斷未含共用呼吸關鍵字、無 `symptomatic`、最新支持非 O₂／CPAP／PPV／ETT，且有觀察或「有處置＋最新 room air」。只有處置時：「出生／途中曾有呼吸處置（PPV），之後紀錄為 room air：未列入呼吸問題。若仍以呼吸問題收治，請填入院時呼吸支持或暫定診斷。」有觀察時（room air 或未知）：「出生時曾記錄呼吸徵象（grunting），未列入呼吸問題；若以呼吸問題收治，請填入院時呼吸支持或暫定診斷。」途中再評估的呼吸觀察改用「途中再評估曾記錄呼吸徵象」，不歸為出生時；兩者並存時合併列出處置與觀察。連結皆跳 `[data-seg="resp"]`。
-- CPR → birth asphyxia 的既有規則不動。
+- 更正（2026-10-24）：此處原寫「CPR → birth asphyxia 的既有規則不動」有誤——程式裡從來沒有這條規則。perinatal asphyxia／HIE 的觸發、DX 列、NI plan HIE 評估與核對提醒已另外實作（`asphyxiaBasis()`／`HIE_TEXT`，見 `tests/prose/hie-safety.js`）。
 
 **`#` 診斷列**（`renderAdm` 的 `DX`）：每列加 `auto:true` 標記（由 `probs.*` 推出的症狀／問題列）；手填 `tentDx` 只替換 `auto` 列，**保留**基底列（term／prematurity）與母體／周產期風險列（Fetal distress、DOIC、MSAF、PROM／PPROM、IDM、PIH、preeclampsia、GBS）。
 
