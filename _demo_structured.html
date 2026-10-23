@@ -3624,11 +3624,13 @@
     const numericIssues=[...document.querySelectorAll('#admSections input[type="number"]')].filter(el=>el.value&&!el.closest('[hidden]')&&!el.validity.valid).map(el=>reviewIssue(`${reviewFieldLabel(el)}：數值或單位範圍需核對。`,'#'+el.id));
     // 跨分頁一致性：Acceptance 記錄的抗生素與 NI plan 的等級（劑量單一來源見 ABX_DOSE）。
     const crossIssues=[];
-    // 有壓胸／epinephrine 或低 Apgar，但暫定診斷沒寫 asphyxia／HIE、NI plan 的 HIE 評估又被關掉 → 提醒（不自動改診斷）
-    {const b=asphyxiaBasis(),hieOn=S.planOn.hie===undefined?b.on:S.planOn.hie;
-     if(b.on&&!hieOn&&!HIE_DX_PATTERN.test(raw('tentDx'))){
+    // 有壓胸／epinephrine 或低 Apgar，但暫定診斷沒寫 asphyxia／HIE → 提醒（不自動改診斷）。兩種漏法都要抓：
+    // ①手填了別的診斷（手填優先，自動的 asphyxia 列不會出現，plan 卻有 HIE 句，兩邊打架）②NI plan 的 HIE 評估被關掉。
+    {const b=asphyxiaBasis(),hieOn=S.planOn.hie===undefined?b.on:S.planOn.hie,tent=raw('tentDx');
+     if(b.on&&!HIE_DX_PATTERN.test(tent)&&(tent||!hieOn)){
        const why=[b.compressions||b.epinephrine?'已記錄'+[b.compressions?'壓胸':'',b.epinephrine?'epinephrine':''].filter(Boolean).join('／'):'',b.apgar?'Apgar 偏低（10 分鐘 ≤5 或 5 分鐘 ≤3）':''].filter(Boolean).join('、');
-       crossIssues.push(reviewIssue(`${why}，尚未評估 perinatal asphyxia／HIE（NI plan 的 HIE 評估已關閉）`,'#tentDx','入院問題／暫定診斷'));}}
+       const how=[tent?'手填的暫定診斷未納入':'',hieOn?'':'NI plan 的 HIE 評估已關閉'].filter(Boolean).join('；');
+       crossIssues.push(reviewIssue(`${why}，尚未評估 perinatal asphyxia／HIE（${how}）`,'#tentDx','入院問題／暫定診斷'));}}
     if(planAbxLevel()==="none"&&S.acc.abx.length)
       crossIssues.push(reviewIssue(`NI plan 抗生素為「不開」，但 Acceptance 已記錄 ${S.acc.abx.map(k=>ABX_DOSE[k]?.name||k).join("、")}`,'[data-seg="planAbx"]','抗生素處方'));
     const all=[...new Set([...birth,...path,...contextIssues,...medIssues,...numericIssues,...crossIssues,...birthNegPending,...(S.destNotice?[reviewIssue(S.destNotice,'[data-seg="dest"]','收治單位')]:[])])];
