@@ -21,6 +21,21 @@
 - **文法與時態**：時間單位依數值使用單複數；處置紀錄與後續追蹤計畫分開，換血步驟維持計畫式指令。校正的是自動組稿文句，不擅自改寫使用者貼上的原始報告。
 - **產前檢查敘述**：已有羊穿 aCGH 結果而沒有 NIPT 結果時，只寫 aCGH 結果，不另補「NIPT 未做」；兩者都有結果時先寫 NIPT，再接 aCGH，不推定檢查先後、因果或結果互相證實。表單順序與已填結果保持不變。
 
+## 2026-10-24 第一批：會寫錯進 HIS 的洞與中斷保護
+
+起點是兩份審查：真瀏覽器的「R1 第一次使用」走查，與「NICU 主治」對 20 個 golden 情境加 14 個自組情境的臨床完整性審查。這批只修「會把錯的東西寫進 HIS」與「填到一半全丟」，plan 內容（黃疸／低血糖／晚發型發燒）留到下一批。
+
+- **草稿暫存（sessionStorage，Ryan 拍板）**：`nicu_draft_v1` 存 `S`＋所有有 id 的表單欄位＋導覽狀態（時序帶所在段、分頁）。同一分頁 12 小時內重新整理會自動還原並在頁首顯示可關閉的提示；關閉分頁即消失、不落地、不上雲，`localStorage` 仍只放三個偏好。有資料時離開頁面會攔截（`beforeunload`）；「清空重填／看範例」會先停存、刪草稿再 reload，所以清空後不會又被還原。還原時 `syncRestoredControls()` 依 `S` 回推各類按鈕的按下狀態並重畫事件列——**新增控制型別（新的 `data-*` 群組）時要同步加進這個函式，否則還原會靜默漏掉那一類按鈕**；初始化後才套 `S`，否則 `initializeAdmissionWorkflow` 會把產前預設寫回去。
+- **ABG 單行貼上**：`parseGas` 依換行與 `/ , ; |` 切段，段內空白分隔的成對數值也解析；解析不到的片段原文接在整理行後，不再靜默丟值。`mmol/L` 這類單位內的斜線不會被切。
+- **本院出生「離開產房／刀房」開放 CPAP**：之前只有外接看得到 CPAP 鈕，住院醫師選最接近的 O₂ 會產出「weaned to supplemental oxygen」這句錯話。本院寫 `The infant was then placed on CPAP via Neopuff`（無急救事件時 `CPAP was provided via Neopuff`），入 NICU 選 CPAP 類時入院句寫 `continued on NCPAP`。入院前處置站維持不出 CPAP（2026-10-06 決定）。
+- **Fetal distress／MSAF 自動勾選的防誤取消**：由 standby／C-S／入院原因帶入時記 `S.fdAuto`／`S.msafAuto`，按鈕旁標「自動帶入」；第一次點不取消只提示「再點一次才會取消」，第二次才取消；來源 chip 移除且仍是自動時清回。再點已選的原因 chip（＝移除原因）不再把 FD 設成 true。
+- **抗生素劑量單一來源**：`ABX_DOSE`／`ABX_REGIMEN` 兩張表，NI plan 與 Acceptance 都依 `S.planAbx` 等級（empirical／sepsis／meningitic）查劑量；Acceptance E 區 chip 只存藥名 key，標題旁提示目前等級。之前 plan 寫 Ampicillin 100、Acceptance 寫死 200，同一病人兩份 note 打架。plan 為「不開」但 Acceptance 有藥時核對列衝突，可直接跳到 NI plan 分頁。
+- **Perinatal asphyxia／HIE 安全網**：`asphyxiaBasis()`＝出生事件（含外接外院事件）有壓胸或 epinephrine、或 10 分鐘 Apgar ≤5、或 5 分鐘 Apgar ≤3（E 再入院不觸發）。成立時 `#` 診斷列自動加 `# Perinatal asphyxia, suspected (依據)`、`primaryDx` 排在 respiratory 之前；NI plan 新增 `hie` 開關（規則預設開、可覆寫），文案集中在 `HIE_TEXT`：cooling 評估（6 小時窗）、多器官檢查、normothermia、seizure 監測、以 `Keep NPO initially` 取代 trophic feeding 句、asphyxia 併發症監測。手填 `tentDx` 仍優先；手填診斷未含 asphyxia／HIE，或開關被關掉時，核對列提醒並可跳到 `tentDx`。程式裡之前完全沒有 asphyxia 字樣（舊 parseHIS 版的規則沒搬過來，稽核文件那句已更正）。cooling 的週數門檻尚未設（待 Ryan 決定是否加進 `PLAN_GA`）。
+- **sepsis work-up 規則（Ryan 2026-10-24：「有症狀來住院通常還是會做」）**：`infRisk || 有症狀 || GA < PLAN_GA.sepsis.ga(35) || 呼吸支持 || FD || DOIC`。有症狀於 A–D＝呼吸／低血糖／黃疸問題、症狀 chip、嬰兒室異常（排除「確認無異常」）；E＝感染／呼吸。≥35 週無症狀無風險不再常規開（baseline 12／17 少掉該句）；足月低血糖（baseline 05）因「有症狀」而新增該句。
+- **核對訊號同源**：`countBlanks()` 供第 5 段摘要與複製鈕共用，摘要在「關鍵資料未填 N 項」後接「目前病歷仍有 M 個空格」（M=0 不寫）。Acceptance Brief history 對未確認的 FD／DOIC／MSAF 整項省略（不再寫 `(unknown)`）；核對新增待確認項「出生事件 FD／DOIC／MSAF 尚未確認（沒有勾選不代表沒有發生）」，連到第 3 段的確認鈕，所以「本段還缺」與時序帶節點會跟著反映。
+- 複製狀態列切分頁即隱藏；Procedure 底部文案改為「請複製到 HIS 後再修改」。
+- 驗收：九支新 jsdom 測試接進 `npm test`（`draft-persist`、`gas-parse`、`cpap-inhouse`、`fd-autoset`、`copy-status-tab`、`abx-single-source`、`hie-safety`、`plan-sepsis-rule`、`review-consistency`；`page-helper.js` 是後四支共用的頁面，selector 找不到直接 throw）。`story-line`、`stage-band`、`brief-history`、`corpus`、`regression` 依新規格改了對應的 selector／斷言。合併後在真 Chrome 以範例驗過：reload 後四份 note 逐字相同、CPR 事件與手填診斷都還原、console 零錯誤。
+
 ## Acceptance 短版 Brief history（2026-10-19）
 
 【Brief history】使用獨立摘要組稿，從既有表單挑選出生背景、入院原因及重要風險。一般病例為開頭一句加六個欄位：
