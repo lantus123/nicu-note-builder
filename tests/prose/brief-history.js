@@ -361,7 +361,7 @@ const differentialCases=[
 function capture(p,setup){
   setup(p);p.click('[data-hct="workup"] button');p.click('[data-hc="infMarkers"] [data-v="none"]');
   p.click('[data-hc="cultures"] [data-v="nogrowth"]');p.click('[data-hct="aline"] button');
-  p.click('[data-am="resp"] [data-v="NCPAP"]');p.click('[data-am="abx"] [data-v^="Ampicillin"]');
+  p.click('[data-am="resp"] [data-v="NCPAP"]');p.click('[data-am="abx"] [data-v="ampicillin"]');
   p.input('accCXR','Mild bilateral infiltrates');p.input('accABG','pH 7.32 PCO2 43 PO2 75 HCO3 22 BE -3');
   p.input('hcExtra','Feeding was advanced as tolerated');p.input('accAbxNote','Ampicillin was discontinued after 48 hours');
   p.input('accBrainUS','No intraventricular hemorrhage');p.click('[data-proctog] [data-v="aline"]');

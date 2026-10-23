@@ -1606,12 +1606,14 @@
 
     <section class="card">
       <h2 class="sec-h"><span class="n">E</span>Antibiotic course <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">多選 · 劑量自動帶</span></h2>
+      <!-- data-v 只存藥名 key；劑量一律由 ABX_DOSE 依 NI plan 等級組出（同一病人兩份 note 不得劑量矛盾）。提示只進 UI。 -->
+      <p class="man-h" id="accAbxLevel" style="margin:0 0 6px">劑量依 NI plan 的抗生素等級（目前：empirical）；要改等級請到 NI plan</p>
       <div class="seg" data-am="abx" style="flex-wrap:wrap">
-        <button data-v="Ampicillin (200 mg/kg/day)" style="flex:0 1 auto">Ampicillin</button>
-        <button data-v="Gentamicin (4 mg/kg/dose)" style="flex:0 1 auto">Gentamicin</button>
-        <button data-v="Cefotaxime (Claforan) (50 mg/kg/dose)" style="flex:0 1 auto">Claforan</button>
-        <button data-v="Vancomycin (15 mg/kg/dose)" style="flex:0 1 auto">Vancomycin</button>
-        <button data-v="Meropenem (20 mg/kg/dose)" style="flex:0 1 auto">Meropenem</button>
+        <button data-v="ampicillin" style="flex:0 1 auto">Ampicillin</button>
+        <button data-v="gentamicin" style="flex:0 1 auto">Gentamicin</button>
+        <button data-v="cefotaxime" style="flex:0 1 auto">Claforan</button>
+        <button data-v="vancomycin" style="flex:0 1 auto">Vancomycin</button>
+        <button data-v="meropenem" style="flex:0 1 auto">Meropenem</button>
       </div>
       <div class="field" style="margin-top:11px"><span class="lab">療程備註 <span class="q">（起訖／天數，選填）</span></span><input class="tin" id="accAbxNote" placeholder="例：D1–D7，或 keep until…"></div>
     </section>
@@ -3321,6 +3323,8 @@
     reviewTargets.set(message,targets);return message;
   }
   function reviewContext(el){
+    // NI plan 分頁的控制項不屬於 Admission 的任何一區；位置直接寫分頁名，不套第 1 區。
+    if(el?.closest('#planForm'))return {chapter:null,step:'',phase:'',location:'NI plan 分頁'};
     const cards=[...document.querySelectorAll('#admSections > .card')],host=cards.find(c=>c.contains(el));
     const stage=workflowStages.filter(([card])=>cards.indexOf(card)<=cards.indexOf(host)).at(-1)||workflowStages[0];
     const step=el?.closest('#journey [data-stop]')?.dataset.stop||(document.getElementById('journeyWorkspace')?.contains(el)?mountedJourneyStop:'');
@@ -3355,6 +3359,17 @@
   // bar=false：段落結尾「本段還缺」的連結只定位，不顯示「返回核對」。
   function goToReviewTarget(selector,label,{bar=true}={}){
     clearReviewLocation();
+    // 跨分頁的核對項（例如 NI plan 抗生素等級）：切到 NI plan 分頁再定位，不走 Admission 的章節導覽。
+    if(document.querySelector(selector)?.closest('#planForm')){
+      if(S.mode!=='plan')document.querySelector('.tabs [data-tab="plan"]').click();
+      const t=document.querySelector(selector);
+      if(!t||t.closest('[hidden]')){unavailableReviewTarget();return;}
+      if(!t.matches('input:not([type="hidden"]),select,textarea,button,a[href]'))t.setAttribute('tabindex','-1');
+      t.focus({preventScroll:true});t.scrollIntoView?.({block:'center',behavior:'instant'});
+      t.classList.add('review-target-flash');reviewHighlight=t;
+      reviewHighlightTimer=setTimeout(()=>{t.classList.remove('review-target-flash');},4000);
+      return;
+    }
     if(S.mode!=='adm')document.querySelector('.tabs [data-tab="adm"]').click();
     const serial=reviewJumpSerial;
     let target=document.querySelector(selector),context=target&&reviewContext(target);
@@ -3508,7 +3523,11 @@
       [S.pathway==='readmit'&&!S.readmitProblems.length&&!raw('readmitComplaint'),'主要問題','[data-msel="readmitProblems"]','本次主要問題']
     ].filter(([missing])=>missing).map(([,message,selector,label])=>reviewIssue(message,selector,label));
     const numericIssues=[...document.querySelectorAll('#admSections input[type="number"]')].filter(el=>el.value&&!el.closest('[hidden]')&&!el.validity.valid).map(el=>reviewIssue(`${reviewFieldLabel(el)}：數值或單位範圍需核對。`,'#'+el.id));
-    const all=[...new Set([...birth,...path,...contextIssues,...medIssues,...numericIssues,...(S.destNotice?[reviewIssue(S.destNotice,'[data-seg="dest"]','收治單位')]:[])])];
+    // 跨分頁一致性：Acceptance 記錄的抗生素與 NI plan 的等級（劑量單一來源見 ABX_DOSE）。
+    const crossIssues=[];
+    if(planAbxLevel()==="none"&&S.acc.abx.length)
+      crossIssues.push(reviewIssue(`NI plan 抗生素為「不開」，但 Acceptance 已記錄 ${S.acc.abx.map(k=>ABX_DOSE[k]?.name||k).join("、")}`,'[data-seg="planAbx"]','抗生素處方'));
+    const all=[...new Set([...birth,...path,...contextIssues,...medIssues,...numericIssues,...crossIssues,...(S.destNotice?[reviewIssue(S.destNotice,'[data-seg="dest"]','收治單位')]:[])])];
     fillReview('contextReview',contextIssues);
     document.querySelectorAll('.readmit-local-review').forEach(el=>fillReview(el.id,[...path.filter(item=>!item.startsWith('先前進食描述與每餐奶量')),...numericIssues]));
     const conflicts=all.filter(item=>!pending.includes(item)),uniquePending=[...new Set(pending)];
@@ -5125,6 +5144,26 @@ ${opLine}`);
     ptx:["a peripheral lucent area with lung collapse","pneumothorax"],
     infl:["increased pulmonary infiltrates","increased pulmonary infiltrates without frank consolidation"],
     pmd:["lucency outlining the cardiac border and mediastinum","pneumomediastinum"]};
+  // ── 抗生素劑量（單一來源）──
+  // 劑量只由 NI plan 的抗生素等級決定；Acceptance 只記藥名 key，輸出時查這張表。
+  // 以前 chip 的 data-v 寫死劑量，同一病人 plan 寫 Ampicillin 100、acceptance 寫 200，核對也不會提示。
+  // 院內劑量不同改這裡；沒有等級差異的藥用 all。
+  const ABX_DOSE={
+    ampicillin:{name:"Ampicillin",empirical:"100 mg/kg/day",sepsis:"200 mg/kg/day, Q12H",meningitic:"300 mg/kg/day, Q8H"},   // Ryan 2026-10-06：sepsis dose 是 Ampicillin 200＋Gentamicin 4
+    gentamicin:{name:"Gentamicin",all:"4 mg/kg/dose QD"},
+    cefotaxime:{name:"Cefotaxime",accName:"Cefotaxime (Claforan)",empirical:"50 mg/kg/dose",sepsis:"50 mg/kg/dose",meningitic:"100 mg/kg/dose Q12H"},
+    vancomycin:{name:"Vancomycin",all:"15 mg/kg/dose"},
+    meropenem:{name:"Meropenem",all:"20 mg/kg/dose"}
+  };
+  const ABX_LEVELS=["empirical","sepsis","meningitic"];
+  const ABX_REGIMEN={empirical:["ampicillin","gentamicin"],sepsis:["ampicillin","gentamicin"],meningitic:["ampicillin","cefotaxime"]};   // NI plan 各等級開哪些藥
+  // acc=true 用 Acceptance 的藥名（Cefotaxime 帶商品名 Claforan）；表外的值原樣輸出，不補劑量。
+  const abxPhrase=(key,level,acc)=>{const d=ABX_DOSE[key]; if(!d)return String(key);
+    const dose=d[level]||d.all||"", name=acc&&d.accName||d.name; return dose?`${name} (${dose})`:name;};
+  // Acceptance 的劑量等級：plan 為「不開」時仍以 empirical 劑量寫出已記錄的藥，並由核對列出衝突。
+  const accAbxLevel=()=>{const l=planAbxLevel(); return ABX_LEVELS.includes(l)?l:"empirical";};
+  const accAbxPhrases=()=>{const l=accAbxLevel(); return S.acc.abx.map(k=>abxPhrase(k,l,true));};
+
   function buildHC(sl,gas,ph){
     const H=[], respiratory=[], infection=[], hc=S.hc, firstMode=S.acc.resp[0]||"";
     // 同一問題的評估、處置與反應放在一起；未記錄先後或理由時不補 therefore / despite。
@@ -5178,7 +5217,7 @@ ${opLine}`);
                 improve:"continue until the infant's clinical condition improves",digestion:"continue until feeding tolerance improves"};
     const abxPlan=pMap[hc.abxPlan]||"";
     if(S.acc.abx.length){
-      let sentence=`Antibiotic treatment with ${sl(joinAnd(S.acc.abx))} was started`;
+      let sentence=`Antibiotic treatment with ${sl(joinAnd(accAbxPhrases()))} was started`;
       if(abxPlan)sentence+=`, with a plan to ${sl(abxPlan)}`;
       infection.push(sentence+".");
     }else if(abxPlan){
@@ -5208,6 +5247,14 @@ ${opLine}`);
     dt.setDate(dt.getDate()+n);
     const p=x=>String(x).padStart(2,"0");
     return fmtDate(`${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())}`);};
+
+  // NI plan 的感染風險與抗生素等級：plan 與 Acceptance／核對共用，不各自推導。
+  function planInfRisk(){
+    const pr=admissionProblems();
+    return ["pos","pend","nd"].includes(S.scr.gbs)||S.r.prom.on||S.r.fever.on||pr.infection;   // na=未表態不算風險；嬰兒室已見 bandemia/CRP↑ 等 → 直接算感染風險
+  }
+  // 自動：有感染風險→Empirical、否則→none（不自動替健康兒開藥）；手動選過則尊重
+  function planAbxLevel(){return S.planAbxAuto?(planInfRisk()?"empirical":"none"):S.planAbx;}
 
   // ── NI plan（依 GA + admission 選擇自動組出診斷/治療/預後）──
   function renderPlan(){
@@ -5239,7 +5286,7 @@ ${opLine}`);
     const invasive=ruleResp?/ETT/.test(ruleResp):lvl>=2;
     const respSupport=ruleResp?ruleResp!=="room air":lvl>=1;
     const pr=admissionProblems();
-    const infRisk=["pos","pend","nd"].includes(S.scr.gbs)||S.r.prom.on||S.r.fever.on||pr.infection;   // na=未表態不算風險；嬰兒室已見 bandemia/CRP↑ 等 → 直接算感染風險
+    const infRisk=planInfRisk();
 
     // 距離某個 PMA 週數還有幾天（生後第幾天）；可能為負＝已經過了，仍照算。
     const daysToPMA=weeks=>weeks*7-(gw*7+gd);
@@ -5295,13 +5342,11 @@ ${opLine}`);
       T.push(`Start caffeine citrate for apnea of prematurity (loading dose 20 mg/kg, then 5–10 mg/kg/day); continue until at least a PMA of ${PLAN_GA.caffeine.ga} weeks${d34?` (${d34})`:""} and 5–7 days without apnea`);}
     if(S.hc.surf){const drug=S.hc.surfDrug==="curosurf"?"Curosurf (1.25 or 2.5 mL/kg)":"Survanta (4 mL/kg)"; const route=S.hc.surfRoute==="lisa"?"LISA":"the endotracheal tube"; T.push(`Surfactant therapy: ${drug} via ${route}`);}
     if(ON("og"))T.push("Provide OG decompression");
-    // 自動：有感染風險→Empirical、否則→none（不自動替健康兒開藥）；手動選過則尊重
-    const abxKey = S.planAbxAuto ? (infRisk?"empirical":"none") : S.planAbx;
+    const abxKey=planAbxLevel();
     document.querySelectorAll('[data-seg="planAbx"] button').forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===abxKey?"true":"false"));
-    const abxLine={empirical:"Administer empirical antibiotics: Ampicillin (100 mg/kg/day) and Gentamicin (4 mg/kg/dose QD)",
-      sepsis:"Administer Ampicillin (200 mg/kg/day, Q12H) and Gentamicin (4 mg/kg/dose QD) at sepsis doses",   // Ryan 2026-10-06：sepsis dose 是 Ampicillin 200＋Gentamicin 4
-      meningitic:"Administer Ampicillin (300 mg/kg/day, Q8H) and Cefotaxime (100 mg/kg/dose Q12H) at meningitic doses"}[abxKey];
-    if(abxLine)T.push(abxLine);
+    // 劑量查 ABX_DOSE（與 Acceptance 同源）；句型維持原文
+    if(ABX_REGIMEN[abxKey]){const list=joinAnd(ABX_REGIMEN[abxKey].map(k=>abxPhrase(k,abxKey)));
+      T.push(abxKey==="empirical"?`Administer empirical antibiotics: ${list}`:`Administer ${list} at ${abxKey} doses`);}
     // 母親 HBsAg 陽性 → HBIG 有出生 12 小時內時限，計畫端必須反應（原本只在 acceptance 的括號裡提一句）
     if(S.scr.hbsag==="pos"){T.push("Administer HBIG 0.5 mL IM within 12 hours after birth (maternal HBsAg positive)");
       T.push(bwN>0&&bwN<=2200
@@ -5562,7 +5607,9 @@ ${opLine}`);
      chip("pctBH","L",V("accBH"));
      chip("pctHC","H",V("accHC"));}
 
-    const abx=S.acc.abx.length?S.acc.abx.join(" / "):"";
+    const abx=S.acc.abx.length?accAbxPhrases().join(" / "):"";
+    {const h=document.getElementById("accAbxLevel"), l=planAbxLevel();
+     if(h)h.textContent=`劑量依 NI plan 的抗生素等級（目前：${l==="none"?"不開；已記錄的藥暫以 empirical 劑量寫出，請核對":l}）；要改等級請到 NI plan`;}
     const scr=(k,vid)=>S.acc[k]==="done"?(inV(vid)||"done"):"not yet";
 
     const L=[];
