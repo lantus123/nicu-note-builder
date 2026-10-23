@@ -501,6 +501,8 @@
   .inline-confirm[hidden]{display:none}
   .draft-notice{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-size:13px;line-height:1.6}
   .draft-notice[hidden]{display:none}
+  .auto-tog-note{margin:6px 0 0;font-size:12px;line-height:1.5}
+  .auto-tog-note[hidden]{display:none}
   .draft-notice p{flex:1 1 auto;margin:0}
   .draft-notice button{flex:0 0 auto;min-width:38px;min-height:38px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
   .inline-confirm p{flex:1 1 220px;margin:0}
@@ -1090,6 +1092,9 @@
         <div class="seg risk" data-tog="doic"><button type="button" data-v="1" data-on>DOIC</button></div>
         <div class="seg risk" data-tog="msaf"><button type="button" data-v="1" data-on>MSAF</button></div>
       </div>
+      <p class="q auto-tog-note" id="fdAutoNote" hidden>Fetal distress：自動帶入（來自 standby／C/S／入院原因）</p>
+      <p class="q auto-tog-note" id="msafAutoNote" hidden>MSAF：自動帶入（來自 standby 原因）</p>
+      <p class="q auto-tog-note" id="autoTogConfirm" role="status" hidden></p>
       <div class="num" id="doicMinWrap" hidden><label class="u" for="doicMin">DOIC</label><input type="number" id="doicMin" placeholder="—" min="0"><span class="u">分鐘</span></div>
       <div class="seg" data-seg="msafGrade" id="msafGradeWrap" hidden aria-label="MSAF 稠度（選填）"><button type="button" data-v="thin">Thin 稀</button><button type="button" data-v="moderate">Moderate 中</button><button type="button" data-v="thick">Thick 稠</button></div>
       <div class="seg" data-tog="birthNegConfirmed"><button type="button" data-v="1">確認未勾選的出生事件均未發生（FD／DOIC／MSAF）</button></div></div>
@@ -1968,7 +1973,7 @@
            routeDrafts:{},lastRemoved:null,birthNegConfirmed:false,prenatalEdited:{},prenatalConfirmed:false,   // prenatalConfirmed：按過第 2 段「以上都對」；只給複製提醒用，不進病歷
            
            amnio:"na",nipt:"na",mgso4:"none",toco:"none",iap:"none",maternalAbxPurpose:"",maternalAbxCourses:[],nextMaternalAbxId:1,lastMaternalAbxRemoved:null,us:"normal",ancReg:"regular",
-           fd:false,doic:false,msaf:false,msafGrade:"",birthSigns:[],birthFinalSigns:[],tocoDischarged:false,   // 出生當下／產房結束評估的呼吸徵象（多選，空＝不寫）；安胎後已出院（前次住院）
+           fd:false,fdAuto:false,doic:false,msaf:false,msafAuto:false,msafGrade:"",birthSigns:[],birthFinalSigns:[],tocoDischarged:false,   // 出生當下／產房結束評估的呼吸徵象（多選，空＝不寫）；安胎後已出院（前次住院）
            // pathway 不預設：預選「直接入院」＝零點擊就斷言路徑（2026-09-19 住院醫師混亂盤點）
            pathway:"",outborn:false,obRespType:"",obRespStable:false,obSx:[],brEval:[],brWorkup:[],brFindings:[],obO2Dev:"",   // 支持與裝置皆不預設，避免寫成未確認事實。
            readmitPrior:"",readmitFeeding:"",readmitSource:"",readmitBaseline:[],readmitProblems:[],readmitJaundiceSigns:[],
@@ -1991,6 +1996,7 @@
   S.r.steroid.val="2"; S.r.steroid.extra=["complete"];   // Y11 類固醇預設 2 劑・完整療程(turn on 即帶,例外才改)
   // 草稿暫存的狀態放在 S 旁邊：render() 第一次被呼叫前就要存在（let 在宣告行之前讀會 TDZ）
   let draftSaveTimer=null,draftSuspended=false,draftBaseline=null,skipUnloadGuard=false;
+  let autoTogConfirm="";   // 剛擋下一次取消的 fd／msaf，顯示「再點一次才會取消」
 
   // ── AGA/SGA/LGA 自動判定：Fenton 2025 出生體重百分位（取自 neonatal-navigator/src/lib/neocalc.ts）──
   const maleBWpct={21:[397,675.2],22:[397,675.2],23:[496,753.5],24:[562.7,843.9],25:[635.7,957.4],26:[719.2,1097.9],27:[816.2,1261],28:[928.7,1444.2],29:[1057.8,1644.7],30:[1203.7,1859.2],31:[1365.4,2084.4],32:[1541.2,2316.6],33:[1728.3,2551.8],34:[1922.9,2785.7],35:[2120.2,3013.9],36:[2314.6,3231.5],37:[2499.3,3433.5],38:[2667.7,3614.5],39:[2808.3,3769],40:[2914.2,3890.9],41:[2974.1,3974.2],42:[2976.4,4012.3],43:[2908.5,3998.6],44:[2756.9,3926]};
@@ -2219,9 +2225,13 @@
       const same=b.hasAttribute("data-prom-reason")?x=>PROM_REASON_TEXTS.includes(x):x=>x===add;
       const i=parts.findIndex(same); if(i>=0)parts.splice(i,1); else parts.push(add);
       inp.value=parts.join(" and ");
-      if(/fetal distress/i.test(b.dataset.v)){S.fd=true; const fdb=document.querySelector('[data-tog="fd"] button'); if(fdb)fdb.setAttribute("aria-pressed","true");}  // C/S/入院原因命中→自動勾出生事件 fetal distress(可再取消)
+      if(/fetal distress/i.test(b.dataset.v)&&i<0&&!S.fd){S.fd=true;S.fdAuto=true; const fdb=document.querySelector('[data-tog="fd"] button'); if(fdb)fdb.setAttribute("aria-pressed","true");}  // C/S/入院原因命中→自動勾出生事件 fetal distress；已手動勾的不改標成自動
       render();} return;}
-    const tog=b.closest("[data-tog]"); if(tog){const k=tog.dataset.tog; S[k]=!S[k];
+    const tog=b.closest("[data-tog]"); if(tog){const k=tog.dataset.tog;
+      // 自動帶入的 FD／MSAF 第一次點不取消：前文已寫「Because of fetal distress…」，誤點會讓診斷與 Acceptance 變 unknown 而零提示（HIE 情境實際踩到）
+      if((k==="fd"||k==="msaf")&&S[k]===true&&S[k+"Auto"]===true){S[k+"Auto"]=false;autoTogConfirm=k;render();return;}
+      if(k==="fd"||k==="msaf"){S[k+"Auto"]=false;if(autoTogConfirm===k)autoTogConfirm="";}
+      S[k]=!S[k];
       b.setAttribute("aria-pressed",S[k]?"true":"false");
       if(k==="doic"){const w=document.getElementById("doicMinWrap"); if(w)w.hidden=!S.doic;}
       if(k==="msaf"){const w=document.getElementById("msafGradeWrap"); if(w)w.hidden=!S.msaf;}
@@ -2243,8 +2253,8 @@
         ms.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(arr.includes(x.dataset.v))));
       }
       if(k==="pwSbR"&&arr.includes(v)){   // standby 原因命中出生事件→自動勾(可再取消),避免與「There was no fetal distress…」矛盾
-        if(v==="fetal distress"&&!S.fd){S.fd=true; document.querySelector('[data-tog="fd"] button')?.setAttribute("aria-pressed","true");}
-        if(v==="meconium-stained amniotic fluid"&&!S.msaf){S.msaf=true; document.querySelector('[data-tog="msaf"] button')?.setAttribute("aria-pressed","true"); const w=document.getElementById("msafGradeWrap"); if(w)w.hidden=false;}}
+        if(v==="fetal distress"&&!S.fd){S.fd=true;S.fdAuto=true; document.querySelector('[data-tog="fd"] button')?.setAttribute("aria-pressed","true");}
+        if(v==="meconium-stained amniotic fluid"&&!S.msaf){S.msaf=true;S.msafAuto=true; document.querySelector('[data-tog="msaf"] button')?.setAttribute("aria-pressed","true"); const w=document.getElementById("msafGradeWrap"); if(w)w.hidden=false;}}
       render(); return;}
     const seg=b.closest("[data-seg]"); if(seg){segPick(seg,b,seg.dataset.seg);}
     const r3=b.closest("[data-r3]"); if(r3){r3pick(r3,b);}
@@ -2292,6 +2302,20 @@
 
   // 單選重點不取消；合法空值由獨立「清除」操作恢復，避免連點時清掉病程路徑。
   const SEG_CLEARABLE=new Set(["gender","delivery","dest","pathway","obRespType","obO2Dev","obM1Type","obM1Dev","resp","acceptanceResp","readmitPrior","readmitFeeding","readmitSource"]);
+  // 自動帶入的來源還在嗎：原因文字（C/S、媽媽入院原因可手改）或 standby 原因 chip
+  // 來源欄位＝有 fetal distress chip 的 data-fill 目標（現為 C/S 原因、媽媽入院原因）；由 DOM 推，日後加 chip 不必兩處改
+  const fdSourcePresent=()=>S.pwSbR.includes("fetal distress")||[...document.querySelectorAll('[data-fill]')].some(g=>[...g.querySelectorAll('button[data-v]')].some(b=>/fetal distress/i.test(b.dataset.v))&&/fetal distress/i.test(document.getElementById(g.dataset.fill)?.value||""));
+  const msafSourcePresent=()=>S.pwSbR.includes("meconium-stained amniotic fluid");
+  function syncAutoBirthEvents(){
+    // 來源移除且仍是自動狀態 → 清回；使用者點過（Auto=false）的不動
+    if(S.fdAuto&&!fdSourcePresent()){S.fd=false;S.fdAuto=false;document.querySelector('[data-tog="fd"] button')?.setAttribute("aria-pressed","false");}
+    if(S.msafAuto&&!msafSourcePresent()){S.msaf=false;S.msafAuto=false;document.querySelector('[data-tog="msaf"] button')?.setAttribute("aria-pressed","false");const w=document.getElementById("msafGradeWrap");if(w)w.hidden=true;}
+    if(autoTogConfirm&&!S[autoTogConfirm])autoTogConfirm="";
+    const fdNote=document.getElementById("fdAutoNote"),msafNote=document.getElementById("msafAutoNote"),confirm=document.getElementById("autoTogConfirm");
+    if(fdNote)fdNote.hidden=!(S.fd&&S.fdAuto);
+    if(msafNote)msafNote.hidden=!(S.msaf&&S.msafAuto);
+    if(confirm){confirm.hidden=!autoTogConfirm;confirm.textContent=autoTogConfirm?`${autoTogConfirm==="fd"?"Fetal distress":"MSAF"} 已由原因帶入；再點一次才會取消。`:"";}
+  }
   function syncChoiceControls(){
     const single='[data-seg],[data-ryn],[data-r3],[data-rc],[data-par],[data-po],[data-as],[data-hc],[data-numunit],[data-re]:not([data-multi="true"])';
     const multi='[data-msel],[data-am],[data-hcm],[data-proctog],[data-tog],[data-habit],[data-hct],[data-planon],[data-fill],[data-re][data-multi="true"]';
@@ -4131,6 +4155,7 @@
 
   function render(){
     try{
+    syncAutoBirthEvents();
     syncNrpDefaults();
     renderDestination();
     renderPrenatalDefaults();
