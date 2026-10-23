@@ -99,8 +99,10 @@ test('status text follows filling: missing, not started and complete',({status,s
   assert.equal(status(2).textContent,'未開始');assert.equal(status(2).dataset.risk,'false');
   assert.match(status(3).textContent,/^缺 4 項$/);assert.equal(status(4).textContent,'未開始');assert.equal(status(5).textContent,'未開始');
   story('A');seg('dest','NICU');input('birthDate','2026-08-29');assert.equal(status(1).textContent,'完成');assert.equal(status(1).dataset.risk,'false');
-  seg('gender','female');input('gaW','38');input('bw','3100');assert.equal(status(3).textContent,'缺 1 項');
-  seg('delivery','nsd');assert.equal(status(3).textContent,'已記錄 1／5');
+  // B4：FD／DOIC／MSAF 未確認也算本段待確認一項
+  seg('gender','female');input('gaW','38');input('bw','3100');assert.equal(status(3).textContent,'缺 2 項');
+  seg('delivery','nsd');assert.equal(status(3).textContent,'缺 1 項');
+  click('[data-tog="birthNegConfirmed"] button');assert.match(status(3).textContent,/^已記錄 \d／5$/);
   assert.equal(status(4).textContent,'未開始');click('#admissionStatusBody [data-seg="resp"] [data-v="room air"]');assert.equal(status(4).textContent,'完成','The empty pre-admission station is skippable (no new treatment = nothing to fill)');
   click('#prenatalNext');assert.equal(status(2).textContent,'完成');
   click('#stageBand [data-flow-target="finalReviewCard"]');assert.equal(status(5).textContent,'完成');
@@ -109,7 +111,9 @@ test('status text follows filling: missing, not started and complete',({status,s
 test('node dots: filled when recorded, hollow when not; current node is marked',({story,get,input,click,current})=>{
   story('D');assert.equal(get('[data-band-node="birth:birth"]').classList.contains('has'),false);
   assert.equal(get('[data-band-node="birth:birth"] .tm').textContent,'未記錄');
-  input('birthBreathing','crying');assert.equal(get('[data-band-node="birth:birth"]').classList.contains('has'),true);
+  // B4：出生事件尚未確認 → 節點是半填（part），按確認後才是實心
+  input('birthBreathing','crying');assert.equal(get('[data-band-node="birth:birth"]').classList.contains('part'),true);
+  click('[data-tog="birthNegConfirmed"] button');assert.equal(get('[data-band-node="birth:birth"]').classList.contains('has'),true);
   input('birthFinalMin','10');assert.equal(get('[data-band-node="birth:drEnd"] .tm').textContent,'生後 10 分');
   input('birthFinalSupport','cpap');assert.equal(get('[data-band-node="birth:drEnd"] .tm').textContent,'CPAP','The leaving-support answer is the node time once chosen');
   click('[data-band-node="course:obArrive"]');assert.equal(current(),'我方抵達外院');

@@ -99,12 +99,11 @@ test('routine history has seven readable rows with identity, reason, and birth d
   assert.doesNotMatch(text,/pediatric team was called to stand by/i,'Standby logistics should not duplicate Admission');
 });
 
-test('unconfirmed birth events stay unknown even with high Apgar scores and no resuscitation',p=>{
+// B4（2026-10-24）：未確認的陰性整項省略（空＝不寫），不再寫 (unknown)；Admission 也不寫，核對另列「尚未確認」。
+test('unconfirmed birth events are omitted, never written as negative, even with high Apgar scores and no resuscitation',p=>{
   const initial=p.brief();
-  for(const label of ['Fetal distress','DOIC','MSAF']){
-    assert.match(initial,new RegExp(label+'\\s*\\([^)]*(?:unknown|_+|\\?)[^)]*\\)','i'));
-    assert.doesNotMatch(initial,new RegExp(label+'\\s*\\(-\\)','i'));
-  }
+  for(const label of ['Fetal distress','DOIC','MSAF'])
+    assert.doesNotMatch(initial,new RegExp(label+'\\s*\\(','i'),label+' must be omitted until confirmed');
   p.tog('birthNegConfirmed');
   for(const label of ['Fetal distress','DOIC','MSAF'])assert.match(p.brief(),new RegExp(label+'\\s*\\(-\\)','i'));
 });
@@ -361,7 +360,7 @@ const differentialCases=[
 function capture(p,setup){
   setup(p);p.click('[data-hct="workup"] button');p.click('[data-hc="infMarkers"] [data-v="none"]');
   p.click('[data-hc="cultures"] [data-v="nogrowth"]');p.click('[data-hct="aline"] button');
-  p.click('[data-am="resp"] [data-v="NCPAP"]');p.click('[data-am="abx"] [data-v^="Ampicillin"]');
+  p.click('[data-am="resp"] [data-v="NCPAP"]');p.click('[data-am="abx"] [data-v="ampicillin"]');
   p.input('accCXR','Mild bilateral infiltrates');p.input('accABG','pH 7.32 PCO2 43 PO2 75 HCO3 22 BE -3');
   p.input('hcExtra','Feeding was advanced as tolerated');p.input('accAbxNote','Ampicillin was discontinued after 48 hours');
   p.input('accBrainUS','No intraventricular hemorrhage');p.click('[data-proctog] [data-v="aline"]');

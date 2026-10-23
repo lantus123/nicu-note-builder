@@ -45,7 +45,7 @@ S['05_GDM_LGA_低血糖']=[...BASE,set('gaW','38'),set('gaD','3'),set('bw','4020
 S['06_PROM18h_GBS陽性_敗血症風險']=[...BASE,set('gaW','36'),set('gaD','5'),set('bw','2680'),
   seg('delivery','nsd'),ryn('prom'),set('promH','18'),ryn('fever'),{cycle:['.scr-row[data-scr="gbs"] .scr-btn','pos']},seg('iap','incomplete'),
   route('direct'),hct('workup'),hc('infMarkers','crp'),
-  am('abx','Ampicillin (200 mg/kg/day)'),am('abx','Gentamicin (4 mg/kg/dose)'),hc('abxPlan','cultures')];
+  am('abx','ampicillin'),am('abx','gentamicin'),hc('abxPlan','cultures')];
 S['07_外接outborn三段']=[...BASE,set('gaW','33'),set('gaD','2'),set('bw','1890'),
   seg('delivery','nsd'),route('D'),seg('obRespType','o2'),seg('obO2Dev','hood'),hcm('cxrDx','rds1'),hct('workup')];
 S['08_出生後會診']=[...BASE,set('gaW','37'),set('gaD','6'),set('bw','2890'),

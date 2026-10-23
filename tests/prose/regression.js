@@ -262,7 +262,7 @@ test('current room air is not replaced by older ETT in the treatment plan',()=>{
 test('course keeps related findings together without inventing treatment response or causality',()=>{
   const {acceptance}=notes([tab('acc'),pick('am','resp','NCPAP'),
     {click:'[data-hct="workup"] button'},hc('infMarkers','crp'),hc('cultures','positive'),
-    pick('am','abx','Ampicillin (200 mg/kg/day)'),hc('abxPlan','course'),
+    pick('am','abx','ampicillin'),hc('abxPlan','course'),
     pick('hcm','cxrDx','rds2'),{click:'[data-hct="surf"] button'},pick('hcm','surfReason','o2')]);
   const course=section(acceptance,'Hospital course'), paragraphs=course.split(/\n\n/);
   assert.ok(paragraphs.some(p=>/NCPAP/.test(p)&&/Chest (?:X-ray|radiography)/.test(p)&&/Survanta/.test(p)));

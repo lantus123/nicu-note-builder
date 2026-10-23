@@ -1491,6 +1491,7 @@
           <button data-v="rop" style="flex:0 1 auto">ROP 篩檢</button>
           <button data-v="brainUS" style="flex:0 1 auto">腦部超音波</button>
           <button data-v="echo" style="flex:0 1 auto">心臟超音波</button>
+          <button data-v="hie" style="flex:0 1 auto">HIE 評估</button>
         </div>
         <button type="button" class="mini-add" id="planOnReset" style="margin-top:7px" hidden>↻ 全部回自動</button></div>
       <p class="man-h" style="margin-top:4px">診斷／治療／預後三段依 GA、SGA/LGA、IDM、fetal distress/DOIC、呼吸支持、surfactant 等自動組出。複製後可再改。</p>
@@ -1615,12 +1616,14 @@
 
     <section class="card">
       <h2 class="sec-h"><span class="n">E</span>Antibiotic course <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink-3)">多選 · 劑量自動帶</span></h2>
+      <!-- data-v 只存藥名 key；劑量一律由 ABX_DOSE 依 NI plan 等級組出（同一病人兩份 note 不得劑量矛盾）。提示只進 UI。 -->
+      <p class="man-h" id="accAbxLevel" style="margin:0 0 6px">劑量依 NI plan 的抗生素等級（目前：empirical）；要改等級請到 NI plan</p>
       <div class="seg" data-am="abx" style="flex-wrap:wrap">
-        <button data-v="Ampicillin (200 mg/kg/day)" style="flex:0 1 auto">Ampicillin</button>
-        <button data-v="Gentamicin (4 mg/kg/dose)" style="flex:0 1 auto">Gentamicin</button>
-        <button data-v="Cefotaxime (Claforan) (50 mg/kg/dose)" style="flex:0 1 auto">Claforan</button>
-        <button data-v="Vancomycin (15 mg/kg/dose)" style="flex:0 1 auto">Vancomycin</button>
-        <button data-v="Meropenem (20 mg/kg/dose)" style="flex:0 1 auto">Meropenem</button>
+        <button data-v="ampicillin" style="flex:0 1 auto">Ampicillin</button>
+        <button data-v="gentamicin" style="flex:0 1 auto">Gentamicin</button>
+        <button data-v="cefotaxime" style="flex:0 1 auto">Claforan</button>
+        <button data-v="vancomycin" style="flex:0 1 auto">Vancomycin</button>
+        <button data-v="meropenem" style="flex:0 1 auto">Meropenem</button>
       </div>
       <div class="field" style="margin-top:11px"><span class="lab">療程備註 <span class="q">（起訖／天數，選填）</span></span><input class="tin" id="accAbxNote" placeholder="例：D1–D7，或 keep until…"></div>
     </section>
@@ -2805,6 +2808,45 @@
   const destPlan=()=>DEST_PLAN[admissionDestination()]||null;   // 未選或不相容，不回退成 NICU 醫囑。
   // 呼吸相關症狀：原本 renderAdm 的 OB_RESP_SX 與 renderAcc 的 respSx 是兩份同內容清單，合併成這一個常數。
   const RESP_SX=["tachypnea","subcostal retractions","grunting","nasal flaring","cyanosis","desaturation","apnea"];
+  // ── Perinatal asphyxia／HIE 安全網（2026-10-24）──
+  // 足月兒壓胸＋epinephrine 以前主診斷落成 respiratory distress，plan 零 cooling 評估；cooling 有出生 6 小時窗，是本工具唯一 time-critical 的決策。
+  // 觸發只看已記錄事實（非 E 路徑）：出生／外接現場事件有壓胸或 epinephrine、10 分 Apgar ≤5、5 分 Apgar ≤3；未填的 Apgar 不算。
+  // 句子是草稿，Ryan 會再校——集中在這裡一眼改，不要散寫到 renderPlan／renderAdm。
+  const HIE_TEXT={
+    dx:"Perinatal asphyxia, suspected",
+    eventBasis:{birth:"at birth",before:"before admission"},
+    diagnostic:["Evaluate eligibility for therapeutic hypothermia within 6 hours of birth: modified Sarnat examination, blood gas within the first hour (cord or postnatal), and aEEG if available",
+                "Check blood glucose, electrolytes, renal and liver function, coagulation profile, and lactate to assess multiorgan involvement"],
+    therapeutic:["Avoid hyperthermia and maintain normothermia pending the cooling decision",
+                 "Monitor for seizures and treat clinically evident seizures"],
+    feeding:"Keep NPO initially; reassess enteral feeding after hemodynamic and neurologic stabilization",   // 取代通用 trophic feeding／OG 餵食句
+    prognostic:["Monitor for complications of perinatal asphyxia: hypoxic-ischemic encephalopathy, seizures, acute kidney injury, myocardial dysfunction, and persistent pulmonary hypertension"]
+  };
+  const HIE_DX_PATTERN=/asphyxi|\bHIE\b|encephalopathy/i;   // 手填 tentDx 已含這些字＝醫師已評估，核對不再提示
+  function asphyxiaBasis(){
+    const none={on:false,compressions:false,epinephrine:false,birthEvents:false,apgar:false};
+    if(S.pathway==="readmit")return none;
+    const birthKinds=activeBirthEvents().map(e=>e.kind);
+    // 外接：外院現場／我方到場／轉送途中的事件都在 courseEvents；直接入院與嬰兒室的 courseEvents 不算出生事件
+    const outKinds=S.outborn?S.courseEvents.map(e=>e.kind):[];
+    const has=k=>birthKinds.includes(k)||outKinds.includes(k);
+    const compressions=has("compressions")||S.resus==="cpr", epinephrine=has("epinephrine");
+    const score=id=>{const v=raw(id);return v===""?null:Number(v);};
+    const a5=score("ap5"), a10=score("ap10");
+    const apgar=(a10!==null&&!isNaN(a10)&&a10<=5)||(a5!==null&&!isNaN(a5)&&a5<=3);
+    const birthEvents=["compressions","epinephrine"].some(k=>birthKinds.includes(k))||S.resus==="cpr";
+    return {on:compressions||epinephrine||apgar,compressions,epinephrine,birthEvents,apgar};
+  }
+  // # 診斷列括號：只寫實際成立的依據
+  function asphyxiaBasisPhrase(b){
+    const parts=[];
+    const ev=[b.compressions?"chest compressions":"",b.epinephrine?"epinephrine":""].filter(Boolean);
+    if(ev.length)parts.push(`${joinAnd(ev)} ${b.birthEvents?HIE_TEXT.eventBasis.birth:HIE_TEXT.eventBasis.before}`);
+    if(b.apgar){const ap1=raw("ap1"),ap5=raw("ap5"),ap10=raw("ap10");
+      parts.push(ap1&&ap5?`Apgar ${[ap1,ap5,ap10].filter(Boolean).join("/")}`
+        :[[ap1,1],[ap5,5],[ap10,10]].filter(([v])=>v).map(([v,m])=>`${m}-minute Apgar ${v}`).join(", "));}
+    return parts.join("; ");
+  }
   // 入院問題清單＝DX chip／入院結語／Acceptance 入院原因／NI plan 的單一真相。
   // 2026-09-23 之前這四處各自推導，離產房掛 CPAP、嬰兒室抽血異常都只進敘事，不進診斷也不進 plan。
   function admissionProblems(){
@@ -2821,7 +2863,8 @@
       prolongedJaundice:re&&rp.includes("prolonged-jaundice"),
       poorFeeding:re&&rp.includes("poor-feeding"),
       weightLoss:re&&rp.includes("weight-loss"),
-      preterm: gw>0&&gw<37
+      preterm: gw>0&&gw<37,
+      asphyxia: asphyxiaBasis().on
     };
   }
   // 既往處置／觀察、最新支持與本次症狀分開，診斷與待核對提示共用同一份事實。
@@ -2859,7 +2902,8 @@
     const tent=raw("tentDx").replace(/[.。]+$/,""); if(tent)return tent;
     if(S.pathway==="readmit")return joinAnd(S.readmitProblems.filter(p=>p!=="care"&&p!=="abnormal-screen").map(p=>p==="apnea"?apneaLabel():READMIT_PROBLEM_LABEL[p]).filter(Boolean));
     const p=admissionProblems();
-    return p.respiratory?"respiratory distress"
+    return p.asphyxia?"perinatal asphyxia"   // 排在 respiratory 之前：壓胸／epinephrine 的足月兒不能只寫 respiratory distress
+      :p.respiratory?"respiratory distress"
       :p.infection?"suspected neonatal sepsis"
       :p.hypoglycemia?"neonatal hypoglycemia"
       :p.prolongedJaundice?"prolonged neonatal jaundice"
@@ -3363,6 +3407,8 @@
     reviewTargets.set(message,targets);return message;
   }
   function reviewContext(el){
+    // NI plan 分頁的控制項不屬於 Admission 的任何一區；位置直接寫分頁名，不套第 1 區。
+    if(el?.closest('#planForm'))return {chapter:null,step:'',phase:'',location:'NI plan 分頁'};
     const cards=[...document.querySelectorAll('#admSections > .card')],host=cards.find(c=>c.contains(el));
     const stage=workflowStages.filter(([card])=>cards.indexOf(card)<=cards.indexOf(host)).at(-1)||workflowStages[0];
     const step=el?.closest('#journey [data-stop]')?.dataset.stop||(document.getElementById('journeyWorkspace')?.contains(el)?mountedJourneyStop:'');
@@ -3397,6 +3443,17 @@
   // bar=false：段落結尾「本段還缺」的連結只定位，不顯示「返回核對」。
   function goToReviewTarget(selector,label,{bar=true}={}){
     clearReviewLocation();
+    // 跨分頁的核對項（例如 NI plan 抗生素等級）：切到 NI plan 分頁再定位，不走 Admission 的章節導覽。
+    if(document.querySelector(selector)?.closest('#planForm')){
+      if(S.mode!=='plan')document.querySelector('.tabs [data-tab="plan"]').click();
+      const t=document.querySelector(selector);
+      if(!t||t.closest('[hidden]')){unavailableReviewTarget();return;}
+      if(!t.matches('input:not([type="hidden"]),select,textarea,button,a[href]'))t.setAttribute('tabindex','-1');
+      t.focus({preventScroll:true});t.scrollIntoView?.({block:'center',behavior:'instant'});
+      t.classList.add('review-target-flash');reviewHighlight=t;
+      reviewHighlightTimer=setTimeout(()=>{t.classList.remove('review-target-flash');},4000);
+      return;
+    }
     if(S.mode!=='adm')document.querySelector('.tabs [data-tab="adm"]').click();
     const serial=reviewJumpSerial;
     let target=document.querySelector(selector),context=target&&reviewContext(target);
@@ -3418,6 +3475,16 @@
     const place=()=>{if(serial!==reviewJumpSerial||!target.isConnected)return;measureWorkflowNavigation();const offset=workflowOffset(),anchor=target.labels?.[0]||target.closest('.field')||target,top=Math.min(anchor.getBoundingClientRect().top,target.getBoundingClientRect().top);window.scrollTo({top:Math.max(0,window.scrollY+top-offset-8),left:0,behavior:'instant'});syncWorkflowNavigation();};
     place();requestAnimationFrame(place);
     reviewHighlightTimer=setTimeout(()=>{target.classList.remove('review-target-flash');},4000);
+  }
+  // 病歷裡的未填佔位（____／……／——）。複製鈕與第 5 段核對總覽共用同一條規則，兩邊數字才不會打架
+  // （以前總覽說「關鍵資料未填 0 項」、複製卻說「尚有 1 空格」——母病歷號是選填但仍是空格）。
+  function countBlanks(txt){return (String(txt||"").match(/_{2,}|……|——/g)||[]).length;}
+  // 第 5 段摘要要等 Admission 寫完 note 才算得出空格數；timelineReview 先存計數，renderAdm 寫完 note 再補上。
+  let reviewSummaryCounts=null;
+  function renderReviewSummary(){
+    const summary=document.getElementById('reviewSummary');if(!summary||!reviewSummaryCounts)return;
+    const {missing,conflicts,pending}=reviewSummaryCounts,blanks=countBlanks(document.getElementById('note')?.textContent);
+    summary.textContent=`關鍵資料未填 ${missing} 項${blanks?` · 目前病歷仍有 ${blanks} 個空格（複製時會留白）`:''} · 前後／格式待核對 ${conflicts} 項${pending?` · 已記錄待確認 ${pending} 項`:''}。請通讀完整病歷後再貼入 HIS。`;
   }
   function timelineReview(){
     reviewTargets.clear();
@@ -3443,6 +3510,11 @@
       if(kinds.includes('intubation')&&!kinds.includes('ppv'))awaitBirth('已記錄插管但沒有插管前 PPV；實際有做請按「＋ PPV」。','#birthAdderButtons','還有嗎？補回處置');
       if(kinds.includes('epinephrine')&&!kinds.includes('compressions'))awaitBirth('已記錄 epinephrine 但沒有壓胸；請核對。','#birthAdderButtons','還有嗎？補回處置');
     }
+    // 未勾選 FD／DOIC／MSAF 不等於沒發生：沒按確認就列待確認（Acceptance 也因此不寫這幾項，見 acceptanceBriefHistory）
+    // 和其他待確認項一樣計入複製提醒（S.copyWarnings），但不另出現在第 1 區的出生核對框。
+    const birthNegPending=S.pathway&&S.pathway!=='readmit'&&!S.birthNegConfirmed&&!(S.fd&&S.doic&&S.msaf)
+      ?[reviewIssue('出生事件 FD／DOIC／MSAF 尚未確認（沒有勾選不代表沒有發生）','[data-tog="birthNegConfirmed"] button','出生事件陰性確認（FD／DOIC／MSAF）')]:[];
+    pending.push(...birthNegPending);
     if(raw("birthFinalMin")&&last>Number(raw("birthFinalMin")))birth.push(reviewIssue("最後評估時間早於前面的事件，請核對。",'#birthFinalMin'));
     if(raw("birthResusStatus")==="performed"&&!birthHasAction())awaitBirth("已選有急救，請在第 1 區選急救到哪一階。",S.pathway?'#ladderChoices':'#entryRoutes',S.pathway?'急救到哪一階':'請先選擇入院情境');
     if(raw("birthResusStatus")!=="performed"&&S.birthEvents.some(e=>e.kind!=="assessment"))awaitBirth("先前處置已保留，目前不寫入；在第 1 區選回急救階梯可恢復。觀察紀錄仍保留於敘述。",S.pathway?'#ladderChoices':'#entryRoutes',S.pathway?'急救到哪一階':'請先選擇入院情境');
@@ -3550,7 +3622,16 @@
       [S.pathway==='readmit'&&!S.readmitProblems.length&&!raw('readmitComplaint'),'主要問題','[data-msel="readmitProblems"]','本次主要問題']
     ].filter(([missing])=>missing).map(([,message,selector,label])=>reviewIssue(message,selector,label));
     const numericIssues=[...document.querySelectorAll('#admSections input[type="number"]')].filter(el=>el.value&&!el.closest('[hidden]')&&!el.validity.valid).map(el=>reviewIssue(`${reviewFieldLabel(el)}：數值或單位範圍需核對。`,'#'+el.id));
-    const all=[...new Set([...birth,...path,...contextIssues,...medIssues,...numericIssues,...(S.destNotice?[reviewIssue(S.destNotice,'[data-seg="dest"]','收治單位')]:[])])];
+    // 跨分頁一致性：Acceptance 記錄的抗生素與 NI plan 的等級（劑量單一來源見 ABX_DOSE）。
+    const crossIssues=[];
+    // 有壓胸／epinephrine 或低 Apgar，但暫定診斷沒寫 asphyxia／HIE、NI plan 的 HIE 評估又被關掉 → 提醒（不自動改診斷）
+    {const b=asphyxiaBasis(),hieOn=S.planOn.hie===undefined?b.on:S.planOn.hie;
+     if(b.on&&!hieOn&&!HIE_DX_PATTERN.test(raw('tentDx'))){
+       const why=[b.compressions||b.epinephrine?'已記錄'+[b.compressions?'壓胸':'',b.epinephrine?'epinephrine':''].filter(Boolean).join('／'):'',b.apgar?'Apgar 偏低（10 分鐘 ≤5 或 5 分鐘 ≤3）':''].filter(Boolean).join('、');
+       crossIssues.push(reviewIssue(`${why}，尚未評估 perinatal asphyxia／HIE（NI plan 的 HIE 評估已關閉）`,'#tentDx','入院問題／暫定診斷'));}}
+    if(planAbxLevel()==="none"&&S.acc.abx.length)
+      crossIssues.push(reviewIssue(`NI plan 抗生素為「不開」，但 Acceptance 已記錄 ${S.acc.abx.map(k=>ABX_DOSE[k]?.name||k).join("、")}`,'[data-seg="planAbx"]','抗生素處方'));
+    const all=[...new Set([...birth,...path,...contextIssues,...medIssues,...numericIssues,...crossIssues,...birthNegPending,...(S.destNotice?[reviewIssue(S.destNotice,'[data-seg="dest"]','收治單位')]:[])])];
     fillReview('contextReview',contextIssues);
     document.querySelectorAll('.readmit-local-review').forEach(el=>fillReview(el.id,[...path.filter(item=>!item.startsWith('先前進食描述與每餐奶量')),...numericIssues]));
     const conflicts=all.filter(item=>!pending.includes(item)),uniquePending=[...new Set(pending)];
@@ -3576,7 +3657,7 @@
     const writing=writingReviewIssues();fillReview('reviewWritingList',writing,'沒有命中已知的文字規則；不代表已完成全文文法審查。',true);
     const writingGroup=document.getElementById('reviewWriting');if(writingGroup){writingGroup.hidden=!writing.length;document.getElementById('reviewWritingSummary').textContent=`文字建議（${new Set(writing).size} 項，不自動改寫）`;}
     const summary=document.getElementById('reviewSummary');if(summary){
-      summary.textContent=`關鍵資料未填 ${basicMissing.length} 項 · 前後／格式待核對 ${conflicts.length} 項${uniquePending.length?` · 已記錄待確認 ${uniquePending.length} 項`:''}。請通讀完整病歷後再貼入 HIS。`;
+      reviewSummaryCounts={missing:basicMissing.length,conflicts:conflicts.length,pending:uniquePending.length};renderReviewSummary();
       document.getElementById('reviewMissing').dataset.issues=String(basicMissing.length+uniquePending.length>0);
       document.getElementById('reviewPending').hidden=!uniquePending.length;
       document.getElementById('reviewConflicts').dataset.issues=String(conflicts.length>0);
@@ -4813,6 +4894,7 @@
       : gw>=42
       ? {s:"Post-term newborn",f:`Post-term newborn, GA ${gaTxt}, BW ${bw} g, ${S.growth==="?"?ph("____"):S.growth}`}
       : {s:"Term newborn",f:`Term newborn, GA ${gaTxt}, BW ${bw} g, ${S.growth==="?"?ph("____"):S.growth}`});
+    if(probs.asphyxia){const b=asphyxiaBasisPhrase(asphyxiaBasis());DX.push({auto:true,s:"Perinatal asphyxia",f:`${HIE_TEXT.dx}${b?` (${b})`:""}`});}
     if(S.pathway==='readmit'){
       if(S.readmitProblems.includes('respiratory'))DX.push({auto:true,s:"Respiratory symptoms",f:"Respiratory symptoms"});
       if(S.readmitProblems.includes('apnea')){const label=cap(apneaLabel().replace(/^a /,'').replace('or a cyanotic','or cyanotic'));DX.push({auto:true,s:label,f:label});}
@@ -4850,6 +4932,7 @@
     // 診斷 chip（與 # 清單同步）
     const dxWrap=document.getElementById("dx");
     dxWrap.innerHTML=`<span class="lbl">暫定診斷</span>`+DX.map(d=>`<span class="tag">${d.s}</span>`).join("");
+    renderReviewSummary();   // note 已寫入，第 5 段的空格數才是這一版病歷的
     }finally{composingNote=null;}
   }
 
@@ -5174,6 +5257,26 @@ ${opLine}`);
     ptx:["a peripheral lucent area with lung collapse","pneumothorax"],
     infl:["increased pulmonary infiltrates","increased pulmonary infiltrates without frank consolidation"],
     pmd:["lucency outlining the cardiac border and mediastinum","pneumomediastinum"]};
+  // ── 抗生素劑量（單一來源）──
+  // 劑量只由 NI plan 的抗生素等級決定；Acceptance 只記藥名 key，輸出時查這張表。
+  // 以前 chip 的 data-v 寫死劑量，同一病人 plan 寫 Ampicillin 100、acceptance 寫 200，核對也不會提示。
+  // 院內劑量不同改這裡；沒有等級差異的藥用 all。
+  const ABX_DOSE={
+    ampicillin:{name:"Ampicillin",empirical:"100 mg/kg/day",sepsis:"200 mg/kg/day, Q12H",meningitic:"300 mg/kg/day, Q8H"},   // Ryan 2026-10-06：sepsis dose 是 Ampicillin 200＋Gentamicin 4
+    gentamicin:{name:"Gentamicin",all:"4 mg/kg/dose QD"},
+    cefotaxime:{name:"Cefotaxime",accName:"Cefotaxime (Claforan)",empirical:"50 mg/kg/dose",sepsis:"50 mg/kg/dose",meningitic:"100 mg/kg/dose Q12H"},
+    vancomycin:{name:"Vancomycin",all:"15 mg/kg/dose"},
+    meropenem:{name:"Meropenem",all:"20 mg/kg/dose"}
+  };
+  const ABX_LEVELS=["empirical","sepsis","meningitic"];
+  const ABX_REGIMEN={empirical:["ampicillin","gentamicin"],sepsis:["ampicillin","gentamicin"],meningitic:["ampicillin","cefotaxime"]};   // NI plan 各等級開哪些藥
+  // acc=true 用 Acceptance 的藥名（Cefotaxime 帶商品名 Claforan）；表外的值原樣輸出，不補劑量。
+  const abxPhrase=(key,level,acc)=>{const d=ABX_DOSE[key]; if(!d)return String(key);
+    const dose=d[level]||d.all||"", name=acc&&d.accName||d.name; return dose?`${name} (${dose})`:name;};
+  // Acceptance 的劑量等級：plan 為「不開」時仍以 empirical 劑量寫出已記錄的藥，並由核對列出衝突。
+  const accAbxLevel=()=>{const l=planAbxLevel(); return ABX_LEVELS.includes(l)?l:"empirical";};
+  const accAbxPhrases=()=>{const l=accAbxLevel(); return S.acc.abx.map(k=>abxPhrase(k,l,true));};
+
   function buildHC(sl,gas,ph){
     const H=[], respiratory=[], infection=[], hc=S.hc, firstMode=S.acc.resp[0]||"";
     // 同一問題的評估、處置與反應放在一起；未記錄先後或理由時不補 therefore / despite。
@@ -5227,7 +5330,7 @@ ${opLine}`);
                 improve:"continue until the infant's clinical condition improves",digestion:"continue until feeding tolerance improves"};
     const abxPlan=pMap[hc.abxPlan]||"";
     if(S.acc.abx.length){
-      let sentence=`Antibiotic treatment with ${sl(joinAnd(S.acc.abx))} was started`;
+      let sentence=`Antibiotic treatment with ${sl(joinAnd(accAbxPhrases()))} was started`;
       if(abxPlan)sentence+=`, with a plan to ${sl(abxPlan)}`;
       infection.push(sentence+".");
     }else if(abxPlan){
@@ -5248,6 +5351,7 @@ ${opLine}`);
     echo:{ga:30},             // GA <30 週 → hsPDA 心臟超音波
     pn:{ga:34,bw:1800},       // GA <34 週或 BW <1800 g（或插管）→ PN
     caffeine:{ga:34},         // GA <34 週 → caffeine，至少到 PMA 34 週
+    sepsis:{ga:35},           // GA <35 週 → 無症狀無風險也做 sepsis work-up；≥35 週要有症狀或風險（Ryan 2026-10-24）
     tiers:{very:32,moderate:34}   // 預後段分層：<32／32–33+6／34–36+6
   };
   // 生後第 n 天的日曆日期；#birthDate 沒填就回空字串（plan 只留相對說法，不掰日期）。
@@ -5257,6 +5361,14 @@ ${opLine}`);
     dt.setDate(dt.getDate()+n);
     const p=x=>String(x).padStart(2,"0");
     return fmtDate(`${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())}`);};
+
+  // NI plan 的感染風險與抗生素等級：plan 與 Acceptance／核對共用，不各自推導。
+  function planInfRisk(){
+    const pr=admissionProblems();
+    return ["pos","pend","nd"].includes(S.scr.gbs)||S.r.prom.on||S.r.fever.on||pr.infection;   // na=未表態不算風險；嬰兒室已見 bandemia/CRP↑ 等 → 直接算感染風險
+  }
+  // 自動：有感染風險→Empirical、否則→none（不自動替健康兒開藥）；手動選過則尊重
+  function planAbxLevel(){return S.planAbxAuto?(planInfRisk()?"empirical":"none"):S.planAbx;}
 
   // ── NI plan（依 GA + admission 選擇自動組出診斷/治療/預後）──
   function renderPlan(){
@@ -5288,7 +5400,7 @@ ${opLine}`);
     const invasive=ruleResp?/ETT/.test(ruleResp):lvl>=2;
     const respSupport=ruleResp?ruleResp!=="room air":lvl>=1;
     const pr=admissionProblems();
-    const infRisk=["pos","pend","nd"].includes(S.scr.gbs)||S.r.prom.on||S.r.fever.on||pr.infection;   // na=未表態不算風險；嬰兒室已見 bandemia/CRP↑ 等 → 直接算感染風險
+    const infRisk=planInfRisk();
 
     // 距離某個 PMA 週數還有幾天（生後第幾天）；可能為負＝已經過了，仍照算。
     const daysToPMA=weeks=>weeks*7-(gw*7+gd);
@@ -5297,19 +5409,25 @@ ${opLine}`);
 
     // 這些是臨床決定不是可推導的事實：規則只給預設值，最終由 planOn 覆寫，且按鈕一律顯示生效狀態
     // GA 空白（gw=0）時所有 GA 規則都不觸發，維持「以足月組稿」；BW 空白時 BW 規則同樣不觸發。
-    const RULE={sepsis:infRisk||preterm||respSupport||S.fd||S.doic||pr.respiratory, csf:false,
+    // sepsis work-up：<35 週一律做；≥35 週（含 35–36+6 晚期早產）要有感染風險、症狀、呼吸支持或 FD／DOIC 才做。
+    // 「有症狀來住院通常還是會做」（Ryan 2026-10-24）：A–D 看本次入院問題與入院經過症狀／嬰兒室異常；E 看發燒或呼吸問題（黃疸再入院不算）。
+    const symptomatic=S.pathway==="readmit"?(pr.infection||pr.respiratory)
+      :(pr.respiratory||pr.hypoglycemia||pr.jaundice||S.obSx.length>0||(S.pathway==="nursery"&&S.brFindings.some(k=>k!=="normal")));   // 「結果無異常（確認）」不是症狀
+    const RULE={sepsis:infRisk||symptomatic||(gw>0&&gw<PLAN_GA.sepsis.ga)||respSupport||S.fd||S.doic, csf:false,
                 biogram:S.fd||S.doic, sga:SGA, aline:S.hc.aline||(cfg.alineRule&&invasive),
                 pn:(gw>0&&gw<PLAN_GA.pn.ga)||(bwN>0&&bwN<PLAN_GA.pn.bw)||invasive,
                 minimal:veryPreterm||invasive, og:respSupport&&cfg.og!==false,
                 rop:(gw>0&&gw<=PLAN_GA.rop.ga)||(bwN>0&&bwN<=PLAN_GA.rop.bw),
                 brainUS:(gw>0&&gw<PLAN_GA.brainUS.ga)||(bwN>0&&bwN<PLAN_GA.brainUS.bw),
                 echo:gw>0&&gw<PLAN_GA.echo.ga,
-                caffeine:gw>0&&gw<PLAN_GA.caffeine.ga};
+                caffeine:gw>0&&gw<PLAN_GA.caffeine.ga,
+                hie:pr.asphyxia};
     const ON=k=>S.planOn[k]===undefined?!!RULE[k]:S.planOn[k];
     document.querySelectorAll('[data-planon] button').forEach(x=>x.setAttribute("aria-pressed",ON(x.dataset.v)?"true":"false"));
     {const r=document.getElementById("planOnReset"); if(r)r.hidden=!Object.keys(S.planOn).length;}
 
     const D=[];
+    if(ON("hie"))D.push(...HIE_TEXT.diagnostic);   // time-critical（出生 6 小時窗），排第一
     // 嬰兒室已經抽過的項目不要再開一次：plan 只寫還沒做的，並註明哪些是在嬰兒室做的。
     const BR_ITEMS={cbc:"CBC/DC",crp:"CRP",bc:"B/C",cxr:"CXR"};   // glucose 不屬於 sepsis work-up 清單
     const FULL=["CBC/DC","CRP","B/C","CXR","urine GBS Ag"];
@@ -5335,7 +5453,9 @@ ${opLine}`);
     const T=[];
     T.push((veryPreterm||(bwN>0&&bwN<1500))?(cfg.giraffe?"Provide incubator (Giraffe) care, with a radiant warmer PRN":"Provide incubator care, with a radiant warmer PRN"):(preterm||(bwN>0&&bwN<2500))?"Provide incubator care, with a radiant warmer PRN":"Provide care under an open warmer");
     if(cfg.minimalHandling&&ON("minimal"))T.push("Minimize handling in critically ill infants");
+    if(ON("hie"))T.push(HIE_TEXT.therapeutic[0]);   // 保溫句之後：cooling 決定前避免過熱
     T.push("Monitor EKG and SpO2");
+    if(ON("hie"))T.push(HIE_TEXT.therapeutic[1]);
     T.push("Record the body weight daily");
     const rmode=S.resp&&S.resp!=="room air"?S.resp:"";   // 不把出生或住院歷程中的模式當成目前應持續的模式。
     if(rmode)T.push(rmode==="O2 hood"?"Provide supplemental oxygen via an oxygen hood":`Provide respiratory support with ${rmode}`);
@@ -5344,13 +5464,11 @@ ${opLine}`);
       T.push(`Start caffeine citrate for apnea of prematurity (loading dose 20 mg/kg, then 5–10 mg/kg/day); continue until at least a PMA of ${PLAN_GA.caffeine.ga} weeks${d34?` (${d34})`:""} and 5–7 days without apnea`);}
     if(S.hc.surf){const drug=S.hc.surfDrug==="curosurf"?"Curosurf (1.25 or 2.5 mL/kg)":"Survanta (4 mL/kg)"; const route=S.hc.surfRoute==="lisa"?"LISA":"the endotracheal tube"; T.push(`Surfactant therapy: ${drug} via ${route}`);}
     if(ON("og"))T.push("Provide OG decompression");
-    // 自動：有感染風險→Empirical、否則→none（不自動替健康兒開藥）；手動選過則尊重
-    const abxKey = S.planAbxAuto ? (infRisk?"empirical":"none") : S.planAbx;
+    const abxKey=planAbxLevel();
     document.querySelectorAll('[data-seg="planAbx"] button').forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===abxKey?"true":"false"));
-    const abxLine={empirical:"Administer empirical antibiotics: Ampicillin (100 mg/kg/day) and Gentamicin (4 mg/kg/dose QD)",
-      sepsis:"Administer Ampicillin (200 mg/kg/day, Q12H) and Gentamicin (4 mg/kg/dose QD) at sepsis doses",   // Ryan 2026-10-06：sepsis dose 是 Ampicillin 200＋Gentamicin 4
-      meningitic:"Administer Ampicillin (300 mg/kg/day, Q8H) and Cefotaxime (100 mg/kg/dose Q12H) at meningitic doses"}[abxKey];
-    if(abxLine)T.push(abxLine);
+    // 劑量查 ABX_DOSE（與 Acceptance 同源）；句型維持原文
+    if(ABX_REGIMEN[abxKey]){const list=joinAnd(ABX_REGIMEN[abxKey].map(k=>abxPhrase(k,abxKey)));
+      T.push(abxKey==="empirical"?`Administer empirical antibiotics: ${list}`:`Administer ${list} at ${abxKey} doses`);}
     // 母親 HBsAg 陽性 → HBIG 有出生 12 小時內時限，計畫端必須反應（原本只在 acceptance 的括號裡提一句）
     if(S.scr.hbsag==="pos"){T.push("Administer HBIG 0.5 mL IM within 12 hours after birth (maternal HBsAg positive)");
       T.push(bwN>0&&bwN<=2200
@@ -5359,7 +5477,8 @@ ${opLine}`);
     if(ON("pn"))T.push("Advance nutritional support with parenteral nutrition (PN)");
     // 餵食計畫依成熟度與呼吸支持分流（2026-09-23 Ryan：足月不該寫母乳庫、早產兒配方、OG feeding；足月 SGA 考慮 PDF）。
     // 早產維持原本兩句；足月掛呼吸支持只寫 OG；足月 room air 就是親餵／擠出母乳；配方奶依 SGA 與否選 PDF 或一般足月配方。
-    if(preterm){
+    if(ON("hie"))T.push(HIE_TEXT.feeding);   // asphyxia 先禁食，取代下面的通用餵食句
+    else if(preterm){
       T.push("Initiate early enteral trophic feeding with breast milk once the infant's general condition and breathing pattern stabilize; encourage exclusive breast milk feeding");
       T.push(`For enteral feeding, ${cfg.og===false?"prioritize":"use an OG tube and prioritize"} the mother's own breast milk, followed by donor human milk from the human milk bank, and then preterm infant formula or preterm special care formula`);
     }else{
@@ -5370,6 +5489,7 @@ ${opLine}`);
     }
 
     const Pr=["The plan was explained to the family."];   // 向家屬解釋是固定會做的事（Ryan 2026-10-06），固定寫
+    if(ON("hie"))Pr.push(...HIE_TEXT.prognostic);
     // 併發症監測依出生週數分層（<32／32–33+6／34–36+6），門檻見 PLAN_GA.tiers；足月不列
     if(gw>0&&gw<PLAN_GA.tiers.very)Pr.push("Monitor for complications of prematurity: RDS, CLD, ROP, oxidative stress, NEC, PDA, IVH, etc.");
     else if(gw>0&&gw<PLAN_GA.tiers.moderate)Pr.push("Monitor for complications of moderate prematurity: RDS, apnea of prematurity, feeding intolerance, hypoglycemia, and hyperbilirubinemia");
@@ -5428,9 +5548,12 @@ ${opLine}`);
     add('Birth history',`${raw('matAge')?`${raw('matAge')}-year-old `:''}${gpa} mother; ${delivery} ${born}${trigger&&trigger.toLowerCase()!==csReason.toLowerCase()?`; delivery indication: ${trigger}`:''}`);
     const ap10=raw('ap10');
     add('Apgar scores',ap10?`${raw('ap1')||'_'}, ${raw('ap5')||'_'}, and ${ap10} at 1, 5, and 10 minutes, respectively`:`${raw('ap1')||'_'} and ${raw('ap5')||'_'} at 1 and 5 minutes, respectively`);
-    const birthFlag=key=>S[key]?'+':S.birthNegConfirmed?'-':'unknown';
+    // 未確認且未勾選＝不知道，整項省略（空＝不寫）；Admission 也不寫，不能只在另一個分頁冒出 (unknown)。三項都省略就整行不出。
+    const birthFlag=key=>S[key]?'+':S.birthNegConfirmed?'-':'';
     const doic=S.doic&&raw('doicMin')?`; first cry at ${raw('doicMin')} ${unitLabel(raw('doicMin'),'minute')} of age`:'';
-    add('',`Fetal distress (${birthFlag('fd')}), DOIC (${birthFlag('doic')}${doic}), MSAF (${birthFlag('msaf')}${S.msaf&&S.msafGrade?`; ${S.msafGrade}`:''})`);
+    const birthItems=[['Fetal distress','fd',''],['DOIC','doic',doic],['MSAF','msaf',S.msaf&&S.msafGrade?`; ${S.msafGrade}`:'']]
+      .filter(([,key])=>birthFlag(key)).map(([label,key,detail])=>`${label} (${birthFlag(key)}${detail})`);
+    if(birthItems.length)add('',birthItems.join(', '));
 
     const shortSupport=(mode,phase)=>mode==='ett'?(phase==='outside'?'mechanical ventilation via ETT':'PPV via ETT'):
       ({room:'room air',o2:'supplemental oxygen',cpap:'CPAP',ppv:'PPV'}[mode]||'');
@@ -5611,7 +5734,9 @@ ${opLine}`);
      chip("pctBH","L",V("accBH"));
      chip("pctHC","H",V("accHC"));}
 
-    const abx=S.acc.abx.length?S.acc.abx.join(" / "):"";
+    const abx=S.acc.abx.length?accAbxPhrases().join(" / "):"";
+    {const h=document.getElementById("accAbxLevel"), l=planAbxLevel();
+     if(h)h.textContent=`劑量依 NI plan 的抗生素等級（目前：${l==="none"?"不開；已記錄的藥暫以 empirical 劑量寫出，請核對":l}）；要改等級請到 NI plan`;}
     const scr=(k,vid)=>S.acc[k]==="done"?(inV(vid)||"done"):"not yet";
 
     const L=[];
