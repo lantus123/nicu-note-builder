@@ -52,10 +52,10 @@ function fullCase(p){
   assert.ok(ppv&&ppv.nrp===false&&ppv.nrpFields.length===0&&ppv.fiO2==='30'&&ppv.response==='improved','範例要有 PPV＋NRP 採用（nrpFields 清空、值保留）＋反應');
   p.click('[data-tab="acc"]');
   p.input('accABG','pH 7.25\npCO2 58\npO2 55\nHCO3 24\nBE -3');
-  p.click('[data-am="abx"] [data-v="Ampicillin (200 mg/kg/day)"]');p.click('[data-am="abx"] [data-v="Gentamicin (4 mg/kg/dose)"]');
+  p.click('[data-am="abx"] [data-v="ampicillin"]');p.click('[data-am="abx"] [data-v="gentamicin"]');
   p.click('[data-tab="proc"]');p.click('[data-proctog] [data-v="uvc"]');
   p.click('[data-tab="acc"]');
-  assert.deepEqual([...p.S.acc.abx],['Ampicillin (200 mg/kg/day)','Gentamicin (4 mg/kg/dose)']);assert.equal(p.S.proc.uvc,true);
+  assert.deepEqual([...p.S.acc.abx],['ampicillin','gentamicin']);assert.equal(p.S.proc.uvc,true);
 }
 const tests=[];const test=(n,f)=>tests.push([n,f]);
 
