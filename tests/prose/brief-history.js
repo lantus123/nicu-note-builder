@@ -99,12 +99,11 @@ test('routine history has seven readable rows with identity, reason, and birth d
   assert.doesNotMatch(text,/pediatric team was called to stand by/i,'Standby logistics should not duplicate Admission');
 });
 
-test('unconfirmed birth events stay unknown even with high Apgar scores and no resuscitation',p=>{
+// B4（2026-10-24）：未確認的陰性整項省略（空＝不寫），不再寫 (unknown)；Admission 也不寫，核對另列「尚未確認」。
+test('unconfirmed birth events are omitted, never written as negative, even with high Apgar scores and no resuscitation',p=>{
   const initial=p.brief();
-  for(const label of ['Fetal distress','DOIC','MSAF']){
-    assert.match(initial,new RegExp(label+'\\s*\\([^)]*(?:unknown|_+|\\?)[^)]*\\)','i'));
-    assert.doesNotMatch(initial,new RegExp(label+'\\s*\\(-\\)','i'));
-  }
+  for(const label of ['Fetal distress','DOIC','MSAF'])
+    assert.doesNotMatch(initial,new RegExp(label+'\\s*\\(','i'),label+' must be omitted until confirmed');
   p.tog('birthNegConfirmed');
   for(const label of ['Fetal distress','DOIC','MSAF'])assert.match(p.brief(),new RegExp(label+'\\s*\\(-\\)','i'));
 });
