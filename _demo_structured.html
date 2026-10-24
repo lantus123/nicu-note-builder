@@ -1131,6 +1131,8 @@
 <div class="field" id="leaveField"><span class="lab"><span id="leaveTitle">離開產房時</span><span class="q">到入院前都沒再變的話就這樣</span></span>
       <div class="seg" data-select-chips="birthFinalSupport" id="leaveChoices"><button type="button" data-v="room">Room air</button><button type="button" data-v="o2">O₂</button><button type="button" data-v="cpap" data-abn>CPAP</button><button type="button" data-v="ppv" data-abn>PPV 持續（Neopuff）</button><button type="button" data-v="ett" data-abn>插管</button></div>
       <select class="tin" id="birthFinalSupport" aria-label="離開時呼吸支持" hidden><option value="">未記錄</option><option value="room">Room air</option><option value="o2">O₂</option><option value="cpap">CPAP</option><option value="ppv">PPV</option><option value="ett">ETT / Mechanical ventilation</option></select>
+      <p class="hint" id="leaveHint" hidden></p>
+      <div class="num sub" id="leavePeepWrap" hidden><label class="u" for="leavePeep">PEEP</label><input type="number" id="leavePeep" min="0" max="20" step="0.5" placeholder="5"><span class="u">cmH₂O</span><span class="q">沒填只寫 PEEP via Neopuff</span></div>
       <div class="num sub"><label class="u" for="leaveSpo2">SpO₂ 維持</label><input type="number" id="leaveSpo2" min="0" max="100" placeholder="—"><span class="u">%</span><span class="q">選填</span></div></div>
     <details class="assess-more" id="leaveMore"><summary>補充評估<span class="q">呼吸／張力／心率／時間（選填）</span></summary>
     <div class="field"><span class="lab">呼吸</span>
@@ -1980,7 +1982,7 @@
            // pathway 不預設：預選「直接入院」＝零點擊就斷言路徑（2026-09-19 住院醫師混亂盤點）
            pathway:"",outborn:false,obRespType:"",obRespStable:false,obSx:[],brEval:[],brWorkup:[],brFindings:[],obO2Dev:"",   // 支持與裝置皆不預設，避免寫成未確認事實。
            readmitPrior:"",readmitFeeding:"",readmitSource:"",readmitBaseline:[],readmitProblems:[],readmitJaundiceSigns:[],
-           pwSbR:[],pwStandby:false,pwConsult:false,pwNoticed:false,pwBrEval:false,pwTransport:false,leaveSpo2:"",pwOnset:"observed",obM1Type:"",obM1Dev:"",
+           pwSbR:[],pwStandby:false,pwConsult:false,pwNoticed:false,pwBrEval:false,pwTransport:false,leaveSpo2:"",leavePeep:"",pwOnset:"observed",obM1Type:"",obM1Dev:"",
            parent:{thal:"na",g6pd:"na",thyroid:"na"},thyType:"",thyMed:false,habit:{smoking:false,alcohol:false,drug:false},habitReviewed:true,
            sibs:[],nextSibId:1,   // 家庭樹：手足清單（本人自動補在最後）
            // 家庭樹第二批：父母關係線型、父親不詳、父／母各自與其他伴侶的小孩（半手足；kids 與 S.sibs 同形，共用 nextSibId）
@@ -2274,6 +2276,7 @@
     updateMaternalAbxField(e.target);
     if(e.target.id==="dolOther")S.dolAuto=false;
     if(e.target.id==="leaveSpo2")S.leaveSpo2=e.target.value;
+    if(e.target.id==="leavePeep")S.leavePeep=e.target.value;
     const d=e.target.dataset; if(d&&d.dkey&&S.acc[d.dkey+"Dates"])S.acc[d.dkey+"Dates"][d.ditem]=e.target.value;
     if(e.target.id==="procOperator"){try{localStorage.setItem("nicu_operator",e.target.value);}catch(_){}}
     if(e.target.id==="homeHosp"){try{localStorage.setItem("nicu_home_hosp",e.target.value);}catch(_){}}
@@ -2289,6 +2292,7 @@
     updateEventField(e.target);
     updateMaternalAbxField(e.target);
     if(e.target.id==='leaveSpo2')S.leaveSpo2=e.target.value;
+    if(e.target.id==='leavePeep')S.leavePeep=e.target.value;
     if(e.target.matches('.scr-choice input[type="radio"], .scr-select')){
       const k=e.target.closest(".scr-row").dataset.scr, v=e.target.value;
       if(selectScreen(k,v)){render(); if(k==="gbs"&&["pos","pend","nd"].includes(v))pulseIap();}
@@ -2704,13 +2708,14 @@
   // 2026-09-20 順八個情境時發現 Admission 把 Apgar 放在整段之後、Acceptance 放在整段之前，
   // 且故事 B 的會診句寫在急救之後，與時間線站序矛盾 ⇒ 拆成 birthObservation／birthCourse 兩段由呼叫端夾 Apgar。
   function leaveSentence(lead=""){
-    const s=raw("birthFinalSupport"),spo2=String(S.leaveSpo2||"").trim();if(!s)return "";
+    const s=raw("birthFinalSupport"),spo2=String(S.leaveSpo2||"").trim(),peep=String(S.leavePeep||"").trim();if(!s)return "";
     const acts=activeBirthEvents().filter(e=>e.kind!=="assessment").map(e=>e.kind),had=k=>acts.includes(k),ourBirth=["direct","nursery"].includes(S.pathway);
     const text={
       room:acts.length?"the infant was then weaned to room air":"the infant remained in room air",
       o2:had("o2")&&!had("ppv")&&!had("intubation")?"supplemental oxygen was continued":acts.length?"the infant was then weaned to supplemental oxygen":"supplemental oxygen was administered",
-      // 本院出生離開產房／刀房掛 CPAP（32 週 RDS 每週都有）；不是 weaned to O₂。外接的 CPAP 裝置不詳，維持原句
-      cpap:ourBirth?(acts.length?"the infant was then placed on CPAP via Neopuff":"CPAP was provided via Neopuff"):"CPAP was provided",
+      // 本院出生離開產房／刀房是 Neopuff 面罩只給 PEEP（32 週 RDS 每週都有）；不是 weaned to O₂，也不寫 CPAP——
+      // 住院醫師會以為是 NCPAP 機器（Ryan 2026-10-24）。PEEP 值沒填就只寫 PEEP via Neopuff，不補 5。外接裝置不詳維持 CPAP was provided。
+      cpap:ourBirth?`${acts.length?"the infant was then supported with":"the infant was supported with"} PEEP${peep?` ${peep} cmH2O`:""} via Neopuff`:"CPAP was provided",
       get ppv(){return `${had("ppv")?"PPV":abbr('PPV','positive-pressure ventilation')} was ${had("ppv")||had("intubation")?'continued':'provided'}${ourBirth?" via Neopuff":""}`;},
       ett:had("intubation")?"the infant remained intubated":"the infant was receiving ventilation through an endotracheal tube"
     }[s];
@@ -3011,14 +3016,16 @@
   const infantSentence=text=>sentence(infantClause(text));
   // 本院出生：前一站（嬰兒室處置／路徑支持／離開產房）已是 CPAP，入院也選 CPAP 類＝延續，不寫成像是新開始。
   // 只處理 CPAP：其他模式（PPV→NSIMV 等）是否算延續屬臨床判斷，維持原句。
+  // 回傳前一站來源：'station'／'pathway'＝真的 CPAP → continued；'leave'＝離開產房的 Neopuff 面罩 PEEP → transitioned（面罩換鼻塞，2026-10-24）；''＝不是延續。
   function inHouseCpapContinued(){
-    if(S.outborn||S.pathway==='readmit'||!['CPAP','bubble CPAP','NCPAP'].includes(S.resp))return false;
+    if(S.outborn||S.pathway==='readmit'||!['CPAP','bubble CPAP','NCPAP'].includes(S.resp))return '';
     const mode=e=>e?(e.kind==='assessment'?e.support:e.kind==='intubation'?'ett':e.kind):'';
     const station=mode(S.courseEvents.filter(e=>['o2','cpap','ppv','intubation'].includes(e.kind)||e.kind==='assessment'&&e.support).at(-1));
-    return (station||pathwaySupportMode()||raw('birthFinalSupport'))==='cpap';
+    const source=station?'station':pathwaySupportMode()?'pathway':raw('birthFinalSupport')?'leave':'';
+    return (station||pathwaySupportMode()||raw('birthFinalSupport'))==='cpap'?source:'';
   }
   function admissionAssessmentSentence(closeAdmission){
-    const status=infantClause(raw('obAdmissionStatus')),resp=closeAdmission&&S.resp?(S.resp==='room air'?'breathing room air':S.resp==='O2 hood'?'receiving supplemental oxygen via an oxygen hood':inHouseCpapContinued()?`continued on ${S.resp}`:`receiving respiratory support with ${S.resp}`):'';
+    const status=infantClause(raw('obAdmissionStatus')),resp=closeAdmission&&S.resp?(S.resp==='room air'?'breathing room air':S.resp==='O2 hood'?'receiving supplemental oxygen via an oxygen hood':inHouseCpapContinued()==='leave'?`transitioned to ${S.resp}`:inHouseCpapContinued()?`continued on ${S.resp}`:`receiving respiratory support with ${S.resp}`):'';
     if(!status&&!resp)return '';
     const predicate=status.startsWith('the infant ')?status.slice(11):'';
     const observation=resp?`the infant was ${resp}${predicate?' and '+predicate:status?'; '+status:''}`:status;
@@ -3516,6 +3523,7 @@
       ?[reviewIssue('出生事件 FD／DOIC／MSAF 尚未確認（沒有勾選不代表沒有發生）','[data-tog="birthNegConfirmed"] button','出生事件陰性確認（FD／DOIC／MSAF）')]:[];
     pending.push(...birthNegPending);
     if(raw("birthFinalMin")&&last>Number(raw("birthFinalMin")))birth.push(reviewIssue("最後評估時間早於前面的事件，請核對。",'#birthFinalMin'));
+    if(['direct','nursery'].includes(S.pathway)&&raw('birthFinalSupport')==='cpap'&&!String(S.leavePeep||'').trim())birth.push(reviewIssue('離開產房／刀房 Neopuff 的 PEEP 值沒填，note 只會寫 PEEP via Neopuff。','#leavePeep','Neopuff PEEP 值'));
     if(raw("birthResusStatus")==="performed"&&!birthHasAction())awaitBirth("已選有急救，請在第 1 區選急救到哪一階。",S.pathway?'#ladderChoices':'#entryRoutes',S.pathway?'急救到哪一階':'請先選擇入院情境');
     if(raw("birthResusStatus")!=="performed"&&S.birthEvents.some(e=>e.kind!=="assessment"))awaitBirth("先前處置已保留，目前不寫入；在第 1 區選回急救階梯可恢復。觀察紀錄仍保留於敘述。",S.pathway?'#ladderChoices':'#entryRoutes',S.pathway?'急救到哪一階':'請先選擇入院情境');
     if(raw("birthResusStatus")==="none"&&(["apnea","gasping","ineffective","labored"].includes(raw("birthBreathing"))||["poor","flaccid"].includes(raw("birthTone"))||(raw("birthHR")!==""&&Number(raw("birthHR"))<100)))birth.push(reviewIssue("出生呼吸紀錄與「無需急救」並存，請確認記錄的時點與內容。",S.pathway?'#ladderChoices':'#entryRoutes',S.pathway?'急救到哪一階':'請先選擇入院情境'));
@@ -3854,7 +3862,7 @@
     }
     stageVisited.add(workflowStages[active][0].id);
   }
-  const supportName=mode=>({room:'Room air（未用氧氣）',o2:'氧氣',cpap:'CPAP',ppv:'PPV',ett:'氣管內管呼吸支持'}[mode]||'這個時點尚無資料');
+  const supportName=(mode,leavingOurs)=>mode==='cpap'&&leavingOurs?'Neopuff PEEP':({room:'Room air（未用氧氣）',o2:'氧氣',cpap:'CPAP',ppv:'PPV',ett:'氣管內管呼吸支持'}[mode]||'這個時點尚無資料');
   function birthPhaseDefinitions(){
     const place=S.delivery==='cs'?'刀房':S.delivery?'產房':'出生場所',prefix=S.pathway==='outborn'?'外院':'',history=S.pathway==='readmit';
     return [
@@ -4029,7 +4037,7 @@
         if(p.id==='info'){has=!!(raw('birthDate')||raw('gaW')||raw('bw'));time=[shortDate(raw('birthDate')),raw('birthTime')].filter(Boolean).join(' ');}
         if(p.id==='consult'&&raw('pwConsultH'))time=`生後 ${raw('pwConsultH')} 小時`;
         if(p.id==='dr'&&ladderLevel()==='none')time='無需急救';
-        if(p.id==='drEnd'){const leave={room:'Room air',o2:'O₂',ppv:'PPV 持續',ett:'插管',cpap:'CPAP'}[raw('birthFinalSupport')];if(leave)time=leave;else if(raw('birthFinalMin'))time=`生後 ${raw('birthFinalMin')} 分`;}
+        if(p.id==='drEnd'){const leave={room:'Room air',o2:'O₂',ppv:'PPV 持續',ett:'插管',cpap:['direct','nursery'].includes(S.pathway)?'Neopuff PEEP':'CPAP'}[raw('birthFinalSupport')];if(leave)time=leave;else if(raw('birthFinalMin'))time=`生後 ${raw('birthFinalMin')} 分`;}
         nodes.push({key:p.key,name:p.id==='info'?'出生':p.lab,time:when(has,time),has,phase:true,place,optOn:OPTIONAL_STATIONS[id]?id:''});
       }
       return settle(nodes);
@@ -4517,6 +4525,13 @@
     el('birthAdderHint').textContent=S.birthEvents.length>skeleton.length?`已有 ${S.birthEvents.length} 筆，照時間順序排。`:'例：PPV 停了又重上＝再做一次；PPV 後看心跳＝中途再評估。';
     document.querySelectorAll('#birthEvents [data-event-kind]').forEach(card=>{card.hidden=card.dataset.eventKind!=="assessment"&&raw("birthResusStatus")!=="performed";});
     el('leaveTitle').textContent=`離開${place}時`;
+    // 本院離開產房／刀房只有 Neopuff 面罩撐 PEEP，沒有 CPAP 機器；鈕與 note 都寫 Neopuff PEEP，不寫 CPAP（Ryan 2026-10-24）。外接裝置不詳維持 CPAP。
+    const ourBirth=['direct','nursery'].includes(S.pathway),cpapLabel=ourBirth?'Neopuff PEEP':'CPAP';
+    const cpapBtn=el('leaveChoices').querySelector('[data-v="cpap"]'),cpapOpt=el('birthFinalSupport').querySelector('option[value="cpap"]');
+    if(cpapBtn.textContent!==cpapLabel)cpapBtn.textContent=cpapLabel;if(cpapOpt.textContent!==cpapLabel)cpapOpt.textContent=cpapLabel;
+    const hint=el('leaveHint');hint.hidden=!ourBirth;if(ourBirth)hint.textContent='Neopuff 面罩貼緊、只設 PEEP、嬰兒自己呼吸 → Neopuff PEEP；面罩沒貼只吹氧 → O₂；有壓給呼吸 → PPV 持續。';
+    el('leavePeepWrap').hidden=!(ourBirth&&raw('birthFinalSupport')==='cpap');
+    if(el('leavePeep').value!==String(S.leavePeep||''))el('leavePeep').value=S.leavePeep||'';
     if(el('leaveSpo2').value!==String(S.leaveSpo2||''))el('leaveSpo2').value=S.leaveSpo2||'';
     const more=el('leaveMore'),filled=['birthFinalBreathing','birthFinalTone','birthFinalHR','birthFinalMin','birthFinalNote'].some(id=>raw(id))||S.birthFinalSigns.length;
     if(filled&&!more.dataset.autoOpened){more.open=true;more.dataset.autoOpened='1';}
@@ -4599,7 +4614,7 @@
     for(const b of document.querySelectorAll('[data-seg="obRespType"] [data-v="cpap"],#courseAdderButtons [data-add-course="cpap"]'))b.hidden=!(b.dataset.v==='cpap'&&S.obRespType==='cpap');
     {const ladLab=document.getElementById("ladderALab");ladLab.textContent=S.outborn?"轉送途中呼吸支持":S.pathway==="nursery"?"嬰兒室呼吸支持":"入院前呼吸支持";
      const source=sourceMode('obRespRelation'),before=document.getElementById('routeSupportBefore');
-     before.hidden=!source;before.textContent=source?`前一站（${S.outborn?(lastArrivalSupport()?'我方現場最後一筆':S.obM1Type?'到場時':'外院最後一筆'):'離開'+(S.delivery==='cs'?'刀房':'產房')+'時'}）：${supportName(source)}。選一樣的會寫「持續」，不一樣寫「改變」。`:'';}
+     before.hidden=!source;before.textContent=source?`前一站（${S.outborn?(lastArrivalSupport()?'我方現場最後一筆':S.obM1Type?'到場時':'外院最後一筆'):'離開'+(S.delivery==='cs'?'刀房':'產房')+'時'}）：${supportName(source,!S.outborn)}。選一樣的會寫「持續」，不一樣寫「改變」。`:'';}
     {const st=deriveStory(); setCsum("pathway",st?[`${st} · `+{direct:"直接入院",nursery:"嬰兒室觀察",outborn:"外接",readmit:"出院後再次就醫"}[S.pathway],S.pwStandby?"standby":"",S.pwConsult?"會診":"",S.pathway==="direct"&&S.pwNoticed&&!S.pwStandby&&!S.pwConsult?"出生後才發現":""].filter(Boolean).join("・"):"尚未選故事",!st);}
     renderJourney();
     timelineReview();
@@ -5604,7 +5619,7 @@ ${opLine}`);
     if(S.surfactant)resp.push(`surfactant in ${deliveryPlace()}${isReadmit?' (prior birth history)':''}`);
     const finalFindings=[BREATHING_NOUN[raw('birthFinalBreathing')],...S.birthFinalSigns].filter(Boolean);
     if(finalFindings.length&&joinAnd(finalFindings)!==joinAnd(birthFindings))put(resp,isReadmit?'birth reassessment (prior history)':'birth reassessment',joinAnd(finalFindings));
-    if(raw('birthFinalSupport'))put(resp,`leaving ${deliveryPlace()}${isReadmit?' (prior history)':''}`,raw('birthFinalSupport')==='ett'?'intubated':shortSupport(raw('birthFinalSupport')));
+    if(raw('birthFinalSupport'))put(resp,`leaving ${deliveryPlace()}${isReadmit?' (prior history)':''}`,raw('birthFinalSupport')==='ett'?'intubated':raw('birthFinalSupport')==='cpap'&&['direct','nursery'].includes(S.pathway)?`Neopuff PEEP${String(S.leavePeep||'').trim()?` ${String(S.leavePeep).trim()} cmH2O`:''}`:shortSupport(raw('birthFinalSupport')));
     for(const prefix of ['birth','birthFinal']){
       const time=prefix==='birth'?'at birth':'at birth reassessment';
       const severe=[['poor','flaccid'].includes(raw(prefix+'Tone'))?(raw(prefix+'Tone')==='poor'?'poor muscle tone':'flaccidity'):'',raw(prefix+'HR')&&Number(raw(prefix+'HR'))<100?`HR ${raw(prefix+'HR')}/min`:''].filter(Boolean);

@@ -130,7 +130,7 @@ test('"＋" repeats a skeleton step or adds a reassessment; each row can be remo
 });
 test('leaving the delivery room is one question plus an optional SpO2',({d,story,ladder,chip,input,get,note,S})=>{
   story('A');ladder('ppv');
-  assert.equal(get('#leaveChoices [data-v="cpap"]').hidden,false,'CPAP via Neopuff is available when leaving the delivery room (2026-10-24)');
+  assert.equal(get('#leaveChoices [data-v="cpap"]').hidden,false,'Neopuff PEEP (value cpap) is available when leaving the delivery room (2026-10-24)');
   assert.equal(get('#leaveMore').open,false,'Breathing, tone and heart rate fold into 補充評估');
   chip('birthFinalSupport','ppv');input('leaveSpo2','95');assert.equal(S.leaveSpo2,'95');
   assert.match(note(),/PPV was continued via Neopuff, with SpO2 maintained at 95%\./);

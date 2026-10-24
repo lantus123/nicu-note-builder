@@ -205,6 +205,20 @@ test('a draft older than 12 hours is not restored and is dropped; an untouched p
     p.click('[data-tab="plan"]');await wait(400);assert.equal(p.session()[KEY],undefined,'只切分頁不算資料');
     const ev=new p.W.Event('beforeunload',{cancelable:true});p.W.dispatchEvent(ev);assert.equal(ev.defaultPrevented,false,'空白頁不攔');}finally{p.close();}
 });
+test('leaving-OR Neopuff PEEP value and its field visibility survive a reload',async()=>{
+  let p=open();p.click('#entryDirect');p.click('[data-story="A"]');p.click('[data-seg="dest"] [data-v="NICU"]');
+  p.input('birthDate','2026-08-30');p.input('gaW','32');p.input('gaD','1');p.input('bw','1650');p.click('[data-seg="delivery"] [data-v="cs"]');
+  p.click('[data-ladder-v="ppv"]');p.click('#leaveChoices [data-v="cpap"]');p.input('leavePeep','5');p.input('leaveSpo2','93');
+  assert.equal(p.get('#leavePeepWrap').hidden,false);assert.equal(p.get('#leaveChoices [data-v="cpap"]').textContent,'Neopuff PEEP');
+  const before=notes(p);assert.match(before.adm,/supported with PEEP 5 cmH2O via Neopuff, with SpO2 maintained at 93%/);
+  p=await reload(p);
+  try{
+    assert.equal(p.S.leavePeep,'5');assert.equal(p.get('#leavePeep').value,'5');assert.equal(p.get('#leavePeepWrap').hidden,false,'PEEP 欄還原後仍顯示');
+    assert.equal(p.get('#leaveChoices [data-v="cpap"]').getAttribute('aria-pressed'),'true');
+    assert.equal(p.get('#leaveChoices [data-v="cpap"]').textContent,'Neopuff PEEP','鈕的字還原後仍是本院寫法');
+    assert.deepEqual(notes(p),before);assert.deepEqual(p.errors,[]);
+  }finally{p.close();}
+});
 test('sessionStorage unavailable: page still works silently',async()=>{
   const errors=[];
   const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'https://nicu-draft.test/',beforeParse(W){
